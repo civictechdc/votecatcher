@@ -1,0 +1,6 @@
+{
+  "BASE_THRESHOLD": 85,
+  "TOP_CROP": 0.385,
+  "BOTTOM_CROP": 0.725,
+  "_comment": "This config.json is used for cropping and image processing configuration. Do not include secrets. Values are used by both frontend and backend for consistent cropping."
+} 
