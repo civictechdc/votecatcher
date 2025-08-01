@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 import { decrypt } from "@/lib/encryption";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 interface OCREntry {
   Name: string;
@@ -16,21 +11,29 @@ interface OCREntry {
 
 export async function POST(req: NextRequest) {
   try {
-    const { base64Images, prompt, userId, provider } = await req.json();
+    const supabase = await createClient();
+    
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { base64Images, prompt, provider } = await req.json();
 
     if (!base64Images || !Array.isArray(base64Images) || base64Images.length === 0) {
       return NextResponse.json({ error: 'No images provided' }, { status: 400 });
     }
 
-    if (!userId || !provider) {
-      return NextResponse.json({ error: 'Missing userId or provider' }, { status: 400 });
+    if (!provider) {
+      return NextResponse.json({ error: 'Missing provider' }, { status: 400 });
     }
 
     // 1. Fetch the API key for this user/provider
     const { data: apiKeyRow, error } = await supabase
       .from('api_keys')
       .select('api_key')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .eq('provider', provider)
       .eq('is_active', true)
       .single();

@@ -20,16 +20,15 @@ CREATE INDEX voter_records_address_idx ON voter_records (street_name, street_num
 -- Enable RLS
 ALTER TABLE voter_records ENABLE ROW LEVEL SECURITY;
 
--- RLS policies for voter_records (allow both user and service role)
-CREATE POLICY "Allow user and service role to insert voter records"
+-- RLS policies for voter_records
+CREATE POLICY "Allow user to insert voter records"
 ON voter_records FOR INSERT
 WITH CHECK (
-  (EXISTS (
+  EXISTS (
     SELECT 1 FROM campaign 
     WHERE campaign.id = voter_records.campaign_id 
     AND campaign.user_id = auth.uid()
-  )) OR 
-  auth.role() = 'service_role'
+  )
 );
 
 CREATE POLICY "Allow user to select own voter records"
@@ -59,18 +58,18 @@ CREATE TABLE file_processing_status (
 -- Enable RLS for processing status
 ALTER TABLE file_processing_status ENABLE ROW LEVEL SECURITY;
 
--- RLS policies for file_processing_status (allow both user and service role)
-CREATE POLICY "Allow user and service role to insert processing status"
+-- RLS policies for file_processing_status
+CREATE POLICY "Allow user to insert processing status"
 ON file_processing_status FOR INSERT
-WITH CHECK (auth.uid() = user_id OR auth.role() = 'service_role');
+WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Allow user to select own processing status"
 ON file_processing_status FOR SELECT
 USING (auth.uid() = user_id);
 
-CREATE POLICY "Allow user and service role to update processing status"
+CREATE POLICY "Allow user to update processing status"
 ON file_processing_status FOR UPDATE
-USING (auth.uid() = user_id OR auth.role() = 'service_role');
+USING (auth.uid() = user_id);
 
 -- Create Storage bucket for voter files
 INSERT INTO storage.buckets (id, name, public) 

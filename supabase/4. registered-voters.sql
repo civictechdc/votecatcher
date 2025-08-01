@@ -19,6 +19,50 @@ create index registration_data_name_idx on registration_data (name);
 create index registration_data_address_idx on registration_data (address);
 create index registration_data_page_row_idx on registration_data (page_number, row_number);
 
+-- Enable RLS
+alter table registration_data enable row level security;
+
+-- RLS policies for registration_data
+create policy "Allow user to insert own registration data"
+on registration_data for insert
+with check (
+  exists (
+    select 1 from campaign 
+    where campaign.id = registration_data.campaign_id 
+    and campaign.user_id = auth.uid()
+  )
+);
+
+create policy "Allow user to select own registration data"
+on registration_data for select
+using (
+  exists (
+    select 1 from campaign 
+    where campaign.id = registration_data.campaign_id 
+    and campaign.user_id = auth.uid()
+  )
+);
+
+create policy "Allow user to update own registration data"
+on registration_data for update
+using (
+  exists (
+    select 1 from campaign 
+    where campaign.id = registration_data.campaign_id 
+    and campaign.user_id = auth.uid()
+  )
+);
+
+create policy "Allow user to delete own registration data"
+on registration_data for delete
+using (
+  exists (
+    select 1 from campaign 
+    where campaign.id = registration_data.campaign_id 
+    and campaign.user_id = auth.uid()
+  )
+);
+
 -- Create the petitions storage bucket (if not already created)
 insert into storage.buckets (id, name, public)
 values ('petitions', 'petitions', false)

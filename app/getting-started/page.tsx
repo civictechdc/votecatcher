@@ -113,7 +113,7 @@ export default function GettingStartedPage() {
             const response = await fetch('/api/store-api-key', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ provider, apiKey, userId: user?.id }),
+              body: JSON.stringify({ provider, apiKey }),
             });
             const result = await response.json();
             if (!response.ok) {
