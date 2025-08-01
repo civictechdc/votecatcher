@@ -35,7 +35,7 @@ Before deploying VoteCatcher, ensure you have:
 ### 1. Clone and Setup
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/civictechdc/votecatcher
 cd votecatcher
 npm install
 ```
@@ -46,24 +46,9 @@ npm install
 1. Go to [supabase.com](https://supabase.com) and create a new project
 2. Note your project URL and API keys
 
-#### Install Supabase CLI
-```bash
-npm install -g supabase
-```
-
-#### Login to Supabase
-```bash
-supabase login
-```
-
-#### Link Your Project
-```bash
-supabase link --project-ref <your-project-ref>
-```
-
 ### 3. Database Migration
 
-Run the SQL scripts in the correct order. You have two options:
+Run the SQL scripts in the correct order.
 
 #### Option A: Using Supabase Dashboard (Recommended)
 1. Go to your Supabase project dashboard
@@ -86,29 +71,6 @@ Run the SQL scripts in the correct order. You have two options:
 -- 5. Fuzzy matching schema
 -- Copy and paste the contents of supabase/5. fuzzy-matching-schema.sql
 ```
-
-#### Option B: Using Supabase CLI
-```bash
-# Create a migrations folder structure
-mkdir -p supabase/migrations
-
-# Copy your SQL files to migrations (rename them with timestamps)
-cp supabase/1.\ campaign-schema.sql supabase/migrations/20240101000000_01_campaign_schema.sql
-cp supabase/2.\ api-keys-schema.sql supabase/migrations/20240101000001_02_api_keys_schema.sql
-cp supabase/3.\ voter-records-schema.sql supabase/migrations/20240101000002_03_voter_records_schema.sql
-cp supabase/4.\ registered-voters.sql supabase/migrations/20240101000003_04_registered_voters.sql
-cp supabase/5.\ fuzzy-matching-schema.sql supabase/migrations/20240101000004_05_fuzzy_matching_schema.sql
-
-# Push all migrations
-supabase db push
-```
-
-**Migration Order:**
-1. `campaign-schema.sql` - Creates campaign table and base functions
-2. `api-keys-schema.sql` - API key management
-3. `voter-records-schema.sql` - Voter data storage
-4. `registered-voters.sql` - Petition signature data
-5. `fuzzy-matching-schema.sql` - Matching algorithms
 
 ### 4. Deploy Edge Functions
 
@@ -242,60 +204,6 @@ votecatcher/
 - **User-Based Authentication**: All API operations use authenticated user context
 - **No Service Role Access**: Eliminated service role key dependency for enhanced security
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
 ## 📄 License
 
 This project is open source. See [LICENSE](LICENSE) for details.
-
-## 🆘 Support
-
-For support and questions:
-- Open an issue on GitHub
-- Check the documentation
-- Join our community discussions
-
-## 🔧 Troubleshooting
-
-### Edge Function Issues
-
-If you encounter "Failed to fetch" errors with the `process-voter-file` function:
-
-1. **Check if Edge Functions are enabled:**
-   - Go to your Supabase dashboard
-   - Navigate to Settings > General
-   - Ensure "Edge Functions" is enabled
-
-2. **Verify function deployment:**
-   ```bash
-   supabase functions list
-   ```
-
-3. **Check function logs:**
-   ```bash
-   supabase functions logs process-voter-file
-   ```
-
-4. **Redeploy the function:**
-   ```bash
-   supabase functions deploy process-voter-file --no-verify-jwt
-   ```
-
-### Database Connection Issues
-
-If you get database connection errors:
-
-1. **Check your environment variables** are correctly set
-2. **Verify your Supabase project** is active and not paused
-3. **Check RLS policies** are correctly configured
-4. **Ensure tables exist** by running the migration scripts in order
-
----
-
-**VoteCatcher** - Making democracy accessible to everyone through open source technology.
