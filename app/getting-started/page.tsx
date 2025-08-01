@@ -145,6 +145,20 @@ export default function GettingStartedPage() {
         if (campaignName && campaignYear) {
           setLoading(true)
           try {
+            // First, deactivate any existing active campaigns for this user
+            const { error: deactivateError } = await supabase
+              .from('campaign')
+              .update({ status: 'inactive' })
+              .eq('user_id', user?.id)
+              .eq('status', 'active');
+
+            if (deactivateError) {
+              console.error('Error deactivating existing campaigns:', deactivateError);
+            } else {
+              console.log('Deactivated existing active campaigns');
+            }
+
+            // Then create the new active campaign
             const { data, error: campaignError } = await supabase
               .from('campaign')
               .insert({
@@ -230,8 +244,12 @@ export default function GettingStartedPage() {
             // Get the user's access token
             const { data: { session } } = await supabase.auth.getSession();
             const accessToken = session?.access_token;
+            // Get the Supabase URL to construct the function URL
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+            const functionUrl = `${supabaseUrl}/functions/v1/process-voter-file`;
+            
             const response = await fetch(
-              "https://rqwkevpqahpnsyhbpyby.functions.supabase.co/process-voter-file",
+              functionUrl,
               {
                 method: "POST",
                 headers: {

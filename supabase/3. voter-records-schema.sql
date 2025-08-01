@@ -76,19 +76,54 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('voter-files', 'voter-files', false)
 ON CONFLICT (id) DO NOTHING;
 
--- Create storage policies
-CREATE POLICY "Allow authenticated users to upload voter files"
-ON storage.objects FOR INSERT
-WITH CHECK (bucket_id = 'voter-files' AND auth.role() = 'authenticated');
+-- Create storage policies (create if they don't exist)
+DO $$ 
+BEGIN
+    -- Upload policy
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'objects' 
+        AND schemaname = 'storage'
+        AND policyname = 'Allow authenticated users to upload voter files'
+    ) THEN
+        CREATE POLICY "Allow authenticated users to upload voter files"
+        ON storage.objects FOR INSERT
+        WITH CHECK (bucket_id = 'voter-files' AND auth.role() = 'authenticated');
+    END IF;
 
-CREATE POLICY "Allow users to view their own voter files"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'voter-files' AND auth.role() = 'authenticated');
+    -- Select policy
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'objects' 
+        AND schemaname = 'storage'
+        AND policyname = 'Allow users to view their own voter files'
+    ) THEN
+        CREATE POLICY "Allow users to view their own voter files"
+        ON storage.objects FOR SELECT
+        USING (bucket_id = 'voter-files' AND auth.role() = 'authenticated');
+    END IF;
 
-CREATE POLICY "Allow users to update their own voter files"
-ON storage.objects FOR UPDATE
-USING (bucket_id = 'voter-files' AND auth.role() = 'authenticated');
+    -- Update policy
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'objects' 
+        AND schemaname = 'storage'
+        AND policyname = 'Allow users to update their own voter files'
+    ) THEN
+        CREATE POLICY "Allow users to update their own voter files"
+        ON storage.objects FOR UPDATE
+        USING (bucket_id = 'voter-files' AND auth.role() = 'authenticated');
+    END IF;
 
-CREATE POLICY "Allow users to delete their own voter files"
-ON storage.objects FOR DELETE
-USING (bucket_id = 'voter-files' AND auth.role() = 'authenticated');
+    -- Delete policy
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'objects' 
+        AND schemaname = 'storage'
+        AND policyname = 'Allow users to delete their own voter files'
+    ) THEN
+        CREATE POLICY "Allow users to delete their own voter files"
+        ON storage.objects FOR DELETE
+        USING (bucket_id = 'voter-files' AND auth.role() = 'authenticated');
+    END IF;
+END $$;

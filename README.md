@@ -63,18 +63,44 @@ supabase link --project-ref <your-project-ref>
 
 ### 3. Database Migration
 
-Run the SQL scripts in the correct order:
+Run the SQL scripts in the correct order. You have two options:
 
+#### Option A: Using Supabase Dashboard (Recommended)
+1. Go to your Supabase project dashboard
+2. Navigate to SQL Editor
+3. Run each script in order:
+
+```sql
+-- 1. Campaign schema
+-- Copy and paste the contents of supabase/1. campaign-schema.sql
+
+-- 2. API keys schema  
+-- Copy and paste the contents of supabase/2. api-keys-schema.sql
+
+-- 3. Voter records schema
+-- Copy and paste the contents of supabase/3. voter-records-schema.sql
+
+-- 4. Registered voters schema
+-- Copy and paste the contents of supabase/4. registered-voters.sql
+
+-- 5. Fuzzy matching schema
+-- Copy and paste the contents of supabase/5. fuzzy-matching-schema.sql
+```
+
+#### Option B: Using Supabase CLI
 ```bash
-# Connect to your Supabase project
-supabase db reset
+# Create a migrations folder structure
+mkdir -p supabase/migrations
 
-# Or run scripts manually in this order:
-supabase db push --file supabase/1.\ campaign-schema.sql
-supabase db push --file supabase/2.\ api-keys-schema.sql
-supabase db push --file supabase/3.\ voter-records-schema.sql
-supabase db push --file supabase/4.\ registered-voters.sql
-supabase db push --file supabase/5.\ fuzzy-matching-schema.sql
+# Copy your SQL files to migrations (rename them with timestamps)
+cp supabase/1.\ campaign-schema.sql supabase/migrations/20240101000000_01_campaign_schema.sql
+cp supabase/2.\ api-keys-schema.sql supabase/migrations/20240101000001_02_api_keys_schema.sql
+cp supabase/3.\ voter-records-schema.sql supabase/migrations/20240101000002_03_voter_records_schema.sql
+cp supabase/4.\ registered-voters.sql supabase/migrations/20240101000003_04_registered_voters.sql
+cp supabase/5.\ fuzzy-matching-schema.sql supabase/migrations/20240101000004_05_fuzzy_matching_schema.sql
+
+# Push all migrations
+supabase db push
 ```
 
 **Migration Order:**
@@ -89,7 +115,12 @@ supabase db push --file supabase/5.\ fuzzy-matching-schema.sql
 ```bash
 # Deploy the voter file processing function
 supabase functions deploy process-voter-file
+
+# Verify the function is deployed
+supabase functions list
 ```
+
+**Note:** Make sure your Supabase project has Edge Functions enabled. You can check this in your Supabase dashboard under Settings > General.
 
 ### 5. Environment Configuration
 
@@ -108,6 +139,14 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 # Encryption (generate a secure 32-character hex string)
 ENCRYPTION_KEY=0123456789abcdef0123456789abcdef
+
+# OCR Configuration
+OCR_MAX_TOKENS=1000
+VOTER_FILE_BATCH_SIZE=1000
+
+# Storage Bucket Names (optional - defaults will be used if not set)
+VOTER_FILES_BUCKET=voter-files
+PETITIONS_BUCKET=petitions
 
 # Optional: AI Provider API Keys
 OPENAI_API_KEY=your-openai-key
@@ -221,6 +260,41 @@ For support and questions:
 - Open an issue on GitHub
 - Check the documentation
 - Join our community discussions
+
+## 🔧 Troubleshooting
+
+### Edge Function Issues
+
+If you encounter "Failed to fetch" errors with the `process-voter-file` function:
+
+1. **Check if Edge Functions are enabled:**
+   - Go to your Supabase dashboard
+   - Navigate to Settings > General
+   - Ensure "Edge Functions" is enabled
+
+2. **Verify function deployment:**
+   ```bash
+   supabase functions list
+   ```
+
+3. **Check function logs:**
+   ```bash
+   supabase functions logs process-voter-file
+   ```
+
+4. **Redeploy the function:**
+   ```bash
+   supabase functions deploy process-voter-file --no-verify-jwt
+   ```
+
+### Database Connection Issues
+
+If you get database connection errors:
+
+1. **Check your environment variables** are correctly set
+2. **Verify your Supabase project** is active and not paused
+3. **Check RLS policies** are correctly configured
+4. **Ensure tables exist** by running the migration scripts in order
 
 ---
 
