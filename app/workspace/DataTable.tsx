@@ -109,8 +109,8 @@ const DataTable = (props: DataTableProps) => {
                         }))
                       }
                     >
-                      {matches.map((m: MatchRecord) => (
-                        <option key={m.match_rank} value={m.match_rank}>
+                      {matches.map((m: MatchRecord, matchIndex: number) => (
+                        <option key={`${record.id}-${m.match_rank}-${matchIndex}`} value={m.match_rank}>
                           {`Rank ${m.match_rank}: ${m.registered_name || '—'} — ${m.registered_address || '—'}`}
                         </option>
                       ))}

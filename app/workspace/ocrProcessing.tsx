@@ -240,13 +240,32 @@ export async function collectOcrData<T extends object = OCRResult>(
 
 export async function insertOcrResultsToSupabase(
   ocrResults: OCRResult[],
-  tableName: string = 'ocr_results'
+  tableName: string = 'registration_data'
 ): Promise<{ success: boolean; error?: unknown }> {
-  // Optionally, you can batch insert for large arrays
-  const { error } = await supabase.from(tableName).insert(ocrResults);
-  if (error) {
-    console.error('Error inserting OCR results:', error);
-    return { success: false, error };
+  try {
+    // First, delete existing OCR results for this campaign to avoid duplicates
+    if (ocrResults.length > 0) {
+      const campaignId = ocrResults[0].campaign_id;
+      const { error: deleteError } = await supabase
+        .from(tableName)
+        .delete()
+        .eq('campaign_id', campaignId);
+      
+      if (deleteError) {
+        console.error('Error deleting existing OCR results:', deleteError);
+        return { success: false, error: deleteError };
+      }
+    }
+
+    // Then insert the new OCR results
+    const { error } = await supabase.from(tableName).insert(ocrResults);
+    if (error) {
+      console.error('Error inserting OCR results:', error);
+      return { success: false, error };
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('Unexpected error in insertOcrResultsToSupabase:', err);
+    return { success: false, error: err };
   }
-  return { success: true };
 } 

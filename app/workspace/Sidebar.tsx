@@ -28,6 +28,8 @@ interface SidebarProps {
   ocrError: string | null;
   ocrResults: OCRResult[];
   handlePetitionUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleFuzzyMatching?: () => void;
+  isFuzzyMatching?: boolean;
 }
 
 interface OCRResult {
@@ -146,6 +148,33 @@ const Sidebar = (props: SidebarProps) => {
             ocrResults={ocrResults}
             ocrProvider={ocrProvider}
           />
+
+          {/* Fuzzy Matching */}
+          {props.handleFuzzyMatching && (
+            <Card className="border-green-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-green-900 flex items-center gap-2">
+                  <Brain className="h-4 w-4" />
+                  Fuzzy Matching
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Match registration data against voter records
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <button
+                  onClick={props.handleFuzzyMatching}
+                  disabled={props.isFuzzyMatching}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                >
+                  {props.isFuzzyMatching ? 'Running Fuzzy Matching...' : 'Run Fuzzy Matching'}
+                </button>
+                <div className="text-xs text-green-600 bg-green-50 p-2 rounded mt-2">
+                  <strong>Note:</strong> This will replace existing matches for the current campaign.
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

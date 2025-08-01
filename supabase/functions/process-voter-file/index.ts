@@ -92,7 +92,7 @@ serve(async (req) => {
   });
 
   // Insert records into voter_records in batches
-  const batchSize = 1000;
+  const batchSize = parseInt(Deno.env.get('VOTER_FILE_BATCH_SIZE') || '1000');
   let insertError = null;
   for (let i = 0; i < records.length; i += batchSize) {
     const batch = records.slice(i, i + batchSize);

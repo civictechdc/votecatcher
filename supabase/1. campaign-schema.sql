@@ -1,5 +1,14 @@
 -- Create enum for campaign status
-create type campaign_status as enum ('draft', 'active', 'completed', 'archived');
+create type campaign_status as enum ('inactive', 'active');
+
+-- Add trigger function for updated_at columns
+create or replace function update_updated_at_column()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
 
 -- Create campaign table with audit fields
 create table public.campaign (
@@ -8,7 +17,7 @@ create table public.campaign (
   name character varying(255) not null,
   description text null,
   year integer not null,
-  status campaign_status default 'draft',
+  status campaign_status default 'inactive',
   is_active boolean default true,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now(),
@@ -45,4 +54,25 @@ create index campaign_year_idx on public.campaign (year);
 -- Create trigger for updated_at column (reuses existing function)
 create trigger update_campaign_updated_at
   before update on public.campaign
-  for each row execute function update_updated_at_column(); 
+  for each row execute function update_updated_at_column();
+
+-- Function to ensure only one active campaign per user
+create or replace function ensure_single_active_campaign()
+returns trigger as $$
+begin
+  -- If we're setting a campaign to active, deactivate all other campaigns for this user
+  if new.status = 'active' then
+    update public.campaign 
+    set status = 'inactive' 
+    where user_id = new.user_id 
+    and id != new.id 
+    and status = 'active';
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+-- Create trigger to enforce single active campaign
+create trigger enforce_single_active_campaign
+  before insert or update on public.campaign
+  for each row execute function ensure_single_active_campaign(); 

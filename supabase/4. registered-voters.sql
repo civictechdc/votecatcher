@@ -68,22 +68,54 @@ insert into storage.buckets (id, name, public)
 values ('petitions', 'petitions', false)
 on conflict (id) do nothing;
 
--- Allow authenticated users to upload petition files
-create policy "Allow authenticated users to upload petition files"
-on storage.objects for insert
-with check (bucket_id = 'petitions' and auth.role() = 'authenticated');
+-- Create storage policies for petitions (create if they don't exist)
+DO $$ 
+BEGIN
+    -- Upload policy
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'objects' 
+        AND schemaname = 'storage'
+        AND policyname = 'Allow authenticated users to upload petition files'
+    ) THEN
+        create policy "Allow authenticated users to upload petition files"
+        on storage.objects for insert
+        with check (bucket_id = 'petitions' and auth.role() = 'authenticated');
+    END IF;
 
--- Allow users to view their own petition files
-create policy "Allow users to view their own petition files"
-on storage.objects for select
-using (bucket_id = 'petitions' and auth.role() = 'authenticated');
+    -- Select policy
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'objects' 
+        AND schemaname = 'storage'
+        AND policyname = 'Allow users to view their own petition files'
+    ) THEN
+        create policy "Allow users to view their own petition files"
+        on storage.objects for select
+        using (bucket_id = 'petitions' and auth.role() = 'authenticated');
+    END IF;
 
--- Allow users to update their own petition files
-create policy "Allow users to update their own petition files"
-on storage.objects for update
-using (bucket_id = 'petitions' and auth.role() = 'authenticated');
+    -- Update policy
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'objects' 
+        AND schemaname = 'storage'
+        AND policyname = 'Allow users to update their own petition files'
+    ) THEN
+        create policy "Allow users to update their own petition files"
+        on storage.objects for update
+        using (bucket_id = 'petitions' and auth.role() = 'authenticated');
+    END IF;
 
--- Allow users to delete their own petition files
-create policy "Allow users to delete their own petition files"
-on storage.objects for delete
-using (bucket_id = 'petitions' and auth.role() = 'authenticated');
+    -- Delete policy
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'objects' 
+        AND schemaname = 'storage'
+        AND policyname = 'Allow users to delete their own petition files'
+    ) THEN
+        create policy "Allow users to delete their own petition files"
+        on storage.objects for delete
+        using (bucket_id = 'petitions' and auth.role() = 'authenticated');
+    END IF;
+END $$;

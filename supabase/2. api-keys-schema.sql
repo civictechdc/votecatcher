@@ -77,14 +77,7 @@ using (
   )
 );
 
--- Add trigger for updated_at columns
-create or replace function update_updated_at_column()
-returns trigger as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$ language plpgsql;
+-- Note: update_updated_at_column() function is defined in campaign-schema.sql
 
 -- Create triggers for updated_at
 create trigger update_api_keys_updated_at

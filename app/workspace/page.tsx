@@ -54,6 +54,7 @@ export default function WorkspacePage() {
 
   const [mappedMatches, setMappedMatches] = useState<MatchRecord[]>([]);
   const [selectedMatchRanks, setSelectedMatchRanks] = useState<{ [registrationId: string]: number }>({});
+  const [isFuzzyMatching, setIsFuzzyMatching] = useState(false);
 
   // Move fetchRegistrationData above useEffect
   const fetchRegistrationData = useCallback(async () => {
@@ -88,17 +89,27 @@ export default function WorkspacePage() {
         return;
       }
       setUser(session.user);
-      // Fetch the active campaign for this user
-      const { data: campaign, error: campaignError } = await supabase
+      // Fetch the most recent campaign for this user (regardless of status)
+      const { data: campaigns, error: campaignError } = await supabase
         .from('campaign')
-        .select('id, name, status')
+        .select('id, name, status, created_at')
         .eq('user_id', session.user.id)
-        .eq('status', 'active')
-        .single();
+        .order('created_at', { ascending: false });
+      
+      let campaign: { id: string; name: string; status: string; created_at: string } | null = null;
+      if (!campaignError && campaigns && campaigns.length > 0) {
+        // If there are multiple campaigns, prefer the most recent active one, otherwise take the most recent
+        const activeCampaign = campaigns.find((c: { status: string }) => c.status === 'active');
+        campaign = activeCampaign || campaigns[0];
+      }
       if (!campaignError && campaign) {
+        console.log("Found campaign:", campaign);
+        console.log("All campaigns for user:", campaigns);
         setCampaignName(campaign.name);
         setCampaignId(campaign.id);
       } else {
+        console.log("No campaign found or error:", campaignError);
+        console.log("All campaigns for user:", campaigns);
         setCampaignName(null);
         setCampaignId(null);
       }
@@ -114,29 +125,24 @@ export default function WorkspacePage() {
           'anthropic-claude': 'Anthropic Claude 3',
           'azure-vision': 'Azure Computer Vision',
           'aws-textract': 'AWS Textract',
-          'OPENAI_API_KEY': 'OpenAI GPT-4o',
-          'GEMINI_API_KEY': 'Google Gemini Pro Vision',
-          'MISTRAL_API_KEY': 'Mistral AI',
+          'OPENAI_API_KEY': `OpenAI ${process.env.OPENAI_MODEL || 'gpt-4o-mini'}`,
+          'GEMINI_API_KEY': `Google ${process.env.GEMINI_MODEL || 'gemini-1.5-flash'}`,
+          'MISTRAL_API_KEY': `Mistral ${process.env.MISTRAL_MODEL || 'mistral-small'}`,
         };
         const uniqueProviders = Array.from(new Set(apiKeys.map((k: { provider: string }) => k.provider)));
         setOcrProviders(uniqueProviders.map((value) => ({ value, label: providerLabelMap[value] || value })));
-        // Set the first provider as selected if none is selected
+        
+        // Set provider based on user preference or first available
         if (!ocrProvider && uniqueProviders.length > 0) {
-          setOcrProvider(uniqueProviders[0]);
+          // Check for stored preference
+          const storedProvider = localStorage.getItem(`ocr_provider_${session.user.id}`);
+          const preferredProvider = storedProvider && uniqueProviders.includes(storedProvider) 
+            ? storedProvider 
+            : uniqueProviders[0];
+          setOcrProvider(preferredProvider);
         }
       } else {
         setOcrProviders([]);
-      }
-      // Fetch the user's active OCR provider from api_keys
-      const { data: apiKey, error: apiKeyError } = await supabase
-        .from('api_keys')
-        .select('provider')
-        .eq('user_id', session.user.id)
-        .eq('is_active', true)
-        .single();
-      if (!apiKeyError && apiKey && apiKey.provider) {
-        setOcrProvider(apiKey.provider);
-      } else {
         setOcrProvider("");
       }
       setLoading(false);
@@ -190,8 +196,10 @@ export default function WorkspacePage() {
 
   const handleOcrProviderChange = (value: string) => {
     setOcrProvider(value)
-    // Optionally, update the api_keys table here if you want to persist the change
-    // Remove localStorage logic
+    // Store the user's preference in localStorage
+    if (user) {
+      localStorage.setItem(`ocr_provider_${user.id}`, value);
+    }
   }
 
   const cropCanvasVertically = (canvas: HTMLCanvasElement, topCrop: number, bottomCrop: number): HTMLCanvasElement => {
@@ -314,7 +322,13 @@ export default function WorkspacePage() {
 
   const handleUploadPetitions = async () => {
     console.log("handleUploadPetitions called");
-    if (!user || !campaignId) return;
+    console.log("user:", user);
+    console.log("campaignId:", campaignId);
+    if (!user || !campaignId) {
+      console.log("Early return: user or campaignId is missing");
+      toast.error("Please ensure you are logged in and have an active campaign.");
+      return;
+    }
     setUploading(true);
     setUploadSuccess(false);
     try {
@@ -337,6 +351,32 @@ export default function WorkspacePage() {
       toast.error("Unexpected error during upload: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleFuzzyMatching = async () => {
+    if (!user || !campaignId) {
+      toast.error('Please ensure you have an active campaign.');
+      return;
+    }
+
+    setIsFuzzyMatching(true);
+    try {
+      toast('Fuzzy matching started... (this will replace existing matches)');
+              const { data: matchResult, error: matchError } = await supabase.rpc('insert_top_matches', { 
+          campaign_id_input: campaignId
+        });
+      if (matchError) {
+        toast.error('Error running fuzzy matching: ' + matchError.message);
+      } else {
+        toast.success('Fuzzy matching complete! ' + (matchResult || 'Previous matches replaced.'));
+        // Refresh mapped matches after matching
+        await fetchMappedMatches();
+      }
+    } catch (err) {
+      toast.error('Error running fuzzy matching: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsFuzzyMatching(false);
     }
   };
 
@@ -385,28 +425,13 @@ export default function WorkspacePage() {
       if (success) {
         setOcrResults(allResults);
         setOcrProgress(100);
-        toast.success(`OCR processing complete! Processed ${allResults.length} entries.`);
+        toast.success(`OCR processing complete! Processed ${allResults.length} entries. Previous data replaced.`);
         // Clear the stored files after successful processing
         setUploadedFilesForOcr([]);
         // Refresh the registration data to show the new entries
         await fetchRegistrationData();
-
-        // 5. Automatically run fuzzy matching for the active campaign
-        toast('Fuzzy matching started...');
-        try {
-          const { error: matchError } = await supabase.rpc('insert_top_matches', { campaign_id_input: campaignId });
-          if (matchError) {
-            toast.error('Error running fuzzy matching: ' + matchError.message);
-          } else {
-            toast.success('Fuzzy matching complete!');
-            // Refresh mapped matches after matching
-            await fetchMappedMatches();
-          }
-        } catch (err) {
-          toast.error('Error running fuzzy matching: ' + (err instanceof Error ? err.message : String(err)));
-        } finally {
-          // setMatchingLoading(false); // This line was removed from the new_code
-        }
+        
+        // Note: Fuzzy matching is now manual - use the "Run Fuzzy Matching" button when ready
       } else {
         setOcrError(error && typeof error === 'object' && 'message' in error ? (error as Error).message : 'Failed to insert results into database');
       }
@@ -494,6 +519,8 @@ export default function WorkspacePage() {
           ocrProgress={ocrProgress}
           ocrError={ocrError}
           ocrResults={ocrResults}
+          handleFuzzyMatching={handleFuzzyMatching}
+          isFuzzyMatching={isFuzzyMatching}
         />
       </div>
     </div>
