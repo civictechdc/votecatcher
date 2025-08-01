@@ -361,7 +361,6 @@ export default function WorkspacePage() {
       const results = await callOcrApi(
         base64Images,
         ocrPrompt,
-        user.id,
         ocrProvider
       );
 

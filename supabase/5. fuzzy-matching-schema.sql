@@ -16,6 +16,50 @@ FOREIGN KEY (registration_id)
 REFERENCES registration_data(id)
 ON DELETE CASCADE;
 
+-- Enable RLS
+ALTER TABLE registration_matches ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for registration_matches
+CREATE POLICY "Allow user to insert own registration matches"
+ON registration_matches FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM campaign 
+    WHERE campaign.id = registration_matches.campaign_id 
+    AND campaign.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow user to select own registration matches"
+ON registration_matches FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM campaign 
+    WHERE campaign.id = registration_matches.campaign_id 
+    AND campaign.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow user to update own registration matches"
+ON registration_matches FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM campaign 
+    WHERE campaign.id = registration_matches.campaign_id 
+    AND campaign.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow user to delete own registration matches"
+ON registration_matches FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM campaign 
+    WHERE campaign.id = registration_matches.campaign_id 
+    AND campaign.user_id = auth.uid()
+  )
+);
+
 -- Function to insert top 5 fuzzy-matched registration matches for a given campaign
 CREATE OR REPLACE FUNCTION insert_top_matches(campaign_id_input UUID)
 RETURNS void AS $$
