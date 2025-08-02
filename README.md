@@ -26,7 +26,7 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 Before deploying VoteCatcher, ensure you have:
 
 - [Node.js](https://nodejs.org/) 18+ installed
-- [Supabase CLI](https://supabase.com/docs/guides/cli) installed
+- [Supabase CLI](https://supabase.com/docs/guides/local-development) installed
 - API keys for AI providers (OpenAI, Mistral, or Gemini)
 
 ## 🚀 Deployment Guide
@@ -49,8 +49,8 @@ npm install
 
 ### 3. Database Migration
 
-1. Open your computer, use terminal or file browser to navigate to the [supabase directory](https://github.com/civictechdc/votecatcher/tree/main/supabase) in your cloned project.
-2. Idenftify the numbered SQL migration files in the `supabase` directory:
+1. Open your terminal or file browser and navigate to the [supabase directory](https://github.com/civictechdc/votecatcher/tree/main/supabase) in your cloned project.
+2. Confirm the following numbered SQL migration files are in the `supabase` directory:
 
    - [`1. campaign-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/1.%20campaign-schema.sql)
    - [`2. api-keys-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/2.%20api-keys-schema.sql)
@@ -58,16 +58,20 @@ npm install
    - [`4. registered-voters.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/4.%20registered-voters.sql)
    - [`5. fuzzy-matching-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/5.%20fuzzy-matching-schema.sql)
 
-3. On the web, open your supabase [project dashboard](https://supabase.com/dashboard), navigate to the 'SQL Editor'.
-4. For each SQL file, open and copy the contents, then in the supabase SQL editor, open a new tab, paste the copied contents and press the 'Run' button to execute the script.
+3. In your web browser, open your [Supabase project dashboard](https://supabase.com/dashboard), navigate to the 'SQL Editor'.
+4. For each SQL file:
+   - Open and copy the contents
+   - In the Supabase SQL editor, open a new tab
+   - Paste the copied contents
+   - Press the 'Run' button to execute the script.
 
-Note: Ensure you **run the scripts in the numbered order listed above**.
+Note: It is critical you **copy and run the scripts in the ascending numbered order listed above**.
 
 5. Verify no errors occurred during the execution of the scripts. You should see a success message for each script in the SQL editor.
 
 ### 4. Deploy Edge Functions
 
-1. Install the Supabase CLI if you haven't already
+1. Install the Supabase CLI [if you haven't already](https://github.com/civictechdc/votecatcher/tree/main?tab=readme-ov-file#-prerequisites)
 2. In your terminal, navigate to the project root directory
 3. Log in to Supabase:
 
@@ -90,45 +94,25 @@ supabase functions list
 
 ### 5. Environment Configuration
 
-1. Open your terminal and navigate to the root project folder.
+1. In your terminal, navigate to the root project folder.
 2. Copy and rename the example `.env.local` file with either off the following commands:
 
 ```shell
-# Linux/MacOS
 cp example.env.local .env.local
 ```
 
-or
+3. Open `.env.local` and fill in the required environment variables:
 
 ```shell
-# Windows
-copy example.env.local .env.local
-```
-
-Fill in your environment variables:
-
-```shell
+# Required environment variables
 NEXT_PUBLIC_SUPABASE_URL=https://<project-id>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<public anon key>
 ENCRYPTION_KEY=0123456789abcdef0123456789abcdef
 
-# OCR Configuration
-OCR_MAX_TOKENS=1000
-VOTER_FILE_BATCH_SIZE=1000
-
-# Model Configuration (cheapest options by default)
-OPENAI_MODEL=gpt-4o-mini  # Options: gpt-4o, gpt-4o-mini, gpt-3.5-turbo
-GEMINI_MODEL=gemini-1.5-flash  # Options: gemini-1.5-flash, gemini-1.5-pro, gemini-pro-vision, gemini-1.5-pro-latest
-MISTRAL_MODEL=mistral-small  # Options: mistral-small, mistral-medium, mistral-large-latest
-
-# Rate Limiting (adjust based on your OpenAI plan)
-OCR_REQUESTS_PER_MINUTE=3
-OCR_DELAY_BETWEEN_REQUESTS=20000
-
-# Storage Bucket Names (optional - defaults will be used if not set)
-VOTER_FILES_BUCKET=voter-files
-PETITIONS_BUCKET=petitions
+# Optional variables not shown. Open the .env.local file to see the remaining optional variables and modify as needed.
 ```
+
+4. Save and close the `.env.local` file.
 
 ### 6. Storage Buckets Setup
 
