@@ -21,6 +21,8 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 - **PDF Processing**: PDF.js for client-side PDF handling
 - **UI Components**: Radix UI, Lucide React icons
 
+<a id="prerequisites"></a>
+
 ## 📋 Prerequisites
 
 Before deploying VoteCatcher, ensure you have:
@@ -91,7 +93,7 @@ Note: It is critical you **copy and run the scripts in the ascending numbered or
 
 ### 4. Deploy [Edge Functions](https://supabase.com/docs/guides/functions)
 
-1. Install the Supabase CLI [if you haven't already](https://github.com/civictechdc/votecatcher/tree/main?tab=readme-ov-file#-prerequisites)
+1. Install the Supabase CLI [if you haven't already](#prerequisites)
 2. In your terminal, navigate to the project root directory
 3. Log in to Supabase using the API key obtained in section [2. Supabase Setup](#2-supabase-setup):
 
