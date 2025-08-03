@@ -59,8 +59,6 @@ cd votecatcher
 npm install
 ```
 
-<a id="supabase_setup"></a>
-
 ### 2. Supabase Setup
 
 #### Create Supabase Project
@@ -95,7 +93,7 @@ Note: It is critical you **copy and run the scripts in the ascending numbered or
 
 1. Install the Supabase CLI [if you haven't already](https://github.com/civictechdc/votecatcher/tree/main?tab=readme-ov-file#-prerequisites)
 2. In your terminal, navigate to the project root directory
-3. Log in to Supabase using the API key obtained in section [2. Supabase Setup](#supabase_setup):
+3. Log in to Supabase using the API key obtained in section [2. Supabase Setup](#2-supabase-setup):
 
 ```shell
 supabase login YOUR_SUPABASE_ACCESS_TOKEN
@@ -128,7 +126,7 @@ This should return a table with a `STATUS` column indicating the functions are d
 cp example.env.local .env.local
 ```
 
-3. Open `.env.local` and fill in the required environment variables with the values collected in section [2. Supabase Setup](#supabase_setup):
+3. Open `.env.local` and fill in the required environment variables with the values collected in section [2. Supabase Setup](#2-supabase-setup):
 
 ```shell
 # Required for Supabase
