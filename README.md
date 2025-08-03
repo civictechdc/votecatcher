@@ -75,22 +75,28 @@ Note: It is critical you **copy and run the scripts in the ascending numbered or
 2. In your terminal, navigate to the project root directory
 3. Log in to Supabase:
 
-```bash
+```shell
 # Use the API key provided in your Supabase project dashboard
 supabase login YOUR_SUPABASE_ACCESS_TOKEN
 ```
 
-4. Deploy the Edge Functions:
+4. Follow the prompts to authenticate your Supabase account.
 
-```bash
+5. Deploy the Edge Functions:
+
+```shell
 supabase functions deploy process-voter-file
 ```
 
-5. Verify the edge function is deployed successfully by checking the list of functions:
+6. Select the desired project when prompted in the terminal.
 
-```bash
+7. Verify the edge function is deployed successfully by checking the list of functions:
+
+```shell
 supabase functions list
 ```
+
+This should return a table with a 'STATUS' column indicating the functions are deployed and active.
 
 ### 5. Environment Configuration
 
@@ -104,13 +110,14 @@ cp example.env.local .env.local
 3. Open `.env.local` and fill in the required environment variables:
 
 ```shell
-# Required environment variables
+# Required for Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://<project-id>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<public anon key>
+# Required for encryption. Generate a secure 32-character hex string
 ENCRYPTION_KEY=0123456789abcdef0123456789abcdef
-
-# Optional variables not shown. Open the .env.local file to see the remaining optional variables and modify as needed.
 ```
+
+**Note:** Environment variables with working defaults not shown. Open the `.env.local` file to view and modify as needed.
 
 4. Save and close the `.env.local` file.
 
