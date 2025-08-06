@@ -21,116 +21,148 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 - **PDF Processing**: PDF.js for client-side PDF handling
 - **UI Components**: Radix UI, Lucide React icons
 
+<a id="prerequisites"></a>
+
 ## 📋 Prerequisites
 
 Before deploying VoteCatcher, ensure you have:
 
-- [Node.js](https://nodejs.org/) 18+ installed
-- [Supabase CLI](https://supabase.com/docs/guides/cli) installed
-- A Supabase project (free tier works)
+- [Node.js](https://nodejs.org/en/download) 18+ installed
+- [Supabase CLI](https://supabase.com/docs/guides/local-development) installed
 - API keys for AI providers (OpenAI, Mistral, or Gemini)
 
 ## 🚀 Deployment Guide
 
+The key objectives of this guide are to:
+
+- Clone and set-up the VoteCatcher project
+- Create and connect to the Supabase project
+- Configure and run the Votecatcher application locally or deploy to the web.
+
+This guide assumes you are using a Unix-like operating system (e.g. Linux, macOS). For Windows, make adjustments as necessary.
+
 ### 1. Clone and Setup
 
-```bash
+1. Clone the repository to your local machine:
+
+```shell
 git clone https://github.com/civictechdc/votecatcher
+```
+
+2. Open your terminal and navigate to the cloned project directory:
+
+```shell
 cd votecatcher
+```
+
+3. Install project dependencies
+
+```shell
 npm install
 ```
 
 ### 2. Supabase Setup
 
 #### Create Supabase Project
-1. Go to [supabase.com](https://supabase.com) and create a new project
-2. Note your project URL and API keys
+
+1. Sign in or create an account at [supabase.com](https://supabase.com/dashboard/sign-up)
+2. [Create a new project](https://supabase.com/dashboard/new) or select an existing one.
+3. Locate your API key and project URL in the project dashboard under _Project Overview_. (You will need both for configuration.)
 
 ### 3. Database Migration
 
-Run the SQL scripts in the correct order.
+1. Open your terminal or file browser and navigate to the [supabase directory](https://github.com/civictechdc/votecatcher/tree/main/supabase) in your cloned project.
+2. Confirm the following numbered SQL migration files are in the `supabase` directory:
 
-#### Option A: Using Supabase Dashboard (Recommended)
-1. Go to your Supabase project dashboard
-2. Navigate to SQL Editor
-3. Run each script in order:
+   - [`1. campaign-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/1.%20campaign-schema.sql)
+   - [`2. api-keys-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/2.%20api-keys-schema.sql)
+   - [`3. voter-records-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/3.%20voter-records-schema.sql)
+   - [`4. registered-voters.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/4.%20registered-voters.sql)
+   - [`5. fuzzy-matching-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/5.%20fuzzy-matching-schema.sql)
 
-```sql
--- 1. Campaign schema
--- Copy and paste the contents of supabase/1. campaign-schema.sql
+3. In your web browser, open your [Supabase project dashboard](https://supabase.com/dashboard), navigate to the **SQL Editor**.
+4. For each SQL file:
+   - Open and copy the contents
+   - In the _Supabase SQL editor_, open a new tab
+   - Paste the copied contents
+   - Press the 'Run' button to execute the script.
 
--- 2. API keys schema  
--- Copy and paste the contents of supabase/2. api-keys-schema.sql
+Note: It is critical you **copy and run the scripts in the ascending numbered order listed above**.
 
--- 3. Voter records schema
--- Copy and paste the contents of supabase/3. voter-records-schema.sql
+5. Verify no errors occurred during the execution of the scripts. You should see a success message for each script in the SQL editor.
 
--- 4. Registered voters schema
--- Copy and paste the contents of supabase/4. registered-voters.sql
+### 4. Deploy [Edge Functions](https://supabase.com/docs/guides/functions)
 
--- 5. Fuzzy matching schema
--- Copy and paste the contents of supabase/5. fuzzy-matching-schema.sql
+1. Install the Supabase CLI [if you haven't already](#prerequisites)
+2. In your terminal, navigate to the project root directory
+3. Log in to Supabase using the API key obtained in section [2. Supabase Setup](#2-supabase-setup):
+
+```shell
+supabase login YOUR_SUPABASE_ACCESS_TOKEN
 ```
 
-### 4. Deploy Edge Functions
+4. Follow the prompts to authenticate your Supabase account.
 
-```bash
-# Deploy the voter file processing function
+5. Deploy the Edge Functions:
+
+```shell
 supabase functions deploy process-voter-file
+```
 
-# Verify the function is deployed
+6. Select the desired project when prompted in the terminal.
+
+7. Verify the edge function is deployed successfully by checking the list of functions:
+
+```shell
 supabase functions list
 ```
 
-**Note:** Make sure your Supabase project has Edge Functions enabled. You can check this in your Supabase dashboard under Settings > General.
+This should return a table with a `STATUS` column indicating the functions are deployed and active.
 
 ### 5. Environment Configuration
 
-Create a `.env.local` file based on `example.env.local`:
+1. In your terminal, navigate to the root project folder.
+2. Copy and rename the example `.env.local` file with either off the following commands:
 
-```bash
+```shell
 cp example.env.local .env.local
 ```
 
-Fill in your environment variables:
+3. Open `.env.local` and fill in the required environment variables with the values collected in section [2. Supabase Setup](#2-supabase-setup):
 
-```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-
-# Encryption (generate a secure 32-character hex string)
+```shell
+# Required for Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://<project-id>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<public anon key>
+# Required for encryption. Generate a secure 32-character hex string
 ENCRYPTION_KEY=0123456789abcdef0123456789abcdef
-
-# OCR Configuration
-OCR_MAX_TOKENS=1000
-VOTER_FILE_BATCH_SIZE=1000
-
-# Storage Bucket Names (optional - defaults will be used if not set)
-VOTER_FILES_BUCKET=voter-files
-PETITIONS_BUCKET=petitions
-
-# Optional: AI Provider API Keys
-OPENAI_API_KEY=your-openai-key
-MISTRAL_API_KEY=your-mistral-key
-GEMINI_API_KEY=your-gemini-key
 ```
+
+**Note:** Environment variables with working defaults not shown. Open the `.env.local` file to view and modify as needed.
+
+4. Save and close the `.env.local` file.
 
 ### 6. Storage Buckets Setup
 
 The application automatically creates these storage buckets:
+
 - `petitions` - For petition PDF files
 - `voter-files` - For voter registration CSV files
 
-### 7. Development
+Verify these buckets exist in your Supabase project under: _Storage > All Buckets_.
 
-```bash
+### 7. Run Locally for Development
+
+1. In your terminal, navigate to the project root directory.
+2. Start the development server:
+
+```shell
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the application.
+3. Open your web browser and go to [http://localhost:3000](http://localhost:3000) to see the application.
 
-### 8. Production Deployment
+### 8. Deploy to Web
 
 #### Option A: Vercel (Recommended)
 
@@ -141,11 +173,15 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 
 #### Option B: Other Platforms
 
-```bash
-# Build the application
-npm run build
+1. Build the application:
 
-# Start production server
+```shell
+npm run build
+```
+
+2. Start production server:
+
+```shell
 npm start
 ```
 
@@ -154,12 +190,14 @@ npm start
 ### Authentication
 
 VoteCatcher uses Supabase Auth. Configure authentication providers in your Supabase dashboard:
+
 1. Go to Authentication > Settings
 2. Configure your preferred providers (Email, Google, etc.)
 
 ### Row Level Security (RLS)
 
 All tables have RLS enabled with policies that ensure:
+
 - Users can only access data from campaigns they own
 - Proper data isolation between campaigns
 - Secure API key management
@@ -168,8 +206,9 @@ All tables have RLS enabled with policies that ensure:
 ### API Key Management
 
 Users can store their own API keys for AI providers:
+
 - OpenAI API Key
-- Mistral API Key  
+- Mistral API Key
 - Gemini API Key
 
 Keys are encrypted and stored securely with user-level access control.
