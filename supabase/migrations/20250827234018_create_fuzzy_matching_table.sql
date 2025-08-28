@@ -212,15 +212,12 @@ DECLARE
   registration_record RECORD;
 BEGIN
   start_time := NOW();
-
   -- First, delete existing matches for this campaign
   DELETE FROM registration_matches WHERE campaign_id = campaign_id_input;
-
   -- Get total count of registrations for this campaign
   SELECT COUNT(*) INTO total_registrations 
   FROM registration_data 
   WHERE campaign_id = campaign_id_input;
-
   -- Process registrations one by one to avoid massive cross-joins
   FOR registration_record IN 
     SELECT id, name, address, campaign_id
@@ -229,7 +226,6 @@ BEGIN
     ORDER BY id
   LOOP
     processed_count := processed_count + 1;
-
     -- Insert top 5 matches for this single registration
     INSERT INTO registration_matches (
       id,
@@ -322,15 +318,12 @@ BEGIN
       campaign_id
     FROM ranked
     WHERE match_rank <= 5;
-
     -- Add a small delay every 10 registrations to prevent overwhelming the database
     IF processed_count % 10 = 0 THEN
       PERFORM pg_sleep(0.05);
     END IF;
   END LOOP;
-
   end_time := NOW();
-
   RETURN 'Processed ' || total_registrations || ' registrations individually. Duration: ' || (end_time - start_time);
 END;
 $$ LANGUAGE plpgsql;
