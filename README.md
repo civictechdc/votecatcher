@@ -63,6 +63,14 @@ npm install
 
 ### 2. Supabase Setup
 
+Quick setup run the `setupSupabase.sh` script
+
+```sh
+supabase login YOUR_SUPABASE_ACCESS_TOKEN
+chmod +x setupSupabase.sh
+./setupSupabase.sh
+```
+
 #### Create Supabase Project
 
 1. Sign in or create an account at [supabase.com](https://supabase.com/dashboard/sign-up)
@@ -93,20 +101,15 @@ supabase db push
 
 ### 4. Deploy [Edge Functions](https://supabase.com/docs/guides/functions)
 
-1. Install the Supabase CLI [if you haven't already](#prerequisites)
-2. In your terminal, navigate to the project root directory
-
-3. Follow the prompts to authenticate your Supabase account.
-
-4. Deploy the Edge Functions:
+1. Deploy the Edge Functions:
 
 ```shell
 supabase functions deploy process-voter-file
 ```
 
-5. Select the desired project when prompted in the terminal.
+2. Select the desired project when prompted in the terminal.
 
-6. Verify the edge function is deployed successfully by checking the list of functions:
+3. Verify the edge function is deployed successfully by checking the list of functions:
 
 ```shell
 supabase functions list
