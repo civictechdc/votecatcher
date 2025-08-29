@@ -170,3 +170,6 @@ temp-uploads/
 
 # Cursor
 .cursor/
+
+# data files
+sample_data

@@ -63,11 +63,24 @@ npm install
 
 ### 2. Supabase Setup
 
+Quick setup run the `setupSupabase.sh` script
+
+```sh
+supabase login YOUR_SUPABASE_ACCESS_TOKEN
+chmod +x setupSupabase.sh
+./setupSupabase.sh
+```
+
 #### Create Supabase Project
 
 1. Sign in or create an account at [supabase.com](https://supabase.com/dashboard/sign-up)
 2. [Create a new project](https://supabase.com/dashboard/new) or select an existing one.
 3. Locate your API key and project URL in the project dashboard under _Project Overview_. (You will need both for configuration.)
+4. Log in to Supabase using the API key:
+
+```shell
+supabase login YOUR_SUPABASE_ACCESS_TOKEN
+```
 
 ### 3. Database Migration
 
@@ -80,43 +93,27 @@ npm install
    - [`4. registered-voters.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/4.%20registered-voters.sql)
    - [`5. fuzzy-matching-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/5.%20fuzzy-matching-schema.sql)
 
-3. In your web browser, open your [Supabase project dashboard](https://supabase.com/dashboard), navigate to the **SQL Editor**.
-4. For each SQL file:
-   - Open and copy the contents
-   - In the _Supabase SQL editor_, open a new tab
-   - Paste the copied contents
-   - Press the 'Run' button to execute the script.
+3. Run DB migrations. Enter the DB password when prompted
 
-Note: It is critical you **copy and run the scripts in the ascending numbered order listed above**.
-
-5. Verify no errors occurred during the execution of the scripts. You should see a success message for each script in the SQL editor.
+```shell
+supabase db push
+```
 
 ### 4. Deploy [Edge Functions](https://supabase.com/docs/guides/functions)
 
-1. Install the Supabase CLI [if you haven't already](#prerequisites)
-2. In your terminal, navigate to the project root directory
-3. Log in to Supabase using the API key obtained in section [2. Supabase Setup](#2-supabase-setup):
-
-```shell
-supabase login YOUR_SUPABASE_ACCESS_TOKEN
-```
-
-4. Follow the prompts to authenticate your Supabase account.
-
-5. Deploy the Edge Functions:
+1. Deploy the Edge Functions:
 
 ```shell
 supabase functions deploy process-voter-file
 ```
 
-6. Select the desired project when prompted in the terminal.
+2. Select the desired project when prompted in the terminal.
 
-7. Verify the edge function is deployed successfully by checking the list of functions:
+3. Verify the edge function is deployed successfully by checking the list of functions:
 
 ```shell
 supabase functions list
 ```
-
 This should return a table with a `STATUS` column indicating the functions are deployed and active.
 
 ### 5. Environment Configuration
@@ -125,7 +122,7 @@ This should return a table with a `STATUS` column indicating the functions are d
 2. Copy and rename the example `.env.local` file with either off the following commands:
 
 ```shell
-cp example.env.local .env.local
+cp .env.example.local .env.local
 ```
 
 3. Open `.env.local` and fill in the required environment variables with the values collected in section [2. Supabase Setup](#2-supabase-setup):
