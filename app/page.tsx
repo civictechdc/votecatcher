@@ -1,10 +1,32 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Users, Shield, Flag } from "lucide-react"
+import { useEffect, useState } from "react";
+import { User } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
+import Navbar from "@/components/navbar";
 
 export default function LandingPage() {
+  const [user, setUser] = useState<User>()
+  const supabase = createClient()
+  
+  useEffect(() => {
+    const getAuthUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+      }
+    }
+    getAuthUser()
+  }, [])
+
+  const homeLink = user ? "/workspace" : "/auth"
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50">
+      <Navbar showAuthButtons user={user} />
       <div className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
           <div className="flex items-center justify-center gap-3 mb-6">
@@ -20,7 +42,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Link href="/auth">
+            <Link href={homeLink}>
               <Button size="lg" className="text-lg px-8 py-3 bg-blue-600 hover:bg-blue-700">
                 Start Your Campaign <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
