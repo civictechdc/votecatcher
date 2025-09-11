@@ -174,3 +174,5 @@ temp-uploads/
 # data files
 sample_data
 __pycache__
+.venv
+*.egg-info
