@@ -25,25 +25,25 @@ export default function Navbar({ showAuthButtons = false, user }: NavbarProps) {
     router.push("/")
   }
 
-  // Add this useEffect to detect mock user state
-  useEffect(() => {
-    if (showAuthButtons) {
-      const mockUser = localStorage.getItem("mock_user")
-      const isAuthenticated = localStorage.getItem("mock_authenticated")
-
-      if (mockUser && isAuthenticated && !user) {
-        // Update user prop would normally come from parent, but for demo purposes
-        // we can show the user is logged in
-      }
-    }
-  }, [showAuthButtons, user])
+  const homeLink = user ? "/workspace" : "/"
 
   return (
     <nav className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-blue-100">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="font-bold text-xl text-blue-900 flex items-center gap-2">
-          VoteCatcher ✓
+        <Link href={homeLink} className="font-bold text-xl text-blue-900 flex items-center gap-2">
+          VoteCatcher
         </Link>
+        {user && (
+          <div className="flex items-center gap-6">
+            <Link href={homeLink} className="flex gap-2">
+              Workspace
+            </Link>
+            <Link href="/getting-started" className="flex gap-2">
+              Getting Started
+            </Link>
+          </div>
+        )}
+
         <div className="flex items-center gap-4">
           <a
             href="https://github.com/civictechdc/Ballot-Initiative"
