@@ -1,17 +1,17 @@
-from typing import List
-import base64
-import os
-import json
-from tqdm.notebook import tqdm
-from dotenv import load_dotenv
-import pandas as pd
 import asyncio
-import fitz  # Add this import at the top with other imports
-
+import base64
+import json
 import logging
+import os
 from datetime import datetime
+from typing import List
 
-from ocr import extract_from_encoding_async
+import fitz  # Add this import at the top with other imports
+import pandas as pd
+from dotenv import load_dotenv
+from tqdm.notebook import tqdm
+
+from .ocr_client_factory import extract_from_encoding_async
 
 # Set up logging
 log_directory = "logs"
@@ -50,7 +50,7 @@ with open("config.json", "r") as f:
     config = json.load(f)
 
 
-def collecting_pdf_encoded_images(file_path: str) -> List[str]:
+def _collecting_pdf_encoded_images(file_path: str) -> List[str]:
     """Convert PDF pages to encoded images, cropping to target area.
     Returns list of base64 encoded image strings."""
 
@@ -97,7 +97,7 @@ def collecting_pdf_encoded_images(file_path: str) -> List[str]:
 
 
 # function for adding data
-def add_metadata(initial_data: List[dict], page_no: int, filename: str) -> List[dict]:
+def _add_metadata(initial_data: List[dict], page_no: int, filename: str) -> List[dict]:
     """
     Adds page number, row number, and filename metadata to the recognized signatures
 
@@ -121,7 +121,7 @@ def add_metadata(initial_data: List[dict], page_no: int, filename: str) -> List[
     return final_data
 
 
-async def process_batch_async(encodings: List[str]) -> List[List[dict]]:
+async def _process_batch_async(encodings: List[str]) -> List[List[dict]]:
     """
     Process a batch of images concurrently
     """
@@ -132,7 +132,7 @@ async def process_batch_async(encodings: List[str]) -> List[List[dict]]:
     return results
 
 
-def get_or_create_event_loop() -> asyncio.AbstractEventLoop:
+def _get_or_create_event_loop() -> asyncio.AbstractEventLoop:
     try:
         return asyncio.get_event_loop()
     except RuntimeError:
@@ -141,7 +141,7 @@ def get_or_create_event_loop() -> asyncio.AbstractEventLoop:
         return loop
 
 
-def collect_ocr_data(
+def _collect_ocr_data(
     filedir: str,
     filename: str,
     max_page_num: int = None,
@@ -165,7 +165,7 @@ def collect_ocr_data(
     logger.info(f"Parameters - max_page_num: {max_page_num}, batch_size: {batch_size}")
 
     # collecting images
-    encoded_images = collecting_pdf_encoded_images(os.path.join(filedir, filename))
+    encoded_images = _collecting_pdf_encoded_images(os.path.join(filedir, filename))
 
     # selecting pages
     if max_page_num:
@@ -180,7 +180,7 @@ def collect_ocr_data(
     total_pages = len(encoded_images)
 
     # getting event loop
-    loop = get_or_create_event_loop()
+    loop = _get_or_create_event_loop()
 
     # Process in batches
     logger.info(f"Processing {total_pages} pages in batches of {batch_size}")
@@ -199,12 +199,12 @@ def collect_ocr_data(
             )
 
         # Run async batch processing using the event loop
-        batch_results = loop.run_until_complete(process_batch_async(batch))
+        batch_results = loop.run_until_complete(_process_batch_async(batch))
 
         # Add metadata for each result in the batch
         for page_idx, result in enumerate(batch_results):
             current_page = i + page_idx
-            ocr_data = add_metadata(result, current_page, filename)
+            ocr_data = _add_metadata(result, current_page, filename)
             full_data.extend(ocr_data)
 
         logger.info(
@@ -238,7 +238,7 @@ def create_ocr_df(
     logger.info("Starting OCR DataFrame creation")
 
     # gathering ocr_data
-    ocr_data = collect_ocr_data(
+    ocr_data = _collect_ocr_data(
         filedir,
         filename,
         max_page_num=max_page_num,

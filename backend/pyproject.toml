@@ -3,7 +3,7 @@ name = "vote-catcher-server"
 version = "0.0.15"
 description = "A python package for verifying ballot petition signatures"
 readme = "README.md"
-requires-python = "~=3.12"
+requires-python = ">=3.12"
 authors = [{ name = "Mobolaji Williams" }]
 maintainers = [
     { name = "Mobolaji Williams" },
@@ -36,6 +36,7 @@ dependencies = [
     "streamlit>=1.44.1",
     "streamlit-shadcn-ui>=0.1.18",
     "structlog>=25.2.0",
+    "supabase>=2.21.1",
     "tomli>=2.2.1",
     "tomli-w>=1.2.0",
 ]

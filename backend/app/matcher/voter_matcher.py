@@ -120,7 +120,7 @@ def score_fuzzy_match_slim(
     return results
 
 
-def get_matched_name_address(
+def _get_matched_name_address(
     ocr_name: str, ocr_address: str, select_voter_records: pd.DataFrame
 ) -> List[Tuple[str, str, float, int]]:
     """
@@ -208,7 +208,7 @@ def create_ocr_matched_df(
         with ThreadPoolExecutor() as executor:
             batch_results = list(
                 executor.map(
-                    lambda row: get_matched_name_address(
+                    lambda row: _get_matched_name_address(
                         row["OCR Name"], row["OCR Address"], select_voter_records
                     ),
                     [row for _, row in batch.iterrows()],
