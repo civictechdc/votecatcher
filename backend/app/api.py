@@ -48,12 +48,10 @@ def ocr(response: Response):
 
     logger.info("Compiling Voter Record Data...")
 
-    select_voter_records = create_select_voter_records(app.state.voter_records_df)
-
     logger.info("Matching petition signatures to voter records...")
 
     ocr_matched_df = create_ocr_matched_df(
-        ocr_df, select_voter_records, threshold=config["BASE_THRESHOLD"]
+        ocr_df, app.state.voter_records_df, threshold=config["BASE_THRESHOLD"]
     )
     response.headers["Content-Type"] = "application/json"
     return {"data": ocr_matched_df.to_dict(orient="records"), "stats": {}}

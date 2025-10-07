@@ -1,5 +1,5 @@
 [project]
-name = "ballot-petition-signature-verifier"
+name = "vote-catcher-server"
 version = "0.0.15"
 description = "A python package for verifying ballot petition signatures"
 readme = "README.md"

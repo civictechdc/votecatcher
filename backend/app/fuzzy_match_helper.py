@@ -1,16 +1,18 @@
 # needed libraries
 ### structured outputs; replacements
-import os
 import json
-from typing import List, Tuple
-from tqdm.notebook import tqdm
-from rapidfuzz import fuzz
-from dotenv import load_dotenv
-import pandas as pd
-import numpy as np
-from concurrent.futures import ThreadPoolExecutor
 import logging
+import os
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from typing import List, Tuple
+
+import numpy as np
+import pandas as pd
+from dotenv import load_dotenv
+from pandas import DataFrame
+from rapidfuzz import fuzz
+from tqdm.notebook import tqdm
 
 # local environment storage
 repo_name = "Ballot-Initiative"
@@ -49,7 +51,7 @@ logger.addHandler(console_handler)
 ###
 
 
-def create_select_voter_records(voter_records: pd.DataFrame) -> pd.DataFrame:
+def _create_select_voter_records(voter_records: pd.DataFrame) -> pd.DataFrame:
     """
     Creates a simplified DataFrame with full names and addresses from voter records.
 
@@ -168,7 +170,7 @@ def get_matched_name_address(
 
 def create_ocr_matched_df(
     ocr_df: pd.DataFrame,
-    select_voter_records: pd.DataFrame,
+    voter_records: pd.DataFrame,
     threshold: float = config["BASE_THRESHOLD"],
     st_bar=None,
 ) -> pd.DataFrame:
@@ -186,6 +188,10 @@ def create_ocr_matched_df(
     """
     logger.info(
         f"Starting matching process for {len(ocr_df)} records with threshold {threshold}"
+    )
+
+    select_voter_records: DataFrame = _create_select_voter_records(
+        voter_records=voter_records
     )
 
     # Process in batches for better memory management
