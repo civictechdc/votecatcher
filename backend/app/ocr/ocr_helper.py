@@ -4,7 +4,6 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import List
 
 import fitz  # Add this import at the top with other imports
 import pandas as pd
@@ -46,7 +45,7 @@ with open("config.json", "r") as f:
     config = json.load(f)
 
 
-def _collecting_pdf_encoded_images(file_path: str) -> List[str]:
+def _collecting_pdf_encoded_images(file_path: str) -> list[str]:
     """Convert PDF pages to encoded images, cropping to target area.
     Returns list of base64 encoded image strings."""
 
@@ -93,17 +92,17 @@ def _collecting_pdf_encoded_images(file_path: str) -> List[str]:
 
 
 # function for adding data
-def _add_metadata(initial_data: List[dict], page_no: int, filename: str) -> List[dict]:
+def _add_metadata(initial_data: list[dict], page_no: int, filename: str) -> list[dict]:
     """
     Adds page number, row number, and filename metadata to the recognized signatures
 
     Args:
-        initial_data (List[dict]): The initial data to add metadata to.
+        initial_data (list[dict]): The initial data to add metadata to.
         page_no (int): The page number of the current page.
         filename (str): The name of the file.
 
     Returns:
-        List[dict]: The final data with metadata.
+        list[dict]: The final data with metadata.
     """
 
     final_data = list()
@@ -117,7 +116,7 @@ def _add_metadata(initial_data: List[dict], page_no: int, filename: str) -> List
     return final_data
 
 
-async def _process_batch_async(encodings: List[str]) -> List[List[dict]]:
+async def _process_batch_async(encodings: list[str]) -> list[list[dict]]:
     """
     Process a batch of images concurrently
     """
@@ -143,7 +142,7 @@ def _collect_ocr_data(
     max_page_num: int = None,
     batch_size: int = 10,
     st_bar=None,
-) -> List[dict]:
+) -> list[dict]:
     """
     Collects OCR data from a PDF file.
 
@@ -214,7 +213,7 @@ def _collect_ocr_data(
 def create_ocr_df(
     filedir: str,
     filename: str,
-    max_page_num: int = None,
+    max_page_num: int | None = None,
     batch_size: int = 10,
     st_bar=None,
 ) -> pd.DataFrame:
