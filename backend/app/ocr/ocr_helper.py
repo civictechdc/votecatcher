@@ -8,7 +8,7 @@ from typing import List
 
 import fitz  # Add this import at the top with other imports
 import pandas as pd
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 from .ocr_client_factory import extract_from_encoding_async
 

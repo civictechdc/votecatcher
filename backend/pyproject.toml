@@ -1,7 +1,7 @@
 [project]
 name = "vote-catcher-server"
 version = "0.0.15"
-description = "A python package for verifying ballot petition signatures"
+description = "A Python server for collecting and verifying votes and ballot petition signatures"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [{ name = "Mobolaji Williams" }]
