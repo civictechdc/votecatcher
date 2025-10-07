@@ -5,19 +5,12 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
-from dotenv import load_dotenv
 from pandas import DataFrame
 from rapidfuzz import fuzz
 from tqdm.notebook import tqdm
-
-# local environment storage
-repo_name = "Ballot-Initiative"
-REPODIR = os.getcwd()
-load_dotenv(os.path.join(REPODIR, ".env"), override=True)
 
 # load config
 with open("config.json", "r") as f:
@@ -86,19 +79,19 @@ def _create_select_voter_records(voter_records: pd.DataFrame) -> pd.DataFrame:
 
 
 def score_fuzzy_match_slim(
-    ocr_result: str, comparison_list: List[str], scorer_=fuzz.ratio, limit_=10
-) -> List[Tuple[str, int, int]]:
+    ocr_result: str, comparison_list: list[str], scorer_=fuzz.ratio, limit_=10
+) -> list[tuple[str, int, int]]:
     """
     Scores the fuzzy match between the OCR result and the comparison list.
 
     Args:
         ocr_result (str): The OCR result to match.
-        comparison_list (List[str]): The list of strings to compare against.
+        comparison_list (list[str]): The list of strings to compare against.
         scorer_ (function): The scorer function to use.
         limit_ (int): The number of top matches to return.
 
     Returns:
-        List[Tuple[str, int, int]]: The list of top matches with their scores and indices.
+        list[tuple[str, int, int]]: The list of top matches with their scores and indices.
     """
     logger.debug(f"Starting fuzzy matching for: {ocr_result[:30]}...")
 
@@ -122,7 +115,7 @@ def score_fuzzy_match_slim(
 
 def _get_matched_name_address(
     ocr_name: str, ocr_address: str, select_voter_records: pd.DataFrame
-) -> List[Tuple[str, str, float, int]]:
+) -> list[tuple[str, str, float, int]]:
     """
     Optimized name and address matching
 
@@ -132,7 +125,7 @@ def _get_matched_name_address(
         select_voter_records (pd.DataFrame): The DataFrame containing voter records.
 
     Returns:
-        List[Tuple[str, str, float, int]]: The list of top matches with their scores and indices.
+        list[tuple[str, str, float, int]]: The list of top matches with their scores and indices.
     """
     logger.debug(f"Matching - Name: {ocr_name[:30]}... Address: {ocr_address[:30]}...")
 

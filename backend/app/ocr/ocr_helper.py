@@ -8,7 +8,6 @@ from typing import List
 
 import fitz  # Add this import at the top with other imports
 import pandas as pd
-from dotenv import load_dotenv
 from tqdm.notebook import tqdm
 
 from .ocr_client_factory import extract_from_encoding_async
@@ -36,9 +35,6 @@ console_handler.setFormatter(log_format)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
-repo_name = "Ballot-Initiative"
-REPODIR = os.getcwd()
-load_dotenv(os.path.join(REPODIR, ".env"), override=True)
 
 # open ai api key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
