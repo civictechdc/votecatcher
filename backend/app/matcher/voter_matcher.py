@@ -3,7 +3,7 @@
 import json
 import logging
 import os
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 
 import numpy as np
@@ -198,7 +198,7 @@ def create_ocr_matched_df(
         )
 
         # Process batch in parallel
-        with ThreadPoolExecutor() as executor:
+        with ProcessPoolExecutor() as executor:
             batch_results = list(
                 executor.map(
                     lambda row: _get_matched_name_address(
