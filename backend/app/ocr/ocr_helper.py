@@ -139,7 +139,7 @@ def _get_or_create_event_loop() -> asyncio.AbstractEventLoop:
 def _collect_ocr_data(
     filedir: str,
     filename: str,
-    max_page_num: int = None,
+    max_page_num: int | None = None,
     batch_size: int = 10,
     st_bar=None,
 ) -> list[dict]:

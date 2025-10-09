@@ -5,12 +5,31 @@ import logging
 import os
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
+from enum import StrEnum
 
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from rapidfuzz import fuzz
 from tqdm import tqdm
+
+from ..voters.voter_regions import DCVoterRecordSpec, VoterRecordProcessor
+
+
+class MatchedColumn(StrEnum):
+    OCR_NAME = "OCR Name"
+    OCR_ADDRESS = "OCR Address"
+    MATCHED_NAME = "Matched Name"
+    MATCHED_ADDRESS = "Matched Address"
+    DATE = "Date"
+    MATCHED_SCORE = "Match Score"
+    VALID = "Valid"
+    PAGE_NUMBER = "Page Number"
+    ROW_NUMBER = "Row Number"
+    FILE_NAME = "Filename"
+
+
+_voter_record_processor: VoterRecordProcessor = VoterRecordProcessor()
 
 # load config
 with open("config.json", "r") as f:
@@ -55,20 +74,19 @@ def _create_select_voter_records(voter_records: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame with 'Full Name' and 'Full Address' columns
     """
+
+    # TODO make it configurable
+    _voter_record_processor.set_voter_region(DCVoterRecordSpec())
+
     # Create full name by combining first and last names
-    name_components = ["First_Name", "Last_Name"]
+    name_components = _voter_record_processor.get_name_components()
     voter_records[name_components] = voter_records[name_components].fillna("")
     voter_records["Full Name"] = (
         voter_records[name_components].astype(str).agg(" ".join, axis=1)
     )
 
     # Create full address by combining address components
-    address_components = [
-        "Street_Number",
-        "Street_Name",
-        "Street_Type",
-        "Street_Dir_Suffix",
-    ]
+    address_components = _voter_record_processor.get_address_components()
     voter_records[address_components] = voter_records[address_components].fillna("")
     voter_records["Full Address"] = (
         voter_records[address_components].astype(str).agg(" ".join, axis=1)
@@ -172,7 +190,7 @@ def create_ocr_matched_df(
 
     Args:
         ocr_df (pd.DataFrame): The DataFrame containing OCR results.
-        select_voter_records (pd.DataFrame): The DataFrame containing voter records.
+        voter_records (pd.DataFrame): The DataFrame containing voter records.
         threshold (float): The threshold for matching.
         st_bar (st.progress): The progress bar to display.
 
@@ -202,7 +220,9 @@ def create_ocr_matched_df(
             batch_results = list(
                 executor.map(
                     lambda row: _get_matched_name_address(
-                        row["OCR Name"], row["OCR Address"], select_voter_records
+                        row[MatchedColumn.OCR_NAME],
+                        row[MatchedColumn.OCR_ADDRESS],
+                        select_voter_records,
                     ),
                     [row for _, row in batch.iterrows()],
                 )
@@ -227,26 +247,16 @@ def create_ocr_matched_df(
                 text=f"Processing batch {batch_start} out of {len(ocr_df) // batch_size + 1} batches",
             )
 
-    logger.info("Creating final DataFrame")
-    match_df = pd.DataFrame(
-        results, columns=["Matched Name", "Matched Address", "Match Score"]
-    )
-    result_df = pd.concat([ocr_df, match_df], axis=1)
-    result_df["Valid"] = result_df["Match Score"] >= threshold
-
-    # Reorder columns
-    column_order = [
-        "OCR Name",
-        "OCR Address",
-        "Matched Name",
-        "Matched Address",
-        "Date",
-        "Match Score",
-        "Valid",
-        "Page Number",
-        "Row Number",
-        "Filename",
+    matched_columns: list[str] = [
+        MatchedColumn.MATCHED_NAME,
+        MatchedColumn.MATCHED_ADDRESS,
+        MatchedColumn.MATCHED_SCORE,
     ]
+
+    logger.info("Creating final DataFrame")
+    match_df = pd.DataFrame(results, columns=matched_columns)
+    result_df = pd.concat([ocr_df, match_df], axis=1)
+    result_df["Valid"] = result_df[MatchedColumn.MATCHED_SCORE] >= threshold
 
     # Log final statistics
     total_valid = result_df["Valid"].sum()
@@ -255,4 +265,4 @@ def create_ocr_matched_df(
         f"Valid matches: {total_valid} ({total_valid / len(result_df) * 100:.1f}%)"
     )
 
-    return result_df[column_order]
+    return result_df[list(MatchedColumn)]
