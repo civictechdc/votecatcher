@@ -1,33 +1,31 @@
-<script lang="ts" setup>
+<script lang="ts">
 	// Explanation: Page-level SvelteKit route component for the landing page.
 	// Uses modern Svelte 5 <script setup> style and onMount to run browser-only code.
 	import { onMount } from 'svelte';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { getSession } from '$lib/api/auth';
 	import { ArrowRight, Users, Shield, Flag } from 'lucide-svelte';
+	import { featureFlags } from '$lib/config/featureFlags';
+	import { initMocks } from '$lib/mocks/init';
+	import DevFlags from '$lib/components/DevFlags.svelte';
+	import { page } from '$app/state';
+	import type { PageData } from './$types';
 
-	let user: { id?: string } | null = null;
+	let user = $state(null);
+
 	let loading = true;
+	interface Props {
+		isDemoMode: boolean;
+	}
 
-	// Explanation: read VITE_API_URL in the helper; here just call the helper on mount.
-	onMount(async () => {
-		try {
-			const res = await getSession();
-			user = res?.user ?? null;
-		} catch (err) {
-			// keep it simple: log and treat as unauthenticated
-			console.error('session check failed', err);
-			user = null;
-		} finally {
-			loading = false;
-		}
-	});
-
-	$: homeLink = user ? '/workspace' : '/auth';
+	let { data } = $props();
+	let DEMO_MODE_ENABLED: boolean = $derived(data.isDemoMode);
+	// When demo mode is on, always point the CTA to the workspace (no real auth required)
+	const homeLink = $derived(
+		DEMO_MODE_ENABLED ? '/workspace/demo' : user ? '/workspace/' + user?.id : '/auth'
+	);
 </script>
 
-<!-- Explanation: Tailwind-based markup closely mirrors the original Next/React layout.
-     Keep classes and structure similar for an easy visual migration. -->
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50">
 	<Navbar {user} showAuthButtons />
 	<div class="container mx-auto px-4 py-16">
@@ -49,13 +47,13 @@
 			</p>
 
 			<div class="mb-16 flex flex-col justify-center gap-4 sm:flex-row">
-				<a href={homeLink} class="inline-flex">
-					<button
-						class="inline-flex items-center rounded-md bg-blue-600 px-8 py-3 text-lg text-white hover:bg-blue-700"
-					>
-						Start Your Campaign
-						<ArrowRight class="ml-2" />
-					</button>
+				<!-- Make the anchor the clickable element (avoid nested <button> inside <a>) -->
+				<a
+					href={homeLink}
+					class="inline-flex items-center justify-center rounded-md bg-blue-600 px-8 py-3 text-lg text-white hover:bg-blue-700"
+				>
+					Start Your Campaign
+					<ArrowRight class="ml-2" />
 				</a>
 
 				<button
@@ -114,4 +112,9 @@
 			</div>
 		</div>
 	</div>
+
+	{#if import.meta.env.DEV}
+		<!-- Dev-only UI to toggle flags in real time -->
+		<DevFlags />
+	{/if}
 </div>

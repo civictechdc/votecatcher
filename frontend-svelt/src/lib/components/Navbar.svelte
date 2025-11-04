@@ -1,23 +1,21 @@
-<script lang="ts" setup>
-	// Explanation: Small, focused navbar component. Accepts 'user' and 'showAuthButtons' props.
-	export let user: { id?: string } | null = null;
-	export let showAuthButtons: boolean = true;
+<script lang="ts">
+	export let user: { email?: string } | null = null;
 </script>
 
-<nav class="sticky top-0 z-40 w-full border-b bg-white/60 backdrop-blur">
-	<div class="container mx-auto flex items-center justify-between px-4 py-3">
-		<a href="/" class="text-lg font-bold text-slate-900">VoteCatcher</a>
-
-		<div class="flex items-center gap-3">
-			{#if showAuthButtons}
-				{#if user}
-					<a href="/workspace" class="rounded-md bg-blue-600 px-3 py-2 text-sm text-white"
-						>Workspace</a
-					>
-				{:else}
-					<a href="/auth" class="rounded-md border border-slate-200 px-3 py-2 text-sm">Sign in</a>
-				{/if}
-			{/if}
-		</div>
+<nav class="row" aria-label="Main navigation" style="justify-content:space-between">
+	<div style="display:flex; gap:0.75rem; align-items:center">
+		<a
+			href="/"
+			aria-label="Votecatcher home"
+			style="text-decoration:none; color:var(--vc-primary); font-weight:700">Votecatcher</a
+		>
+		<span class="text-muted small">Onboarding</span>
+	</div>
+	<div class="small text-muted">
+		{#if user}
+			Signed in as <span aria-label="user-email">{user.email}</span>
+		{:else}
+			<a href="/login" class="small">Sign in</a>
+		{/if}
 	</div>
 </nav>

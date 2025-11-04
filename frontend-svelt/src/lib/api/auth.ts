@@ -1,17 +1,50 @@
-// Explanation: Small fetch wrapper to call the backend FastAPI session endpoint.
-// Reasoning: keep Supabase logic in backend; front-end only asks backend whether a session exists.
-export async function getSession(apiUrl?: string) {
-	const base = apiUrl ?? import.meta.env.VITE_API_URL ?? '';
-	const url = base ? `${base.replace(/\/$/, '')}/auth/session` : '/auth/session';
-	// Note: if you prefer a dev proxy, set VITE_API_URL to your backend (http://localhost:8000)
-	const res = await fetch(url, {
-		credentials: 'include', // if backend uses cookies for session
-		headers: { Accept: 'application/json' }
-	});
+// Frontend fetch wrapper for auth-related REST endpoints.
+// Replace base with your FastAPI /auth base URL by setting VITE_API_URL.
+type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
 
-	if (!res.ok) {
-		// return null for unauthenticated or failed calls
-		return null;
+const BASE = (import.meta as any).env?.VITE_API_URL?.replace(/\/$/, '') ?? '';
+
+async function post<T = unknown>(path: string, body: unknown): Promise<ApiResult<T>> {
+	const url = BASE ? `${BASE}${path}` : path;
+	try {
+		const res = await fetch(url, {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+			body: JSON.stringify(body)
+		});
+		const json = await res.json().catch(() => ({}));
+		if (!res.ok) return { ok: false, error: json?.error || res.statusText || 'request failed' };
+		return { ok: true, data: json as T };
+	} catch (err) {
+		return { ok: false, error: err instanceof Error ? err.message : String(err) };
 	}
-	return await res.json();
 }
+
+async function get<T = unknown>(path: string): Promise<ApiResult<T>> {
+	const url = BASE ? `${BASE}${path}` : path;
+	try {
+		const res = await fetch(url, {
+			credentials: 'include',
+			headers: { Accept: 'application/json' }
+		});
+		const json = await res.json().catch(() => ({}));
+		if (!res.ok) return { ok: false, error: json?.error || res.statusText || 'request failed' };
+		return { ok: true, data: json as T };
+	} catch (err) {
+		return { ok: false, error: err instanceof Error ? err.message : String(err) };
+	}
+}
+
+export const authApi = {
+	getSession: () => get<{ user?: { id: string; email?: string } }>('/api/session'),
+	signUp: (email: string, password: string) => post('/api/auth/sign-up', { email, password }),
+	signIn: (email: string, password: string) => post('/api/auth/sign-in', { email, password }),
+	signOut: () => post('/api/auth/sign-out', {}),
+	// 2FA / Passkey endpoints (optional)
+	start2fa: (email: string) => post('/api/auth/start-2fa', { email }),
+	verify2fa: (email: string, code: string) => post('/api/auth/verify-2fa', { email, code })
+};
+
+// Convenience named export used by pages that import getSession directly
+export const getSession = authApi.getSession;
