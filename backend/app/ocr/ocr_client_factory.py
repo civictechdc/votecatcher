@@ -1,5 +1,4 @@
 import json
-from typing import List
 
 from app.settings import GeminiAiConfig, MistralAiConfig, OpenAiConfig, load_settings
 from app.utils.app_logger import logger
@@ -24,7 +23,7 @@ class OCREntry(BaseModel):
 
 
 class OCRData(BaseModel):
-    Data: List[OCREntry]
+    Data: list[OCREntry]
 
 
 def _create_ocr_client() -> Runnable:
@@ -37,7 +36,7 @@ def _create_ocr_client() -> Runnable:
 
     ocr_config = load_settings().selected_config
 
-    client: Runnable = None
+    client: Runnable | None = None
 
     match ocr_config:
         case OpenAiConfig():
@@ -65,7 +64,7 @@ def _create_ocr_client() -> Runnable:
     return client
 
 
-async def extract_from_encoding_async(base64_image: str) -> List[dict]:
+async def extract_from_encoding_async(base64_image: str) -> list[dict]:
     """
     Extracts names and addresses from single ballot image asynchronously.
     Uses base64_image

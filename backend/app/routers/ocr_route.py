@@ -1,11 +1,14 @@
-from ntpath import isfile
-from typing import Annotated
-
 import pandas as pd
 from app.dependencies import demo_petition_path, oauth2_scheme
 from app.fuzzy_match_helper import create_ocr_matched_df, create_select_voter_records
 from app.ocr.ocr_helper import OCR_COLUMNS, create_ocr_df
-from app.schemas import OcrMatchResponse
+from app.schemas import OcrMatchResponse, OcrProviderPayload
+from app.settings.settings_repo import (
+    GeminiAiConfig,
+    MistralAiConfig,
+    OpenAiConfig,
+    override_settings,
+)
 from app.voter.voter_processor import DEMO_VOTER_RECORD_STATE
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -15,7 +18,7 @@ router: APIRouter = APIRouter(tags=["Workspace"], prefix="/workspace")
 
 
 @router.post(path="/ocr/demo", tags=["OCR", "Demo"], response_model=OcrMatchResponse)
-async def ocr_demo():
+async def ocr_demo(ocr_provider: OcrProviderPayload | None = None):
     if not demo_petition_path.exists():
         raise HTTPException(
             status.HTTP_412_PRECONDITION_FAILED,
@@ -27,6 +30,30 @@ async def ocr_demo():
             status.HTTP_412_PRECONDITION_FAILED,
             detail="No voter records found to match against. Please upload and try again.",
         )
+
+    # Temporary shortcut to set the OCR provider without config
+    if ocr_provider:
+        config: OpenAiConfig | GeminiAiConfig | MistralAiConfig
+        match ocr_provider.provider_name:
+            case "open_ai":
+                config = OpenAiConfig(
+                    api_key=ocr_provider.api_key, model=ocr_provider.provider_model
+                )
+            case "mistral_ai":
+                config = MistralAiConfig(
+                    api_key=ocr_provider.api_key, model=ocr_provider.provider_model
+                )
+            case "gemini_ai":
+                config = GeminiAiConfig(
+                    api_key=ocr_provider.api_key, model=ocr_provider.provider_model
+                )
+            case _:
+                raise HTTPException(
+                    status.HTTP_406_NOT_ACCEPTABLE,
+                    detail=f"Provider name {ocr_provider.provider_name} is invalid. Please use an authorised OCR provider.",
+                )
+
+        override_settings(config)
 
     df_list: list[DataFrame] = []
 

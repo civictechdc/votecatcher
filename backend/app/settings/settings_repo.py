@@ -2,7 +2,6 @@ import os
 import pathlib
 import tomllib
 from dataclasses import dataclass
-from typing import Optional
 
 from app.utils import enable_debug_logging, logger
 
@@ -33,11 +32,15 @@ class SettingsData:
     debug_mode: bool = False
 
 
-_current_settings: Optional[SettingsData] = None
+_current_settings: SettingsData | None = None
+
+
+def override_settings(config: OpenAiConfig | MistralAiConfig | GeminiAiConfig):
+    _current_settings = config
 
 
 def load_settings(
-    custom_path: str = None, reload_settings: bool = False
+    custom_path: str | None = None, reload_settings: bool = False
 ) -> SettingsData:
     """
     Load settings from a TOML file and return the selected OCR engine configuration.

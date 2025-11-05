@@ -53,3 +53,9 @@ class PetitionFileUploadResponse(BaseModel):
 class OcrMatchResponse(BaseModel):
     results: dict = {}
     stats: dict = {}
+
+
+class OcrProviderPayload(BaseModel):
+    provider_name: str
+    provider_model: str
+    api_key: str
