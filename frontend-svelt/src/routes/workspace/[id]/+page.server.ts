@@ -1,10 +1,16 @@
 import type { PageServerLoad } from '../$types';
-import { redirect, fail } from '@sveltejs/kit';
+import { redirect, fail, error } from '@sveltejs/kit';
+import { api } from '$lib/api/client';
 
 export const load: PageServerLoad = async ({ params, fetch }) => {
-	// If demo mode, allow workspace page to load even without a real session.
-	if (params.id === 'demo') {
-		return {};
+	if (params.id) {
+		const json = await api.getWorkspace(params.id);
+		if (!json.ok) throw error(json.status, json.statusText);
+		if (json.body?.id === 'demo') {
+			return {
+				isDemoMode: json.body.id === 'demo'
+			};
+		}
 	}
 
 	const res = await fetch('/workspace');

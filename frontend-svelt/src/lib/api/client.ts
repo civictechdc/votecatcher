@@ -1,6 +1,9 @@
 // Lightweight API client wrapper used by onboarding UI.
 // All direct Supabase calls in your previous app are replaced with REST endpoint calls.
 // For now endpoints are mocked under src/routes/api/*.
+import { VITE_API_URL } from '$env/static/private';
+
+const BASE_URL = VITE_API_URL ?? '';
 
 export type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -23,6 +26,7 @@ async function request<T>(path: string, opts?: RequestInit): Promise<ApiResult<T
 }
 
 export const api = {
+	getWorkspace: (id: string) => request(`${BASE_URL}workspace/${id}`, { method: 'GET' }),
 	getSession: () =>
 		request<{ user?: { id: string; email?: string } }>('/api/session', { method: 'GET' }),
 	storeApiKey: (provider: string, apiKey: string) =>

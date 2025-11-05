@@ -1,12 +1,10 @@
-from typing import Optional
-import tomllib
-import pathlib
-from dataclasses import dataclass
-from utils import (
-    enable_debug_logging,
-    logger,
-)
 import os
+import pathlib
+import tomllib
+from dataclasses import dataclass
+from typing import Optional
+
+from app.utils import enable_debug_logging, logger
 
 config = {"BASE_THRESHOLD": 85, "TOP_CROP": 0.385, "BOTTOM_CROP": 0.725}
 
@@ -77,10 +75,9 @@ def load_settings(
         )
         settings = {
             "selected_ocr_engine": "open_ai",
-            "open_ai": {"api_key": os.getenv('OPENAI_API_KEY'), "model": "gpt-4o"},
+            "open_ai": {"api_key": os.getenv("OPENAI_API_KEY"), "model": "gpt-4o"},
             "debug_mode": False,
         }
-        
 
     selected_engine = settings["selected_ocr_engine"]
     engine_config = settings.get(selected_engine)

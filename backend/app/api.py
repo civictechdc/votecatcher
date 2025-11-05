@@ -1,59 +1,37 @@
 import os
+from typing import Annotated, Any
 
-from fastapi import FastAPI, Response
+from app.data import DbClient, get_db_client
+from app.dependencies import oauth2_scheme
+from app.fuzzy_match_helper import create_ocr_matched_df, create_select_voter_records
+from app.ocr.ocr_helper import create_ocr_df
+from app.routers import auth, file, ocr_route, workspace
+from app.settings.settings_repo import config
+from app.utils.app_logger import logger
+from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fuzzy_match_helper import create_ocr_matched_df, create_select_voter_records
-from ocr_helper import create_ocr_df
-from routers import file
-from settings.settings_repo import config
-from utils import logger
+from fastapi.security import OAuth2PasswordBearer
 
-app = FastAPI(root_path="/api")
+app: FastAPI = FastAPI(root_path="/api", dependencies=[Depends(get_db_client)])
+
 app.state.voter_records_df = None
 
-origins = [
+origins: list[str] = [
     "http://localhost",
-    "http://localhost:5173",
+    "http://localhost:5173",  # To allow local front end to make calls
 ]
 
+DB_CLIENT = Annotated[DbClient, Depends(get_db_client)]
+
 app.add_middleware(
-    CORSMiddleware,
+    middleware_class=CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all HTTP methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(file.router)
-
-
-@app.post("/ocr", tags=["OCR"])
-def ocr(response: Response):
-    """
-    Triggers the OCR process on the uploaded petition signatures PDF file.
-    """
-    if not os.path.exists("temp/ballot.pdf"):
-        logger.error("No PDF file found for petition signatures")
-        response.status_code = 400
-        return {"error": "No PDF file found for petition signatures"}
-    if app.state.voter_records_df is None:
-        logger.error("No voter records file found")
-        response.status_code = 400
-        return {"error": "No voter records file found"}
-    logger.info("Starting OCR processing...")
-    # Process files if in processing state
-    logger.info("Converting PDF to images...")
-
-    ocr_df = create_ocr_df(filedir="temp", filename="ballot.pdf")
-
-    logger.info("Compiling Voter Record Data...")
-
-    select_voter_records = create_select_voter_records(app.state.voter_records_df)
-
-    logger.info("Matching petition signatures to voter records...")
-
-    ocr_matched_df = create_ocr_matched_df(
-        ocr_df, select_voter_records, threshold=config["BASE_THRESHOLD"]
-    )
-    response.headers["Content-Type"] = "application/json"
-    return {"data": ocr_matched_df.to_dict(orient="records"), "stats": {}}
+app.include_router(workspace.router)
+app.include_router(auth.router)
+app.include_router(ocr_route.router)

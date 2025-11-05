@@ -3,7 +3,7 @@ name = "ballot-petition-signature-verifier"
 version = "0.0.15"
 description = "A python package for verifying ballot petition signatures"
 readme = "README.md"
-requires-python = "~=3.12"
+requires-python = ">=3.12"
 authors = [{ name = "Mobolaji Williams" }]
 maintainers = [
     { name = "Mobolaji Williams" },
@@ -15,6 +15,7 @@ maintainers = [
 license = "MIT"
 dependencies = [
     "dotenv>=0.9.9",
+    "faker>=37.12.0",
     "fastapi[standard]>=0.115.12",
     "httpx>=0.28.1",
     "ipywidgets>=8.1.5",
@@ -27,7 +28,9 @@ dependencies = [
     "numpy>=2.2.4",
     "pandas>=2.2.3",
     "pillow>=11.1.0",
+    "pwdlib[argon2]>=0.3.0",
     "pydantic>=2.11.2",
+    "pyjwt>=2.10.1",
     "pymupdf>=1.25.5",
     "python-multipart>=0.0.20",
     "rapidfuzz>=3.13.0",
@@ -36,14 +39,19 @@ dependencies = [
     "streamlit>=1.44.1",
     "streamlit-shadcn-ui>=0.1.18",
     "structlog>=25.2.0",
+    "supabase>=2.23.2",
+    "supabase-auth>=2.23.2",
     "tomli>=2.2.1",
     "tomli-w>=1.2.0",
+    "uvicorn>=0.38.0",
 ]
 
 [dependency-groups]
 dev = [
+    "basedpyright>=1.32.1",
     "black>=25.1.0",
     "flake8>=7.2.0",
+    "pandas-stubs>=2.3.2.250926",
     "pytest>=8.3.5",
     "pytest-cov>=6.1.1",
     "ruff>=0.11.4",
@@ -64,3 +72,11 @@ addopts = ["--import-mode=importlib"]
 
 [tool.ruff]
 exclude = ["notebooks", "cross_referencing_tests"]
+
+[tool.basedpyright]
+include = ["app"]
+exclude = ["**/node_modules", "**/__pycache__"]
+venvPath = "./.venv"
+venv = ".venv"
+reportMissingImports = true
+reportMissingTypeStubs = false

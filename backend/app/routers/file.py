@@ -1,21 +1,38 @@
 import os
+import shutil
 from enum import Enum
 from io import BytesIO
 
-from fastapi.responses import FileResponse
 import pandas as pd
-from fastapi import APIRouter, Request, Response, UploadFile
-from utils import logger
+from app.schemas import (
+    PetitionFileUploadResponse,
+    SuccessResponse,
+    VoterRecordsUploadResponse,
+)
+from app.utils import logger
+from app.voter.voter_processor import VoterRegistrationSchema, process_voter_data
+from fastapi import APIRouter, Request, Response, UploadFile, status
+from fastapi.datastructures import UploadFile
+from fastapi.exceptions import HTTPException
+from fastapi.responses import FileResponse
 
-router = APIRouter(tags=["File Upload"])
+router = APIRouter(prefix="/upload", tags=["File Upload"])
 
 if not os.path.exists("temp"):
     os.makedirs("temp")
     logger.info("Created temporary directory: temp")
 
+
 class UploadFileTypes(str, Enum):
     voter_records = "voter_records"
     petition_signatures = "petition_signatures"
+
+
+async def _save_petition_to_temp(file: UploadFile, file_name: str):
+    with open(os.path.join("temp", f"{file_name}.pdf"), "wb") as buffer:
+        bytes = await file.read()
+        buffer.write(bytes)
+        logger.info(f"{file.filename} saved to temporary directory")
 
 
 @router.delete("/clear")
@@ -32,7 +49,92 @@ def clear_all_files(request: Request):
     return {"message": "All files deleted"}
 
 
-@router.post("/upload/{filetype}")
+@router.post("/voter-records")
+async def upload_voter_records_file(
+    file: UploadFile, response: Response, request: Request
+) -> VoterRecordsUploadResponse:
+
+    if not file.filename:
+        raise HTTPException(
+            status.HTTP_412_PRECONDITION_FAILED,
+            detail="No file name found. Please try again",
+        )
+
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(
+            status.HTTP_412_PRECONDITION_FAILED,
+            detail=f"Invalid file type {file.filename}. Only .csv files are allowed.",
+        )
+
+    data = await process_voter_data(file)
+
+    return VoterRecordsUploadResponse(
+        file_name=file.filename,
+        message=f"{data.voters_df.size} records successfully uploaded",
+    )
+
+
+@router.delete("/clear-voter-records")
+def clear_voter_records() -> SuccessResponse:
+    DEMO_VOTER_RECORD_STATE = None
+    return SuccessResponse(message="Voter records successfully cleared.")
+
+
+@router.post("/petition-entry")
+async def upload_petition_entry(file: UploadFile) -> PetitionFileUploadResponse:
+    if not file.filename:
+        raise HTTPException(
+            status.HTTP_412_PRECONDITION_FAILED,
+            detail="No file name found. Please try again",
+        )
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(
+            status.HTTP_412_PRECONDITION_FAILED,
+            detail=f"Invalid file type {file.filename}. Only .csv files are allowed.",
+        )
+
+    await _save_petition_to_temp(file, file_name="temp_petition")
+
+    return PetitionFileUploadResponse(
+        file_name=file.filename, message=f"{file.filename} uploaded successfully"
+    )
+
+
+@router.post("/petition-entries")
+async def create_upload_files(petition_list: list[UploadFile]) -> SuccessResponse:
+
+    if not petition_list or len(petition_list) == 0:
+        raise HTTPException(
+            status.HTTP_417_EXPECTATION_FAILED,
+            detail="No files were found in the request. Please try again.",
+        )
+
+    for idx, file in enumerate[UploadFile](petition_list):
+        if not file.filename.endswith(".pdf"):
+            shutil.rmtree("temp")
+            raise HTTPException(
+                status.HTTP_412_PRECONDITION_FAILED,
+                detail=f"File {file.filename} was not of type .pdf",
+            )
+
+        await _save_petition_to_temp(file, file_name=f"temp_petition_{idx + 1}")
+
+    return SuccessResponse(
+        message=f"{len(petition_list)} petitions successfully uploaded."
+    )
+
+
+@router.delete("/clear-petitions")
+def clear_petition_files() -> SuccessResponse:
+    if os.path.exists("temp/ballot.pdf"):
+        os.remove("temp/ballot.pdf")
+        logger.info("Deleted all files")
+    else:
+        logger.warning("No files to delete")
+    return SuccessResponse(message="Petition files removed successfully.")
+
+
+@router.post("/{filetype}")
 def upload_file(
     filetype: UploadFileTypes, file: UploadFile, response: Response, request: Request
 ):
@@ -90,7 +192,7 @@ def upload_file(
     return {"filename": file.filename}
 
 
-@router.get("/upload/{filetype}")
+@router.get("/{filetype}")
 def get_uploaded_file(filetype: UploadFileTypes, request: Request):
     """Returns the uploaded file.
 

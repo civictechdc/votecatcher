@@ -8,5 +8,3 @@ export const isDemoMode = (): boolean => {
 export type DemoState = {
 	matchList: OcrMatch[];
 };
-
-function createStartDemoState() {}
