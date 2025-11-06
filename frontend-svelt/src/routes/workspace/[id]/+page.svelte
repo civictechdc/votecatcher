@@ -61,72 +61,64 @@
 		messages = txt;
 	}
 
-	// XMLHttpRequest helper to POST files and get progress events on client side
-	function postFilesWithProgress(url: string, formData: FormData, onProgress: (p: number) => void) {
-		return new Promise<UploadResult>((resolve, reject) => {
-			const xhr = new XMLHttpRequest();
-			xhr.open('POST', url, true);
-			xhr.onload = () => {
-				if (xhr.status >= 200 && xhr.status < 300) {
-					try {
-						const json = JSON.parse(xhr.responseText);
-						resolve(json as UploadResult);
-					} catch (e) {
-						reject(new Error('Invalid json response'));
-					}
-				} else {
-					reject(new Error(`Upload failed: ${xhr.status}`));
-				}
-			};
-			xhr.onerror = () => reject(new Error('Network error during upload'));
-			xhr.upload.onprogress = (ev) => {
-				if (!ev.lengthComputable) return;
-				const pct = Math.round((ev.loaded / ev.total) * 100);
-				onProgress(pct);
-			};
-			xhr.send(formData);
-		});
+	async function uploadVoterList() {
+		if (!voterListFile) {
+			console.log(`No upload happened for voter list ${voterListFile}`);
+			return;
+		}
+		let message: string = '';
+
+		const file = Array.from(voterListFile)[0];
+		const formData = new FormData();
+		formData.append('file', file, file.name);
+		uploading = true;
+		try {
+			const response = await fetch('api/upload', {
+				method: 'POST',
+				body: formData
+			});
+			if (response.ok) {
+				message = 'File uploaded successfully!';
+				pushMessage(message);
+			} else {
+				const errorData = await response.json();
+				message = `Error: ${errorData.detail || 'Something went wrong.'}`;
+			}
+		} catch (error) {
+			message = `Network error: ${error instanceof Error ? error.message : String(error)}`;
+		} finally {
+			uploading = false;
+		}
 	}
 
-	async function doUpload(kind: 'voter' | 'petition') {
-		const files =
-			kind === 'voter'
-				? voterListFile
-					? Array.from(voterListFile)
-					: []
-				: petitionFiles
-					? Array.from(petitionFiles)
-					: [];
-		if (files.length === 0) {
-			pushMessage('No files selected.');
+	async function uploadPetitions() {
+		if (!petitionFiles) {
+			console.log(`No upload happened for voter list ${voterListFile}`);
 			return;
 		}
 
-		// Demo short-circuit: if demo mode, simulate upload and push mock files to server endpoint
-		const fd = new FormData();
-		files.forEach((f) => fd.append('files', f, f.name));
-		fd.append('kind', kind);
-		pushMessage(`Uploading ${files.length} ${kind} file(s)...`);
+		const files = Array.from(petitionFiles);
+		const formData = new FormData();
+		files.forEach((f) => formData.append('petition', f, f.name));
 		uploading = true;
-		uploadProgress.set(0);
+
+		let message = '';
 		try {
-			// Use XHR wrapper to show progress in UI
-			const result = await postFilesWithProgress('/workspace/api/upload', fd, (p) => {
-				uploadProgress.set(p);
+			const response = await fetch('api/upload', {
+				method: 'POST',
+				body: formData
 			});
-			pushMessage(result.message ?? 'Upload completed');
-			// If result provides files metadata, store names in messages
-			if (result.files && result.files.length) {
-				pushMessage(
-					`Server received ${result.files.length} file(s): ${result.files.map((f) => f.name).join(', ')}`
-				);
+			if (response.ok) {
+				message = 'File uploaded successfully!';
+				pushMessage(message);
+			} else {
+				const errorData = await response.json();
+				message = `Error: ${errorData.detail || 'Something went wrong.'}`;
 			}
-			filesUploaded = true;
 		} catch (err) {
-			pushMessage(`Upload error: ${(err as Error).message}`);
+			message = `Network error: ${err instanceof Error ? err.message : String(err)}`;
 		} finally {
 			uploading = false;
-			setTimeout(() => uploadProgress.set(0), 400);
 		}
 	}
 
@@ -207,9 +199,8 @@
 					</div>
 					<button
 						class="inline-flex items-center justify-center rounded-md bg-blue-600 px-8 py-3 text-sm text-white hover:bg-blue-700"
-						onclick={() => doUpload('voter')}
-						disabled={uploading}
-						title="Upload voter files">Upload</button
+						onclick={() => uploadVoterList()}
+						title="Upload voter files">Upload voter list</button
 					>
 				{:else}
 					<label class="hover:to-blue-400" for="upload_voter_list">
@@ -246,7 +237,7 @@
 
 					<button
 						class="inline-flex items-center justify-center rounded-md bg-red-600 px-8 py-3 text-sm text-white hover:bg-red-700"
-						onclick={() => doUpload('petition')}
+						onclick={() => uploadPetitions()}
 						disabled={filesUploaded}
 						title="Upload petitions">Upload</button
 					>

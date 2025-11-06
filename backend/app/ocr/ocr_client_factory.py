@@ -1,13 +1,18 @@
 import json
+import os
 
 from app.settings import GeminiAiConfig, MistralAiConfig, OpenAiConfig, load_settings
+from app.settings.settings_repo import GeminiAiConfig, MistralAiConfig, OpenAiConfig
 from app.utils.app_logger import logger
+from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import Runnable
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mistralai import ChatMistralAI
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
+
+load_dotenv()
 
 
 ###
@@ -26,6 +31,12 @@ class OCRData(BaseModel):
     Data: list[OCREntry]
 
 
+TEXT_PROMPTS: list[str] = [
+    """Using the written text in the image create a list of dictionaries where each dictionary consists of keys 'Name', 'Address', 'Date', and 'Ward'. Fill in the values of each dictionary with the correct entries for each key. Write all the values of the dictionary in full. Only output the list of dictionaries. No other intro text is necessary.""",
+    """Remove the city name 'Washington, DC' and any zip codes from the 'Address' values.""",
+]
+
+
 def _create_ocr_client() -> Runnable:
     """
     Create an OpenAI client with the appropriate settings.
@@ -34,7 +45,10 @@ def _create_ocr_client() -> Runnable:
         Runnable: An AI client for OCR extraction.
     """
 
-    ocr_config = load_settings().selected_config
+    env_provider = os.getenv("OCR_PROVIDER_NAME")
+    enable_env_override = env_provider is not None and len(env_provider) > 0
+
+    ocr_config = load_settings(enable_env_override=enable_env_override).selected_config
 
     client: Runnable | None = None
 
@@ -64,6 +78,36 @@ def _create_ocr_client() -> Runnable:
     return client
 
 
+async def perform_batch_extraction(base64_encoded_images: list[str]):
+    if len(base64_encoded_images) == 0:
+        raise ValueError("Please provide a list of encoded images to match")
+
+    client = _create_ocr_client()
+    inputs: list[HumanMessage] = []
+
+    for img in base64_encoded_images:
+        message = HumanMessage(
+            content=[
+                {
+                    "type": "text",
+                    "text": TEXT_PROMPTS[0],
+                },
+                {
+                    "type": "text",
+                    "text": TEXT_PROMPTS[1],
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{img}"},
+                },
+            ]
+        )
+
+        inputs.append(message)
+
+    job = await client.abatch(inputs=inputs)
+
+
 async def extract_from_encoding_async(base64_image: str) -> list[dict]:
     """
     Extracts names and addresses from single ballot image asynchronously.
@@ -84,11 +128,11 @@ async def extract_from_encoding_async(base64_image: str) -> list[dict]:
         messages = [
             {
                 "type": "text",
-                "text": """Using the written text in the image create a list of dictionaries where each dictionary consists of keys 'Name', 'Address', 'Date', and 'Ward'. Fill in the values of each dictionary with the correct entries for each key. Write all the values of the dictionary in full. Only output the list of dictionaries. No other intro text is necessary.""",
+                "text": TEXT_PROMPTS[0],
             },
             {
                 "type": "text",
-                "text": """Remove the city name 'Washington, DC' and any zip codes from the 'Address' values.""",
+                "text": TEXT_PROMPTS[1],
             },
             {
                 "type": "image_url",

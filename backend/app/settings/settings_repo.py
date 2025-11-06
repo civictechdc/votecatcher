@@ -35,12 +35,31 @@ class SettingsData:
 _current_settings: SettingsData | None = None
 
 
+def _create_provider_config(
+    provider_name: str, provider_model: str, api_key: str
+) -> OpenAiConfig | MistralAiConfig | GeminiAiConfig:
+
+    match provider_name:
+        case "open_ai":
+            return OpenAiConfig(api_key=api_key, model=provider_model)
+        case "gemini_ai":
+            return GeminiAiConfig(api_key=api_key, model=provider_model)
+        case "mistral_ai":
+            return MistralAiConfig(api_key=api_key, model=provider_model)
+        case _:
+            raise ValueError(
+                f"Could not find configuration for {provider_name}. Please try another."
+            )
+
+
 def override_settings(config: OpenAiConfig | MistralAiConfig | GeminiAiConfig):
     _current_settings = config
 
 
 def load_settings(
-    custom_path: str | None = None, reload_settings: bool = False
+    custom_path: str | None = None,
+    reload_settings: bool = False,
+    enable_env_override: bool = False,
 ) -> SettingsData:
     """
     Load settings from a TOML file and return the selected OCR engine configuration.
@@ -58,6 +77,17 @@ def load_settings(
 
     # If settings are already loaded and reload is not requested, return the current settings
     global _current_settings
+
+    # Load selected provider settings if the env variables are set
+    if enable_env_override:
+        env_provider_name: str | None = os.getenv("OCR_PROVIDER_NAME")
+        env_provider_model: str | None = os.getenv("OCR_PROVIDER_MODEL")
+        env_provider_api_key: str | None = os.getenv("OCR_PROVIDER_API_KEY")
+        _current_settings = _create_provider_config(
+            env_provider_name, env_provider_model, env_provider_api_key
+        )
+        logger.debug(f"Loading env settings override: {_current_settings}")
+        return _current_settings
 
     if (_current_settings) and (not reload_settings):
         return _current_settings

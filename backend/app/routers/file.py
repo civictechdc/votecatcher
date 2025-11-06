@@ -2,6 +2,7 @@ import os
 import shutil
 from enum import Enum
 from io import BytesIO
+from typing import Annotated
 
 import pandas as pd
 from app.schemas import (
@@ -10,13 +11,18 @@ from app.schemas import (
     VoterRecordsUploadResponse,
 )
 from app.utils import logger
-from app.voter.voter_processor import VoterRegistrationSchema, process_voter_data
-from fastapi import APIRouter, Request, Response, UploadFile, status
+from app.voter.voter_processor import (
+    RegisteredVotersData,
+    VoterRegistrationSchema,
+    process_voter_data,
+)
+from fastapi import APIRouter, File, Request, Response, UploadFile, status
 from fastapi.datastructures import UploadFile
 from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse
+from fastapi.routing import APIRoute
 
-router = APIRouter(prefix="/upload", tags=["File Upload"])
+router: APIRouter = APIRouter(prefix="/upload", tags=["File Upload"])
 
 if not os.path.exists("temp"):
     os.makedirs("temp")
@@ -51,7 +57,7 @@ def clear_all_files(request: Request):
 
 @router.post("/voter-records")
 async def upload_voter_records_file(
-    file: UploadFile, response: Response, request: Request
+    file: Annotated[UploadFile, File()],
 ) -> VoterRecordsUploadResponse:
 
     if not file.filename:
@@ -66,7 +72,7 @@ async def upload_voter_records_file(
             detail=f"Invalid file type {file.filename}. Only .csv files are allowed.",
         )
 
-    data = await process_voter_data(file)
+    data: RegisteredVotersData = await process_voter_data(file)
 
     return VoterRecordsUploadResponse(
         file_name=file.filename,
@@ -101,15 +107,17 @@ async def upload_petition_entry(file: UploadFile) -> PetitionFileUploadResponse:
 
 
 @router.post("/petition-entries")
-async def create_upload_files(petition_list: list[UploadFile]) -> SuccessResponse:
+async def create_upload_files(
+    files: Annotated[list[UploadFile], File()],
+) -> SuccessResponse:
 
-    if not petition_list or len(petition_list) == 0:
+    if not files or len(files) == 0:
         raise HTTPException(
             status.HTTP_417_EXPECTATION_FAILED,
             detail="No files were found in the request. Please try again.",
         )
 
-    for idx, file in enumerate[UploadFile](petition_list):
+    for idx, file in enumerate[UploadFile](files):
         if not file.filename.endswith(".pdf"):
             shutil.rmtree("temp")
             raise HTTPException(
@@ -119,9 +127,7 @@ async def create_upload_files(petition_list: list[UploadFile]) -> SuccessRespons
 
         await _save_petition_to_temp(file, file_name=f"temp_petition_{idx + 1}")
 
-    return SuccessResponse(
-        message=f"{len(petition_list)} petitions successfully uploaded."
-    )
+    return SuccessResponse(message=f"{len(files)} petitions successfully uploaded.")
 
 
 @router.delete("/clear-petitions")

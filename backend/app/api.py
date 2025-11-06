@@ -12,7 +12,11 @@ from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 
-app: FastAPI = FastAPI(root_path="/api", dependencies=[Depends(get_db_client)])
+if os.getenv("ENABLE_SUPABASE") == "1":
+    app: FastAPI = FastAPI(root_path="/api", dependencies=[Depends(get_db_client)])
+else:
+    app: FastAPI = FastAPI(root_path="/api")
+
 
 app.state.voter_records_df = None
 
