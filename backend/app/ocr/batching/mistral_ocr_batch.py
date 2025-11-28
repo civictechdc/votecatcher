@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any
 
 from app.settings import MistralAiConfig
 from mistralai import Mistral

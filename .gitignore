@@ -176,3 +176,4 @@ sample_data
 __pycache__
 .venv
 *.egg-info
+*.jsonl

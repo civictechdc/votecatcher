@@ -2,6 +2,7 @@
 // All direct Supabase calls in your previous app are replaced with REST endpoint calls.
 // For now endpoints are mocked under src/routes/api/*.
 import { VITE_API_URL } from '$env/static/private';
+import type { OcrMatchResults, MatchingProgressResponse } from '$lib/api/response-types';
 
 const BASE_URL = VITE_API_URL ?? '';
 
@@ -168,6 +169,51 @@ export const api = {
 	demoUploadPetitionsRaw: (formData: FormData) =>
 		fetchRaw(`${BASE_URL}api/upload/petition-entries`, { method: 'POST', body: formData }),
 
-	triggerProcessFile: (payload: { filePath: string; campaignId: string | null }) =>
-		request('/api/process-voter-file', { method: 'POST', body: payload })
+	triggerProcessFile: (payload: { filePath: string; campaignId: string }) =>
+		request('/api/process-voter-file', { method: 'POST', body: payload }),
+
+	fetchMatchFields: (id: string) =>
+		request(`${BASE_URL}api/config/match-fields/${id}`, {
+			method: 'GET'
+		}),
+
+	demoGetMatchResults: (payload: {
+		provider_name: string;
+		provider_model: string;
+		api_key: string;
+	}) =>
+		request(`${BASE_URL}api/workspace/ocr/demo`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: payload
+		}),
+
+	demoStartOcrRequest: (payload: {
+		provider_name: string;
+		provider_model: string;
+		api_key: string;
+	}) =>
+		request<MatchingProgressResponse>(`${BASE_URL}api/workspace/ocr/demo_batch`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: payload
+		}),
+
+	demoGetOcrStatus: (job_id: string) =>
+		request<MatchingProgressResponse>(`${BASE_URL}api/workspace/ocr/batch/${job_id}/status`, {
+			method: 'GET',
+			headers: { 'Content-Type': 'application/json' }
+		}),
+	demoObserveOcrStatus: (job_id: string) => {
+		const url = `${BASE_URL}/workspace/api/match/status/id/${encodeURIComponent(job_id)}`;
+		return new EventSource(url);
+	},
+	demoGetMatchingResults: (job_id: string) =>
+		request<OcrMatchResults>(
+			`${BASE_URL}api/workspace/ocr/results/demo/${encodeURIComponent(job_id)}`,
+			{
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' }
+			}
+		)
 };

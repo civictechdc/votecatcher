@@ -8,7 +8,9 @@ import { json } from '@sveltejs/kit';
 import type { OcrMatch, ConfidenceThresholds, MatchResults } from '$lib/workspace-types';
 import { MatchColumn } from '$lib/workspace-types';
 import { faker } from '@faker-js/faker';
-
+import { api, type ApiResult } from '$lib/api/client';
+import { OCR_PROVIDER_API_KEY, OCR_PROVIDER_NAME, OCR_PROVIDER_MODEL } from '$env/static/private';
+import type { MatchingProgressResponse } from '$lib/api/response-types';
 const SERVER_DEMO = isDemoMode();
 
 const MATCH_TABLE_COLUMNS: MatchColumn[] = [
@@ -114,6 +116,23 @@ export const POST: RequestHandler = async ({ request }) => {
 	const body = await request.json().catch(() => ({}));
 	const demoRequested = body?.demo === true || SERVER_DEMO;
 
+	const batchEnabled = body?.batchEnabled === true;
+
+	if (batchEnabled) {
+		const batchResponse: ApiResult = await api.demoStartOcrRequest({
+			provider_name: OCR_PROVIDER_NAME,
+			provider_model: OCR_PROVIDER_MODEL,
+			api_key: OCR_PROVIDER_API_KEY
+		});
+
+		if (!batchResponse.ok) {
+			return json({ batchResponse }, { status: 400 });
+		}
+
+		const matchStatus: MatchingProgressResponse = batchResponse.data as MatchingProgressResponse;
+		console.log(`Batch response is ${JSON.stringify(matchStatus)}`);
+		return json({ matchStatus }, { status: 200 });
+	}
 	const threshold: ConfidenceThresholds = body?.thresholds;
 
 	// Simulate processing time on server

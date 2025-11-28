@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class MatchInfo:
+    campaign_id: str
     ocr_name: str
     ocr_address: str
     match_score: float

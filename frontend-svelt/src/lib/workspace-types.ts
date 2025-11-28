@@ -47,6 +47,12 @@ export class MatchColumn {
 	}
 }
 
+export interface OcrProvider {
+	provider_name: string;
+	model_name: string;
+	api_key: string;
+}
+
 export interface ConfidenceThresholds {
 	high: number; // e.g. 0.8
 	medium: number; // e.g. 0.5

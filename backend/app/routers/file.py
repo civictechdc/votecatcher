@@ -2,9 +2,10 @@ import os
 import shutil
 from enum import Enum
 from io import BytesIO
-from typing import Annotated
+from typing import Annotated, Any
 
 import pandas as pd
+from app.data.memory_db import get_memory_db
 from app.schemas import (
     PetitionFileUploadResponse,
     SuccessResponse,
@@ -16,7 +17,7 @@ from app.voter.voter_processor import (
     VoterRegistrationSchema,
     process_voter_data,
 )
-from fastapi import APIRouter, File, Request, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Request, Response, UploadFile, status
 from fastapi.datastructures import UploadFile
 from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse
@@ -58,6 +59,7 @@ def clear_all_files(request: Request):
 @router.post("/voter-records")
 async def upload_voter_records_file(
     file: Annotated[UploadFile, File()],
+    db_mem: Annotated[dict[str, Any], Depends(get_memory_db)],
 ) -> VoterRecordsUploadResponse:
 
     if not file.filename:
@@ -73,6 +75,10 @@ async def upload_voter_records_file(
         )
 
     data: RegisteredVotersData = await process_voter_data(file)
+
+    db_mem["voter_list"] = data
+
+    logger.debug(f"Uploaded voter records", records=file.filename)
 
     return VoterRecordsUploadResponse(
         file_name=file.filename,

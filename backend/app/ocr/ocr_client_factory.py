@@ -1,6 +1,7 @@
 import json
 import os
 
+from app.ocr.data_model import OCRData
 from app.settings import GeminiAiConfig, MistralAiConfig, OpenAiConfig, load_settings
 from app.settings.settings_repo import GeminiAiConfig, MistralAiConfig, OpenAiConfig
 from app.utils.app_logger import logger
@@ -10,25 +11,8 @@ from langchain_core.runnables import Runnable
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mistralai import ChatMistralAI
 from langchain_openai import ChatOpenAI
-from pydantic import BaseModel, Field
 
 load_dotenv()
-
-
-###
-## OCR FUNCTIONS
-###
-class OCREntry(BaseModel):
-    """Ballot signatory data"""
-
-    Name: str = Field(description="Name of the petition signer")
-    Address: str = Field(description="Address of the petition signatory")
-    Date: str = Field(description="Date of the signed")
-    Ward: int = Field(description="The area or 'Ward' that the signer belongs to")
-
-
-class OCRData(BaseModel):
-    Data: list[OCREntry]
 
 
 TEXT_PROMPTS: list[str] = [
@@ -49,7 +33,6 @@ def _create_ocr_client() -> Runnable:
     enable_env_override = env_provider is not None and len(env_provider) > 0
 
     ocr_config = load_settings(enable_env_override=enable_env_override).selected_config
-
     client: Runnable | None = None
 
     match ocr_config:

@@ -1,6 +1,7 @@
 from typing import Any
 
-from pydantic import BaseModel, EmailStr
+from app.matching.response_adapter import OcrMatchResults
+from pydantic import BaseModel, EmailStr, Field
 
 
 class Cookies(BaseModel):
@@ -51,11 +52,16 @@ class PetitionFileUploadResponse(BaseModel):
 
 
 class OcrMatchResponse(BaseModel):
-    results: dict = {}
-    stats: dict = {}
+    results: OcrMatchResults | dict[str, str] = Field(default_factory=dict)
+    stats: dict[str, Any] = Field(default_factory=dict)
 
 
 class OcrProviderPayload(BaseModel):
     provider_name: str
     provider_model: str
     api_key: str
+
+
+class MatchFieldsResponse(BaseModel):
+    id: str
+    field_names: list[str]

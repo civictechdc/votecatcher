@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from '$app/state';
 	import type { PageData } from '../$types';
 	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';
@@ -9,32 +8,42 @@
 		ConfidenceThresholds,
 		MatchResults
 	} from '$lib/workspace-types';
+	import { MatchJobStatus, type MatchingProgressResponse } from '$lib/api/response-types';
 	import { MatchColumn } from '$lib/workspace-types';
 	import MatchConfidenceIndicator from '$lib/components/MatchConfidenceIndicator.svelte';
 	import ColumnHeader from '$lib/components/match-results/ColumnHeader.svelte';
 	import UploadItem from '$lib/components/match-results/UploadItem.svelte';
+	import { onDestroy } from 'svelte';
 
 	let petitionFiles = $state<FileList | null>(null);
-
 	let voterListFile = $state<FileList | null>(null);
 	let selectedVoterFile: File | null = $derived(voterListFile ? voterListFile.item(0) : null);
 
-	let data: PageData = $props();
-	const DEMO_MODE: boolean = $derived(data.isDemoMode);
+	let currentMatchStatus = $state<MatchingProgressResponse | null>(null);
+	let eventSource = $state<EventSource | null>(null);
+	let currentMatchEventMessage = $state<string>('');
+
+	let props: PageData = $props();
+	const DEMO_MODE = $derived(props.data.isDemoMode as boolean);
+	const MATCH_FIELDS = $derived(props.data.matchingFields as string[]);
 
 	$effect(() => {
+		console.log(`voter list is ${voterListFile} with state: ${selectedVoterFile}`);
 		if (voterListFile) {
 			for (const file of voterListFile) {
 				console.log(`${file.name}: ${file.size} bytes`);
 			}
+		} else {
+			console.log(`Voter list is ${voterListFile}`);
 		}
 	});
 
 	let uploading = $state(false);
-	let filesUploaded = $state(false);
-	let readyToMatch: boolean = $derived(filesUploaded && !uploading);
+	let voterFileUploaded: boolean = $state(false);
+	let petitionsUploaded: boolean = $state(false);
+	let readyToMatch: boolean = $derived(voterFileUploaded && petitionsUploaded);
 
-	const uploadProgress = writable(0); // 0-100
+	let uploadProgress = $state<number>(0); // 0-100
 	let messages = $state('');
 	let matchResults: MatchResults = $state({
 		matchColumns: [],
@@ -57,18 +66,92 @@
 		}
 	});
 
+	function observeMatchStatus() {
+		if (eventSource && eventSource.readyState !== EventSource.CLOSED) {
+			console.log('Connection already open or connecting.');
+			return;
+		}
+
+		eventSource = new EventSource(
+			`api/match-status/${$state.snapshot(currentMatchStatus)?.ocr_job_id}`
+		);
+
+		eventSource.onopen = () => {
+			currentMatchEventMessage = 'Matching status connection opened';
+		};
+
+		eventSource.onmessage = (event) => {
+			console.log(`old status: ${currentMatchStatus?.job_status}`);
+			currentMatchStatus = JSON.parse(event.data) as MatchingProgressResponse;
+			currentMatchEventMessage = `Current status is ${currentMatchStatus}`;
+			console.log(`Updated status is: ${JSON.stringify($state.snapshot(currentMatchStatus))}`);
+			switch (currentMatchStatus.job_status) {
+				case MatchJobStatus.CANCELLED:
+				case MatchJobStatus.COMPLETED:
+				case MatchJobStatus.FAILED:
+				case MatchJobStatus.EXPIRED:
+					console.log(
+						`Job status ${currentMatchStatus.job_status} with job state ${currentMatchStatus.job_status == MatchJobStatus.COMPLETED}`
+					);
+					stopStreaming();
+					if (currentMatchStatus.job_status === MatchJobStatus.COMPLETED) {
+						onOcrJobCompleted(currentMatchStatus.ocr_job_id);
+					}
+					uploadProgress = 100;
+					break;
+				case MatchJobStatus.PENDING:
+					uploadProgress = 10;
+					break;
+				case MatchJobStatus.IN_PROGRESS:
+					uploadProgress = 50;
+					break;
+				default:
+					console.log(`Match status is ${currentMatchStatus.job_status}`);
+					break;
+			}
+		};
+
+		eventSource.onerror = (error) => {
+			console.error('EventSource error:', error);
+			currentMatchEventMessage = 'Error or Closed';
+			// Optional: Auto-reconnect logic could be added here if desired
+		};
+	}
+
+	// Function to manually close the connection
+	function stopStreaming() {
+		if (eventSource) {
+			eventSource.close();
+			currentMatchEventMessage = 'Closed manually';
+			console.log('Connection closed.');
+		}
+	}
+
+	async function onOcrJobCompleted(jobId: string) {
+		const res = await fetch(`api/match-result/${jobId}`, {
+			method: 'GET'
+		});
+	}
+
+	onDestroy(() => {
+		// Ensures connection is closed if the user navigates away
+		if (eventSource) {
+			eventSource.close();
+		}
+	});
+
 	function pushMessage(txt: string) {
 		messages = txt;
 	}
 
 	async function uploadVoterList() {
-		if (!voterListFile) {
-			console.log(`No upload happened for voter list ${voterListFile}`);
+		if (!selectedVoterFile) {
+			console.log(`No upload happened for voter list ${selectedVoterFile}`);
 			return;
 		}
 		let message: string = '';
 
-		const file = Array.from(voterListFile)[0];
+		const file = selectedVoterFile;
 		const formData = new FormData();
 		formData.append('file', file, file.name);
 		uploading = true;
@@ -84,7 +167,9 @@
 				const errorData = await response.json();
 				message = `Error: ${errorData.detail || 'Something went wrong.'}`;
 			}
+			voterFileUploaded = response.ok;
 		} catch (error) {
+			voterFileUploaded = false;
 			message = `Network error: ${error instanceof Error ? error.message : String(error)}`;
 		} finally {
 			uploading = false;
@@ -108,6 +193,7 @@
 				method: 'POST',
 				body: formData
 			});
+
 			if (response.ok) {
 				message = 'File uploaded successfully!';
 				pushMessage(message);
@@ -115,7 +201,9 @@
 				const errorData = await response.json();
 				message = `Error: ${errorData.detail || 'Something went wrong.'}`;
 			}
+			petitionsUploaded = response.ok;
 		} catch (err) {
+			petitionsUploaded = false;
 			message = `Network error: ${err instanceof Error ? err.message : String(err)}`;
 		} finally {
 			uploading = false;
@@ -125,7 +213,7 @@
 	async function runMatching() {
 		pushMessage('Starting matching...');
 		uploading = true;
-		uploadProgress.set(0);
+		uploadProgress = 0;
 		matchResults = {
 			...matchResults,
 			matchRecords: [],
@@ -134,13 +222,33 @@
 		};
 		try {
 			// fetch matches (server simulates processing)
+
+			const matchBody = {
+				demo: DEMO_MODE,
+				thresholds: confidenceThresholds,
+				columns: MATCH_FIELDS,
+				batchEnabled: true
+			};
+
+			console.log(`Stringified body: ${JSON.stringify(matchBody)}`);
+
 			const res = await fetch('/workspace/api/match', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ demo: DEMO_MODE, thresholds: confidenceThresholds })
+				body: JSON.stringify(matchBody)
 			});
 			if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
 			const payload = await res.json();
+			if (matchBody.batchEnabled) {
+				console.log(
+					`Current state of the response is ${JSON.stringify(payload.matchStatus)} with ${typeof payload.matchStatus}`
+				);
+				currentMatchStatus = payload.matchStatus as MatchingProgressResponse;
+				observeMatchStatus();
+			} else {
+				stopStreaming();
+			}
 			// payload.matches: OCRMatch[]
 			if (payload.matchResults as MatchResults) {
 				matchResults = payload.matchResults as MatchResults;
@@ -150,8 +258,8 @@
 			pushMessage(`Matching error: ${(err as Error).message}`);
 		} finally {
 			uploading = false;
-			uploadProgress.set(100);
-			setTimeout(() => uploadProgress.set(0), 500);
+			uploadProgress = 100;
+			setTimeout(() => (uploadProgress = 0), 500);
 		}
 	}
 
@@ -188,7 +296,7 @@
 			</p>
 
 			<div style="margin-top:1rem;" class="relative w-full">
-				{#if selectedVoterFile !== null}
+				{#if voterListFile !== null}
 					<div class="mb-4">
 						<UploadItem
 							file={selectedVoterFile}
@@ -200,6 +308,7 @@
 					<button
 						class="inline-flex items-center justify-center rounded-md bg-blue-600 px-8 py-3 text-sm text-white hover:bg-blue-700"
 						onclick={() => uploadVoterList()}
+						disabled={selectedVoterFile === null}
 						title="Upload voter files">Upload voter list</button
 					>
 				{:else}
@@ -238,8 +347,8 @@
 					<button
 						class="inline-flex items-center justify-center rounded-md bg-red-600 px-8 py-3 text-sm text-white hover:bg-red-700"
 						onclick={() => uploadPetitions()}
-						disabled={filesUploaded}
-						title="Upload petitions">Upload</button
+						disabled={petitionFiles === null || petitionFiles.length === 0}
+						title="Upload petitions">Upload petitions</button
 					>
 				{:else}
 					<label class="muted">
@@ -272,10 +381,11 @@
 			<div style="margin-top:1rem;">
 				<div class="muted">Progress</div>
 				<div class="progress" style="margin-top:.5rem;">
-					<div class="bar" style="width: {$uploadProgress}%"></div>
+					<div class="bar" style="width: {uploadProgress}%"></div>
 				</div>
-				<div class="muted" style="margin-top:.25rem">{$uploadProgress}%</div>
+				<div class="muted" style="margin-top:.25rem">{uploadProgress}%</div>
 			</div>
+			<progress> test </progress>
 
 			<div style="margin-top:1rem;">
 				<div class="muted">Messages</div>

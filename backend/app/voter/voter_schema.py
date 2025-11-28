@@ -11,7 +11,7 @@ class VoterRegistrationSchema:
     additional_fields: list[str]
 
 
-def get_default_voter_schema() -> VoterRegistrationSchema:
+def get_demo_voter_schema() -> VoterRegistrationSchema:
     return VoterRegistrationSchema(
         id="demo_voter_reg_schema",
         locality_display_name="Washington D.C",

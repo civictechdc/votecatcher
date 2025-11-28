@@ -5,7 +5,6 @@
 	}
 
 	let { file, onRemove }: Props = $props();
-
 	let fileType = $derived(file.name.split('.').pop());
 </script>
 

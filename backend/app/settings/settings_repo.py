@@ -12,18 +12,21 @@ config = {"BASE_THRESHOLD": 85, "TOP_CROP": 0.385, "BOTTOM_CROP": 0.725}
 class OpenAiConfig:
     api_key: str
     model: str
+    name: str = "open_ai"
 
 
 @dataclass
 class MistralAiConfig:
     api_key: str
     model: str
+    name: str = "mistral_ai"
 
 
 @dataclass
 class GeminiAiConfig:
     api_key: str
     model: str
+    name: str = "gemini_ai"
 
 
 @dataclass
@@ -76,15 +79,16 @@ def load_settings(
     """
 
     # If settings are already loaded and reload is not requested, return the current settings
-    global _current_settings
 
     # Load selected provider settings if the env variables are set
     if enable_env_override:
         env_provider_name: str | None = os.getenv("OCR_PROVIDER_NAME")
         env_provider_model: str | None = os.getenv("OCR_PROVIDER_MODEL")
         env_provider_api_key: str | None = os.getenv("OCR_PROVIDER_API_KEY")
-        _current_settings = _create_provider_config(
-            env_provider_name, env_provider_model, env_provider_api_key
+        _current_settings = SettingsData(
+            selected_config=_create_provider_config(
+                env_provider_name, env_provider_model, env_provider_api_key
+            )
         )
         logger.debug(f"Loading env settings override: {_current_settings}")
         return _current_settings
