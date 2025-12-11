@@ -1,7 +1,7 @@
 import json
 import os
 
-from app.ocr.data_model import OCRData
+from app.ocr.data.data_models import OCRData
 from app.settings import GeminiAiConfig, MistralAiConfig, OpenAiConfig, load_settings
 from app.settings.settings_repo import GeminiAiConfig, MistralAiConfig, OpenAiConfig
 from app.utils.app_logger import logger

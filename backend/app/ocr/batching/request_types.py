@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from typing import Any
 
-from app.ocr.data_model import EncodedPetitionDocuments
 from pydantic import BaseModel, Field
+
+from app.ocr.data.data_models import EncodedPetitionDocuments
 
 
 class BatchEncodedImage(BaseModel):

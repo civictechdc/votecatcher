@@ -5,7 +5,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { isDemoMode } from '$lib/stores/demo';
 import { json } from '@sveltejs/kit';
-import type { OcrMatch, ConfidenceThresholds, MatchResults } from '$lib/workspace-types';
+import type { MatchRow, ConfidenceThresholds, MatchResults } from '$lib/workspace-types';
 import { MatchColumn } from '$lib/workspace-types';
 import { faker } from '@faker-js/faker';
 import { api, type ApiResult } from '$lib/api/client';
@@ -14,7 +14,7 @@ import type { MatchingProgressResponse } from '$lib/api/response-types';
 const SERVER_DEMO = isDemoMode();
 
 const MATCH_TABLE_COLUMNS: MatchColumn[] = [
-	new MatchColumn('Registration Name', function (first: OcrMatch, second: OcrMatch) {
+	new MatchColumn('Registration Name', function (first: MatchRow, second: MatchRow) {
 		return first.registeredName.localeCompare(second.registeredName);
 	}),
 	new MatchColumn('Matched Name'),
@@ -49,7 +49,7 @@ const MATCH_TABLE_COLUMNS: MatchColumn[] = [
 	})
 ];
 
-function createRandomMatch(thresholds: ConfidenceThresholds): OcrMatch {
+function createRandomMatch(thresholds: ConfidenceThresholds): MatchRow {
 	const randomScore = parseFloat(Math.random().toFixed(2));
 
 	const person = faker.person;
@@ -101,8 +101,8 @@ function createRandomMatch(thresholds: ConfidenceThresholds): OcrMatch {
 	};
 }
 
-function mockMatches(thresholds: ConfidenceThresholds): OcrMatch[] {
-	const matches: OcrMatch[] = [];
+function mockMatches(thresholds: ConfidenceThresholds): MatchRow[] {
+	const matches: MatchRow[] = [];
 
 	let i = 0;
 	for (i; i <= 50; i++) {
@@ -138,7 +138,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	// Simulate processing time on server
 	await new Promise((r) => setTimeout(r, demoRequested ? 800 : 400));
 
-	let matches: OcrMatch[] = [];
+	let matches: MatchRow[] = [];
 	if (demoRequested) {
 		matches = mockMatches(threshold ?? { high: 0.8, medium: 0.5 });
 	}

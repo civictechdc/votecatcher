@@ -1,19 +1,45 @@
 import asyncio
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Iterable
 from pathlib import Path
-from typing import Annotated, Any, Iterable
+from typing import Annotated, Any
 
 import pandas as pd
 import structlog
+from app.campaign.campaign_repository import CampaignRepository, ReadCampaign
 from app.data.demo_data import IN_MEMORY_DEMO_CAMPAIGN_ID
 from app.data.memory_db import get_memory_db
-from app.dependencies import demo_petition_path, oauth2_scheme
+from app.dependencies import demo_petition_path  # get_ocr_job_repository,
+from app.dependencies import (
+    get_campaign_repository,
+    get_file_repository,
+    get_matching_results_repository,
+    get_matching_task_monitor,
+    get_matching_task_repository,
+    get_ocr_handler,
+    get_ocr_results_repository,
+    get_scanned_documents_repository,
+    oauth2_scheme,
+)
+from app.events.matching_task_events import MatchingTaskMonitor
+from app.files.file_repository import (
+    ReadPetitionScan,
+    RegisteredVoterRepository,
+    ScannedPetitionRepository,
+)
 from app.logging.app_logger import AppLogger
 from app.matching.fuzzy_match_helper import (
     create_ocr_match_result_response,
     create_ocr_matched_df,
     create_select_voter_records,
     perform_fuzzy_matching,
+)
+from app.matching.match_repository import (
+    CreateMatchingTask,
+    EntryMatchRepository,
+    MatchingStatus,
+    MatchingTask,
+    MatchTaskRepository,
+    UpdateMatchingTask,
 )
 from app.matching.response_adapter import OcrMatchResults
 from app.ocr.batching.batch_handler import (
@@ -22,16 +48,20 @@ from app.ocr.batching.batch_handler import (
     observe_batch_job_status,
 )
 from app.ocr.batching.batch_ocr_client import BatchJobStatus, JobStatus
-from app.ocr.data.ocr_repository import OcrResultItem
+from app.ocr.data.data_models import OcrResultItem
 from app.ocr.ocr_helper import (
     OCR_COLUMNS,
     create_batched_ocr_job,
     create_ocr_df,
     create_ocr_results,
     emit_batch_job_status,
+    emit_matching_job_status,
 )
+from app.ocr.ocr_manager import OcrHandler
+from app.ocr.ocr_result_repo import OcrResultRepository
 from app.ocr.response_types import MatchingJobStatusProgress
 from app.schemas import OcrMatchResponse, OcrProviderPayload
+from app.settings.env_settings import AppSettings, get_settings
 from app.voter.voter_processor import DEMO_VOTER_RECORD_STATE, RegisteredVotersData
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -124,11 +154,33 @@ async def start_batch_ocr(
 @router.post("/ocr/demo_batch", tags=["OCR", "Demo"])
 async def start_demo_batch_ocr(
     db: Annotated[dict[str, Any], Depends(get_memory_db)],
+    settings: Annotated[AppSettings, Depends(get_settings)],
+    campaign_repo: Annotated[CampaignRepository, Depends(get_campaign_repository)],
+    file_repo: Annotated[
+        ScannedPetitionRepository, Depends(get_scanned_documents_repository)
+    ],
+    voter_repo: Annotated[RegisteredVoterRepository, Depends(get_file_repository)],
+    matching_task_repo: Annotated[
+        MatchTaskRepository, Depends(get_matching_task_repository)
+    ],
+    matching_task_monitor: Annotated[
+        MatchingTaskMonitor, Depends(get_matching_task_repository)
+    ],
+    ocr_handler: Annotated[OcrHandler, Depends(get_ocr_handler)],
     ocr_provider: OcrProviderPayload,
 ) -> MatchingJobStatusProgress:
 
     logger.debug(f"demo petition path ${demo_petition_path.exists()}")
     DEMO_VOTER_RECORD_STATE: Any | None = db.get("voter_list")
+
+    demo_campaign, voter_data = await asyncio.gather(
+        campaign_repo.fetch_campaign("demo"),
+        voter_repo.get_registered_voter_data_by_region_key("demo"),
+    )
+
+    file_scans: list[ReadPetitionScan] = await file_repo.get_scanned_petitions(
+        demo_campaign.unique_name
+    )
 
     if not demo_petition_path.exists():
         raise HTTPException(
@@ -155,30 +207,50 @@ async def start_demo_batch_ocr(
                 detail=f"{e}",
             )
 
-    files: list[Path] = [file for file in demo_petition_path.iterdir()]
-    ocr_status: MatchingJobStatusProgress = await create_batched_ocr_job(
-        campaign_id=IN_MEMORY_DEMO_CAMPAIGN_ID, files=files
+    task: MatchingTask = await matching_task_repo.register_matching_task(
+        CreateMatchingTask(campaign_id=demo_campaign.unique_name)
     )
 
-    db[ocr_status.ocr_job_id] = ocr_status
+    cropped_img_dest: Path = settings.local_campaign_base_dir().joinpath(
+        settings.crop_dir
+    )
+
+    ocr_status: MatchingJobStatusProgress = await create_batched_ocr_job(
+        campaign_data=demo_campaign,
+        scans=file_scans,
+        scan_repo=file_repo,
+        crop_dir=cropped_img_dest,
+        task_id=task.id,
+        ocr_handler=ocr_handler,
+        ocr_provider_id=provider_config.name,
+    )
+
+    # db[ocr_status.ocr_job_id] = ocr_status
     return ocr_status
 
 
-@router.get("/ocr/batch/{job_id}/status", tags=["OCR"])
+@router.get("/ocr/batch/{task_id}/status", tags=["OCR"])
 async def get_batch_status(
-    job_id: str,
+    task_id: str,
     db: Annotated[dict[str, Any], Depends(get_memory_db)],
+    matching_task_monitor: MatchingTaskMonitor = Depends(get_matching_task_monitor),
 ) -> EventSourceResponse:
     """Stream batch job status updates"""
-    if not job_id:
+    if not task_id:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
-            detail=f"Could not find job id for value {job_id}",
+            detail=f"Could not find job id for value {task_id}",
         )
-    return EventSourceResponse(content=emit_batch_job_status(job_id=job_id))
+
+    # return EventSourceResponse(content=matching_task_monitor.monitor_job(task_id=job_id))
+    return EventSourceResponse(
+        content=emit_matching_job_status(
+            task_id=task_id, matching_task_monitor=matching_task_monitor
+        )
+    )
 
 
-@router.get(path="/ocr/batch/{job_id}/snapshot", tags=["OCR", "API"])
+@router.get(path="/ocr/batch/{task_id}/snapshot", tags=["OCR", "API"])
 async def get_batch_status_json(
     job_id: str,
     db: Annotated[dict[str, Any], Depends(get_memory_db)],
@@ -192,10 +264,25 @@ async def get_batch_status_json(
     return snapshot
 
 
-@router.get(path="/ocr/results/demo/{job_id}", tags=["OCR, Demo"])
+@router.get(path="/ocr/results/demo/{task_id}", tags=["OCR, Demo"])
 async def get_batch_result(
-    job_id: str,
+    match_task_repo: Annotated[
+        MatchTaskRepository, Depends(get_matching_task_repository)
+    ],
+    match_task_monitor: Annotated[
+        MatchingTaskMonitor, Depends(get_matching_task_monitor)
+    ],
+    match_result_repo: Annotated[
+        EntryMatchRepository, Depends(get_matching_results_repository)
+    ],
+    ocr_result_repo: Annotated[
+        OcrResultRepository, Depends(get_ocr_results_repository)
+    ],
+    registered_voter_repo: Annotated[
+        RegisteredVoterRepository, Depends(get_file_repository)
+    ],
     db: Annotated[dict[str, Any], Depends(get_memory_db)],
+    task_id: str,
 ) -> OcrMatchResponse:
 
     DEMO_VOTER_RECORD_STATE: RegisteredVotersData | None = db.get("voter_list")
@@ -206,26 +293,56 @@ async def get_batch_result(
             detail="No voter records found to match against. Please upload and try again.",
         )
 
+    task: MatchingTask = await match_task_repo.get_matching_task(task_id)
+
     try:
-        ocr_results: Iterable[OcrResultItem] = await get_ocr_results(
-            IN_MEMORY_DEMO_CAMPAIGN_ID
+        voters_df, results, columns = await asyncio.gather(
+            registered_voter_repo.get_registered_voter_data_by_region_key("demo"),
+            ocr_result_repo.fetch_ocr_results_by_task(task_id),
+            match_result_repo.fetch_column_spec("demo"),
         )
+
+        # ocr_results: Iterable[OcrResultItem] = await get_ocr_results(
+        # IN_MEMORY_DEMO_CAMPAIGN_ID
+        # )
 
         DEMO_VOTER_RECORD_STATE.voters_df.info()
         logger.debug(f"DEMO VOTER DATA: {DEMO_VOTER_RECORD_STATE.voters_df.head()}")
 
+        _ = await match_task_monitor.publish_updated_task_status(
+            UpdateMatchingTask(
+                task_id=task.id,
+                status=MatchingStatus.MATCHING,
+                status_message="Performing fuzzy matching on OCR results",
+            )
+        )
+
         fuzzy_match_df: DataFrame = await perform_fuzzy_matching(
-            ocr_results=ocr_results, voter_records=DEMO_VOTER_RECORD_STATE.voters_df
+            ocr_results=results, voter_records=voters_df
         )
 
         logger.debug(f"Fuzzy match results created: {len(fuzzy_match_df)}")
         fuzzy_match_df.info()
 
         response: OcrMatchResults = create_ocr_match_result_response(fuzzy_match_df)
+        _ = await match_task_monitor.publish_updated_task_status(
+            UpdateMatchingTask(
+                task_id=task.id,
+                status=MatchingStatus.COMPLETED,
+                status_message=f"Matching completed successfully for {len(fuzzy_match_df)} records",
+            )
+        )
         return OcrMatchResponse(results=response)
 
     except Exception as e:
         logger.error(f"Error with: {e}")
+        _ = await match_task_monitor.publish_updated_task_status(
+            UpdateMatchingTask(
+                task_id=task.id,
+                status=MatchingStatus.MATCHING_FAILED,
+                status_message=f"Matching failed with error: {e}",
+            )
+        )
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 

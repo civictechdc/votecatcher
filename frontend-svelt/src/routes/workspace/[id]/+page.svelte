@@ -4,12 +4,12 @@
 	import { writable } from 'svelte/store';
 	import type {
 		UploadResult,
-		OcrMatch,
+		MatchRow,
 		ConfidenceThresholds,
 		MatchResults
 	} from '$lib/workspace-types';
 	import { MatchJobStatus, type MatchingProgressResponse } from '$lib/api/response-types';
-	import { MatchColumn } from '$lib/workspace-types';
+	import { MatchColumn, MatchValueFormatKeys } from '$lib/workspace-types';
 	import MatchConfidenceIndicator from '$lib/components/MatchConfidenceIndicator.svelte';
 	import ColumnHeader from '$lib/components/match-results/ColumnHeader.svelte';
 	import UploadItem from '$lib/components/match-results/UploadItem.svelte';
@@ -50,8 +50,8 @@
 		matchRecords: [],
 		timestamp: new Date().toISOString()
 	});
-	let matches: OcrMatch[] = $derived(matchResults ? matchResults.matchRecords : []);
-	let confidenceThresholds: ConfidenceThresholds = $state({ high: 0.8, medium: 0.5 });
+	let matches: MatchRow[] = $derived(matchResults ? matchResults.matchRecords : []);
+	let confidenceThresholds: ConfidenceThresholds = $state({ high: 95.0, medium: 90.0 });
 
 	// results / config
 	onMount(async () => {
@@ -73,7 +73,7 @@
 		}
 
 		eventSource = new EventSource(
-			`api/match-status/${$state.snapshot(currentMatchStatus)?.ocr_job_id}`
+			`api/match-status/${$state.snapshot(currentMatchStatus)?.task_id}`
 		);
 
 		eventSource.onopen = () => {
@@ -88,22 +88,31 @@
 			switch (currentMatchStatus.job_status) {
 				case MatchJobStatus.CANCELLED:
 				case MatchJobStatus.COMPLETED:
-				case MatchJobStatus.FAILED:
-				case MatchJobStatus.EXPIRED:
+				case MatchJobStatus.OCR_FAILED:
+				case MatchJobStatus.MATCHING_FAILED:
+				case MatchJobStatus.OCR_TIMED_OUT:
+				case MatchJobStatus.TIMED_OUT:
+				case MatchJobStatus.MISC_ERROR:
 					console.log(
 						`Job status ${currentMatchStatus.job_status} with job state ${currentMatchStatus.job_status == MatchJobStatus.COMPLETED}`
 					);
 					stopStreaming();
-					if (currentMatchStatus.job_status === MatchJobStatus.COMPLETED) {
-						onOcrJobCompleted(currentMatchStatus.ocr_job_id);
-					}
 					uploadProgress = 100;
 					break;
 				case MatchJobStatus.PENDING:
 					uploadProgress = 10;
 					break;
-				case MatchJobStatus.IN_PROGRESS:
+				case MatchJobStatus.OCR_IN_PROGRESS:
 					uploadProgress = 50;
+					break;
+				case MatchJobStatus.OCR_COMPLETED:
+					uploadProgress = 75;
+					if (currentMatchStatus.job_status === MatchJobStatus.OCR_COMPLETED) {
+						onOcrJobCompleted(currentMatchStatus.task_id);
+					}
+					break;
+				case MatchJobStatus.MATCHING:
+					uploadProgress = 80;
 					break;
 				default:
 					console.log(`Match status is ${currentMatchStatus.job_status}`);
@@ -131,6 +140,10 @@
 		const res = await fetch(`api/match-result/${jobId}`, {
 			method: 'GET'
 		});
+
+		if (!res.ok) throw new Error(`Server returned ${res.status}`);
+		const payload = await res.json();
+		matchResults = payload.matchResults as MatchResults;
 	}
 
 	onDestroy(() => {
@@ -210,6 +223,10 @@
 		}
 	}
 
+	function console_log(message: string) {
+		console.log(message);
+	}
+
 	async function runMatching() {
 		pushMessage('Starting matching...');
 		uploading = true;
@@ -264,7 +281,7 @@
 	}
 
 	let currentSort: [boolean, MatchColumn | null] = $state([false, null]);
-	let currentResultsOrder: OcrMatch[] = $derived(matches);
+	let currentResultsOrder: MatchRow[] = $derived(matches);
 
 	function sortColumn(sortState: [boolean, MatchColumn]) {
 		const column = sortState[1];
@@ -430,24 +447,23 @@
 								></tr
 							>
 						{:else}
-							{#each matches as m}
+							{#each matches as m (m.row_idx)}
 								<tr class="hover:bg-blue-200">
-									<td>{m.registeredName}</td>
-									<td>{m.ocrPredictedName}</td>
-									<td>
-										<MatchConfidenceIndicator
-											matchScore={m.predictionScore}
-											confidenceThreshold={confidenceThresholds}
-										/>
-									</td>
-									<td>{m.nameDistance ?? '—'}</td>
-									<td>{m.registeredAddress}</td>
-									<td>{m.addressDistance ?? '—'}</td>
-									<td>{m.predictedAddress}</td>
-									<td>{m.ward ?? '—'}</td>
-									<td>{m.petitionPageNumber ?? '—'}</td>
-									<td>{m.petitionRowNumber ?? '—'}</td>
-									<td>{m.matchRank ?? '—'}</td>
+									<!-- Create each row value cell of arbitrary number of values -->
+									{#each Object.entries(m) as [key, value]}
+										{#if key === MatchValueFormatKeys.MATCH_SCORE}
+											<td>
+												<MatchConfidenceIndicator
+													matchScore={value as number}
+													confidenceThreshold={confidenceThresholds}
+												/>
+											</td>
+										{:else}
+											<td>
+												{value}
+											</td>
+										{/if}
+									{/each}
 								</tr>
 							{/each}
 						{/if}

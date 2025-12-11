@@ -5,8 +5,7 @@ from enum import Enum
 from pathlib import Path
 
 from app.ocr.batching.request_types import BatchRequestPayload
-from app.ocr.data.ocr_repository import OcrResultItem
-from app.ocr.data_model import OCREntry
+from app.ocr.data.data_models import OcrResultItem
 from pydantic import BaseModel, Field, field_serializer
 
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { OcrMatch, ConfidenceThresholds } from '$lib/workspace-types';
+	import type { MatchRow, ConfidenceThresholds } from '$lib/workspace-types';
 
 	interface Props {
 		matchScore: number;

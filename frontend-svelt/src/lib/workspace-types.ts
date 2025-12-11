@@ -14,33 +14,30 @@ export interface UploadResult {
 	files?: UploadFileMeta[];
 }
 
-export interface OcrMatch {
-	voterId: string;
-	registeredName: string;
-	registeredAddress: string;
-	ocrPredictedName: string;
-	predictionScore: number; // 0..1
-	nameDistance?: number;
-	predictedAddress?: string;
-	addressDistance?: number;
-	ward?: string;
-	petitionPageNumber: number;
-	petitionRowNumber: number;
-	matchRank: number;
+export enum MatchValueFormatKeys {
+	MATCH_SCORE = 'match_score'
+}
+
+export type MatchValueTypes = string | number | boolean | null;
+export interface MatchRow {
+	row_idx: number;
+	// A row value could be a set of the following configurations
+	[key: string]: MatchValueTypes;
 }
 
 export interface MatchResults {
 	matchColumns: MatchColumn[];
-	matchRecords: OcrMatch[];
+	matchRecords: MatchRow[];
 	timestamp: string;
 }
 
 export class MatchColumn {
 	public readonly name: string;
-	public readonly sort?: (first: OcrMatch, second: OcrMatch) => number;
+	public readonly sort?: (first: MatchRow, second: MatchRow) => number;
 	public readonly isSortable: boolean;
 
-	constructor(name: string, sort?: (first: OcrMatch, second: OcrMatch) => number) {
+	//TODO have sorting factories and selector?
+	constructor(name: string, sort?: (first: MatchRow, second: MatchRow) => number) {
 		this.name = name;
 		this.sort = sort;
 		this.isSortable = typeof sort !== 'undefined';

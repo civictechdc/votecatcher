@@ -16,15 +16,17 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import structlog
+from app.events.matching_task_events import MatchingTaskMonitor
 from app.logging.app_logger import AppLogger
 from app.matching.match_columns import MatchColumns
+from app.matching.match_repository import EntryMatchRepository
 from app.matching.response_adapter import (
     OcrMatchResults,
     create_ocr_match_result_response,
 )
-from app.ocr.data.ocr_repository import OcrResultItem
-from app.ocr.data_model import OCREntry
+from app.ocr.data.data_models import OCREntry, OcrResultItem
 from app.ocr.ocr_config import CropConfig, get_current_crop_config
+from app.ocr.ocr_manager import ReadOcrResult
 from dotenv import load_dotenv
 from pandas import DataFrame
 from pandas.core.frame import DataFrame
@@ -225,10 +227,6 @@ def create_ocr_matched_df(
     ):
         batch: DataFrame = ocr_df.iloc[batch_start : batch_start + batch_size]
 
-        names: list[str] = batch[match_columns.OCR_NAME].astype(str).tolist()
-        addrs: list[str] = batch[match_columns.OCR_ADDRESS].astype(str).tolist()
-        voters: list[DataFrame] = [select_voter_records] * len(names)
-
         with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
             futures = [
                 executor.submit(
@@ -320,18 +318,36 @@ def create_ocr_matched_df(
 
 
 async def perform_fuzzy_matching(
-    ocr_results: Iterable[OcrResultItem], voter_records: DataFrame
+    ocr_results: Iterable[ReadOcrResult],
+    voter_records: DataFrame,
 ) -> DataFrame:
 
-    result_data: list[dict[str, Any]] = [
-        _transform_ocr_results_to_df(item) for item in ocr_results
-    ]
-    ocr_df: DataFrame = pd.DataFrame(data=result_data, dtype=pd.StringDtype)
+    res_list: list[dict[str, str]] = []
+    for res in ocr_results:
+
+        res_item: dict[str, str] = {}
+        for part in res.result_parts:
+
+            field_name: str = part["field_name"]
+
+            if field_name.casefold() == "name":
+                field_name = MatchColumns.OCR_NAME
+            elif "address" in field_name.casefold():
+                field_name = MatchColumns.OCR_ADDRESS
+            res_item[field_name] = str(part["value"])
+
+        res_item[MatchColumns.PAGE_NUMBER] = str(res.page_num)
+        res_item[MatchColumns.ROW_NUMBER] = str(res.row_num)
+        res_item[MatchColumns.FILE_NAME] = "scan file"
+
+        res_list.append(res_item)
+
+    ocr_df: DataFrame = pd.DataFrame(data=res_list, dtype=pd.StringDtype)
 
     logger.debug(f"perform_fuzzy_matching\n:{ocr_df.head()}")
 
     # TODO Separate fuzzy match configuration
-    fuzzy_threshold = get_current_crop_config().BASE_THRESHOLD
+    fuzzy_threshold: int | float = get_current_crop_config().BASE_THRESHOLD
 
     fuzzy_match_df: DataFrame = create_ocr_matched_df(
         select_voter_records=voter_records, ocr_df=ocr_df, threshold=fuzzy_threshold

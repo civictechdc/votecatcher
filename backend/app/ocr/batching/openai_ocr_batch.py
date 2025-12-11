@@ -11,9 +11,9 @@ import structlog
 from app.logging.app_logger import AppLogger
 from app.ocr.batching.batch_ocr_client import BatchJobStatus, BatchOcrClient, JobStatus
 from app.ocr.batching.request_types import BatchRequestPayload, Payload
-from app.ocr.data.ocr_repository import OcrResultItem, OcrResultRepository
-from app.ocr.data_model import OCREntry
-from app.ocr.ocr_client_factory import OpenAiConfig
+from app.ocr.data.data_models import OCREntry, OcrResultItem
+from app.ocr.data.ocr_repository import OcrResultRepository
+from app.settings.settings_repo import OpenAiConfig
 from openai import OpenAI
 from openai.lib._pydantic import to_strict_json_schema
 from openai.types.batch import Batch

@@ -1,17 +1,25 @@
 //OCR Matching
 export enum MatchJobStatus {
+	NOT_STARTED = 'not started',
 	PENDING = 'pending',
-	IN_PROGRESS = 'in_progress',
+	OCR_PENDING = 'ocr_pending',
+	OCR_IN_PROGRESS = 'ocr extract',
+	MATCHING = 'matching',
 	COMPLETED = 'completed',
-	FAILED = 'failed',
-	EXPIRED = 'expired',
-	CANCELLED = 'cancelled'
+	OCR_COMPLETED = 'ocr_completed',
+	OCR_FAILED = 'ocr_failed',
+	MATCHING_FAILED = 'matching failed',
+	OCR_TIMED_OUT = 'ocr timed out',
+	OCR_CANCELLED = 'ocr cancelled',
+	CANCELLED = 'cancelled',
+	TIMED_OUT = 'timed out',
+	MISC_ERROR = 'error'
 }
 
 export interface MatchingProgressResponse {
 	campaign_id: string;
 	started_at: Date;
-	ocr_job_id: string;
+	task_id: string;
 	ocr_provider: string;
 	last_updated_at?: Date;
 	ended_at?: Date;
@@ -20,24 +28,29 @@ export interface MatchingProgressResponse {
 }
 
 //OCR Results
-export interface OcrMatchValueItem {
+export interface MatchValueItemResponse {
 	value: string;
 	column_idx: number;
 	data_type: string;
 }
 
-export interface OcrMatchColumnSpec {
+export interface MatchColumnSpecResponse {
 	name: string;
 	position_idx: number;
 	data_type: string;
 }
 
-export interface OcrMatchRow {
+export interface MatchRowResponse {
 	row_idx: number;
-	values: Array<OcrMatchValueItem>;
+	values: MatchValueItemResponse[];
 }
 
-export interface OcrMatchResults {
-	column_data: Array<OcrMatchColumnSpec>;
-	result_data: Array<OcrMatchRow>;
+export interface MatchResultResponse {
+	column_data: MatchColumnSpecResponse[];
+	result_data: MatchRowResponse[];
+}
+
+export interface MatchResponse {
+	results: MatchResultResponse;
+	stats: Record<string, any>;
 }

@@ -1,4 +1,4 @@
-import type { OcrMatch } from '$lib/workspace-types';
+import type { MatchRow } from '$lib/workspace-types';
 import { DEMO_MODE } from '$env/static/private';
 
 export const isDemoMode = (): boolean => {
@@ -6,5 +6,5 @@ export const isDemoMode = (): boolean => {
 };
 
 export type DemoState = {
-	matchList: OcrMatch[];
+	matchList: MatchRow[];
 };

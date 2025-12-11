@@ -3,8 +3,8 @@ from typing import Any, override
 
 import structlog
 from app.data.memory_db import get_memory_db
-from app.ocr.data.ocr_repository import OcrResultItem, OcrResultRepository
-from app.ocr.data_model import OCREntry
+from app.ocr.data.data_models import OCREntry, OcrResultItem
+from app.ocr.data.ocr_repository import OcrResultRepository
 
 logger = structlog.getLogger(__name__)
 

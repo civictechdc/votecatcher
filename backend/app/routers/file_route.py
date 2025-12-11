@@ -1,16 +1,34 @@
+import asyncio
 import os
 import shutil
 from enum import Enum
 from io import BytesIO
+from itertools import count
+from pathlib import Path
 from typing import Annotated, Any
 
+import aiofiles
+import fitz
 import pandas as pd
+from _asyncio import Task
+from app.campaign.campaign_repository import CampaignRepository, ReadCampaign
 from app.data.memory_db import get_memory_db
+from app.dependencies import (
+    get_campaign_repository,
+    get_file_repository,
+    get_scanned_documents_repository,
+)
+from app.files.file_repository import (
+    CreatePetitionScan,
+    RegisteredVoterRepository,
+    ScannedPetitionRepository,
+)
 from app.schemas import (
     PetitionFileUploadResponse,
     SuccessResponse,
     VoterRecordsUploadResponse,
 )
+from app.settings.env_settings import AppSettings, get_settings
 from app.utils import logger
 from app.voter.voter_processor import (
     RegisteredVotersData,
@@ -22,6 +40,7 @@ from fastapi.datastructures import UploadFile
 from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse
 from fastapi.routing import APIRoute
+from pymupdf import Document
 
 router: APIRouter = APIRouter(prefix="/upload", tags=["File Upload"])
 
@@ -42,6 +61,30 @@ async def _save_petition_to_temp(file: UploadFile, file_name: str):
         logger.info(f"{file.filename} saved to temporary directory")
 
 
+async def _process_pdf_async(file: UploadFile, dest_path: Path) -> tuple[Path, int]:
+    try:
+        async with aiofiles.open(dest_path, "wb") as buffer:
+            while content := await file.read(1024 * 1024):  # Read in 1MB chunks
+                await buffer.write(content)
+            logger.debug(f"Saved {dest_path.name} to {dest_path}")
+
+        loop = asyncio.get_event_loop()
+        page_count: int = await loop.run_in_executor(
+            None, _get_pdf_page_count, dest_path
+        )
+        logger.debug(f"PDF {dest_path.name} has {page_count} pages.")
+
+        return (dest_path, page_count)
+    except FileNotFoundError as fne:
+        logger.error(f"Error: Source file not found at {dest_path}")
+        raise fne
+    except Exception as e:
+        logger.error(f"An error occurred while copying {file.filename}: {e}")
+        raise e
+    finally:
+        await file.close()
+
+
 @router.delete("/clear")
 def clear_all_files(request: Request):
     """
@@ -60,6 +103,9 @@ def clear_all_files(request: Request):
 async def upload_voter_records_file(
     file: Annotated[UploadFile, File()],
     db_mem: Annotated[dict[str, Any], Depends(get_memory_db)],
+    settings: Annotated[AppSettings, Depends(get_settings)],
+    campaign_repo: Annotated[CampaignRepository, Depends(get_campaign_repository)],
+    voter_list_repo: Annotated[RegisteredVoterRepository, Depends(get_file_repository)],
 ) -> VoterRecordsUploadResponse:
 
     if not file.filename:
@@ -74,7 +120,34 @@ async def upload_voter_records_file(
             detail=f"Invalid file type {file.filename}. Only .csv files are allowed.",
         )
 
+    campaign: ReadCampaign = await campaign_repo.fetch_campaign(unique_name="demo")
+
+    voter_dir: Path = (
+        settings.local_campaign_base_dir()
+        .joinpath(campaign.unique_name)
+        .joinpath(settings.registration_dir)
+    )
+
+    if not voter_dir.exists():
+        voter_dir.mkdir(parents=True, exist_ok=True)
+
+    voter_file: Path = voter_dir.joinpath(file.filename)
+    async with aiofiles.open(voter_file, "wb") as out_file:
+        content = await file.read()  # Read in 1KB chunks
+        await out_file.write(content)
+
+    # Reset upload stream so we can read it again when saving to disk
+    # UploadFile.file is a file-like object (SpooledTemporaryFile) so use .seek(0)
+    try:
+        file.file.seek(0)
+    except Exception:
+        # fa: ReadCampaignllback for implementations that might expose async seek in the future
+        await file.seek(0)  # type: ignore
     data: RegisteredVotersData = await process_voter_data(file)
+
+    await voter_list_repo.save_registered_voter_list(
+        region_id=campaign.region_id, file_path=voter_file
+    )
 
     db_mem["voter_list"] = data
 
@@ -90,6 +163,12 @@ async def upload_voter_records_file(
 def clear_voter_records() -> SuccessResponse:
     DEMO_VOTER_RECORD_STATE = None
     return SuccessResponse(message="Voter records successfully cleared.")
+
+
+def _get_pdf_page_count(pdf_path) -> int:
+    # Synchronous PyMuPDF operations
+    with fitz.open(pdf_path) as doc:
+        return doc.page_count
 
 
 @router.post("/petition-entry")
@@ -115,6 +194,11 @@ async def upload_petition_entry(file: UploadFile) -> PetitionFileUploadResponse:
 @router.post("/petition-entries")
 async def create_upload_files(
     files: Annotated[list[UploadFile], File()],
+    settings: Annotated[AppSettings, Depends(get_settings)],
+    campaign_repo: Annotated[CampaignRepository, Depends(get_campaign_repository)],
+    scan_repo: Annotated[
+        ScannedPetitionRepository, Depends(get_scanned_documents_repository)
+    ],
 ) -> SuccessResponse:
 
     if not files or len(files) == 0:
@@ -131,9 +215,52 @@ async def create_upload_files(
                 detail=f"File {file.filename} was not of type .pdf",
             )
 
-        await _save_petition_to_temp(file, file_name=f"temp_petition_{idx + 1}")
+    campaign: ReadCampaign = await campaign_repo.fetch_campaign("demo")
+    scanned_doc_dir: Path = (
+        settings.local_campaign_base_dir()
+        .joinpath(campaign.unique_name)
+        .joinpath(settings.petition_dir)
+    )
 
-    return SuccessResponse(message=f"{len(files)} petitions successfully uploaded.")
+    if not scanned_doc_dir.exists():
+        scanned_doc_dir.mkdir(parents=True, exist_ok=True)
+
+    magnitude: int = max(len(str(len(files))), 2)
+
+    file_copy_task: list[Task[tuple[Path, int]]] = []
+    for idx, file in enumerate[UploadFile](files):
+        file_dest: Path = scanned_doc_dir.joinpath(
+            f"{idx + 1:0{magnitude}d}-{file.filename}"
+        )
+        task: Task[tuple[Path, int]] = asyncio.create_task(
+            _process_pdf_async(file, file_dest)
+        )
+        file_copy_task.append(task)
+    try:
+        saved_files: list[tuple[Path, int]] = await asyncio.gather(*file_copy_task)
+        logger.info(f"Saved {len(saved_files)} scanned documents.")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save {len(files)} files on server.",
+        )
+
+    file_records: list[CreatePetitionScan] = [
+        CreatePetitionScan(
+            file_name=doc_path.name,
+            file_path=str(doc_path),
+            campaign_id=campaign.unique_name,
+            page_count=count,
+        )
+        for doc_path, count in saved_files
+    ]
+
+    await scan_repo.save_scanned_petitions(file_records)
+    # await _save_petition_to_temp(file, file_name=f"temp_petition_{idx + 1}")
+
+    return SuccessResponse(
+        message=f"{len(saved_files)} petitions successfully uploaded."
+    )
 
 
 @router.delete("/clear-petitions")

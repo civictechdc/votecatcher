@@ -48,7 +48,6 @@ def create_ocr_match_result_response(match_results: DataFrame) -> OcrMatchResult
 
     results_data: list[OcrMatchRow] = []
     for i, (idx, row) in enumerate(match_results.iterrows()):
-        logger.debug(f"Iterating on index {idx} with row: {row}")
         entry: OcrMatchRow = OcrMatchRow(
             row_idx=i,
             values=[

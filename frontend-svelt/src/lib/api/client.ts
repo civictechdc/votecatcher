@@ -2,7 +2,11 @@
 // All direct Supabase calls in your previous app are replaced with REST endpoint calls.
 // For now endpoints are mocked under src/routes/api/*.
 import { VITE_API_URL } from '$env/static/private';
-import type { OcrMatchResults, MatchingProgressResponse } from '$lib/api/response-types';
+import type {
+	MatchResponse,
+	MatchResultResponse,
+	MatchingProgressResponse
+} from '$lib/api/response-types';
 
 const BASE_URL = VITE_API_URL ?? '';
 
@@ -209,7 +213,7 @@ export const api = {
 		return new EventSource(url);
 	},
 	demoGetMatchingResults: (job_id: string) =>
-		request<OcrMatchResults>(
+		request<MatchResponse>(
 			`${BASE_URL}api/workspace/ocr/results/demo/${encodeURIComponent(job_id)}`,
 			{
 				method: 'GET',

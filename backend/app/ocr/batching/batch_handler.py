@@ -4,7 +4,7 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from multiprocessing import Value
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import structlog
 from app.logging.app_logger import AppLogger
@@ -23,9 +23,9 @@ from app.ocr.batching.request_types import (
     BatchRequestPayload,
     Payload,
 )
+from app.ocr.data.data_models import EncodedPetitionPage, OcrResultItem
 from app.ocr.data.ocr_memory_storage import get_memory_ocr_result_repository
-from app.ocr.data.ocr_repository import OcrResultItem, OcrResultRepository
-from app.ocr.data_model import EncodedPetitionPage, OCREntry
+from app.ocr.data.ocr_repository import OcrResultRepository
 from app.ocr.ocr_client_factory import TEXT_PROMPTS
 from app.settings import GeminiAiConfig, MistralAiConfig, OpenAiConfig
 from app.settings.settings_repo import override_settings

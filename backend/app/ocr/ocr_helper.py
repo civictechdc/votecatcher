@@ -2,29 +2,44 @@ import asyncio
 import base64
 import logging
 import os
-from collections.abc import AsyncGenerator
-from concurrent.futures import ProcessPoolExecutor
+from collections.abc import AsyncGenerator, Coroutine
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import datetime
+from functools import partial
 from logging import Formatter
 from math import floor
 from multiprocessing import cpu_count
+from operator import is_
 from pathlib import Path
+from poplib import CR
+from types import CoroutineType
 from typing import Any
 
+import aiofiles
 import fitz  # Add this import at the top with other imports
 import pandas as pd
+import PIL
 import pymupdf
 from _asyncio import Task
+from app.campaign.campaign_repository import ReadCampaign
+from app.events.matching_task_events import MatchingTaskMonitor
+from app.files.file_repository import (
+    CreatePetitionCrop,
+    ReadPetitionScan,
+    ScannedPetitionRepository,
+)
 from app.logging.app_logger import AppLogger
+from app.matching.match_repository import MatchingTask, is_terminal_matching_status
 from app.ocr import extract_from_encoding_async
 from app.ocr.batching.batch_handler import (
     create_batch_payload,
     observe_batch_job_status,
 )
 from app.ocr.batching.batch_ocr_client import BatchJobStatus, JobStatus
-from app.ocr.batching.request_types import BatchEncodedImage, BatchOcrRequestInput
-from app.ocr.data_model import EncodedPetitionDocuments, EncodedPetitionPage
+from app.ocr.batching.request_types import BatchOcrRequestInput
+from app.ocr.data.data_models import EncodedPetitionDocuments, EncodedPetitionPage
 from app.ocr.ocr_config import CropConfig, get_current_crop_config
+from app.ocr.ocr_manager import OcrHandler, OcrRequest
 from app.ocr.response_types import (
     MatchingJobStatusProgress,
     adapt_ocr_batch_status_to_progress_response,
@@ -58,21 +73,42 @@ HELICONE_PERSONAL_API_KEY = os.getenv("HELICONE_PERSONAL_API_KEY")
 OCR_COLUMNS: list[str] = ["OCR Name", "OCR Address", "OCR Ward"]
 
 
-def encode_document_pages(file_path: Path) -> list[EncodedPetitionPage]:
+def _save_cropped_image(byte_and_path: tuple[bytes, Path]) -> None:
+    (img_bytes, dest_path) = byte_and_path
+    try:
+        with open(dest_path, "wb") as f:
+            f.write(img_bytes)
+        logger.debug(f"Saved {dest_path.name}")
+    except Exception as e:
+        logger.debug(f"Error saving {dest_path.name}: {e}")
+    # Image.save handles file closing internally
+
+
+def encode_document_pages(
+    campaign_id: str,
+    scan: ReadPetitionScan,
+    img_dir: Path,
+) -> tuple[list[EncodedPetitionPage], list[CreatePetitionCrop]]:
     """Convert a PDF's pages to encoded images, cropping to target area.
     Returns list of base64 encoded image strings."""
 
     crop_config: CropConfig = get_current_crop_config()
+    file_path: Path = Path(scan.file_path)
 
     logger.info(f"Starting PDF conversion for file: {file_path}")
     encoded_image_list: list[EncodedPetitionPage] = []
+
+    # Save the crop database entries
+    cropped_entries: list[CreatePetitionCrop] = []
+
     # Open PDF document
     with fitz.open(filename=file_path) as doc:
 
-        total_pages = len(doc)
+        total_pages: int = len(doc)
 
         logger.info(f"PDF opened successfully. Total pages: {total_pages}")
         logger.debug("\nCropping Images and Converting to Bytes Objects")
+        page_magnitude: int = len(str(total_pages))
         # Process each page
         for page_num in range(total_pages):
             page: Page = doc[page_num]
@@ -95,15 +131,40 @@ def encode_document_pages(file_path: Path) -> list[EncodedPetitionPage]:
                 colorspace=fitz.csGRAY,  # convert to grayscale
                 clip=crop_rect,  # crop to our target area
             )
+            file_dest: Path = img_dir.joinpath(
+                f"{page_num:0{page_magnitude}d}-{file_path.stem}.jpeg"
+            )
 
             # Convert to bytes and encode
             img_bytes: bytes = pix.tobytes(output="jpeg")
+            # Save cropped image asynchronously
+            try:
+                file_dest.parent.mkdir(parents=True, exist_ok=True)
+                with open(file_dest, "wb") as f:
+                    f.write(img_bytes)
+                logger.debug(f"Saved {file_dest.name}")
+            except Exception as e:
+                logger.debug(f"Error saving {file_dest.name}: {e}")
+
+            cropped_entries.append(
+                CreatePetitionCrop(
+                    file_path=str(file_dest),
+                    file_name=file_dest.name,
+                    page_number=page_num,
+                    top_crop=crop_config.TOP_CROP,
+                    bottom_crop=crop_config.BOTTOM_CROP,
+                    petition_scan_id=scan.id,
+                    campaign_id=campaign_id,
+                )
+            )
             encoded: str = base64.b64encode(img_bytes).decode("utf-8")
             encoded_page: EncodedPetitionPage = EncodedPetitionPage(
                 page_num=page_num,
                 encoded_page=encoded,
+                image_path=str(file_dest),
                 petition_file_name=file_path.name,
                 petition_file_page_total=total_pages,
+                scan_id=scan.id,
             )
             logger.debug(f"Encoded: {encoded}")
             # Adding each cropped encoded page to the list
@@ -112,7 +173,8 @@ def encode_document_pages(file_path: Path) -> list[EncodedPetitionPage]:
         logger.info(
             f"Completed encoding for {file_path.name}. Generated {len(encoded_image_list)} encoded pages for OCR"
         )
-    return encoded_image_list
+
+    return (encoded_image_list, cropped_entries)
 
 
 # function for adding data
@@ -255,10 +317,15 @@ async def collect_ocr_data(
 
 
 async def create_batched_ocr_job(
-    campaign_id: str, files: list[Path]
+    campaign_data: ReadCampaign,
+    scans: list[ReadPetitionScan],
+    scan_repo: ScannedPetitionRepository,
+    crop_dir: Path,
+    ocr_handler: OcrHandler,
+    ocr_provider_id: str,
+    task_id: str,
 ) -> MatchingJobStatusProgress:
     total_pages = 0
-    ocr_dfs: list[pd.DataFrame] = []
     """
     1 - List of files belonging to the same campaign
     2 - For each file, encoded the pages
@@ -266,24 +333,74 @@ async def create_batched_ocr_job(
     4 - Submit the whole list to OCR
     5 - OCR iterates through each set of encoded files
     """
+
     pages: list[EncodedPetitionPage] = []
-    with ProcessPoolExecutor() as executor:
-        for encoded_file_pages in executor.map(encode_document_pages, files):
+    # partial_encode = partial(
+    #     encode_document_pages,
+    #     campaign_id=campaign_data.unique_name,
+    #     crop_scan_repo=scan_repo,
+    #     img_dir=crop_dir,
+    # )
+
+    all_cropped_entries: list[CreatePetitionCrop] = []
+
+    def _worker(
+        scan: ReadPetitionScan,
+    ) -> tuple[list[EncodedPetitionPage], list[CreatePetitionCrop]]:
+        return encode_document_pages(campaign_data.unique_name, scan, crop_dir)
+
+    with ThreadPoolExecutor() as executor:
+        for encoded_file_pages, cropped_entries in executor.map(_worker, scans):
             total_pages += len(encoded_file_pages)
             pages.extend(encoded_file_pages)
+            all_cropped_entries.extend(cropped_entries)
+
+    if all_cropped_entries:
+        await scan_repo.save_cropped_assets(all_cropped_entries)
 
     all_encoded_pages: EncodedPetitionDocuments = EncodedPetitionDocuments(
-        campaign_id=campaign_id, encoded_pages=pages
+        campaign_id=campaign_data.unique_name, encoded_pages=pages
     )
 
     request_data: BatchOcrRequestInput = BatchOcrRequestInput(
-        campaign_id=campaign_id, encoded_petition_pages=all_encoded_pages
+        campaign_id=campaign_data.unique_name, encoded_petition_pages=all_encoded_pages
     )
 
+    """
     ocr_status: BatchJobStatus = await create_batch_payload(
         load_settings(enable_env_override=True).selected_config, request_data
     )
-    return adapt_ocr_batch_status_to_progress_response(ocr_status)
+    """
+
+    request: OcrRequest = OcrRequest(
+        campaign_id=campaign_data.unique_name,
+        task_id=task_id,
+        provider_id=ocr_provider_id,
+        encoded_pages=all_encoded_pages.encoded_pages,
+    )
+
+    task: MatchingTask = await ocr_handler.start_ocr_job(request)
+
+    return adapt_ocr_batch_status_to_progress_response(task)
+
+
+async def emit_matching_job_status(
+    task_id: str, matching_task_monitor: MatchingTaskMonitor
+) -> AsyncGenerator[str, str]:
+    try:
+        async for task in matching_task_monitor.monitor_job(task_id):
+            response: MatchingJobStatusProgress = (
+                adapt_ocr_batch_status_to_progress_response(task)
+            )
+            yield response.model_dump_json()
+            if is_terminal_matching_status(task.status):
+                logger.debug(f"Task {task.id} ended with status: {task.status}")
+                break
+
+            await asyncio.sleep(5)  # 5 seconds poll rate
+    except Exception as e:
+        logger.error(f"Error monitoring matching job {task_id}: {e}")
+        raise e
 
 
 async def emit_batch_job_status(
@@ -301,9 +418,8 @@ async def emit_batch_job_status(
 
                 yield MatchingJobStatusProgress(
                     campaign_id=job.campaign_id,
-                    ocr_provider=job.provider_id,
                     started_at=job.started_at,
-                    ocr_job_id=job.job_id,
+                    task_id=job.job_id,
                     job_status=job.status,
                     last_updated_at=job.last_updated_at,
                     failure_reason=job.error if job.error else None,
@@ -313,9 +429,8 @@ async def emit_batch_job_status(
             case _:
                 yield MatchingJobStatusProgress(
                     campaign_id=job.campaign_id,
-                    ocr_provider=job.provider_id,
                     started_at=job.started_at,
-                    ocr_job_id=job.job_id,
+                    task_id=job.job_id,
                     last_updated_at=job.last_updated_at,
                     job_status=job.status,
                 ).model_dump_json()
@@ -344,8 +459,9 @@ async def create_ocr_results(
     for l in encoded_batches:
         encoded.append(l.encoded_page)
 
-    create_batch_payload(
-        load_settings(enable_env_override=True).selected_config, encoded
+    payload: BatchJobStatus = await create_batch_payload(
+        config=load_settings(enable_env_override=True).selected_config,
+        request_data=encoded,
     )
     return ocr_dfs
 

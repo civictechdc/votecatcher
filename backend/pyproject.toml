@@ -14,11 +14,15 @@ maintainers = [
 ]
 license = "MIT"
 dependencies = [
+    "aiofiles>=25.1.0",
+    "aiosqlite>=0.21.0",
     "argparse>=1.4.0",
     "asgi-correlation-id>=4.3.4",
     "claude-agent-sdk>=0.1.6",
     "dotenv>=0.9.9",
+    "email-validator>=2.3.0",
     "faker>=37.12.0",
+    "fastapi-injectable>=1.4.4",
     "fastapi[standard]>=0.115.12",
     "google-genai>=1.48.0",
     "httpx>=0.28.1",
@@ -34,7 +38,7 @@ dependencies = [
     "openai>=2.7.1",
     "pandas>=2.2.3",
     "pillow>=11.1.0",
-    "psycopg2-binary>=2.9.11",
+    "psycopg[binary,pool]>=3.2.13",
     "pwdlib[argon2]>=0.3.0",
     "pydantic>=2.11.2",
     "pydantic-settings>=2.12.0",
@@ -45,6 +49,9 @@ dependencies = [
     "requests>=2.32.3",
     "rich>=14.2.0",
     "scikit-learn>=1.6.1",
+    "slowapi>=0.1.9",
+    "sqlalchemy>=2.0.44",
+    "sqlmodel>=0.0.27",
     "streamlit>=1.44.1",
     "streamlit-shadcn-ui>=0.1.18",
     "structlog>=25.2.0",
@@ -59,6 +66,7 @@ dependencies = [
 dev = [
     "basedpyright>=1.32.1",
     "black>=25.1.0",
+    "devtools>=0.12.2",
     "flake8>=7.2.0",
     "pandas-stubs>=2.3.2.250926",
     "pymupdf-stubs>=1.26.1.post1",
@@ -79,14 +87,24 @@ testpaths = ["tests"]
 pythonpath = "app"
 addopts = ["--import-mode=importlib"]
 
+[tool.black]
+line-length = 88
+target-version = ['py313']
 
 [tool.ruff]
+line-length = 88
+target-version = "py313"
+lint.select = ["E", "F", "W"]
+lint.ignore = ["E203"]
 exclude = ["notebooks", "cross_referencing_tests"]
+
+
+[tool.ruff.format]
+indent-style = "tab"
+docstring-code-format = true
 
 [tool.basedpyright]
 include = ["app"]
 exclude = ["**/node_modules", "**/__pycache__"]
-venvPath = "./.venv"
-venv = ".venv"
 reportMissingImports = true
 reportMissingTypeStubs = false

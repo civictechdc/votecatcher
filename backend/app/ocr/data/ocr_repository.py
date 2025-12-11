@@ -1,23 +1,17 @@
-from collections.abc import Iterable
+from collections.abc import AsyncGenerator, Iterable
 from dataclasses import dataclass
 from typing import Protocol
 
-from app.ocr.data_model import OCREntry
+from app.data.database.model.ocr_model import (
+    CreateOcrJob,
+    OcrJob,
+    ReadOcrJobStatus,
+    UpdateOcrJobStatus,
+)
+from app.matching.match_repository import MatchingTask
+from app.ocr.batching.batch_ocr_client import BatchOcrClient, JobStatus
+from app.ocr.data.data_models import OcrResultItem
 from pydantic import BaseModel, Field
-
-
-class OcrResultItem(BaseModel):
-    campaign_id: str
-    file_name: str
-    page_num: int
-    row_num: int
-    ocr_entry: OCREntry
-
-
-class OcrResult(BaseModel):
-    campaign_id: str
-    columns_order: list[str] = Field(default_factory=list)
-    result_items: list[OcrResultItem] = Field(default_factory=list)
 
 
 class OcrResultRepository(Protocol):
@@ -29,3 +23,42 @@ class OcrResultRepository(Protocol):
 
     async def fetch_results(self, campaign_id: str) -> Iterable[OcrResultItem]:
         raise NotImplementedError(f"This function should be implemented")
+
+
+class OcrJobRepository(Protocol):
+
+    async def save_ocr_job(self, ocr_job: CreateOcrJob) -> OcrJob: ...
+
+    async def update_ocr_job_status(self, ocr_job: UpdateOcrJobStatus) -> OcrJob: ...
+
+    async def get_ocr_job_status(self, job_id: str) -> ReadOcrJobStatus: ...
+
+
+@dataclass
+class RegisterOcrJob:
+    job_id: str
+    campaign_id: str
+    provider_id: str
+    request_payload: str
+    crop_file_id: str
+
+
+@dataclass
+class UpdateOcrJob:
+    job_id: str
+    status: JobStatus
+    error_message: str | None = None
+    status_message: str | None = None
+
+
+class OcrManager(Protocol):
+
+    async def start_ocr_job(
+        self, ocr_client: BatchOcrClient, ocr_data: RegisterOcrJob
+    ) -> MatchingTask: ...
+
+    async def update_status(self, ocr_status: UpdateOcrJob) -> MatchingTask: ...
+
+    async def get_job_status(self, job_id: str) -> MatchingTask: ...
+
+    def monitor_job(self, job_id: str) -> AsyncGenerator[MatchingTask, None]: ...

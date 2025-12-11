@@ -21,8 +21,10 @@ class EncodedPetitionPage:
     petition_file_name: str
     page_num: int
     encoded_page: str
+    image_path: str
     # For tracking
     petition_file_page_total: int
+    scan_id: str
 
 
 @dataclass
@@ -40,3 +42,17 @@ class EncodedPetitionDocuments:
     @property
     def total_pages(self) -> int:
         return len(self.encoded_pages)
+
+
+class OcrResultItem(BaseModel):
+    campaign_id: str
+    file_name: str
+    page_num: int
+    row_num: int
+    ocr_entry: OCREntry
+
+
+class OcrResult(BaseModel):
+    campaign_id: str
+    columns_order: list[str] = Field(default_factory=list)
+    result_items: list[OcrResultItem] = Field(default_factory=list)
