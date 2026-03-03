@@ -18,12 +18,12 @@
 | 6. Frontend - Fix Results Page | Completed | 2 | 2 | 2026-03-02T16:05 |
 | 7. Frontend - API Layer | Completed | 2 | 2 | 2026-03-03T00:20 |
 | 7.5. Feature Flag System | Completed | 4 | 4 | 2026-03-03T00:45 |
-| 8. Frontend - Verification | Not Started | 0 | 1 | - |
+| 8. Frontend - Verification | Not Started | 0 | 3 | - |
 | 9. Documentation | Not Started | 0 | 1 | - |
 | 10. Verification Script | Not Started | 0 | 1 | - |
 | 11. Docker/DevContainer | Not Started | 0 | 10 | - |
 
-**Overall Progress:** 16 / 29 tasks (55%)
+**Overall Progress:** 16 / 31 tasks (52%)
 
 ---
 
@@ -132,7 +132,9 @@ When you encounter ANY issue, ambiguity, or blocker:
 
 | Task | Status | Commit | Notes | Updated |
 |------|--------|--------|-------|---------|
-| 8.1 Run all frontend checks | Not Started | - | - | - |
+| 8.1 Add backend feature flag tests | Not Started | - | Create tests/test_config.py for feature flag settings | - |
+| 8.2 Add frontend feature flag tests | Not Started | - | Create featureFlags.test.ts for store functionality | - |
+| 8.3 Run all frontend checks | Not Started | - | Type check, lint, format, unit tests, build | - |
 
 ### Phase 9: Documentation
 

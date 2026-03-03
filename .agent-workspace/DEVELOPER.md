@@ -2,34 +2,143 @@
 
 ## Context
 - **Branch:** refactor/svelte_frontend
-- **Progress:** 16/29 tasks (55%)
+- **Progress:** 16/31 tasks (52%)
 - **Plan:** `.agent-workspace/2026-03-02-fix-results-table.md`
 - **Last Phase Completed:** Phase 7.5 - Feature Flag System (4/4 tasks)
 
 ## Active Concerns
 None - all concerns resolved or noted (pre-existing issues out of scope).
 
-## Gap Identified
-
-❗️ **Missing Tests:** The feature flag system (Phase 7.5) was implemented without tests:
-- Backend: No `backend/tests/test_config.py` for feature flags
-- Frontend: No `frontend-svelt/src/lib/stores/featureFlags.test.ts`
-
-**Recommendation:** Add these tests as part of Phase 8 or as a separate tech debt item.
-
 ## Next Work
 
 ### Phase 8: Frontend - Verification
 
-**Run all frontend checks to verify Phases 4-7.5 are working correctly.**
+**Add feature flag tests and run all verification checks.**
 
 **Tasks:**
 
-1. **Task 8.1:** Run all frontend checks
+1. **Task 8.1:** Add backend feature flag tests
+   - Create: `backend/tests/test_config.py`
+   
+   **Test code:**
+   ```python
+   import pytest
+   from app.settings.env_settings import AppSettings
+
+   def test_feature_flags_defaults():
+       """Test default feature flag values."""
+       settings = AppSettings()
+       assert settings.enable_simulation is False
+       assert settings.enable_beta_features is False
+       assert settings.enable_debug_mode is False
+
+   def test_feature_flags_from_env(monkeypatch):
+       """Test loading feature flags from environment."""
+       monkeypatch.setenv("FEATURE_ENABLE_SIMULATION", "true")
+       monkeypatch.setenv("FEATURE_ENABLE_BETA_FEATURES", "true")
+       monkeypatch.setenv("FEATURE_ENABLE_DEBUG_MODE", "false")
+       
+       settings = AppSettings()
+       assert settings.enable_simulation is True
+       assert settings.enable_beta_features is True
+       assert settings.enable_debug_mode is False
+   ```
+   
+   **Run:** `cd backend && uv run pytest tests/test_config.py -v`
+   **Expected:** All tests pass
+
+2. **Task 8.2:** Add frontend feature flag tests
+   - Create: `frontend-svelt/src/lib/stores/featureFlags.test.ts`
+   
+   **Test code:**
+   ```typescript
+   import { describe, it, expect, beforeEach, vi } from 'vitest';
+   import { get } from 'svelte/store';
+   import { featureFlags, hasOverrides } from './featureFlags';
+
+   // Mock browser environment
+   vi.mock('$app/environment', () => ({
+     browser: true,
+   }));
+
+   describe('featureFlags', () => {
+     beforeEach(() => {
+       localStorage.clear();
+       // Reset store to defaults
+       featureFlags.resetAll();
+     });
+
+     it('loads default flags', async () => {
+       await featureFlags.load();
+       const flags = get(featureFlags);
+       expect(flags.simulationMode).toBeDefined();
+       expect(flags.betaFeatures).toBeDefined();
+       expect(flags.debugMode).toBeDefined();
+     });
+
+     it('toggles flags', () => {
+       featureFlags.toggle('simulationMode');
+       const flags = get(featureFlags);
+       expect(flags.simulationMode).toBe(true);
+       
+       featureFlags.toggle('simulationMode');
+       const flags2 = get(featureFlags);
+       expect(flags2.simulationMode).toBe(false);
+     });
+
+     it('sets flag values', () => {
+       featureFlags.setFlag('betaFeatures', true);
+       const flags = get(featureFlags);
+       expect(flags.betaFeatures).toBe(true);
+     });
+
+     it('persists overrides to localStorage', () => {
+       featureFlags.toggle('simulationMode');
+       const stored = localStorage.getItem('featureFlags_overrides');
+       expect(stored).toContain('"simulationMode":true');
+     });
+
+     it('resets individual flags', () => {
+       featureFlags.toggle('simulationMode');
+       featureFlags.reset('simulationMode');
+       const flags = get(featureFlags);
+       // Should be back to server default (false)
+       expect(flags.simulationMode).toBe(false);
+     });
+
+     it('resets all flags', () => {
+       featureFlags.toggle('simulationMode');
+       featureFlags.toggle('betaFeatures');
+       featureFlags.resetAll();
+       
+       const flags = get(featureFlags);
+       expect(flags.simulationMode).toBe(false);
+       expect(flags.betaFeatures).toBe(false);
+       
+       const overrides = localStorage.getItem('featureFlags_overrides');
+       expect(overrides).toBe('{}');
+     });
+
+     it('tracks hasOverrides', () => {
+       expect(get(hasOverrides)).toBe(false);
+       
+       featureFlags.toggle('simulationMode');
+       expect(get(hasOverrides)).toBe(true);
+       
+       featureFlags.resetAll();
+       expect(get(hasOverrides)).toBe(false);
+     });
+   });
+   ```
+   
+   **Run:** `cd frontend-svelt && bun run test:unit --run src/lib/stores/featureFlags.test.ts`
+   **Expected:** All tests pass
+
+3. **Task 8.3:** Run all frontend checks
    - Type check: `cd frontend-svelt && bun run check`
    - Lint: `cd frontend-svelt && bun run lint`
    - Format check: `cd frontend-svelt && bun run fmt:check`
-   - Unit tests: `cd frontend-svelt && bun run test:unit --run`
+   - All unit tests: `cd frontend-svelt && bun run test:unit --run`
    - Build: `cd frontend-svelt && bun run build`
    
    **Expected:** All checks pass, build succeeds
@@ -39,13 +148,6 @@ None - all concerns resolved or noted (pre-existing issues out of scope).
    - Fix issues
    - Re-run checks
    - Commit fixes
-
-2. **Optional Task 8.2:** Add feature flag tests
-   - Create: `frontend-svelt/src/lib/stores/featureFlags.test.ts`
-   - Test: load, toggle, setFlag, reset, resetAll, persistence
-   - Run: `cd frontend-svelt && bun run test:unit --run src/lib/stores/featureFlags.test.ts`
-   
-   **Note:** This is optional but recommended for code quality.
 
 **Version Requirements:**
 - Frontend: Svelte 5 runes ONLY (`$state`, `$derived`, `$props`)
