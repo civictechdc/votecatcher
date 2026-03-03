@@ -215,6 +215,35 @@ After reviewing progress (either from user request or session start), you MUST:
 - Frontend: Svelte 5 runes ONLY (`$state`, `$derived`, `$props`)
 - Backend: Python 3.12+ features
 
+**TDD Workflow - Continuous Test Runners:**
+
+For rapid feedback during development, use continuous test runners:
+
+**Frontend (Vitest watch mode):**
+```bash
+cd frontend-svelt
+bun run test:unit --watch  # Runs tests on file changes
+```
+
+**Backend (pytest-watcher):**
+```bash
+cd backend
+uv run pytest-watch  # Or: uv run ptw
+# Runs tests on file changes
+```
+
+**TDD Cycle:**
+1. Write failing test → See red
+2. Implement minimal code → See green
+3. Refactor → Keep green
+4. Repeat
+
+**Benefits:**
+- Immediate feedback on changes
+- Catches regressions instantly
+- Reduces context switching
+- Encourages small, focused commits
+
 **MANDATORY After Each Task:**
 1. Update `.agent-workspace/PROGRESS.md`:
    - Status: Not Started → In Progress → Completed
