@@ -12,6 +12,17 @@ const BASE_URL = VITE_API_URL ?? '';
 
 export type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
 
+// Extended options that allows plain objects as body (will be JSON stringified by fetchRaw)
+export type RequestOptions = Omit<RequestInit, 'body'> & { body?: unknown };
+
+// Options for the new-style request call
+export type RequestOptionsObject = {
+	opts: RequestOptions;
+	path?: string[];
+	query?: Record<string, string>;
+	base_url?: string;
+};
+
 // Middleware types
 export type RequestMiddleware = (
 	input: string,
@@ -72,15 +83,15 @@ async function fetchWithRetry(
 // Low-level fetch wrapper returning raw Response (applies middleware)
 export async function fetchRaw(
 	path: string,
-	opts: RequestInit = {},
+	opts: RequestOptions = {},
 	optsOverride?: { retries?: number }
 ) {
 	const resolved = path.startsWith('http')
 		? path
 		: `${BASE_URL}${path.startsWith('/') ? path : '/' + path}`;
 
-	// normalize init
-	let init: RequestInit = { credentials: 'include', ...opts };
+	// normalize init - cast body since we handle stringifying below
+	let init: RequestInit = { credentials: 'include', ...opts, body: opts.body as BodyInit | null | undefined };
 
 	// Let request middlewares transform init (e.g. auth headers)
 	init = await runRequestMiddlewares(resolved, init);
@@ -117,12 +128,35 @@ export async function fetchRaw(
 }
 
 // High-level request that returns ApiResult<T>
+// Supports two calling conventions for backward compatibility:
+// 1. Old: request<T>(path: string, opts?: RequestOptions)
+// 2. New: request<T>(RequestOptionsObject)
 export async function request<T = unknown>(
-	path: string,
-	opts?: RequestInit
+	pathOrOpts: string | RequestOptionsObject,
+	opts?: RequestOptions
 ): Promise<ApiResult<T>> {
 	try {
-		const res = await fetchRaw(path, opts);
+		let resolvedPath: string;
+		let requestOpts: RequestOptions;
+
+		if (typeof pathOrOpts === 'string') {
+			// Old calling convention: request(path, opts)
+			resolvedPath = pathOrOpts;
+			requestOpts = opts ?? {};
+		} else {
+			// New calling convention: request({ opts, path, query, base_url })
+			const { opts: reqOpts, path, query, base_url } = pathOrOpts;
+			const pathStr = path ? '/' + path.join('/') : '';
+			const queryString = query && Object.keys(query).length > 0 
+				? '?' + new URLSearchParams(query).toString() 
+				: '';
+			resolvedPath = base_url 
+				? `${base_url}${pathStr}${queryString}`
+				: `${BASE_URL}${pathStr}${queryString}`;
+			requestOpts = reqOpts;
+		}
+
+		const res = await fetchRaw(resolvedPath, requestOpts);
 		// try parse json, fall back to text
 		const contentType = res.headers.get('content-type') ?? '';
 		let parsed: unknown = undefined;
