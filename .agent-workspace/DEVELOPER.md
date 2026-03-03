@@ -2,40 +2,37 @@
 
 ## Context
 - **Branch:** refactor/svelte_frontend
-- **Progress:** 8/24 tasks (33%)
+- **Progress:** 10/24 tasks (42%)
 - **Plan:** `.agent-workspace/2026-03-02-fix-results-table.md`
-- **Last Phase Completed:** Phase 5 - Pagination (all 7 tests passing)
+- **Last Phase Completed:** Phase 6 - Fix Results Page (2/2 tasks passing)
 
 ## Active Concerns
 None - all concerns resolved or noted (pre-existing issues out of scope).
 
 ## Next Work
 
-### Phase 6: Frontend - Fix Results Page
+### Phase 7: Frontend - API Layer Update
 
-**This is the critical fix for the broken results table.**
+**This adds the simulate endpoint to the frontend API client.**
 
 **Tasks:**
 
-1. **Task 6.1:** Read current page implementation
-   - Read: `frontend-svelt/src/routes/workspace/[id]/+page.svelte`
-   - Identify the broken line 153-154 (incomplete `matchResults =` assignment)
-   - Note the existing structure and patterns
-   - No commit needed - research only
-
-2. **Task 6.2:** Update results page
-   - Modify: `frontend-svelt/src/routes/workspace/[id]/+page.svelte`
-   - See plan lines 871-1024 for implementation details
-   - **Critical fix:** Use `convertMatchResponseToMatchResults()` from `$lib/utils.ts`
+1. **Task 7.1:** Add simulate method to client
+   - Modify: `frontend-svelt/src/lib/api/client.ts`
+   - See plan lines 1028-1068 for implementation details
+   - Add `simulateOcrResults` method to api object
    
    **Key Changes:**
-   - Fix broken `onOcrJobCompleted()` function (lines 146-154)
-   - Add pagination state: `let pageSize = $state(25); let currentPage = $state(1);`
-   - Add simulation toggle: `let useSimulation = $state(false);`
-   - Add derived pagination: `const totalPages`, `const paginatedRows`
-   - Import Pagination component
-   - Wrap table rows with pagination
-   - Add simulation toggle UI
+   ```typescript
+   simulateOcrResults: (task_id: string) =>
+     request<MatchResponse>({
+       opts: {
+         method: 'GET',
+         headers: { 'Content-Type': 'application/json' },
+       },
+       path: ['api', 'workspace', 'ocr', 'simulate', task_id],
+     }),
+   ```
    
    **Run:** `cd frontend-svelt && bun run check`
    **Expected:** No type errors
@@ -120,13 +117,12 @@ uv run ptw . --now
 **After Phase Completion:**
 1. Update Status Overview in PROGRESS.md
 2. Add entry to Checkpoint Log
-3. Report back for review (do NOT proceed to Phase 7 without review)
+3. Report back for review (do NOT proceed to Phase 8 without review)
 
 **Key References:**
-- Plan: `.agent-workspace/2026-03-02-fix-results-table.md` (lines 871-1024)
+- Plan: `.agent-workspace/2026-03-02-fix-results-table.md` (lines 1028-1068)
 - Progress: `.agent-workspace/PROGRESS.md`
-- Data converter: `frontend-svelt/src/lib/utils.ts`
-- Pagination component: `frontend-svelt/src/lib/components/Pagination.svelte`
+- API client: `frontend-svelt/src/lib/api/client.ts`
 - Response types: `frontend-svelt/src/lib/api/response-types.ts`
 
 Working directory: /Users/kurian/01 - Projects/votecatcher

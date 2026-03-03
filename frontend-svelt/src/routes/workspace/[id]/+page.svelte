@@ -14,6 +14,9 @@
 	import ColumnHeader from '$lib/components/match-results/ColumnHeader.svelte';
 	import UploadItem from '$lib/components/match-results/UploadItem.svelte';
 	import { onDestroy } from 'svelte';
+	import { convertMatchResponseToMatchResults } from '$lib/utils';
+	import { matchApi } from '$lib/api/matching-requests';
+	import Pagination from '$lib/components/Pagination.svelte';
 
 	let petitionFiles = $state<FileList | null>(null);
 	let voterListFile = $state<FileList | null>(null);
@@ -53,13 +56,29 @@
 	let matches: MatchRow[] = $derived(matchResults ? matchResults.matchRecords : []);
 	let confidenceThresholds: ConfidenceThresholds = $state({ high: 95.0, medium: 90.0 });
 
+	let pageSize = $state(25);
+	let currentPage = $state(1);
+	let useSimulation = $state(false);
+
+	const totalPages = $derived(Math.ceil((matchResults?.matchRecords?.length ?? 0) / pageSize));
+	const paginatedRows = $derived(() => {
+		const rows = matchResults?.matchRecords ?? [];
+		const start = (currentPage - 1) * pageSize;
+		return rows.slice(start, start + pageSize);
+	});
+
 	// results / config
 	onMount(async () => {
 		try {
 			const res = await fetch('/static/config.json');
 			if (res.ok) {
 				const cfg = await res.json();
-				confidenceThresholds = cfg.confidence_thresholds ?? { high: 0.8, medium: 0.5 };
+				const thresholds = cfg.confidence_thresholds ?? { high: 0.8, medium: 0.5 };
+				// Convert from 0-1 scale to 0-100 scale
+				confidenceThresholds = {
+					high: thresholds.high * 100,
+					medium: thresholds.medium * 100
+				};
 			}
 		} catch (err) {
 			// ignore, keep defaults
@@ -137,13 +156,12 @@
 	}
 
 	async function onOcrJobCompleted(jobId: string) {
-		const res = await fetch(`api/match-result/${jobId}`, {
-			method: 'GET'
+		const res = await matchApi.getMatchResults({
+			campaign_id: "demo",
+			job_id: jobId
 		});
-
 		if (!res.ok) throw new Error(`Server returned ${res.status}`);
-		const payload = await res.json();
-		matchResults = payload.matchResults as MatchResults;
+		matchResults = convertMatchResponseToMatchResults(res.data);
 	}
 
 	onDestroy(() => {
@@ -223,9 +241,9 @@
 		}
 	}
 
-	function console_log(message: string) {
-		console.log(message);
-	}
+ 	$effect(() => {
+    	console.log('Count changed:', matches);
+  	});
 
 	async function runMatching() {
 		pushMessage('Starting matching...');
@@ -267,10 +285,16 @@
 				stopStreaming();
 			}
 			// payload.matches: OCRMatch[]
-			if (payload.matchResults as MatchResults) {
+			if (payload.matchResults) {
 				matchResults = payload.matchResults as MatchResults;
+			} else if (payload.results) {
+				// Convert backend MatchResultResponse to frontend MatchResults format
+				const convertedResults = convertMatchResponseToMatchResults(payload.results);
+				matchResults = convertedResults;
 			}
-			pushMessage(`Matching complete: ${matchResults.matchRecords.length ?? 0} result(s)`);
+			if (matches.length > 0) {
+				pushMessage(`Matching complete: ${matches.length ?? 0} result(s)`);
+			}
 		} catch (err) {
 			pushMessage(`Matching error: ${(err as Error).message}`);
 		} finally {
@@ -317,6 +341,7 @@
 					<div class="mb-4">
 						<UploadItem
 							file={selectedVoterFile}
+							isUploaded={voterFileUploaded}
 							onRemove={(_) => {
 								voterListFile = null;
 							}}
@@ -354,6 +379,7 @@
 						<div class="mb-4">
 							<UploadItem
 								{file}
+								isUploaded={petitionsUploaded}
 								onRemove={(_) => {
 									petitionFiles = null;
 								}}
@@ -402,7 +428,6 @@
 				</div>
 				<div class="muted" style="margin-top:.25rem">{uploadProgress}%</div>
 			</div>
-			<progress> test </progress>
 
 			<div style="margin-top:1rem;">
 				<div class="muted">Messages</div>
@@ -417,59 +442,100 @@
 			<p class="muted">
 				Confidence thresholds: high ≥ {confidenceThresholds.high}, medium ≥ {confidenceThresholds.medium}
 			</p>
-			<div
-				style="relative flex flex-col w-full h-full margin-top:0.75rem; overflow:scroll; border:1px solid #eef2f7; border-radius:6px;"
-			>
-				<table>
-					{#if matches.length > 0}
-						<caption class="caption-top">
-							{matches.length} matches found.
-						</caption>
-					{/if}
-					<thead>
-						<tr>
-							{#each matchResults?.matchColumns as col}
-								<th>
-									<ColumnHeader
-										column={col}
-										sortAscending={currentSort[0]}
-										toggleSort={(sortState: [boolean, MatchColumn]) => sortColumn(sortState)}
-									/>
-								</th>
-							{/each}
-						</tr>
-					</thead>
-					<tbody>
-						{#if matches.length === 0}
-							<tr
-								><td colspan="9" class="muted" style="text-align:center; padding:1rem;"
-									>No matches yet — upload files and press Run Matching</td
-								></tr
-							>
-						{:else}
-							{#each matches as m (m.row_idx)}
-								<tr class="hover:bg-blue-200">
-									<!-- Create each row value cell of arbitrary number of values -->
-									{#each Object.entries(m) as [key, value]}
-										{#if key === MatchValueFormatKeys.MATCH_SCORE}
-											<td>
-												<MatchConfidenceIndicator
-													matchScore={value as number}
-													confidenceThreshold={confidenceThresholds}
-												/>
-											</td>
-										{:else}
-											<td>
-												{value}
-											</td>
-										{/if}
+			{#if matchResults && matchResults.matchRecords.length > 0}
+				<div class="rounded-xl border bg-card shadow-sm">
+					<div class="flex items-center justify-between px-4 py-3 border-b">
+						<h3 class="text-lg font-semibold">Match Results ({matchResults.matchRecords.length} records)</h3>
+						<label class="flex items-center gap-2 text-sm">
+							<input
+								type="checkbox"
+								bind:checked={useSimulation}
+								class="h-4 w-4 rounded border-input"
+							/>
+							Use Simulated Data
+						</label>
+					</div>
+					
+					<div style="overflow:scroll;">
+						<table>
+							<thead>
+								<tr>
+									{#each matchResults?.matchColumns as col}
+										<th>
+											<ColumnHeader
+												column={col}
+												sortAscending={currentSort[0]}
+												toggleSort={(sortState: [boolean, MatchColumn]) => sortColumn(sortState)}
+											/>
+										</th>
 									{/each}
 								</tr>
-							{/each}
-						{/if}
-					</tbody>
-				</table>
-			</div>
+							</thead>
+							<tbody>
+								{#each paginatedRows() as m (m.row_idx)}
+									<tr class="hover:bg-blue-200">
+										{#each matchResults.matchColumns as col}
+											{#if col.name === 'Match Score' || col.name === 'MatchScore' || col.name.includes('Score')}
+												<td>
+													<MatchConfidenceIndicator
+														matchScore={m[col.name]}
+														confidenceThreshold={confidenceThresholds}
+													/>
+													<div class="text-xs text-gray-500">
+														Raw: {m[col.name]} (Type: {typeof m[col.name]})
+													</div>
+												</td>
+											{:else}
+												<td>
+													{m[col.name]}
+												</td>
+											{/if}
+										{/each}
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+
+					<Pagination
+						totalItems={matchResults.matchRecords.length}
+						{pageSize}
+						{currentPage}
+						onPageChange={(page) => currentPage = page}
+						onPageSizeChange={(size) => {
+							pageSize = size;
+							currentPage = 1;
+						}}
+					/>
+				</div>
+			{:else}
+				<div
+					style="relative flex flex-col w-full h-full margin-top:0.75rem; overflow:scroll; border:1px solid #eef2f7; border-radius:6px;"
+				>
+					<table>
+						<thead>
+							<tr>
+								{#each matchResults?.matchColumns as col}
+									<th>
+										<ColumnHeader
+											column={col}
+											sortAscending={currentSort[0]}
+											toggleSort={(sortState: [boolean, MatchColumn]) => sortColumn(sortState)}
+										/>
+									</th>
+								{/each}
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td colspan="9" class="muted" style="text-align:center; padding:1rem;">
+									No matches yet — upload files and press Run Matching
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			{/if}
 		</main>
 	</div>
 </div>
