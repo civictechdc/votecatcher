@@ -6,10 +6,39 @@
 
 **Architecture:** Backend adds simulate endpoint and fixes column sorting. Frontend adds pagination component, design tokens, and simulation toggle. All changes verified with automated tests and linting.
 
-**Tech Stack:** Python 3.13, FastAPI, pytest, ruff, basedpyright, SvelteKit 5, TypeScript, Tailwind CSS v4, Vitest, oxlint, oxfmt
+**Tech Stack:** Python 3.12+, FastAPI, pytest, ruff, basedpyright, SvelteKit 5, TypeScript, Tailwind CSS v4, Vitest, oxlint, oxfmt
 
 **Design Doc:** `.agent-workspace/2026-03-02-fix-results-table-design.md`
 **Progress Tracker:** `.agent-workspace/PROGRESS.md`
+
+---
+
+## ⚠️ Tech Stack Requirements
+
+### Backend: Python 3.12+
+- All backend code must be compatible with Python 3.12+
+- Use modern Python features where appropriate (type hints, pattern matching, etc.)
+- Run `python --version` to verify if needed
+
+### Frontend: Svelte 5 (Runes)
+
+**CRITICAL:** This project uses Svelte 5 with runes (`$state`, `$derived`, `$effect`, `$props`).
+
+**If you encounter Svelte 4 or older syntax:**
+- Update to Svelte 5 runes immediately
+- Common migrations:
+  - `let x = value` → `let x = $state(value)`
+  - `$: doubled = x * 2` → `let doubled = $derived(x * 2)`
+  - `export let prop` → `let { prop } = $props()`
+  - `on:click={handler}` → `onclick={handler}`
+
+**Svelte 5 MCP Resource:**
+```
+Use the Svelte MCP server for Svelte 5 documentation:
+- Call `mcp__svelte__list-sections` to discover available docs
+- Call `mcp__svelte__get-documentation` for specific sections
+- Call `mcp__svelte__svelte-autofixer` to analyze and fix Svelte code
+```
 
 ---
 

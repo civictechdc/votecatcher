@@ -12,8 +12,8 @@
 |-------|--------|------------|-------------|--------------|
 | 1. Backend - Response Adapter | Completed | 1 | 1 | 2026-03-02T12:30 |
 | 2. Backend - Simulate Endpoint | Completed | 2 | 2 | 2026-03-02T12:45 |
-| 3. Backend - Verification | Not Started | 0 | 1 | - |
-| 4. Frontend - Design Tokens | Not Started | 0 | 2 | - |
+| 3. Backend - Verification | Completed | 1 | 1 | 2026-03-02T13:00 |
+| 4. Frontend - Design Tokens | Completed | 2 | 2 | 2026-03-02T13:15 |
 | 5. Frontend - Pagination | Not Started | 0 | 2 | - |
 | 6. Frontend - Fix Results Page | Not Started | 0 | 2 | - |
 | 7. Frontend - API Layer | Not Started | 0 | 1 | - |
@@ -22,7 +22,7 @@
 | 10. Verification Script | Not Started | 0 | 1 | - |
 | 11. Docker/DevContainer | Not Started | 0 | 10 | - |
 
-**Overall Progress:** 3 / 24 tasks (12%)
+**Overall Progress:** 6 / 24 tasks (25%)
 
 ---
 
@@ -57,6 +57,8 @@ When you encounter ANY issue, ambiguity, or blocker:
 | Phase 6 data format mismatch | 6 | Resolved | Conversion function `convertMatchResponseToMatchResults()` already exists in `$lib/utils.ts`. Task 6.2 should use it: `matchResults = convertMatchResponseToMatchResults(res.data)` | 2026-03-02 |
 | Line 153-154 incomplete assignment | 6 | Resolved | Fix: Complete with converter. Also fix type: `MatchRowEntryResponse` → `MatchResultResponse` (implicitly via converter) | 2026-03-02 |
 | Pre-existing LSP errors in ocr_route.py | - | Noted | Out of scope for this fix (minimal changes). Verify Phase 2 didn't introduce new issues. Fix separately if needed. | 2026-03-02 |
+| Pre-existing frontend type errors | - | Noted | +page.svelte line 153-154 incomplete, Svelte 4 syntax in +error.svelte. Not blocking current tasks. | 2026-03-02 |
+| tokens.css coexists with theme.css | 4 | Noted | Both exist: tokens.css (shadcn style, OKLCH) and theme.css (--vc-* prefix, hex). Tokens for new components, theme for legacy. | 2026-03-02 |
 
 ### Concern Template
 
@@ -85,14 +87,14 @@ When you encounter ANY issue, ambiguity, or blocker:
 
 | Task | Status | Commit | Notes | Updated |
 |------|--------|--------|-------|---------|
-| 3.1 Run all backend checks | Not Started | - | - | - |
+| 3.1 Run all backend checks | Completed | - | Type check (0 errors), lint (pre-existing warnings), 8 tests pass | 2026-03-02T13:00 |
 
 ### Phase 4: Frontend - Design Tokens
 
 | Task | Status | Commit | Notes | Updated |
 |------|--------|--------|-------|---------|
-| 4.1 Create design tokens CSS | Not Started | - | - | - |
-| 4.2 Create CN utility | Not Started | - | - | - |
+| 4.1 Create design tokens CSS | Completed | 73976c2 | Created tokens.css with OKLCH colors, imported in app.css | 2026-03-02T13:10 |
+| 4.2 Create CN utility | Completed | 73976c2 | Created cn.ts with clsx + tailwind-merge | 2026-03-02T13:15 |
 
 ### Phase 5: Frontend - Pagination
 

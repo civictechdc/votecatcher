@@ -28,6 +28,8 @@ Fix the results table display in the OCR/voter matching workflow. The current im
 5. Maintain existing CSS theming from legacy frontend
 6. Add comprehensive lint/type/format checking
 7. Create Docker/DevContainer setup for easy onboarding
+8. **Use Svelte 5 patterns** - migrate any Svelte 4 code encountered
+9. **Use Python 3.12+** features and patterns
 
 ## Non-Goals
 
@@ -506,3 +508,43 @@ When executing the implementation plan:
 | Workspace types | `frontend-svelt/src/lib/workspace-types.ts` |
 | Match API | `frontend-svelt/src/lib/api/matching-requests.ts` |
 | Page to fix | `frontend-svelt/src/routes/workspace/[id]/+page.svelte` |
+
+---
+
+## Version Requirements
+
+### Frontend: Svelte 5 (REQUIRED)
+
+**All new code must use Svelte 5 patterns.** If you encounter Svelte 4 or older syntax, migrate it.
+
+**Svelte 5 Migrations:**
+
+| Svelte 4 | Svelte 5 |
+|----------|----------|
+| `let x = value` | `let x = $state(value)` |
+| `$: doubled = x * 2` | `let doubled = $derived(x * 2)` |
+| `export let prop` | `let { prop } = $props()` |
+| `on:click={handler}` | `onclick={handler}` |
+| `$$props` | Use `$props()` spread |
+| `$$slots` | Use `$props()` children |
+
+**Resources:**
+- Svelte 5 docs: https://svelte-5-preview.vercel.app/docs
+- MCP Tool: Use `svelte-autofixer` via Svelte MCP to analyze code
+- Run `svelte-check` to catch compatibility issues
+
+### Backend: Python 3.12+ (REQUIRED)
+
+**All backend code must be compatible with Python 3.12+.**
+
+**Python 3.12+ Features to Use:**
+- Type hints with generics: `list[str]` not `List[str]`
+- Pattern matching: `match` / `case` statements
+- F-strings with expressions: `f"{value=}"` for debugging
+- Type alias syntax: `type MyType = str | int`
+
+**Verification:**
+```bash
+python --version  # Should be 3.12+
+uv run basedpyright app/  # Type checking
+```
