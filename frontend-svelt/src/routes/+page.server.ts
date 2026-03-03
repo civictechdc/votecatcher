@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { isDemoMode } from '$lib/stores/demo';
-import { error } from 'console';
+import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async () => {
 	if (!isDemoMode()) {
@@ -11,6 +11,6 @@ export const load: PageServerLoad = async () => {
 	console.log('Is demo mode enabled:', isDemoMode());
 
 	return {
-		isDemoMode: isDemoMode()
+		isDemoMode: isDemoMode(),
 	};
 };

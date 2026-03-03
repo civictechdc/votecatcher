@@ -1,6 +1,5 @@
 <script>
-  export let error
-  export let status
+  let { error, status } = $props();
 </script>
 
 <div class="container" role="alert" aria-live="assertive">
