@@ -8,7 +8,33 @@
 
 **Tech Stack:** Python 3.13, FastAPI, pytest, ruff, basedpyright, SvelteKit 5, TypeScript, Tailwind CSS v4, Vitest, oxlint, oxfmt
 
-**Design Doc:** `docs/plans/2026-03-02-fix-results-table-design.md`
+**Design Doc:** `.agent-workspace/2026-03-02-fix-results-table-design.md`
+**Progress Tracker:** `.agent-workspace/PROGRESS.md`
+
+---
+
+## ⚠️ MANDATORY: Progress Tracking
+
+**After completing EACH task, you MUST update the progress tracker:**
+
+```bash
+# Read current progress
+cat .agent-workspace/PROGRESS.md
+
+# After completing a task, update PROGRESS.md:
+# 1. Change task status: Not Started → In Progress → Completed
+# 2. Add commit hash if applicable
+# 3. Add timestamp and any notes
+# 4. Update phase status in Status Overview table
+# 5. Update Overall Progress percentage
+```
+
+**At checkpoint reviews (end of each phase):**
+1. Add entry to Checkpoint Log in PROGRESS.md
+2. Verify all tests pass before proceeding
+3. Summarize what was accomplished
+
+**This ensures future agents can quickly understand progress and resume work.**
 
 ---
 
@@ -1733,3 +1759,34 @@ git commit -m "docs: add design document and implementation plan for fix-results
 - All lint/format checks pass
 - Verification script runs green
 - Manual testing confirms results table works correctly
+
+---
+
+## Post-Task Checklist (Apply After EVERY Task)
+
+After completing each task in this plan, you MUST:
+
+1. **Update Progress Tracker** (`.agent-workspace/PROGRESS.md`)
+   - Mark task as `Completed`
+   - Add commit hash
+   - Add timestamp
+   - Add any notes/blockers encountered
+
+2. **Update Status Overview**
+   - Increment "Tasks Done" for the phase
+   - Update "Overall Progress" percentage
+   - Update "Last Updated" timestamp
+
+3. **Verify the Change**
+   - Run relevant tests
+   - Run lint/format checks for changed files
+   - Ensure no regressions
+
+4. **Commit if Not Already Done**
+   - Each task should have its own commit
+   - Use descriptive commit messages per plan
+
+**At Phase Completion:**
+1. Add entry to Checkpoint Log in PROGRESS.md
+2. Run full phase verification
+3. Only proceed to next phase if all checks pass
