@@ -7,13 +7,23 @@
 - **Last Phase Completed:** Phase 6 - Fix Results Page (2/2 tasks passing)
 
 ## Active Concerns
-None - all concerns resolved or noted (pre-existing issues out of scope).
+
+**Open Concern: Simulation toggle not connected**
+
+The simulation toggle (`useSimulation`) exists in the UI but doesn't actually do anything. The `fetchResultsWithSimulation()` function was not implemented in Phase 6.
+
+**Current state:**
+- `onOcrJobCompleted()` always calls real endpoint
+- Toggle checkbox exists but has no effect
+
+**Fix required in Phase 7:**
+After adding `api.simulateOcrResults()`, you must also add the `fetchResultsWithSimulation()` function and update `onOcrJobCompleted()` to use it.
 
 ## Next Work
 
 ### Phase 7: Frontend - API Layer Update
 
-**This adds the simulate endpoint to the frontend API client.**
+**This adds the simulate endpoint to the frontend API client AND connects the simulation toggle.**
 
 **Tasks:**
 
@@ -32,6 +42,39 @@ None - all concerns resolved or noted (pre-existing issues out of scope).
        },
        path: ['api', 'workspace', 'ocr', 'simulate', task_id],
      }),
+   ```
+   
+   **Run:** `cd frontend-svelt && bun run check`
+   **Expected:** No type errors
+
+2. **Task 7.2:** Connect simulation toggle (Fix Open Concern)
+   - Modify: `frontend-svelt/src/routes/workspace/[id]/+page.svelte`
+   - Add `fetchResultsWithSimulation()` function (see plan lines 950-969)
+   - Update `onOcrJobCompleted()` to use it
+   
+   **Add this function:**
+   ```typescript
+   async function fetchResultsWithSimulation(jobId: string) {
+     let res;
+     if (useSimulation) {
+       res = await api.simulateOcrResults(jobId);
+     } else {
+       res = await matchApi.getMatchResults({
+         campaign_id: "demo",
+         job_id: jobId
+       });
+     }
+     
+     if (!res.ok) throw new Error(`Server returned ${res.status}`);
+     matchResults = convertMatchResponseToMatchResults(res.data);
+   }
+   ```
+   
+   **Update `onOcrJobCompleted()`:**
+   ```typescript
+   async function onOcrJobCompleted(jobId: string) {
+     await fetchResultsWithSimulation(jobId);
+   }
    ```
    
    **Run:** `cd frontend-svelt && bun run check`

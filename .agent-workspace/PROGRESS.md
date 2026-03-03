@@ -16,13 +16,13 @@
 | 4. Frontend - Design Tokens | Completed | 2 | 2 | 2026-03-02T13:15 |
 | 5. Frontend - Pagination | Completed | 2 | 2 | 2026-03-02T15:15 |
 | 6. Frontend - Fix Results Page | Completed | 2 | 2 | 2026-03-02T16:05 |
-| 7. Frontend - API Layer | Not Started | 0 | 1 | - |
+| 7. Frontend - API Layer | Not Started | 0 | 2 | - |
 | 8. Frontend - Verification | Not Started | 0 | 1 | - |
 | 9. Documentation | Not Started | 0 | 1 | - |
 | 10. Verification Script | Not Started | 0 | 1 | - |
 | 11. Docker/DevContainer | Not Started | 0 | 10 | - |
 
-**Overall Progress:** 10 / 24 tasks (42%)
+**Overall Progress:** 10 / 25 tasks (40%)
 
 ---
 
@@ -56,6 +56,7 @@ When you encounter ANY issue, ambiguity, or blocker:
 |---------|-------|--------|-------|------------|
 | Phase 6 data format mismatch | 6 | Resolved | Conversion function `convertMatchResponseToMatchResults()` already exists in `$lib/utils.ts`. Task 6.2 should use it: `matchResults = convertMatchResponseToMatchResults(res.data)` | 2026-03-02 |
 | Line 153-154 incomplete assignment | 6 | Resolved | Fix: Complete with converter. Also fix type: `MatchRowEntryResponse` → `MatchResultResponse` (implicitly via converter) | 2026-03-02 |
+| Simulation toggle not connected | 6-7 | Open | UI toggle exists but `fetchResultsWithSimulation()` function not implemented. `onOcrJobCompleted()` always calls real endpoint. Fix in Phase 7: add function that checks `useSimulation` state and calls `api.simulateOcrResults()` or `matchApi.getMatchResults()` accordingly | 2026-03-02 |
 | Pre-existing LSP errors in ocr_route.py | - | Noted | Out of scope for this fix (minimal changes). Verify Phase 2 didn't introduce new issues. Fix separately if needed. | 2026-03-02 |
 | Pre-existing frontend type errors | - | Noted | +page.svelte line 153-154 incomplete, Svelte 4 syntax in +error.svelte. Not blocking current tasks. | 2026-03-02 |
 | tokens.css coexists with theme.css | 4 | Noted | Both exist: tokens.css (shadcn style, OKLCH) and theme.css (--vc-* prefix, hex). Tokens for new components, theme for legacy. | 2026-03-02 |
@@ -115,6 +116,7 @@ When you encounter ANY issue, ambiguity, or blocker:
 | Task | Status | Commit | Notes | Updated |
 |------|--------|--------|-------|---------|
 | 7.1 Add simulate method to client | Not Started | - | - | - |
+| 7.2 Connect simulation toggle | Not Started | - | Add fetchResultsWithSimulation() and update onOcrJobCompleted() | - |
 
 ### Phase 8: Frontend - Verification
 
