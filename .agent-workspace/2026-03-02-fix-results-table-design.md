@@ -426,6 +426,56 @@ docker-compose logs -f      # View logs
 | CSS theming inconsistencies | Use exact tokens from legacy frontend |
 | Test flakiness | Use deterministic mocks, avoid timing-dependent tests |
 | Docker build failures | Multi-stage builds, proper .dockerignore |
+| Ambiguous requirements | Log concerns immediately, don't guess |
+| Pre-existing bugs discovered | Log in PROGRESS.md, assess if in-scope |
+
+## Concern Handling Workflow
+
+During implementation, agents MUST follow this workflow for concerns:
+
+```
+Concern Discovered
+       │
+       ▼
+┌─────────────────┐
+│ Log in          │
+│ PROGRESS.md     │
+│ (Concerns table)│
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐     No      ┌─────────────────┐
+│ Blocks current  │────────────▶│ Status: Noted   │
+│ task?           │             │ Continue work   │
+└────────┬────────┘             └─────────────────┘
+         │ Yes
+         ▼
+┌─────────────────┐     No      ┌─────────────────┐
+│ Can resolve     │────────────▶│ Status: Open    │
+│ independently?  │             │ STOP & notify   │
+└────────┬────────┘             │ user            │
+         │ Yes                  └─────────────────┘
+         ▼
+┌─────────────────┐
+│ Status: In      │
+│ Progress        │
+│ Implement fix   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Status:         │
+│ Resolved        │
+│ Document how    │
+└─────────────────┘
+```
+
+**Triage Categories:**
+- **Open** - Needs resolution, blocks progress
+- **Blocked** - Waiting for external input
+- **Resolved** - Fixed, document solution
+- **Deferred** - Out of scope for current task
+- **Noted** - Pre-existing, not blocking
 
 ## Future Work
 

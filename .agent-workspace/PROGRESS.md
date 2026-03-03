@@ -28,11 +28,41 @@
 
 ## Concerns & Blockers
 
-| Concern | Phase | Status | Notes |
-|---------|-------|--------|-------|
-| Phase 6 data format mismatch | 6 | Resolved | Conversion function `convertMatchResponseToMatchResults()` already exists in `$lib/utils.ts`. Task 6.2 should use it: `matchResults = convertMatchResponseToMatchResults(res.data)` |
-| Line 153-154 incomplete assignment | 6 | Resolved | Fix: Complete with converter. Also fix type: `MatchRowEntryResponse` → `MatchResultResponse` (implicitly via converter) |
-| Pre-existing LSP errors in ocr_route.py | - | Noted | Out of scope for this fix (minimal changes). Verify Phase 2 didn't introduce new issues. Fix separately if needed. |
+> **⚠️ MANDATORY:** Log ALL concerns here immediately when discovered. Do not guess or work around issues.
+
+### How to Log a Concern
+
+When you encounter ANY issue, ambiguity, or blocker:
+
+1. Add a row to the table below
+2. Set status appropriately (see status definitions)
+3. Add detailed notes + suggested resolution if known
+4. If **Open** or **Blocked**, STOP and notify user before continuing
+5. When resolved, update status to **Resolved** and document how
+
+### Status Definitions
+
+| Status | Meaning | Action |
+|--------|---------|--------|
+| **Open** | Needs resolution before continuing | STOP - notify user |
+| **Blocked** | Waiting for external input/decision | Continue other tasks |
+| **Resolved** | Issue fixed - document how | Continue work |
+| **Deferred** | Out of scope for this task | Note for future |
+| **Noted** | Pre-existing, not blocking current work | Continue, fix separately |
+
+### Active Concerns
+
+| Concern | Phase | Status | Notes | Discovered |
+|---------|-------|--------|-------|------------|
+| Phase 6 data format mismatch | 6 | Resolved | Conversion function `convertMatchResponseToMatchResults()` already exists in `$lib/utils.ts`. Task 6.2 should use it: `matchResults = convertMatchResponseToMatchResults(res.data)` | 2026-03-02 |
+| Line 153-154 incomplete assignment | 6 | Resolved | Fix: Complete with converter. Also fix type: `MatchRowEntryResponse` → `MatchResultResponse` (implicitly via converter) | 2026-03-02 |
+| Pre-existing LSP errors in ocr_route.py | - | Noted | Out of scope for this fix (minimal changes). Verify Phase 2 didn't introduce new issues. Fix separately if needed. | 2026-03-02 |
+
+### Concern Template
+
+```markdown
+| [Brief description] | [Phase #] | [Status] | [Details + suggested resolution] | [YYYY-MM-DD] |
+```
 
 ---
 

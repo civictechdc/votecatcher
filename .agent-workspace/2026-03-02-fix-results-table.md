@@ -56,6 +56,42 @@ cat .agent-workspace/PROGRESS.md
 
 ---
 
+## ⚠️ MANDATORY: Concern Logging
+
+**When you encounter ANY concern, ambiguity, or blocker:**
+
+1. **STOP** - Don't guess or work around issues
+2. **LOG IT** - Add to `PROGRESS.md` → "Concerns & Blockers" section:
+
+```markdown
+| Concern | Phase | Status | Notes |
+|---------|-------|--------|-------|
+| Your concern here | X | Open | Details + suggested resolution |
+```
+
+3. **TRIAGE** - Categorize the concern:
+   - **Open** - Needs resolution before continuing
+   - **Blocked** - Waiting for external input
+   - **Resolved** - Document how it was resolved
+   - **Deferred** - Out of scope, note for future
+
+4. **UPDATE PLAN** - If concern affects the plan:
+   - Update relevant task in this plan file
+   - Add a note referencing the concern
+   - Notify the user before major plan changes
+
+**Example concerns to log:**
+- Ambiguous requirements
+- Missing dependencies
+- Pre-existing bugs discovered
+- API contract mismatches
+- Unexpected behavior
+- Type errors that seem wrong
+
+**This creates an audit trail and helps future agents understand issues encountered.**
+
+---
+
 ## 💡 Token Efficiency Guidelines
 
 **To maximize context window for actual work:**
