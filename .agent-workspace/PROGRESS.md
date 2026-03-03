@@ -10,8 +10,8 @@
 
 | Phase | Status | Tasks Done | Tasks Total | Last Updated |
 |-------|--------|------------|-------------|--------------|
-| 1. Backend - Response Adapter | Not Started | 0 | 1 | - |
-| 2. Backend - Simulate Endpoint | Not Started | 0 | 2 | - |
+| 1. Backend - Response Adapter | Completed | 1 | 1 | 2026-03-02T12:30 |
+| 2. Backend - Simulate Endpoint | Completed | 2 | 2 | 2026-03-02T12:45 |
 | 3. Backend - Verification | Not Started | 0 | 1 | - |
 | 4. Frontend - Design Tokens | Not Started | 0 | 2 | - |
 | 5. Frontend - Pagination | Not Started | 0 | 2 | - |
@@ -22,7 +22,17 @@
 | 10. Verification Script | Not Started | 0 | 1 | - |
 | 11. Docker/DevContainer | Not Started | 0 | 10 | - |
 
-**Overall Progress:** 0 / 24 tasks (0%)
+**Overall Progress:** 3 / 24 tasks (12%)
+
+---
+
+## Concerns & Blockers
+
+| Concern | Phase | Status | Notes |
+|---------|-------|--------|-------|
+| Phase 6 data format mismatch | 6 | Resolved | Conversion function `convertMatchResponseToMatchResults()` already exists in `$lib/utils.ts`. Task 6.2 should use it: `matchResults = convertMatchResponseToMatchResults(res.data)` |
+| Line 153-154 incomplete assignment | 6 | Resolved | Fix: Complete with converter. Also fix type: `MatchRowEntryResponse` → `MatchResultResponse` (implicitly via converter) |
+| Pre-existing LSP errors in ocr_route.py | - | Noted | Out of scope for this fix (minimal changes). Verify Phase 2 didn't introduce new issues. Fix separately if needed. |
 
 ---
 
@@ -32,14 +42,14 @@
 
 | Task | Status | Commit | Notes | Updated |
 |------|--------|--------|-------|---------|
-| 1.1 Write test for column ordering | Not Started | - | - | - |
+| 1.1 Write test for column ordering | Completed | ebe1134 | Added field_validator to sort columns by position_idx | 2026-03-02T12:30 |
 
 ### Phase 2: Backend - Simulate Endpoint
 
 | Task | Status | Commit | Notes | Updated |
 |------|--------|--------|-------|---------|
-| 2.1 Write test for simulate endpoint | Not Started | - | - | - |
-| 2.2 Implement simulate endpoint | Not Started | - | - | - |
+| 2.1 Write test for simulate endpoint | Completed | 56ca2e9 | Tests for simulate endpoint with env fixture | 2026-03-02T12:45 |
+| 2.2 Implement simulate endpoint | Completed | 56ca2e9 | Added /workspace/ocr/simulate/{task_id} using Faker | 2026-03-02T12:45 |
 
 ### Phase 3: Backend - Verification
 

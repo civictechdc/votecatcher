@@ -11,10 +11,13 @@ Fix the results table display in the OCR/voter matching workflow. The current im
 ## Problem Statement
 
 - Results table displays columns out of order (not respecting `position_idx`)
-- Incomplete code at `+page.svelte` line 153-154
+- Incomplete code at `+page.svelte` lines 146-154: `onOcrJobCompleted()` has incomplete `matchResults =` assignment and uses wrong type (`MatchRowEntryResponse` instead of `MatchResultResponse`)
 - No pagination for large result sets
 - No way to test UI without running full OCR pipeline
 - No automated tests for this critical workflow
+
+**Pre-existing Issues (Out of Scope):**
+- LSP errors in `ocr_route.py`: `provider_config` possibly unbound, duplicate `get_batch_result` function name - these should be fixed separately
 
 ## Goals
 
@@ -61,12 +64,49 @@ Fix the results table display in the OCR/voter matching workflow. The current im
                     └──────────────┬──────────────┘
                                    ▼
                     ┌─────────────────────────────┐
-                    │  OcrMatchResults            │
+                    │  MatchResultResponse        │
+                    │  (Backend format)           │
                     │  {                          │
                     │    column_data: [...],      │
                     │    result_data: [...]       │
                     │  }                          │
+                    └──────────────┬──────────────┘
+                                   │
+                                   ▼ convertMatchResponseToMatchResults()
+                                   │
+                    ┌──────────────┴──────────────┐
+                    │  MatchResults               │
+                    │  (Frontend format)          │
+                    │  {                          │
+                    │    matchColumns: [...],     │
+                    │    matchRecords: [...]      │
+                    │  }                          │
                     └─────────────────────────────┘
+```
+
+### Data Format Conversion
+
+**Important:** The frontend uses a different data structure than the backend.
+
+| Backend (`MatchResultResponse`) | Frontend (`MatchResults`) |
+|--------------------------------|---------------------------|
+| `column_data` | `matchColumns` |
+| `result_data` | `matchRecords` |
+
+**Conversion Function:** `$lib/utils.ts` → `convertMatchResponseToMatchResults()`
+
+This function:
+1. Maps `column_data` to `matchColumns` with sorting functions
+2. Maps `result_data` to `matchRecords` as key-value pairs
+3. Already exists and is imported in the workspace page
+
+**Implementation Note:** Task 6.2 must use this converter:
+
+```typescript
+// Correct usage in onOcrJobCompleted():
+const res = await matchApi.getMatchResults({ campaign_id: "demo", job_id: jobId });
+if (!res.ok) throw new Error(`Server returned ${res.status}`);
+matchResults = convertMatchResponseToMatchResults(res.data);
 ```
 
 ## Design Decisions
@@ -394,3 +434,25 @@ docker-compose logs -f      # View logs
 - E2E tests for complete workflow
 - Dark mode toggle in UI
 - Performance monitoring for OCR pipeline
+
+---
+
+## Notes for Implementers
+
+### Token Efficiency
+
+When executing the implementation plan:
+- Read only necessary portions of large files (use `limit` parameter)
+- Use grep/glob to locate code rather than reading entire files
+- Keep progress updates concise
+- Reference existing code by path/line rather than duplicating
+
+### Key Reference Files
+
+| Purpose | File |
+|---------|------|
+| Data conversion | `frontend-svelt/src/lib/utils.ts` |
+| Response types | `frontend-svelt/src/lib/api/response-types.ts` |
+| Workspace types | `frontend-svelt/src/lib/workspace-types.ts` |
+| Match API | `frontend-svelt/src/lib/api/matching-requests.ts` |
+| Page to fix | `frontend-svelt/src/routes/workspace/[id]/+page.svelte` |

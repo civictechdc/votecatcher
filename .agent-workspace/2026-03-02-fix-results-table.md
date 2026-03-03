@@ -56,6 +56,36 @@ cat .agent-workspace/PROGRESS.md
 
 ---
 
+## 💡 Token Efficiency Guidelines
+
+**To maximize context window for actual work:**
+
+### Reading Files
+- Use `Read` with `limit` parameter for large files - read only what you need
+- Use `Grep` to find specific patterns instead of reading entire files
+- Use `Glob` to find files by pattern instead of listing directories
+
+### Code Generation
+- Don't repeat code that's already in the plan - reference it by line/task
+- Use comments sparingly - the plan already documents intent
+- Skip generating full file contents if only small changes needed
+
+### Verification
+- Run tests with `-q` (quiet) flag when you just need pass/fail
+- Use `--tb=short` for pytest to reduce traceback output
+- Capture output to files only when needed for debugging
+
+### Progress Updates
+- Keep PROGRESS.md updates concise - status + commit hash + 1-line note
+- Don't duplicate information already in the plan
+
+### Context Management
+- If context grows large, summarize completed work and focus on remaining
+- Reference external docs by path rather than including full content
+- Use subagents for independent tasks (if quota allows)
+
+---
+
 ## Phase 1: Backend - Response Adapter Fix
 
 ### Task 1.1: Write Test for Column Ordering
@@ -789,6 +819,9 @@ Note the incomplete `matchResults =` assignment.
 
 ### Task 6.2: Update Results Page
 
+> ⚠️ **IMPORTANT:** The frontend uses `matchColumns`/`matchRecords` (not `column_data`/`result_data`).
+> Use the existing `convertMatchResponseToMatchResults()` from `$lib/utils.ts` to convert backend responses.
+
 **Files:**
 - Modify: `frontend-svelt/src/routes/workspace/[id]/+page.svelte`
 
@@ -798,9 +831,8 @@ At the top of the script section, add:
 
 ```svelte
 <script lang="ts">
-  // ... existing imports
+  // ... existing imports (convertMatchResponseToMatchResults is already imported)
   import Pagination from "$lib/components/Pagination.svelte";
-  import { api } from "$lib/api/client";
   
   // ... existing state
   
@@ -811,52 +843,78 @@ At the top of the script section, add:
   // Simulation state
   let useSimulation = $state(false);
   
-  // Derived pagination values
-  const totalPages = $derived(Math.ceil((matchResults?.result_data?.length ?? 0) / pageSize));
+  // Derived pagination values (use matchRecords, not result_data)
+  const totalPages = $derived(Math.ceil((matchResults?.matchRecords?.length ?? 0) / pageSize));
   const paginatedRows = $derived(() => {
-    const rows = matchResults?.result_data ?? [];
+    const rows = matchResults?.matchRecords ?? [];
     const start = (currentPage - 1) * pageSize;
     return rows.slice(start, start + pageSize);
   });
 </script>
 ```
 
-**Step 2: Fix the broken matchResults assignment**
+**Step 2: Fix the broken matchResults assignment (lines 146-154)**
 
-Find and fix line 153-154:
+Find and fix the incomplete `onOcrJobCompleted` function:
 
 ```typescript
 // Before (broken):
-matchResults =
+async function onOcrJobCompleted(jobId: string) {
+  const res = await matchApi.getMatchResults({
+    campaign_id: "demo",
+    job_id: jobId
+  })
+  if (!res.ok) throw new Error(`Server returned ${res.status}`);
+  const data: MatchRowEntryResponse = res.data;  // WRONG TYPE
+  matchResults =  // INCOMPLETE
+}
 
 // After (fixed):
-matchResults = response.results;
+async function onOcrJobCompleted(jobId: string) {
+  const res = await matchApi.getMatchResults({
+    campaign_id: "demo",
+    job_id: jobId
+  });
+  if (!res.ok) throw new Error(`Server returned ${res.status}`);
+  
+  // Convert backend format (column_data/result_data) to frontend format (matchColumns/matchRecords)
+  matchResults = convertMatchResponseToMatchResults(res.data);
+}
 ```
 
-**Step 3: Add fetch results function with simulation support**
+**Step 3: Add simulation toggle and fetch function**
+
+Add a function to fetch results with simulation support:
 
 ```typescript
-async function fetchResults(taskId: string) {
-  const response = useSimulation
-    ? await api.simulateOcrResults(taskId)
-    : await api.demoGetMatchingResults(taskId);
-  
-  if (response.ok) {
-    matchResults = response.data.results;
+async function fetchResultsWithSimulation(jobId: string) {
+  let res;
+  if (useSimulation) {
+    // Use simulate endpoint (will be added in Phase 7)
+    res = await api.simulateOcrResults(jobId);
+  } else {
+    res = await matchApi.getMatchResults({
+      campaign_id: "demo",
+      job_id: jobId
+    });
   }
+  
+  if (!res.ok) throw new Error(`Server returned ${res.status}`);
+  matchResults = convertMatchResponseToMatchResults(res.data);
 }
 ```
 
 **Step 4: Update the results table section**
 
-Replace the results display section with:
+The existing table already uses `matchResults.matchColumns` and `matchResults.matchRecords`.
+Add pagination and simulation toggle:
 
 ```svelte
-{#if matchResults}
+{#if matchResults && matchResults.matchRecords.length > 0}
   <div class="rounded-xl border bg-card shadow-sm">
     <!-- Simulation Toggle -->
     <div class="flex items-center justify-between px-4 py-3 border-b">
-      <h3 class="text-lg font-semibold">Match Results</h3>
+      <h3 class="text-lg font-semibold">Match Results ({matchResults.matchRecords.length} records)</h3>
       <label class="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
@@ -867,39 +925,12 @@ Replace the results display section with:
       </label>
     </div>
 
-    <!-- Table -->
-    <div class="overflow-x-auto">
-      <table class="w-full">
-        <thead class="bg-muted text-muted-foreground text-sm">
-          <tr>
-            {#each matchResults.column_data.sort((a, b) => a.position_idx - b.position_idx) as column}
-              <th class="px-4 py-3 text-left font-medium">
-                {column.name}
-              </th>
-            {/each}
-          </tr>
-        </thead>
-        <tbody>
-          {#each paginatedRows() as row}
-            <tr class="border-b hover:bg-accent/50">
-              {#each row.values as value}
-                <td class="px-4 py-3 text-sm">
-                  {#if value.data_type === 'float'}
-                    <span class="font-mono">{parseFloat(value.value).toFixed(3)}</span>
-                  {:else}
-                    {value.value}
-                  {/if}
-                </td>
-              {/each}
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <!-- Existing table structure - columns already sorted by matchColumns -->
+    <!-- ... keep existing table code, just wrap rows with pagination ... -->
 
     <!-- Pagination -->
     <Pagination
-      totalItems={matchResults.result_data.length}
+      totalItems={matchResults.matchRecords.length}
       {pageSize}
       {currentPage}
       onPageChange={(page) => currentPage = page}
