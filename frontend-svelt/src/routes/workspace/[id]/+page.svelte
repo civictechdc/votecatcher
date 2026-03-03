@@ -17,6 +17,7 @@
 	import { convertMatchResponseToMatchResults } from '$lib/utils';
 	import { matchApi } from '$lib/api/matching-requests';
 	import Pagination from '$lib/components/Pagination.svelte';
+	import { featureFlags } from '$lib/stores/featureFlags';
 
 	let petitionFiles = $state<FileList | null>(null);
 	let voterListFile = $state<FileList | null>(null);
@@ -58,7 +59,6 @@
 
 	let pageSize = $state(25);
 	let currentPage = $state(1);
-	let useSimulation = $state(false);
 
 	const totalPages = $derived(Math.ceil((matchResults?.matchRecords?.length ?? 0) / pageSize));
 	const paginatedRows = $derived(() => {
@@ -156,12 +156,18 @@
 	}
 
 	async function onOcrJobCompleted(jobId: string) {
-		const res = await matchApi.getMatchResults({
-			campaign_id: "demo",
-			job_id: jobId
-		});
-		if (!res.ok) throw new Error(`Server returned ${res.status}`);
-		matchResults = convertMatchResponseToMatchResults(res.data);
+		if ($featureFlags.simulationMode) {
+			const res = await matchApi.simulateOcrResults(jobId);
+			if (!res.ok) throw new Error(`Server returned ${res.status}`);
+			matchResults = convertMatchResponseToMatchResults(res.data.results);
+		} else {
+			const res = await matchApi.getMatchResults({
+				campaign_id: "demo",
+				job_id: jobId
+			});
+			if (!res.ok) throw new Error(`Server returned ${res.status}`);
+			matchResults = convertMatchResponseToMatchResults(res.data);
+		}
 	}
 
 	onDestroy(() => {
@@ -449,7 +455,8 @@
 						<label class="flex items-center gap-2 text-sm">
 							<input
 								type="checkbox"
-								bind:checked={useSimulation}
+								checked={$featureFlags.simulationMode}
+								onchange={() => featureFlags.toggle('simulationMode')}
 								class="h-4 w-4 rounded border-input"
 							/>
 							Use Simulated Data

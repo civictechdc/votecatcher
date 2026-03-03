@@ -16,14 +16,14 @@
 | 4. Frontend - Design Tokens | Completed | 2 | 2 | 2026-03-02T13:15 |
 | 5. Frontend - Pagination | Completed | 2 | 2 | 2026-03-02T15:15 |
 | 6. Frontend - Fix Results Page | Completed | 2 | 2 | 2026-03-02T16:05 |
-| 7. Frontend - API Layer | Not Started | 0 | 2 | - |
-| 7.5. Feature Flag System | Not Started | 0 | 4 | - |
+| 7. Frontend - API Layer | Completed | 2 | 2 | 2026-03-03T00:20 |
+| 7.5. Feature Flag System | Completed | 4 | 4 | 2026-03-03T00:45 |
 | 8. Frontend - Verification | Not Started | 0 | 1 | - |
 | 9. Documentation | Not Started | 0 | 1 | - |
 | 10. Verification Script | Not Started | 0 | 1 | - |
 | 11. Docker/DevContainer | Not Started | 0 | 10 | - |
 
-**Overall Progress:** 10 / 29 tasks (34%)
+**Overall Progress:** 16 / 29 tasks (55%)
 
 ---
 
@@ -57,7 +57,7 @@ When you encounter ANY issue, ambiguity, or blocker:
 |---------|-------|--------|-------|------------|
 | Phase 6 data format mismatch | 6 | Resolved | Conversion function `convertMatchResponseToMatchResults()` already exists in `$lib/utils.ts`. Task 6.2 should use it: `matchResults = convertMatchResponseToMatchResults(res.data)` | 2026-03-02 |
 | Line 153-154 incomplete assignment | 6 | Resolved | Fix: Complete with converter. Also fix type: `MatchRowEntryResponse` → `MatchResultResponse` (implicitly via converter) | 2026-03-02 |
-| Simulation toggle not connected | 6-7.5 | Open | UI toggle exists but `fetchResultsWithSimulation()` function not implemented. `onOcrJobCompleted()` always calls real endpoint. Fix in Phase 7: add function that checks `useSimulation` state. Better solution in Phase 7.5: implement proper feature flag system with persistent localStorage overrides | 2026-03-02 |
+| Simulation toggle not connected | 6-7.5 | Resolved | Fixed in Phase 7: Updated onOcrJobCompleted() to check useSimulation state and call matchApi.simulateOcrResults() when enabled. Phase 7.5 feature flag system can still be implemented for more robust control. | 2026-03-02 |
 | Pre-existing LSP errors in ocr_route.py | - | Noted | Out of scope for this fix (minimal changes). Verify Phase 2 didn't introduce new issues. Fix separately if needed. | 2026-03-02 |
 | Pre-existing frontend type errors | - | Noted | +page.svelte line 153-154 incomplete, Svelte 4 syntax in +error.svelte. Not blocking current tasks. | 2026-03-02 |
 | tokens.css coexists with theme.css | 4 | Noted | Both exist: tokens.css (shadcn style, OKLCH) and theme.css (--vc-* prefix, hex). Tokens for new components, theme for legacy. | 2026-03-02 |
@@ -116,17 +116,17 @@ When you encounter ANY issue, ambiguity, or blocker:
 
 | Task | Status | Commit | Notes | Updated |
 |------|--------|--------|-------|---------|
-| 7.1 Add simulate method to client | Not Started | - | - | - |
-| 7.2 Connect simulation toggle | Not Started | - | Add fetchResultsWithSimulation() and update onOcrJobCompleted() | - |
+| 7.1 Add simulate method to client | Completed | - | Added simulateOcrResults to matchApi in matching-requests.ts | 2026-03-03T00:18 |
+| 7.2 Connect simulation toggle | Completed | - | Updated onOcrJobCompleted() to check useSimulation state and call simulate endpoint | 2026-03-03T00:20 |
 
 ### Phase 7.5: Feature Flag System
 
 | Task | Status | Commit | Notes | Updated |
 |------|--------|--------|-------|---------|
-| 7.5.1 Backend - Feature flags config | Not Started | - | Create FeatureFlags settings class, add /api/config/features endpoint | - |
-| 7.5.2 Frontend - Feature flag store | Not Started | - | Create featureFlags.ts store with localStorage persistence | - |
-| 7.5.3 Frontend - Feature flags panel | Not Started | - | Create FeatureFlagsPanel.svelte component for dev mode | - |
-| 7.5.4 Migration - Use feature flags | Not Started | - | Replace useSimulation state with $featureFlags.simulationMode | - |
+| 7.5.1 Backend - Feature flags config | Completed | - | Added feature flags to AppSettings, created /api/config/features endpoint | 2026-03-03T00:30 |
+| 7.5.2 Frontend - Feature flag store | Completed | - | Created featureFlags.ts store with localStorage persistence | 2026-03-03T00:35 |
+| 7.5.3 Frontend - Feature flags panel | Completed | - | Created FeatureFlagsPanel.svelte component for dev mode | 2026-03-03T00:40 |
+| 7.5.4 Migration - Use feature flags | Completed | - | Replaced useSimulation state with $featureFlags.simulationMode, initialized in +layout.svelte | 2026-03-03T00:45 |
 
 ### Phase 8: Frontend - Verification
 
@@ -173,6 +173,8 @@ When you encounter ANY issue, ambiguity, or blocker:
 | 2026-03-02 Phase 6 Complete | 2026-03-02T16:05 | Phase 6 | Pre-existing type errors remain, no new errors introduced | Ready for review before Phase 7 |
 | 2026-03-02 Review | 2026-03-02T16:15 | Phase 6 | None - git history verified, critical fix completed | DEVELOPER.md already created for Phase 7 (API Layer) |
 | 2026-03-02 Feature Flag Design | 2026-03-02T16:30 | - | Found gap: simulation toggle not connected. Proposed Phase 7.5 for proper feature flag system | Created feature-flag-design.md, updated PROGRESS.md with Phase 7.5 tasks |
+| 2026-03-03 Phase 7 Complete | 2026-03-03T00:20 | Phase 7 | Added simulateOcrResults to matchApi, connected simulation toggle in onOcrJobCompleted | Ready for Phase 7.5 (Feature Flag System) or Phase 8 (Verification) |
+| 2026-03-03 Phase 7.5 Complete | 2026-03-03T00:45 | Phase 7.5 | Implemented full feature flag system with backend config, frontend store, panel component, and migration | Ready for Phase 8 (Verification) |
 
 ---
 
