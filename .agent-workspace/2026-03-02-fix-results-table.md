@@ -13,6 +13,24 @@
 
 ---
 
+## Sample Test Data
+
+When testing the OCR/matching workflow, use these sample files:
+
+| File | Description | Path |
+|------|-------------|------|
+| Petition PDF (small) | 10 pages of fake signed petitions | `samples/dc/fake_signed_petitions_1-10.pdf` |
+| Petition PDF (full) | Full petition dataset | `samples/dc/fake_signed_petitions.pdf` |
+| Voter Records CSV | ~100k fake voter records | `samples/dc/fake_voter_records.csv` |
+
+**Voter Records CSV Columns:**
+- `First_Name`, `Last_Name`
+- `Street_Number`, `Street_Name`, `Street_Type`, `Street_Dir_Suffix`
+
+These files are used to test the full OCR → fuzzy match → results display workflow.
+
+---
+
 ## ⚠️ MANDATORY: Progress Tracking
 
 **After completing EACH task, you MUST update the progress tracker:**
