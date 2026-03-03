@@ -79,14 +79,21 @@ For rapid feedback during development, use continuous test runners:
 **Frontend (Vitest watch mode):**
 ```bash
 cd frontend-svelt
-bun run test:unit --watch  # Runs tests on file changes
+bun run test:unit        # Runs in watch mode by default
+# OR explicitly:
+bun run test:unit watch  # Explicit watch mode
+# For single run (CI/non-interactive):
+bun run test:unit run
 ```
 
 **Backend (pytest-watcher):**
 ```bash
 cd backend
-uv run pytest-watch  # Or: uv run ptw
-# Runs tests on file changes
+uv run ptw .             # Watch current directory
+# Watch specific tests:
+uv run ptw tests/ -- -v  # Pass -v flag to pytest
+# Run immediately on start:
+uv run ptw . --now
 ```
 
 **TDD Cycle:**
