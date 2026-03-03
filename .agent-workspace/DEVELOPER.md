@@ -1,116 +1,55 @@
-# Developer Handoff - 2026-03-02
+# Developer Handoff - 2026-03-03
 
 ## Context
 - **Branch:** refactor/svelte_frontend
-- **Progress:** 10/24 tasks (42%)
+- **Progress:** 16/29 tasks (55%)
 - **Plan:** `.agent-workspace/2026-03-02-fix-results-table.md`
-- **Last Phase Completed:** Phase 6 - Fix Results Page (2/2 tasks passing)
+- **Last Phase Completed:** Phase 7.5 - Feature Flag System (4/4 tasks)
 
 ## Active Concerns
+None - all concerns resolved or noted (pre-existing issues out of scope).
 
-**Open Concern: Simulation toggle not connected**
+## Gap Identified
 
-The simulation toggle (`useSimulation`) exists in the UI but doesn't actually do anything. The `fetchResultsWithSimulation()` function was not implemented in Phase 6.
+❗️ **Missing Tests:** The feature flag system (Phase 7.5) was implemented without tests:
+- Backend: No `backend/tests/test_config.py` for feature flags
+- Frontend: No `frontend-svelt/src/lib/stores/featureFlags.test.ts`
 
-**Current state:**
-- `onOcrJobCompleted()` always calls real endpoint
-- Toggle checkbox exists but has no effect
-
-**Fix required in Phase 7:**
-After adding `api.simulateOcrResults()`, you must also add the `fetchResultsWithSimulation()` function and update `onOcrJobCompleted()` to use it.
+**Recommendation:** Add these tests as part of Phase 8 or as a separate tech debt item.
 
 ## Next Work
 
-### Phase 7: Frontend - API Layer Update
+### Phase 8: Frontend - Verification
 
-**This adds the simulate endpoint to the frontend API client AND connects the simulation toggle.**
+**Run all frontend checks to verify Phases 4-7.5 are working correctly.**
 
 **Tasks:**
 
-1. **Task 7.1:** Add simulate method to client
-   - Modify: `frontend-svelt/src/lib/api/client.ts`
-   - See plan lines 1028-1068 for implementation details
-   - Add `simulateOcrResults` method to api object
+1. **Task 8.1:** Run all frontend checks
+   - Type check: `cd frontend-svelt && bun run check`
+   - Lint: `cd frontend-svelt && bun run lint`
+   - Format check: `cd frontend-svelt && bun run fmt:check`
+   - Unit tests: `cd frontend-svelt && bun run test:unit --run`
+   - Build: `cd frontend-svelt && bun run build`
    
-   **Key Changes:**
-   ```typescript
-   simulateOcrResults: (task_id: string) =>
-     request<MatchResponse>({
-       opts: {
-         method: 'GET',
-         headers: { 'Content-Type': 'application/json' },
-       },
-       path: ['api', 'workspace', 'ocr', 'simulate', task_id],
-     }),
-   ```
+   **Expected:** All checks pass, build succeeds
    
-   **Run:** `cd frontend-svelt && bun run check`
-   **Expected:** No type errors
+   **If failures:**
+   - Document errors in PROGRESS.md as concerns
+   - Fix issues
+   - Re-run checks
+   - Commit fixes
 
-2. **Task 7.2:** Connect simulation toggle (Fix Open Concern)
-   - Modify: `frontend-svelt/src/routes/workspace/[id]/+page.svelte`
-   - Add `fetchResultsWithSimulation()` function (see plan lines 950-969)
-   - Update `onOcrJobCompleted()` to use it
+2. **Optional Task 8.2:** Add feature flag tests
+   - Create: `frontend-svelt/src/lib/stores/featureFlags.test.ts`
+   - Test: load, toggle, setFlag, reset, resetAll, persistence
+   - Run: `cd frontend-svelt && bun run test:unit --run src/lib/stores/featureFlags.test.ts`
    
-   **Add this function:**
-   ```typescript
-   async function fetchResultsWithSimulation(jobId: string) {
-     let res;
-     if (useSimulation) {
-       res = await api.simulateOcrResults(jobId);
-     } else {
-       res = await matchApi.getMatchResults({
-         campaign_id: "demo",
-         job_id: jobId
-       });
-     }
-     
-     if (!res.ok) throw new Error(`Server returned ${res.status}`);
-     matchResults = convertMatchResponseToMatchResults(res.data);
-   }
-   ```
-   
-   **Update `onOcrJobCompleted()`:**
-   ```typescript
-   async function onOcrJobCompleted(jobId: string) {
-     await fetchResultsWithSimulation(jobId);
-   }
-   ```
-   
-   **Run:** `cd frontend-svelt && bun run check`
-   **Expected:** No type errors
+   **Note:** This is optional but recommended for code quality.
 
 **Version Requirements:**
 - Frontend: Svelte 5 runes ONLY (`$state`, `$derived`, `$props`)
 - Backend: Python 3.12+ features
-
-**Data Format Conversion (CRITICAL):**
-
-The backend returns:
-```typescript
-{
-  column_data: [...],  // Backend format
-  result_data: [...]   // Backend format
-}
-```
-
-The frontend expects:
-```typescript
-{
-  matchColumns: [...],  // Frontend format
-  matchRecords: [...]   // Frontend format
-}
-```
-
-**Always use the converter:**
-```typescript
-import { convertMatchResponseToMatchResults } from "$lib/utils";
-
-// In onOcrJobCompleted():
-const res = await matchApi.getMatchResults({ campaign_id: "demo", job_id: jobId });
-if (!res.ok) throw new Error(`Server returned ${res.status}`);
-matchResults = convertMatchResponseToMatchResults(res.data);  // ← USE THIS
-```
 
 **TDD Workflow - Continuous Test Runners:**
 
@@ -153,19 +92,18 @@ uv run ptw . --now
    - Status: Not Started → In Progress → Completed
    - Add commit hash
    - Add timestamp
-   - Add notes
+   - Add notes (especially any errors found and how they were fixed)
 2. Commit changes with descriptive message
 3. Run verification commands
 
 **After Phase Completion:**
 1. Update Status Overview in PROGRESS.md
 2. Add entry to Checkpoint Log
-3. Report back for review (do NOT proceed to Phase 8 without review)
+3. Report back for review (do NOT proceed to Phase 9 without review)
 
 **Key References:**
-- Plan: `.agent-workspace/2026-03-02-fix-results-table.md` (lines 1028-1068)
+- Plan: `.agent-workspace/2026-03-02-fix-results-table.md` (lines 1071-1115)
 - Progress: `.agent-workspace/PROGRESS.md`
-- API client: `frontend-svelt/src/lib/api/client.ts`
-- Response types: `frontend-svelt/src/lib/api/response-types.ts`
+- Feature flags: `.agent-workspace/feature-flag-design.md`
 
 Working directory: /Users/kurian/01 - Projects/votecatcher
