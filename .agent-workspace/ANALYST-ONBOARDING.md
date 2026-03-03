@@ -171,7 +171,89 @@ grep -A 20 "Active Concerns" .agent-workspace/PROGRESS.md
    - Open concerns requiring attention
    - Recommended next actions
    - Any plan updates needed
+7. Create DEVELOPER.md with handoff prompt (see template below)
+8. Log review in PROGRESS.md Checkpoint Log
+9. Commit DEVELOPER.md
 ```
+
+### After Progress Review (MANDATORY):
+
+After reviewing progress (either from user request or session start), you MUST:
+
+1. **Create DEVELOPER.md** in `.agent-workspace/` with a handoff prompt for implementing agents
+
+**DEVELOPER.md Template:**
+
+```markdown
+# Developer Handoff - [DATE]
+
+## Context
+- **Branch:** [current branch]
+- **Progress:** X/Y tasks (Z%)
+- **Plan:** `.agent-workspace/[plan-file].md`
+- **Last Phase Completed:** [Phase # - Name]
+
+## Active Concerns
+[List any Open/Blocked concerns from PROGRESS.md, or "None"]
+
+## Next Work
+
+### Phase [X]: [Phase Name]
+
+**Tasks:**
+1. **Task X.1:** [Description]
+   - [File(s) to create/modify]
+   - [Verification command]
+   - [Expected result]
+
+2. **Task X.2:** [Description]
+   - [File(s) to create/modify]
+   - [Verification command]
+   - [Expected result]
+
+**Version Requirements:**
+- Frontend: Svelte 5 runes ONLY (`$state`, `$derived`, `$props`)
+- Backend: Python 3.12+ features
+
+**MANDATORY After Each Task:**
+1. Update `.agent-workspace/PROGRESS.md`:
+   - Status: Not Started → In Progress → Completed
+   - Add commit hash
+   - Add timestamp
+   - Add notes
+2. Commit changes with descriptive message
+3. Run verification commands
+
+**After Phase Completion:**
+1. Update Status Overview in PROGRESS.md
+2. Add entry to Checkpoint Log
+3. Report back for review (do NOT proceed to next phase without review)
+
+**Key References:**
+- [List relevant files with line numbers]
+- [List any patterns or utilities to use]
+
+Working directory: [project path]
+```
+
+2. **Log the review** in PROGRESS.md Checkpoint Log:
+
+```markdown
+| [DATE] Review | [TIMESTAMP] | Phase [X] | [Issues found or "None"] | Created DEVELOPER.md for Phase [Y] |
+```
+
+3. **Commit the DEVELOPER.md:**
+
+```bash
+git add .agent-workspace/DEVELOPER.md
+git commit -m "docs: create developer handoff for Phase [X]"
+```
+
+**Why This Matters:**
+- Provides clear, actionable instructions for implementing agents
+- Captures context from your review (concerns, findings, updates)
+- Ensures continuity between sessions
+- Reduces token usage (agents don't need to re-read all docs)
 
 ### When New Concern Reported:
 
@@ -185,6 +267,7 @@ grep -A 20 "Active Concerns" .agent-workspace/PROGRESS.md
    c. Out of scope? → Mark Deferred, document why
 5. Update PROGRESS.md with your analysis
 6. If plan affected, update plan and commit
+7. If DEVELOPER.md exists, update it with concern context
 ```
 
 ---
@@ -283,6 +366,7 @@ You're doing well if:
 - ✅ Implementing agents follow the established patterns
 - ✅ User gets clear, actionable status updates
 - ✅ Blockers are escalated promptly
+- ✅ DEVELOPER.md created after each progress review
 
 ---
 
@@ -320,6 +404,14 @@ You're doing well if:
 2. In next handoff prompt, emphasize MANDATORY tracking
 3. If persistent, add explicit checklist items
 
+### Scenario: Concern resolved or plan updated
+
+**Action:**
+1. Update concern status in PROGRESS.md
+2. If DEVELOPER.md exists, update it to reflect changes
+3. Commit both files together
+4. This ensures next implementing agent has current context
+
 ---
 
 ## Tools Available
@@ -353,6 +445,7 @@ Before taking over, verify you understand:
 - [ ] Understand data format conversion
 - [ ] Know where to find everything
 - [ ] Understand the implementing agent handoff process
+- [ ] Understand DEVELOPER.md creation workflow after reviews
 
 **When ready, announce to user:**
 > "I've reviewed the analyst/architect context. Current status: [X% complete, Y open concerns]. Ready to [review progress / triage concerns / continue implementation]."
