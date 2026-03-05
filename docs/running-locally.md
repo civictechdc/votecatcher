@@ -343,23 +343,23 @@ A separate task will address these legacy errors.
 
 ## Environment Variables Quick Reference
 
-### Backend (`.env.local`)
+### Backend
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
 | `OCR_PROVIDER_NAME` | OCR service provider | `open_ai` |
 | `OCR_PROVIDER_MODEL` | OCR model to use | `gpt-4o-mini` |
 | `OCR_PROVIDER_API_KEY` | API key for OCR provider | `sk-proj-...` |
-| `DEV_LOCAL_RUNTIME_DIR` | Base runtime directory | `runtime` |
-| `DEV_LOGGING_ENABLED` | Enable dev logging | `1` |
-| `FEATURE_ENABLE_SIMULATION` | Enable simulation mode | `0` |
+| `DEV_LOCAL_RUNTIME_DIR` | Base runtime directory *(dev only)* | `runtime` |
+| `DEV_LOGGING_ENABLED` | Enable dev logging *(dev only)* | `1` |
+| `FEATURE_ENABLE_SIMULATION` | Enable simulation mode *(dev only)* | `0` |
 
-### Frontend (`.env.local`)
+### Frontend
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
 | `PUBLIC_API_URL` | Backend API URL (trailing slash!) | `http://localhost:8080/` |
-| `DEMO_MODE` | Use sample data | `1` |
+| `DEMO_MODE` | Use sample data *(dev only)* | `1` |
 | `DATABASE_URL` | PostgreSQL connection string | `postgres://...` |
 | `ORIGIN` | App origin for CORS/auth | `http://localhost:5173` |
 | `BETTER_AUTH_SECRET` | Auth encryption key (32+ chars) | `dev-secret-...` |
