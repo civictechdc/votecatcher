@@ -21,9 +21,53 @@ uv sync --dev
 
 Create `.env.local` in the backend directory:
 
+#### Required Variables
+
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/votecatcher
-VITE_API_URL=http://localhost:8080
+# OCR Provider (for petition text extraction)
+OCR_PROVIDER_NAME=open_ai
+OCR_PROVIDER_MODEL=gpt-4o-mini
+OCR_PROVIDER_API_KEY=your-openai-api-key-here
+```
+
+#### Local Development Paths
+
+```env
+# Runtime directory structure (relative to backend/)
+DEV_LOCAL_RUNTIME_DIR=runtime
+DEV_LOCAL_RUNTIME_DB_DIR=database
+DEV_LOCAL_RUNTIME_DB_FILE=database/local_db.db
+DEV_LOCAL_BALLOT_CROP_DIR=crops
+DEV_LOCAL_CAMPAIGNS_DIR=campaigns
+DEV_LOCAL_PETITION_SCAN_DIR=scans
+DEV_LOCAL_VOTER_REGISTRATION_DIR=voters
+DEV_LOCAL_OCR_DIR=ocr
+
+# Clear runtime on launch (useful for clean dev starts)
+DEV_CLEAR_RUNTIME_ON_LAUNCH=1
+```
+
+#### Optional: Supabase (Production)
+
+```env
+SUPABASE_PROJECT_URL=your-project-url
+SUPABASE_PROJECT_KEY=your-project-key
+ENABLE_SUPABASE=0  # Set to 1 for production
+```
+
+#### Feature Flags
+
+```env
+FEATURE_ENABLE_SIMULATION=0      # Enable OCR simulation mode
+FEATURE_ENABLE_BETA_FEATURES=0   # Enable beta features
+FEATURE_ENABLE_DEBUG_MODE=0      # Enable debug mode
+```
+
+#### Development Settings
+
+```env
+DEV_LOGGING_ENABLED=1            # Enable detailed logging
+DEV_LOCAL_DB_ENABLE_LOGGING=1    # Enable database query logging
 ```
 
 ### Running
@@ -94,6 +138,39 @@ uv run ruff format app/
 ```bash
 cd frontend-svelt
 bun install
+```
+
+### Environment Configuration
+
+Create `.env.local` in the frontend directory:
+
+#### Required Variables
+
+```env
+# Backend API URL (must include trailing slash)
+PUBLIC_API_URL="http://localhost:8080/"
+
+# Demo mode (uses sample data)
+DEMO_MODE=1
+
+# Database connection (for server-side queries)
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/votecatcher"
+
+# App origin (for CORS and auth)
+ORIGIN="http://localhost:5173"
+
+# Better Auth secret (32+ chars for production)
+# Generate with: openssl rand -base64 32
+BETTER_AUTH_SECRET="dev-secret-key-for-local-development-32ch"
+```
+
+#### OCR Configuration (Frontend)
+
+```env
+# These mirror backend config for client-side reference
+OCR_PROVIDER_NAME="open_ai"
+OCR_PROVIDER_MODEL=gpt-4o-mini
+OCR_PROVIDER_API_KEY=your-openai-api-key-here
 ```
 
 ### Running
@@ -263,3 +340,35 @@ These errors existed before the recent refactoring work and do not affect the ne
 - Results table fixes
 
 A separate task will address these legacy errors.
+
+## Environment Variables Quick Reference
+
+### Backend (`.env.local`)
+
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `OCR_PROVIDER_NAME` | OCR service provider | `open_ai` |
+| `OCR_PROVIDER_MODEL` | OCR model to use | `gpt-4o-mini` |
+| `OCR_PROVIDER_API_KEY` | API key for OCR provider | `sk-proj-...` |
+| `DEV_LOCAL_RUNTIME_DIR` | Base runtime directory | `runtime` |
+| `DEV_LOGGING_ENABLED` | Enable dev logging | `1` |
+| `FEATURE_ENABLE_SIMULATION` | Enable simulation mode | `0` |
+
+### Frontend (`.env.local`)
+
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `PUBLIC_API_URL` | Backend API URL (trailing slash!) | `http://localhost:8080/` |
+| `DEMO_MODE` | Use sample data | `1` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgres://...` |
+| `ORIGIN` | App origin for CORS/auth | `http://localhost:5173` |
+| `BETTER_AUTH_SECRET` | Auth encryption key (32+ chars) | `dev-secret-...` |
+
+### Production Checklist
+
+- [ ] Set `ENABLE_SUPABASE=1` (if using Supabase)
+- [ ] Generate strong `BETTER_AUTH_SECRET` (32+ random chars)
+- [ ] Update `PUBLIC_API_URL` to production URL
+- [ ] Update `ORIGIN` to production domain
+- [ ] Secure `OCR_PROVIDER_API_KEY`
+- [ ] Set production `DATABASE_URL`
