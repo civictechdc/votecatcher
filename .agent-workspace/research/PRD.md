@@ -55,6 +55,7 @@ Votecatcher aims to help campaigns rapidly get snapshots of signed petition ball
 - Integrate provider SSO
 - Enumerated list (can it be dynamically updated from a remote list)
 - Optional: Local/self hosted model options
+- Select vendor/models at runtime
 - Campaign management
 - User management
 - Storage management and configuration
@@ -62,6 +63,7 @@ Votecatcher aims to help campaigns rapidly get snapshots of signed petition ball
 - Data management
 - Security and Access controls
 - Structured branding configuration
+- Model/vendor selection persisted for text extraction jobs/results
 
 #### Asset storage
 
@@ -73,3 +75,19 @@ Votecatcher aims to help campaigns rapidly get snapshots of signed petition ball
 - Open questions about efficient storage/storage formats
 - Asset export
 - Duplication resolution
+
+### Deployment and Release
+
+- It's an open source product
+- Allow for self-hosting deployment
+  - Containers?
+  - Bootstrap script to set up most of the core?
+- One-click deployment to a cloud vendor
+  - Digital ocean example: https://www.digitalocean.com/community/tutorials/one-click-deploy-button
+- What can be automated and what requires manual or pre-set up
+- Secure deployment
+
+### Storage set-up
+
+- Auto create local database
+- Auto connect to host provider given required credentials e.g. supabase
