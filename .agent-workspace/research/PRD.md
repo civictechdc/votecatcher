@@ -107,9 +107,46 @@ Votecatcher aims to help campaigns rapidly get snapshots of signed petition ball
 
 ## Key Milesone
 
-### Deployable MVP
+### Deployable Minimum Viable Product
+
+### Must-have Scope
+
+- A working build that allows a complete end-to-end experince of creating a campaign, uploading files and running matches
+  - Baseline acceptable performance
+- Baseline UX/Styling
+  - Along the lines of the current motif
+  - Arrange in a modular way for future refinement
+  - Baseline accessibility
+- Basic campaign creation and configuration
+  - Create campaign onboarding
+    - Name, Description, Target election year
+    - Editing the above fields
+- Foundational database schema
+  - Campaigns, Assets, Text extraction (jobs and results), Fuzzy matching (results)
+  - User (lower priority)
+  - Region (lower priority)
+- Working with local databases like PostGres/SQLite or on a Supabase
+- Contanerised deployment
+- A first-pass impelemenation of simple/'one click' deployment (this can be iterated and optimised on)
+  - Auto run database creation and schema set-up
+  - Start backend and front end
+- Foundatonal secure web practises
+  - Credential management of keys
+  - Frontend/backend data hygeine
+  - Data leakage prevention
+  - Hooks/support for HTTPS and encrypted data in the future
+
+### Stretch goals
+
+- Basic user auth and managment
+- Regional configuration
+  - Campaign creation selects a region which provides preset configurations on expected registered voter table fields and expected petiton fields
 
 ### Hosted Simulated Demo
 
-- We want to have a version of Votecatcher that is hosted on a public URL
-- This version will
+- We want to have a variant of Votecatcher that is hosted on a public URL
+- Users who visit this version will be able to interact with the core flow
+- Simulate uploading files
+- Simulate the UX of matching and results/metrics presentation
+- No real external calls, all data and events are pre-baked or locally sourced
+- Simulation can be reset

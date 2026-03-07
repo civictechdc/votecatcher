@@ -181,7 +181,7 @@ export async function request<T = unknown>(
 
 // Convenience API surface
 export const api = {
-	getWorkspace: (id: string) => request(`${BASE_URL}api/workspace/${id}`, { method: 'GET' }),
+	getWorkspace: (id: string) => request(`${BASE_URL}/api/workspace/${id}`, { method: 'GET' }),
 	getSession: () =>
 		request<{ user?: { id: string; email?: string } }>('/api/session', { method: 'GET' }),
 	storeApiKey: (provider: string, apiKey: string) =>
@@ -193,25 +193,25 @@ export const api = {
 
 	// high-level (returns ApiResult)
 	demoUploadVoters: (formData: FormData) =>
-		request(`${BASE_URL}api/upload/voter-records`, { method: 'POST', body: formData }),
+		request(`${BASE_URL}/api/upload/voter-records`, { method: 'POST', body: formData }),
 
 	// low-level raw fetch (useful in +server to forward response)
 	demoUploadVotersRaw: (formData: FormData) =>
-		fetchRaw(`${BASE_URL}api/upload/voter-records`, { method: 'POST', body: formData }),
+		fetchRaw(`${BASE_URL}/api/upload/voter-records`, { method: 'POST', body: formData }),
 
 	// high-level (returns ApiResult)
 	demoUploadPetitions: (formData: FormData) =>
-		request(`${BASE_URL}api/upload/petition-entries`, { method: 'POST', body: formData }),
+		request(`${BASE_URL}/api/upload/petition-entries`, { method: 'POST', body: formData }),
 
 	// low-level raw fetch (useful in +server to forward response)
 	demoUploadPetitionsRaw: (formData: FormData) =>
-		fetchRaw(`${BASE_URL}api/upload/petition-entries`, { method: 'POST', body: formData }),
+		fetchRaw(`${BASE_URL}/api/upload/petition-entries`, { method: 'POST', body: formData }),
 
 	triggerProcessFile: (payload: { filePath: string; campaignId: string }) =>
 		request('/api/process-voter-file', { method: 'POST', body: payload }),
 
 	fetchMatchFields: (id: string) =>
-		request(`${BASE_URL}api/config/match-fields/${id}`, {
+		request(`${BASE_URL}/api/config/match-fields/${id}`, {
 			method: 'GET'
 		}),
 
@@ -220,7 +220,7 @@ export const api = {
 		provider_model: string;
 		api_key: string;
 	}) =>
-		request(`${BASE_URL}api/workspace/ocr/demo`, {
+		request(`${BASE_URL}/api/workspace/ocr/demo`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: payload
@@ -231,14 +231,14 @@ export const api = {
 		provider_model: string;
 		api_key: string;
 	}) =>
-		request<MatchingProgressResponse>(`${BASE_URL}api/workspace/ocr/demo_batch`, {
+		request<MatchingProgressResponse>(`${BASE_URL}/api/workspace/ocr/demo_batch`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: payload
 		}),
 
 	demoGetOcrStatus: (job_id: string) =>
-		request<MatchingProgressResponse>(`${BASE_URL}api/workspace/ocr/batch/${job_id}/status`, {
+		request<MatchingProgressResponse>(`${BASE_URL}/api/workspace/ocr/batch/${job_id}/status`, {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
 		}),
@@ -248,7 +248,7 @@ export const api = {
 	},
 	demoGetMatchingResults: (job_id: string) =>
 		request<MatchResponse>(
-			`${BASE_URL}api/workspace/ocr/results/demo/${encodeURIComponent(job_id)}`,
+			`${BASE_URL}/api/workspace/ocr/results/demo/${encodeURIComponent(job_id)}`,
 			{
 				method: 'GET',
 				headers: { 'Content-Type': 'application/json' }
