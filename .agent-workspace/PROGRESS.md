@@ -71,6 +71,7 @@ When you encounter ANY issue, ambiguity, or blocker:
 | Feature flag tests skip localStorage | 8 | Noted | 4 tests skipped due to module isolation complexity with localStorage mocking. Core functionality tested via getOverrides() tests. Integration tests needed for full localStorage coverage. | 2026-03-03 |
 | Phase 11 Docker/DevContainer deferred | 11 | Resolved | Blocker removed in Phase 12 - build now succeeds. Phase 11 ready to resume. | 2026-03-03 |
 | tests/api/match.test.ts fails | 13 | Resolved | Test had fundamental issues: (1) $env/static/public not mocked, (2) MSW handlers didn't match actual API URL patterns. Fixed by: adding $env/static/public alias in vitest.config.ts, updating web-server.ts to use hardcoded BASE_URL, and marking test as skipped with TODO for proper refactor. All other tests pass (25 passed, 4 skipped). | 2026-03-07 |
+| Simulation toggle UI placement bug | 13 | Noted | "Use Simulated Data" checkbox at +page.svelte:455-463 is wrapped in `{#if matchResults && matchResults.matchRecords.length > 0}` — only visible AFTER results exist. Docs say to toggle BEFORE running matching. FeatureFlagsPanel.svelte exists (69 lines) but never imported anywhere. Recommend: Fix placement OR add proper debug panel. See design doc: `.agent-workspace/debug-flag-system-design.md` | 2026-03-07 |
 
 ### Concern Template
 
@@ -216,6 +217,7 @@ When you encounter ANY issue, ambiguity, or blocker:
 | 2026-03-07 Phase 13 Complete | 2026-03-07T02:30 | Phase 13 | All 3 tasks complete. Created e2e/simulation-results.test.ts, updated running-locally.md with E2E testing section, created docs/simulation-testing.md. Commits: ecb74f5, 6ba65d4. | 🎉 Project complete! All 39/39 tasks finished. Ready for merge. |
 | 2026-03-07 Analyst Review | 2026-03-07T15:30 | All | Verified git history (46 commits), backend tests pass (19), frontend build succeeds. Found 1 Open concern: tests/api/match.test.ts fails with $env/static/public import error. New concern logged. | Fix unit test mock issue before merge, or mark test as skip/TODO. |
 | 2026-03-07 Test Fix | 2026-03-07T02:32 | - | Fixed tests/api/match.test.ts: Added $env/static/public mock, updated web-server.ts, marked test as skipped (fundamental URL pattern mismatch). All tests now pass: 25 passed, 5 skipped (4 localStorage + 1 match.test). | All tests passing. Project ready for merge. |
+| 2026-03-07 Debug System Design | 2026-03-07T02:45 | - | Documented simulation toggle UI bug (checkbox hidden until results exist). Created debug-flag-system-design.md with research on best practices, security considerations, and implementation plan (Phase 14). ~4 hours estimated work. | Future work: Implement unified debug panel, fix toggle placement, add URL param support. |
 
 ---
 
