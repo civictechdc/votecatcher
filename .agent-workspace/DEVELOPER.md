@@ -91,7 +91,6 @@ All planned work finished. Next steps:
 1. Review Docker configuration for production readiness
 2. Test Docker deployment: `docker-compose up`
 3. Consider addressing pre-existing Svelte 5 event handler deprecation warnings
-4. Merge to main branch
 
 ## Docker Setup
 
