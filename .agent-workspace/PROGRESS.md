@@ -72,7 +72,7 @@ When you encounter ANY issue, ambiguity, or blocker:
 | Phase 11 Docker/DevContainer deferred | 11 | Resolved | Blocker removed in Phase 12 - build now succeeds. Phase 11 ready to resume. | 2026-03-03 |
 | tests/api/match.test.ts fails | 13 | Resolved | Test had fundamental issues: (1) $env/static/public not mocked, (2) MSW handlers didn't match actual API URL patterns. Fixed by: adding $env/static/public alias in vitest.config.ts, updating web-server.ts to use hardcoded BASE_URL, and marking test as skipped with TODO for proper refactor. All other tests pass (25 passed, 4 skipped). | 2026-03-07 |
 | Simulation toggle UI placement bug | 13 | Resolved | Fixed in commit 5d1efad - moved checkbox outside conditional block, now visible before "Run Matching" button. Added comprehensive debug logging to trace data flow. | 2026-03-07 |
-| Matching results not rendering after smoke test | 13 | Open | Smoke test revealed matching results fail to render on frontend. Last known working commit: df12170 (WIP: Database integration). Our changes may have broken the data flow from backend to frontend. Requires systematic debugging WITHOUT real LLM OCR calls — simulation mode is critical here. May involve database setup analysis (potential sub-project). See: `.agent-workspace/debug-results-rendering.md` | 2026-03-07 |
+| Matching results not rendering after smoke test | 13 | Resolved | Root cause identified: (1) Double-slash in API URL (`//workspace`) caused 404, (2) Simulation mode was checked AFTER OCR ran instead of BEFORE. Fixed in commit 4d941ec: URL normalization in client.ts + simulation bypass in runMatching(). | 2026-03-07 |
 
 ### Concern Template
 
@@ -221,6 +221,7 @@ When you encounter ANY issue, ambiguity, or blocker:
 | 2026-03-07 Debug System Design | 2026-03-07T02:45 | - | Documented simulation toggle UI bug (checkbox hidden until results exist). Created debug-flag-system-design.md with research on best practices, security considerations, and implementation plan (Phase 14). ~4 hours estimated work. | Future work: Implement unified debug panel, fix toggle placement, add URL param support. |
 | 2026-03-07 Smoke Test Failure | 2026-03-07T03:00 | - | User smoke test revealed matching results not rendering. Last known working: commit df12170. Created debug-results-rendering.md with systematic debugging plan (Phases A-D). **Critical:** Must use simulation mode only — no real LLM OCR calls. Blocked by simulation toggle placement bug. | P0: Fix simulation toggle, then debug data flow from backend → frontend using simulation mode. |
 | 2026-03-07 Phase A.1 Complete | 2026-03-07T15:45 | - | Fixed simulation toggle placement (commit 5d1efad). Toggle now visible before "Run Matching" button. Added comprehensive debug logging to trace data flow: API calls, conversion, state updates, and render conditions. | Ready to test simulation mode and debug rendering issue. Proceed with Phase B (isolate break point). |
+| 2026-03-07 Root Cause Found | 2026-03-07T20:00 | - | Browser logs revealed TWO bugs: (1) Double-slash URL `http://localhost:8080//workspace/ocr/simulate` causing 404, (2) Simulation mode checked AFTER real OCR ran (wasted LLM API call). Fixed in commit 4d941ec: URL normalization + simulation bypass in runMatching(). | Simulation mode now works correctly - bypasses OCR entirely. Ready for user testing. |
 
 ---
 
