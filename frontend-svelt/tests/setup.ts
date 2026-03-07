@@ -7,6 +7,10 @@ vi.mock('$app/environment', () => ({
 	SSR: true,
 }));
 
+vi.mock('$env/static/public', () => ({
+	PUBLIC_API_URL: 'http://localhost:8000',
+}));
+
 vi.mock('$app/stores', () => {
 	const { readable } = require('svelte/store');
 	return {

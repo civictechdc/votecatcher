@@ -1,11 +1,8 @@
 import { setupServer } from "msw/node";
 import { http, HttpHandler, HttpResponse, RequestHandler } from "msw";
 import { beforeAll, afterEach, afterAll } from "vitest";
-import { vi } from "vitest";
 
-vi.stubEnv("VITE_API_URL", "https://testserver.com/");
-
-import { BASE_URL } from "$lib/api/client";
+const BASE_URL = "http://localhost:8000";
 
 function apiUrl(path: string): string {
 	return new URL(path, BASE_URL).href;
