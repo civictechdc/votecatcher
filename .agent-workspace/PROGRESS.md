@@ -23,10 +23,11 @@
 | 10. Verification Script | Completed | 1 | 1 | 2026-03-03T13:30 |
 | 11. Docker/DevContainer | Completed | 10 | 10 | 2026-03-07T14:35 |
 | 12. Frontend Build Fixes | Completed | 5 | 5 | 2026-03-05T14:02 |
+| 13. E2E Simulation Testing | Not Started | 0 | 3 | - |
 
-**Overall Progress:** 36 / 36 tasks (100%)
+**Overall Progress:** 36 / 39 tasks (92%)
 
-**Note:** All phases complete! Phase 11 (Docker/DevContainer) implemented successfully.
+**Note:** Phase 13 (E2E Simulation Testing) added to provide comprehensive testing coverage for the simulation feature and results table.
 
 ---
 
@@ -165,6 +166,14 @@ When you encounter ANY issue, ambiguity, or blocker:
 | 12.4 Fix MSW browser import | Completed | - | Changed import from `'msw'` to `'msw/browser'` for setupWorker | 2026-03-05T14:01 |
 | 12.5 Verify production build | Completed | - | Build succeeds. All pages load correctly (landing, workspace demo, getting-started). Backend/frontend communication working. | 2026-03-05T14:02 |
 
+### Phase 13: E2E Simulation Testing
+
+| Task | Status | Commit | Notes | Updated |
+|------|--------|--------|-------|---------|
+| 13.1 Create e2e test for simulation results table | Not Started | - | E2E test using Playwright to verify simulation mode loads results table with pagination | - |
+| 13.2 Update running-locally.md with e2e testing info | Not Started | - | Add section on running e2e tests, simulation mode testing, and troubleshooting | - |
+| 13.3 Create simulation testing guide | Not Started | - | Create docs/simulation-testing.md with comprehensive guide on using simulation for testing and development | - |
+
 ### Phase 11: Docker/DevContainer
 
 | Task | Status | Commit | Notes | Updated |
@@ -202,6 +211,7 @@ When you encounter ANY issue, ambiguity, or blocker:
 | 2026-03-05 Frontend Debug Session | 2026-03-05T14:02 | Build Fixes | Fixed Svelte 5 syntax errors (+error.svelte, getting-started/+page.svelte) and MSW 2.x compatibility (handlers.ts, browser.ts). Production build now succeeds. All pages load correctly (landing, workspace demo, getting-started). | Frontend fully functional. Minor Svelte 5 deprecation warnings remain (event handlers) but non-blocking. |
 | 2026-03-07 Phase 11 Complete | 2026-03-07T14:35 | Phase 11 | Implemented Docker/DevContainer setup: docker-compose.yml, Dockerfiles, .dockerignore files, DevContainer config, setup script, and README. All files committed (7921c26). Docker Compose config validates successfully. | Project complete! All 36 tasks finished. |
 | 2026-03-07 Analyst Review | 2026-03-07T15:00 | All (Project Complete) | None - git history verified (b716ed3, 7921c26), all concerns documented appropriately, no Open/Blocked issues. DEVELOPER.md current and accurate. | Project complete. Ready for merge. Pre-existing Svelte 5 warnings and legacy errors noted but non-blocking. |
+| 2026-03-07 Phase 13 Added | 2026-03-07T15:15 | - | Added Phase 13 (E2E Simulation Testing) with 3 tasks: e2e test, documentation updates, simulation testing guide. Task count: 36→39. Progress: 100%→92%. | Ready to execute Phase 13 for comprehensive simulation testing coverage. |
 
 ---
 

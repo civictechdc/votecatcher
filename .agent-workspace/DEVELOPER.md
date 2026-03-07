@@ -2,19 +2,20 @@
 
 ## Context
 - **Branch:** refactor/svelte_frontend
-- **Progress:** 36/36 tasks (100%) ✅
+- **Progress:** 36/39 tasks (92%)
 - **Plan:** `.agent-workspace/2026-03-02-fix-results-table.md`
-- **Last Phase Completed:** Phase 11 - Docker/DevContainer (10/10 tasks)
+- **Last Phase Completed:** Phase 12 - Frontend Build Fixes (5/5 tasks)
+- **Next Phase:** Phase 13 - E2E Simulation Testing (0/3 tasks)
 
-## Status: PROJECT COMPLETE ✅
+## Status: Phase 13 Pending
 
-All planned tasks completed successfully. Docker/DevContainer setup implemented and validated.
+Phases 1-12 complete. Phase 13 (E2E Simulation Testing) added to provide comprehensive testing coverage.
 
 ## Active Concerns
 
 **All concerns resolved or noted (pre-existing, not blocking).**
 
-**Phase 11 Complete:** Docker/DevContainer setup implemented. All configuration files created and validated.
+**Phase 13 Added:** E2E testing with simulation mode to verify results table functionality end-to-end.
 
 ## Completed Work
 
@@ -68,9 +69,47 @@ All planned tasks completed successfully. Docker/DevContainer setup implemented 
 
 **Commit:** `7921c26`
 
+### Phase 13: E2E Simulation Testing (Pending)
+
+**Tasks 13.1-13.3:**
+
+**Task 13.1: Create e2e test for simulation results table**
+- File: `frontend-svelt/e2e/simulation-results.test.ts`
+- Test workspace page with simulation mode enabled
+- Verify results table renders with pagination
+- Test pagination controls (next, previous, page size)
+- Verify data format and column ordering
+- Use feature flag to enable simulation mode
+
+**Verification:**
+```bash
+cd frontend-svelt
+bun run test:e2e
+```
+
+**Expected result:** All e2e tests pass
+
+**Task 13.2: Update running-locally.md with e2e testing info**
+- File: `docs/running-locally.md`
+- Add section: "End-to-End Testing"
+- Include: Running e2e tests, simulation mode testing, troubleshooting e2e issues
+- Update feature flags section with e2e considerations
+
+**Task 13.3: Create simulation testing guide**
+- File: `docs/simulation-testing.md`
+- Purpose: Comprehensive guide for using simulation mode
+- Sections:
+  - What is simulation mode?
+  - When to use simulation (development, testing, demos)
+  - How to enable simulation (feature flags)
+  - Simulated data structure and behavior
+  - Testing patterns with simulation
+  - Troubleshooting simulation issues
+  - API reference: /workspace/ocr/simulate/{task_id}
+
 ## Summary
 
-**What we've accomplished:**
+**What we've accomplished (Phases 1-12):**
 - ✅ Fixed column ordering (backend + frontend)
 - ✅ Added pagination component (7 tests)
 - ✅ Added simulation capability for testing
@@ -83,44 +122,78 @@ All planned tasks completed successfully. Docker/DevContainer setup implemented 
 - ✅ Implemented Docker/DevContainer setup
 - ✅ All new code tested and working
 
-**All 36 tasks complete!** 🎉
+**36/39 tasks complete!** Phase 13 (E2E Simulation Testing) pending.
 
-## Project Complete
+## Next Work
 
-All planned work finished. Next steps:
-1. Review Docker configuration for production readiness
-2. Test Docker deployment: `docker-compose up`
-3. Consider addressing pre-existing Svelte 5 event handler deprecation warnings
+### Phase 13: E2E Simulation Testing
 
-## Docker Setup
+**Tasks:**
+1. **Task 13.1:** Create e2e test for simulation results table
+   - File: `frontend-svelt/e2e/simulation-results.test.ts`
+   - Test workspace page with simulation enabled
+   - Verify results table and pagination
+   - Verification: `bun run test:e2e`
 
-**Files created:**
-- `docker-compose.yml` - Multi-service orchestration
-- `backend/Dockerfile` - Python 3.13 + uv
-- `frontend-svelt/Dockerfile` - Bun + SvelteKit
-- `.devcontainer/` - VS Code DevContainer configuration
+2. **Task 13.2:** Update running-locally.md with e2e testing info
+   - Add e2e testing section
+   - Include simulation testing guidance
+   - Add troubleshooting
 
-**Quick start:**
+3. **Task 13.3:** Create simulation testing guide
+   - File: `docs/simulation-testing.md`
+   - Comprehensive guide for simulation mode
+   - Testing patterns and troubleshooting
+
+**Version Requirements:**
+- Frontend: Svelte 5 runes ONLY (`$state`, `$derived`, `$props`)
+- Backend: Python 3.12+ features
+- E2E: Playwright (already configured)
+
+**TDD Workflow - Continuous Test Runners:**
+
+For rapid feedback during development, use continuous test runners:
+
+**Frontend (Vitest watch mode):**
 ```bash
-# Build and start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down -v
+cd frontend-svelt
+bun run test:unit        # Runs in watch mode by default
 ```
 
-**DevContainer:**
-1. Open in VS Code
-2. Click "Reopen in Container"
-3. Run `.devcontainer/setup.sh`
+**E2E (Playwright):**
+```bash
+cd frontend-svelt
+bun run test:e2e         # Run all e2e tests
+bunx playwright test --ui  # Interactive UI mode
+bunx playwright test --debug  # Debug mode
+```
 
-## Known issues (non-blocking):
-- Svelte 5 event handler deprecation warnings (`on:click` → `onclick`)
-- Pre-existing legacy type/lint errors
+**TDD Cycle:**
+1. Write failing test → See red
+2. Implement minimal code → See green
+3. Refactor → Keep green
+4. Repeat
 
-**Our new code:** All tests passing ✅
+**MANDATORY After Each Task:**
+1. Update `.agent-workspace/PROGRESS.md`:
+   - Status: Not Started → In Progress → Completed
+   - Add commit hash
+   - Add timestamp
+   - Add notes
+2. Commit changes with descriptive message
+3. Run verification commands
+
+**After Phase Completion:**
+1. Update Status Overview in PROGRESS.md
+2. Add entry to Checkpoint Log
+3. Report back for review (do NOT proceed to next phase without review)
+
+**Key References:**
+- Simulation endpoint: `backend/app/routers/ocr_route.py:85`
+- Feature flags: `frontend-svelt/src/lib/stores/featureFlags.ts`
+- API client: `frontend-svelt/src/lib/api/matching-requests.ts`
+- Workspace page: `frontend-svelt/src/routes/workspace/[id]/+page.svelte`
+- Existing e2e test: `frontend-svelt/e2e/demo.test.ts`
+- Playwright config: `frontend-svelt/playwright.config.ts`
 
 Working directory: /Users/kurian/01 - Projects/votecatcher
