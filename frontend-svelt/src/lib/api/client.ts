@@ -8,7 +8,7 @@ import type {
 	MatchingProgressResponse
 } from '$lib/api/response-types';
 
-const BASE_URL = PUBLIC_API_URL ?? '';
+const BASE_URL = (PUBLIC_API_URL ?? '').replace(/\/$/, '');
 
 export type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
 

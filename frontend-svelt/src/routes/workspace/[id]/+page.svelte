@@ -292,6 +292,38 @@
 			matchColumns: matchResults?.matchColumns ?? [],
 			timestamp: new Date().toISOString()
 		};
+
+		// SIMULATION MODE: Bypass OCR entirely
+		if ($featureFlags.simulationMode) {
+			console.log('[DEBUG] Simulation mode enabled - bypassing OCR');
+			pushMessage('Simulation mode: Generating fake results...');
+			uploadProgress = 50;
+			
+			try {
+				const fakeTaskId = `sim-${Date.now()}`;
+				const res = await matchApi.simulateOcrResults(fakeTaskId);
+				console.log('[DEBUG] Simulate response:', res);
+				
+				if (!res.ok) {
+					throw new Error(`Simulation failed: ${res.error}`);
+				}
+				
+				const converted = convertMatchResponseToMatchResults(res.data.results);
+				console.log('[DEBUG] Converted simulation results:', converted);
+				
+				matchResults = converted;
+				uploadProgress = 100;
+				pushMessage(`Simulation complete: ${converted.matchRecords.length} fake results`);
+			} catch (err) {
+				pushMessage(`Simulation error: ${(err as Error).message}`);
+			} finally {
+				uploading = false;
+				setTimeout(() => (uploadProgress = 0), 500);
+			}
+			return;
+		}
+
+		// REAL OCR FLOW
 		try {
 			// fetch matches (server simulates processing)
 
