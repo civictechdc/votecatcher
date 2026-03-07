@@ -198,9 +198,85 @@ bun run test:unit --watch
 # E2E tests
 bun run test:e2e
 
-# All tests
-bun run test
+# E2E tests (interactive UI mode)
+bunx playwright test --ui
+
+# E2E tests (debug mode)
+bunx playwright test --debug
 ```
+
+### E2E Testing with Simulation Mode
+
+The simulation mode feature allows testing the OCR matching workflow without requiring real file uploads or OCR processing.
+
+#### Enabling Simulation Mode
+
+1. Navigate to the workspace page (`/workspace/demo`)
+2. Find the "Use Simulated Data" checkbox
+3. Check the box to enable simulation mode
+4. Upload files and click "Run Matching" button
+5. Simulated results (50-200 rows) will appear in the results table
+
+#### Simulation Mode Features
+
+- Generates realistic mock data using Faker
+- Returns 50-200 rows of match results
+- Includes columns: ocr_name, ocr_address, matched_name, matched_address, match_score, ocr_date, ocr_ward
+- No database operations required
+- no OCR API calls required
+
+#### Testing Workflow
+
+1. Enable simulation mode in the workspace UI
+2. Upload sample files (any CSV/pdf will work)
+3. Click "Run Matching" to trigger simulation
+4. Verify results table displays with pagination
+5. Test pagination controls (next/previous/page size)
+
+#### Troubleshooting E2E Issues
+
+- **Port conflicts**: `lsof -ti:4173 | xargs kill -9`
+- **Test failures**: Check browser console and backend logs
+- **Timeout issues**: Increase timeout in playwright.config.ts
+
+- **Build failures**: Ensure production build succeeds before e2e
+
+### Linting & Formatting
+
+### E2E Testing with Simulation Mode
+
+The simulation mode feature allows testing the OCR matching workflow without requiring real file uploads or OCR processing.
+
+**Enabling Simulation Mode:**
+
+1. Navigate to the workspace page (`/workspace/demo`)
+2. Find the "Use Simulated Data" checkbox
+3. Check the box to enable simulation mode
+4. Click "Run Matching" button
+5. Simulated results (50-200 rows) will appear in the results table
+
+**Simulation Mode Features:**
+
+- Generates realistic mock data using Faker
+- Returns 50-200 rows of match results
+- Includes columns: ocr_name, ocr_address, matched_name, matched_address, match_score, ocr_date, ocr_ward
+- No database operations required
+- No OCR API calls required
+
+**Testing Workflow:**
+
+1. **Unit Tests**: Test individual components (Pagination, feature flags, utilities)
+2. **E2E Tests**: Verify page rendering, element visibility, user interactions
+3. **Backend Tests**: Verify simulation endpoint returns valid data structure
+
+**Troubleshooting E2E Issues:**
+
+| Issue | Solution |
+|-------|----------|
+| Tests timeout | Increase timeout in test: `await expect(locator).toBeVisible({ timeout: 10000 })` |
+| Port 4173 in use | Kill process: `lsof -ti:4173 \| xargs kill -9` |
+| Flaky tests | Use `test.slow()` annotation or increase retries |
+| Browser not installed | Run: `bunx playwright install` |
 
 ### Linting & Formatting
 
