@@ -224,6 +224,7 @@ When you encounter ANY issue, ambiguity, or blocker:
 | 2026-03-07 Root Cause Found | 2026-03-07T20:00 | - | Browser logs revealed TWO bugs: (1) Double-slash URL `http://localhost:8080//workspace/ocr/simulate` causing 404, (2) Simulation mode checked AFTER real OCR ran (wasted LLM API call). Fixed in commit 4d941ec: URL normalization + simulation bypass in runMatching(). | Simulation mode now works correctly - bypasses OCR entirely. Ready for user testing. |
 | 2026-03-07 Workspace Demo 500 Error | 2026-03-07T20:15 | - | +page.server.ts tried to access `json.status` and `json.statusText` on ApiResult type, which only has `error: string` when `ok: false`. Fixed in commit c29cb64: Use `error(404, json.error)` instead. Also removed unused imports/variables. | Workspace demo page now loads correctly. |
 | 2026-03-07 Feature Flags 404 Error | 2026-03-07T20:20 | - | featureFlags.ts used relative fetch (`/api/config/features`) which went to frontend dev server (port 5173) instead of backend (port 8080). Fixed in commit d282bfb: Use `PUBLIC_API_URL` to construct correct API URL. All tests pass (17/21). | Feature flags now load correctly from backend. |
+| 2026-03-07 Workspace API 404 Error | 2026-03-07T20:30 | - | `getWorkspace()` was calling `/workspace/demo` instead of `/api/workspace/demo`. Backend has `root_path="/api"` so all endpoints are prefixed with `/api`. Fixed in commit 1e81e29: Add `/api` prefix to workspace endpoint URL. | Workspace demo page now loads correctly. |
 
 ---
 
