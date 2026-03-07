@@ -4,17 +4,17 @@ import { json } from '@sveltejs/kit';
 import { api, type ApiResult } from '$lib/api/client';
 import { error } from '@sveltejs/kit';
 import type {
-	MatchColumnSpecResponse,
+	MatchColumnsResponse,
 	MatchResponse,
 	MatchResultResponse,
-	MatchRowResponse,
-	MatchValueItemResponse
+	MatchRowsResponse,
+	MatchRowEntryResponse,
 } from '$lib/api/response-types';
 import {
 	type MatchRow,
 	type MatchColumn,
 	type MatchResults,
-	MatchValueFormatKeys
+	MatchValueFormatKeys,
 } from '$lib/workspace-types';
 
 export const GET: RequestHandler = async ({ params }) => {
@@ -49,7 +49,7 @@ function transformToMatchResults(response: MatchResultResponse): MatchResults {
 		.forEach((column) => {
 			matchHeaders[column.position_idx] = {
 				name: column.name,
-				isSortable: false
+				isSortable: false,
 			};
 		});
 	rowData.forEach((row) => {
@@ -61,7 +61,7 @@ function transformToMatchResults(response: MatchResultResponse): MatchResults {
 	const results: MatchResults = {
 		matchColumns: matchHeaders,
 		matchRecords: matchRows,
-		timestamp: new Date().toISOString()
+		timestamp: new Date().toISOString(),
 	};
 
 	return results;
@@ -69,7 +69,7 @@ function transformToMatchResults(response: MatchResultResponse): MatchResults {
 
 function processValueItem(
 	columnType: string,
-	item: MatchValueItemResponse
+	item: MatchRowEntryResponse
 ): string | number | boolean | null {
 	switch (columnType.toLowerCase()) {
 		case 'int':
@@ -91,9 +91,9 @@ function processValueItem(
 	}
 }
 
-function flattenRow(cols: Array<MatchColumnSpecResponse>, row: MatchRowResponse): MatchRow {
+function flattenRow(cols: Array<MatchColumnsResponse>, row: MatchRowsResponse): MatchRow {
 	const flatObject: MatchRow = {
-		row_idx: row.row_idx
+		row_idx: row.row_idx,
 	};
 
 	row.values.forEach((item, idx) => {

@@ -1,4 +1,4 @@
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { featureFlags } from '$lib/config/featureFlags';
 
 /**
@@ -15,9 +15,9 @@ import { featureFlags } from '$lib/config/featureFlags';
  * Add more flags/handlers to simulate additional backend behaviors.
  */
 
-function jsonSafe(req: any) {
+async function jsonSafe(request: Request) {
 	try {
-		return req.json ? req.json() : {};
+		return await request.json();
 	} catch {
 		return {};
 	}
@@ -25,31 +25,43 @@ function jsonSafe(req: any) {
 
 export const handlers = [
 	// session endpoint used by server-side load and client code
-	rest.get('/api/session', async (req, res, ctx) => {
+	http.get('/api/session', async ({ request }) => {
 		// Dev override: allow local toggles
 		if (featureFlags.isEnabled('mock:session:loggedOut')) {
-			return res(ctx.status(401), ctx.json({ error: 'Not authenticated' }));
+			return new HttpResponse(JSON.stringify({ error: 'Not authenticated' }), {
+				status: 401,
+				headers: { 'Content-Type': 'application/json' }
+			});
 		}
 		if (featureFlags.isEnabled('mock:session:loggedIn')) {
-			return res(
-				ctx.status(200),
-				ctx.json({
+			return new HttpResponse(
+				JSON.stringify({
 					user: { id: 'user_mock_1', email: 'dev@example.test' }
-				})
+				}),
+				{
+					status: 200,
+					headers: { 'Content-Type': 'application/json' }
+				}
 			);
 		}
 		// Default: pass-through to real network (MSW config onUnhandledRequest: 'bypass')
-		return res(ctx.status(401), ctx.json({ error: 'Not authenticated' }));
+		return new HttpResponse(JSON.stringify({ error: 'Not authenticated' }), {
+			status: 401,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	}),
 
 	// store API key endpoint (onboarding provider step)
-	rest.post('/api/store-api-key', async (req, res, ctx) => {
-		const body = await jsonSafe(req);
-		const provider = body?.provider ?? body?.name ?? null;
-		const apiKey = body?.apiKey ?? body?.api_key ?? null;
+	http.post('/api/store-api-key', async ({ request }) => {
+		const body = await jsonSafe(request);
+		const provider = (body as any)?.provider ?? (body as any)?.name ?? null;
+		const apiKey = (body as any)?.apiKey ?? (body as any)?.api_key ?? null;
 
 		if (!provider || !apiKey) {
-			return res(ctx.status(400), ctx.json({ error: 'Missing provider or apiKey' }));
+			return new HttpResponse(JSON.stringify({ error: 'Missing provider or apiKey' }), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			});
 		}
 
 		// Simulate small latency if requested
@@ -57,16 +69,22 @@ export const handlers = [
 			await new Promise((r) => setTimeout(r, 600));
 		}
 
-		return res(ctx.status(200), ctx.json({ ok: true }));
+		return new HttpResponse(JSON.stringify({ ok: true }), {
+			status: 200,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	}),
 
 	// create campaign
-	rest.post('/api/create-campaign', async (req, res, ctx) => {
-		const body = await jsonSafe(req);
+	http.post('/api/create-campaign', async ({ request }) => {
+		const body = await jsonSafe(request);
 
 		// explicit mocked failures/overrides
 		if (featureFlags.isEnabled('mock:createCampaign:missingFields')) {
-			return res(ctx.status(400), ctx.json({ error: 'Missing name or year (mocked)' }));
+			return new HttpResponse(JSON.stringify({ error: 'Missing name or year (mocked)' }), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			});
 		}
 
 		if (featureFlags.isEnabled('mock:createCampaign:delay')) {
@@ -74,37 +92,58 @@ export const handlers = [
 		}
 
 		if (featureFlags.isEnabled('mock:createCampaign:success')) {
-			return res(ctx.status(200), ctx.json({ id: 'mock_campaign_success_123' }));
+			return new HttpResponse(JSON.stringify({ id: 'mock_campaign_success_123' }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
 		}
 
 		// Normal validation to mirror your server real behavior
-		if (!body?.name || !('year' in body) || body?.year === null || body?.year === undefined) {
-			return res(ctx.status(400), ctx.json({ error: 'Missing name or year' }));
+		if (!(body as any)?.name || !('year' in (body as any)) || (body as any)?.year === null || (body as any)?.year === undefined) {
+			return new HttpResponse(JSON.stringify({ error: 'Missing name or year' }), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			});
 		}
 
 		// Return an id similar to your server route
-		return res(ctx.status(200), ctx.json({ id: 'campaign_abc123' }));
+		return new HttpResponse(JSON.stringify({ id: 'campaign_abc123' }), {
+			status: 200,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	}),
 
 	// upload metadata
-	rest.post('/api/upload-file', async (req, res, ctx) => {
-		const body = await jsonSafe(req);
-		if (!body?.fileName || !('size' in body)) {
-			return res(ctx.status(400), ctx.json({ error: 'Missing file metadata' }));
+	http.post('/api/upload-file', async ({ request }) => {
+		const body = await jsonSafe(request);
+		if (!(body as any)?.fileName || !('size' in (body as any))) {
+			return new HttpResponse(JSON.stringify({ error: 'Missing file metadata' }), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			});
 		}
-		return res(ctx.status(200), ctx.json({ uploadId: 'upload_mock_1' }));
+		return new HttpResponse(JSON.stringify({ uploadId: 'upload_mock_1' }), {
+			status: 200,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	}),
 
 	// trigger file processing
-	rest.post('/api/process-voter-file', async (req, res, ctx) => {
-		const body = await jsonSafe(req);
-		if (!body?.filePath) {
-			return res(ctx.status(400), ctx.json({ error: 'Missing filePath' }));
+	http.post('/api/process-voter-file', async ({ request }) => {
+		const body = await jsonSafe(request);
+		if (!(body as any)?.filePath) {
+			return new HttpResponse(JSON.stringify({ error: 'Missing filePath' }), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			});
 		}
 		// simulate processing delay
 		if (featureFlags.isEnabled('mock:createCampaign:delay')) {
 			await new Promise((r) => setTimeout(r, 900));
 		}
-		return res(ctx.status(200), ctx.json({ jobId: 'process_job_mock_1' }));
+		return new HttpResponse(JSON.stringify({ jobId: 'process_job_mock_1' }), {
+			status: 200,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	})
 ];

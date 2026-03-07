@@ -11,13 +11,13 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (password === '2fa') {
 		return new Response(JSON.stringify({ ok: true, twoFactorRequired: true }), {
 			status: 200,
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
 		});
 	}
 
 	// Otherwise return a mock user
 	return new Response(JSON.stringify({ ok: true, user: { id: 'user_dev_1', email } }), {
 		status: 200,
-		headers: { 'Content-Type': 'application/json' }
+		headers: { 'Content-Type': 'application/json' },
 	});
 };

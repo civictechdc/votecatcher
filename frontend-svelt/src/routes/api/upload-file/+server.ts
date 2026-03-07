@@ -8,6 +8,6 @@ export const POST: RequestHandler = async ({ request }) => {
 	// Return a mocked storage path
 	return new Response(JSON.stringify({ path: `mock-storage/${body.fileName}` }), {
 		status: 200,
-		headers: { 'Content-Type': 'application/json' }
+		headers: { 'Content-Type': 'application/json' },
 	});
 };

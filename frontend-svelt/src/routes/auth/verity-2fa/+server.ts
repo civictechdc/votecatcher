@@ -9,7 +9,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (code === '123456') {
 		return new Response(JSON.stringify({ ok: true, user: { id: 'user_dev_1', email } }), {
 			status: 200,
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
 		});
 	}
 	return new Response(JSON.stringify({ error: 'Invalid code' }), { status: 400 });

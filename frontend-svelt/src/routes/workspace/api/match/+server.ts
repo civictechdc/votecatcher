@@ -46,7 +46,7 @@ const MATCH_TABLE_COLUMNS: MatchColumn[] = [
 		if (first.matchRank > second.matchRank) return 1;
 		if (first.matchRank < second.matchRank) return -1;
 		return 0;
-	})
+	}),
 ];
 
 function createRandomMatch(thresholds: ConfidenceThresholds): MatchRow {
@@ -97,7 +97,7 @@ function createRandomMatch(thresholds: ConfidenceThresholds): MatchRow {
 		ward: ward.toString(),
 		petitionPageNumber: 2,
 		petitionRowNumber: 14,
-		matchRank: 1
+		matchRank: 1,
 	};
 }
 
@@ -122,7 +122,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const batchResponse: ApiResult = await api.demoStartOcrRequest({
 			provider_name: OCR_PROVIDER_NAME,
 			provider_model: OCR_PROVIDER_MODEL,
-			api_key: OCR_PROVIDER_API_KEY
+			api_key: OCR_PROVIDER_API_KEY,
 		});
 
 		if (!batchResponse.ok) {
@@ -146,7 +146,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	const matchResults: MatchResults = {
 		matchColumns: MATCH_TABLE_COLUMNS,
 		matchRecords: matches,
-		timestamp: new Date().toISOString()
+		timestamp: new Date().toISOString(),
 	};
 
 	return json({ matchResults }, { status: 200 });

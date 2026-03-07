@@ -12,6 +12,6 @@ export const GET: RequestHandler = async ({ request }) => {
 	const user = { id: 'user_dev_1', email: 'dev@example.com' };
 	return new Response(JSON.stringify({ user }), {
 		status: 200,
-		headers: { 'Content-Type': 'application/json' }
+		headers: { 'Content-Type': 'application/json' },
 	});
 };

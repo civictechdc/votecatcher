@@ -1,7 +1,7 @@
 import { browser } from '$app/environment';
 
-import { VITE_API_URL } from '$env/static/private';
-const BASE_URL = VITE_API_URL ?? '';
+import { PUBLIC_API_URL } from '$env/static/public';
+const _BASE_URL = PUBLIC_API_URL ?? '';
 
 export interface UserSession {
 	accessToken: string;
@@ -16,7 +16,7 @@ const defaultUnauthenticatedSession: UserSession = {
 	refreshToken: '',
 	isAuthenticated: false,
 	email: '',
-	id: ''
+	id: '',
 };
 
 export let authStore: UserSession = $state(defaultUnauthenticatedSession);
@@ -35,7 +35,7 @@ export async function authenticatedFetch(url: string | URL, options = {}) {
 	if (currentToken) {
 		options.headers = {
 			...options.headers,
-			Authorization: `Bearer ${currentToken}`
+			Authorization: `Bearer ${currentToken}`,
 		};
 	}
 
@@ -49,7 +49,7 @@ export async function authenticatedFetch(url: string | URL, options = {}) {
 		// Ensure the refresh call includes credentials to send the HttpOnly cookie
 		const refreshResponse = await fetch('http://localhost:8000/api/refresh-token', {
 			method: 'POST',
-			credentials: 'include'
+			credentials: 'include',
 		});
 
 		if (refreshResponse.ok) {

@@ -40,5 +40,5 @@ export const featureFlags = {
 	},
 	list() {
 		return Array.from(new Set([...Array.from(envFlags), ...Array.from(getLocalFlags())]));
-	}
+	},
 };

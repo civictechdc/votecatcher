@@ -1,8 +1,8 @@
 // Frontend fetch wrapper for auth-related REST endpoints.
-// Replace base with your FastAPI /auth base URL by setting VITE_API_URL.
+// Replace base with your FastAPI /auth base URL by setting PUBLIC_API_URL.
 type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
 
-const BASE = (import.meta as any).env?.VITE_API_URL?.replace(/\/$/, '') ?? '';
+const BASE = (import.meta as any).env?.PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
 
 async function post<T = unknown>(path: string, body: unknown): Promise<ApiResult<T>> {
 	const url = BASE ? `${BASE}${path}` : path;
@@ -11,7 +11,7 @@ async function post<T = unknown>(path: string, body: unknown): Promise<ApiResult
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-			body: JSON.stringify(body)
+			body: JSON.stringify(body),
 		});
 		const json = await res.json().catch(() => ({}));
 		if (!res.ok) return { ok: false, error: json?.error || res.statusText || 'request failed' };
@@ -26,7 +26,7 @@ async function get<T = unknown>(path: string): Promise<ApiResult<T>> {
 	try {
 		const res = await fetch(url, {
 			credentials: 'include',
-			headers: { Accept: 'application/json' }
+			headers: { Accept: 'application/json' },
 		});
 		const json = await res.json().catch(() => ({}));
 		if (!res.ok) return { ok: false, error: json?.error || res.statusText || 'request failed' };
@@ -44,7 +44,7 @@ export const authApi = {
 	signOut: () => post('/api/auth/sign-out', {}),
 	// 2FA / Passkey endpoints (optional)
 	start2fa: (email: string) => post('/api/auth/start-2fa', { email }),
-	verify2fa: (email: string, code: string) => post('/api/auth/verify-2fa', { email, code })
+	verify2fa: (email: string, code: string) => post('/api/auth/verify-2fa', { email, code }),
 };
 
 // Convenience named export used by pages that import getSession directly
@@ -56,7 +56,7 @@ import { browser } from '$app/environment';
 export const authStore = writable({
 	accessToken: null,
 	isAuthenticated: false,
-	userEmail: null
+	userEmail: null,
 });
 
 export async function logout() {
@@ -76,7 +76,7 @@ export async function authenticatedFetch(url: string | URL, options = {}) {
 	if (currentToken) {
 		options.headers = {
 			...options.headers,
-			Authorization: `Bearer ${currentToken}`
+			Authorization: `Bearer ${currentToken}`,
 		};
 	}
 
@@ -90,7 +90,7 @@ export async function authenticatedFetch(url: string | URL, options = {}) {
 		// Ensure the refresh call includes credentials to send the HttpOnly cookie
 		const refreshResponse = await fetch(`${BASE}api/refresh-token`, {
 			method: 'POST',
-			credentials: 'include'
+			credentials: 'include',
 		});
 
 		if (refreshResponse.ok) {
@@ -101,7 +101,7 @@ export async function authenticatedFetch(url: string | URL, options = {}) {
 			authStore.update((store) => ({
 				...store,
 				accessToken: newAccessToken,
-				isAuthenticated: true
+				isAuthenticated: true,
 			}));
 
 			// 4. Retry the original failed request with the new token

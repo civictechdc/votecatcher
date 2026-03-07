@@ -1,19 +1,10 @@
 <script lang="ts">
-	// Explanation: Page-level SvelteKit route component for the landing page.
-	// Uses modern Svelte 5 <script setup> style and onMount to run browser-only code.
-	import { onMount } from 'svelte';
 	import Navbar from '$lib/components/Navbar.svelte';
-	import { getSession } from '$lib/api/auth';
 	import { ArrowRight, Users, Shield, Flag } from 'lucide-svelte';
-	import { featureFlags } from '$lib/config/featureFlags';
-	import { initMocks } from '$lib/mocks/init';
 	import DevFlags from '$lib/components/DevFlags.svelte';
-	import { page } from '$app/state';
-	import type { PageData } from './$types';
 
 	let user = $state(null);
 
-	let loading = true;
 	interface Props {
 		isDemoMode: boolean;
 	}

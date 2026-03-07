@@ -9,11 +9,13 @@
 	import { OCR_PROVIDER_SELECTION } from '$lib/constants/ocr';
 
 	// Data injected by the server-side load (+page.server.ts)
-	export let data: {
-		user: { id?: string; email?: string } | null;
-		steps: { id: string; title: string; description: string }[];
-		years: string[];
-	};
+	let { data } = $props<{
+		data: {
+			user: { id?: string; email?: string } | null;
+			steps: { id: string; title: string; description: string }[];
+			years: string[];
+		};
+	}>();
 
 	// Local reactive copies for template use
 	let state = get(onboard);
@@ -95,7 +97,7 @@
 					return;
 				}
 				// store id from response (mock returns { id })
-				// @ts-ignore
+				// @ts-expect-error
 				onboard.setCampaignId((res.data as any).id);
 			} else {
 				errorMsg = 'Please provide campaign name and year.';

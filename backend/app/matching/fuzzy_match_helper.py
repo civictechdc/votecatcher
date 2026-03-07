@@ -28,6 +28,7 @@ from app.ocr.data.data_models import OCREntry, OcrResultItem
 from app.ocr.ocr_config import CropConfig, get_current_crop_config
 from app.ocr.ocr_manager import ReadOcrResult
 from dotenv import load_dotenv
+from numpy import vectorize
 from pandas import DataFrame
 from pandas.core.frame import DataFrame
 from rapidfuzz import fuzz
@@ -123,7 +124,7 @@ def score_fuzzy_match_slim(
     comparison_array = np.array(comparison_list)
 
     # Vectorize the scorer function
-    vectorized_scorer = np.vectorize(lambda x: scorer_(ocr_result, x))
+    vectorized_scorer: vectorize = np.vectorize(lambda x: scorer_(ocr_result, x))
 
     # Calculate all scores at once
     scores = vectorized_scorer(comparison_array)
@@ -171,6 +172,9 @@ def get_matched_name_address(
     name_scores = np.array([x[1] for x in name_matches])
     addr_scores = np.array([x[1] for x in address_matches])
     harmonic_means = 2 * name_scores * addr_scores / (name_scores + addr_scores)
+
+    # Handle NaN values that can occur when both scores are 0 (0/0 division)
+    harmonic_means = np.nan_to_num(harmonic_means, nan=0.0, posinf=100.0, neginf=0.0)
 
     # Create and sort results
     results: list[tuple[str, str, float, int]] = list[tuple[str, str, float, int]](
@@ -228,25 +232,34 @@ def create_ocr_matched_df(
         batch: DataFrame = ocr_df.iloc[batch_start : batch_start + batch_size]
 
         with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
-            futures = [
+            # Submit jobs and preserve original indices
+            future_to_index = {
                 executor.submit(
                     get_matched_name_address,
-                    row[match_columns.OCR_NAME],
-                    row[match_columns.OCR_ADDRESS],
+                    str(row[match_columns.OCR_NAME]),
+                    str(row[match_columns.OCR_ADDRESS]),
                     select_voter_records,
-                )
-                for _, row in batch.iterrows()
-            ]
-            batch_results = [
-                future.result() for future in concurrent.futures.as_completed(futures)
-            ]
+                ): idx
+                for idx, (_, row) in enumerate(batch.iterrows())
+            }
 
-        # Extract best matches
+            # Collect results in original order
+            batch_results: list[list[tuple[str, str, float, int]] | None] = [
+                None
+            ] * len(batch)
+            for future in concurrent.futures.as_completed(future_to_index):
+                original_idx = future_to_index[future]
+                batch_results[original_idx] = future.result()
+
+        # Extract best matches in original order
         batch_matches: list[tuple[str, str, float]] = []
         for res in batch_results:
-            best: tuple[str, str, float, int] = res[0]
-            batch_matches.append((best[0], best[1], float(best[2])))
-        # batch_matches = [(res[0][0], res[0][1], res[0][2]) for res in batch_results]
+            if res:
+                best: tuple[str, str, float, int] = res[0]
+                batch_matches.append((best[0], best[1], float(best[2])))
+            else:
+                # Handle failed matches with empty results
+                batch_matches.append(("", "", 0.0))
         results.extend(batch_matches)
 
         # Log batch statistics
@@ -255,10 +268,10 @@ def create_ocr_matched_df(
         )
 
         logger.info(
-            f"Batch {batch_idx}/{total_batches} - records: {len(batch_matches)},\n"
-            f"Avg score: {np.mean(batch_scores):.2f},\n"
-            f"Min score: {min(batch_scores):.2f},\n"
-            f"Max score: {max(batch_scores):.2f},\n"
+            f"Batch {batch_idx}/{total_batches} - records: {len(batch_matches)}, "
+            f"Avg score: {np.mean(batch_scores):.2f}, "
+            f"Min score: {min(batch_scores):.2f}, "
+            f"Max score: {max(batch_scores):.2f}, "
             f"Valid matches: {sum(score >= threshold for score in batch_scores)}"
         )
 
@@ -307,6 +320,9 @@ def create_ocr_matched_df(
     # Reorder columns
     column_order: list[str] = match_columns.COLUMNS()
 
+    # Reset index to avoid including it in the output
+    result_df = result_df[column_order].reset_index(drop=True)
+
     # Log final statistics
     total_valid = result_df["Valid"].sum()
     logger.info(
@@ -314,7 +330,7 @@ def create_ocr_matched_df(
         f"Valid matches: {total_valid} ({total_valid / len(result_df) * 100:.1f}%)"
     )
 
-    return result_df[column_order]
+    return result_df
 
 
 async def perform_fuzzy_matching(

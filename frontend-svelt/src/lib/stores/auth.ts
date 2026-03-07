@@ -10,7 +10,7 @@ export const initialAuthState = {
 	user: null as User,
 	loading: false,
 	error: null as string | null,
-	twoFactorRequired: false
+	twoFactorRequired: false,
 };
 
 function createAuthStore() {
@@ -27,7 +27,7 @@ function createAuthStore() {
 			update((s) => ({ ...s, loading: true, error: null }));
 			const res = await authApi.getSession();
 			if (res.ok) {
-				// @ts-ignore
+				// @ts-expect-error
 				update((s) => ({ ...s, user: (res.data as any).user ?? null, loading: false }));
 			} else {
 				update((s) => ({ ...s, user: null, loading: false }));
@@ -53,14 +53,14 @@ function createAuthStore() {
 				update((s) => ({ ...s, loading: false, error: res.error }));
 				return { ok: false, error: res.error };
 			}
-			// @ts-ignore
+			// @ts-expect-error
 			const user = (res.data as any).user ?? null;
 			update((s) => ({
 				...s,
 				user,
 				loading: false,
 				error: null,
-				twoFactorRequired: !!(res.data as any).twoFactorRequired
+				twoFactorRequired: !!(res.data as any).twoFactorRequired,
 			}));
 			return { ok: true };
 		},
@@ -82,18 +82,18 @@ function createAuthStore() {
 			update((s) => ({ ...s, loading: true }));
 			const res = await authApi.verify2fa(email, code);
 			if (res.ok) {
-				// @ts-ignore
+				// @ts-expect-error
 				update((s) => ({
 					...s,
 					user: (res.data as any).user ?? null,
 					loading: false,
-					twoFactorRequired: false
+					twoFactorRequired: false,
 				}));
 			} else {
 				update((s) => ({ ...s, loading: false, error: res.error }));
 			}
 			return res;
-		}
+		},
 	};
 }
 

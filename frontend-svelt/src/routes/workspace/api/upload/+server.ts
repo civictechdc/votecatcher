@@ -16,7 +16,7 @@ async function uploadPetitions(formData: FormData) {
 	if (petitions.length === 0) {
 		return new Response(
 			JSON.stringify({
-				detail: `File to upload is null.`
+				detail: `File to upload is null.`,
 			}),
 			{ status: 500 }
 		);
@@ -38,7 +38,7 @@ async function uploadPetitions(formData: FormData) {
 		} else {
 			return new Response(
 				JSON.stringify({
-					detail: `Server error: ${response instanceof Error ? response.message : String(response)}`
+					detail: `Server error: ${response instanceof Error ? response.message : String(response)}`,
 				}),
 				{ status: 500 }
 			);
@@ -48,7 +48,7 @@ async function uploadPetitions(formData: FormData) {
 
 	return new Response(
 		JSON.stringify({
-			detail: `Client server error uploading ${petitions.length} petitions.`
+			detail: `Client server error uploading ${petitions.length} petitions.`,
 		}),
 		{ status: 500 }
 	);
@@ -65,7 +65,7 @@ async function uploadVoterList(formData: FormData) {
 		} else {
 			return new Response(
 				JSON.stringify({
-					detail: `Server error: ${response instanceof Error ? response.message : String(response)}`
+					detail: `Server error: ${response instanceof Error ? response.message : String(response)}`,
 				}),
 				{ status: 500 }
 			);
@@ -76,7 +76,7 @@ async function uploadVoterList(formData: FormData) {
 
 	return new Response(
 		JSON.stringify({
-			detail: `Client server error uploading ${formData.getAll('file')}}.`
+			detail: `Client server error uploading ${formData.getAll('file')}}.`,
 		}),
 		{ status: 500 }
 	);
@@ -108,7 +108,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (!voterFile) {
 		return new Response(
 			JSON.stringify({
-				detail: `File to upload is null.`
+				detail: `File to upload is null.`,
 			}),
 			{ status: 500 }
 		);
@@ -126,7 +126,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			} else {
 				return new Response(
 					JSON.stringify({
-						detail: `Server error: ${response instanceof Error ? response.message : String(response)}`
+						detail: `Server error: ${response instanceof Error ? response.message : String(response)}`,
 					}),
 					{ status: 500 }
 				);
@@ -137,14 +137,14 @@ export const POST: RequestHandler = async ({ request }) => {
 			const resp: UploadResult = {
 				success: true,
 				message: `Upload accepted (${files.length})`,
-				files
+				files,
 			};
 			return json(resp, { status: 200 });
 		}
 	} catch (error) {
 		return new Response(
 			JSON.stringify({
-				detail: `Server error: ${error instanceof Error ? error.message : String(error)}`
+				detail: `Server error: ${error instanceof Error ? error.message : String(error)}`,
 			}),
 			{ status: 500 }
 		);

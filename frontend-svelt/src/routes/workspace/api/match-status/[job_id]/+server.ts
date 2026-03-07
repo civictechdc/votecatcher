@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
-import { VITE_API_URL } from '$env/static/private';
-const BASE_URL = VITE_API_URL ?? '';
+import { PUBLIC_API_URL } from '$env/static/public';
+const BASE_URL = PUBLIC_API_URL ?? '';
 
 export const GET: RequestHandler = async ({ params }) => {
 	try {
@@ -21,8 +21,8 @@ export const GET: RequestHandler = async ({ params }) => {
 			headers: {
 				'Content-Type': 'text/event-stream',
 				'Cache-Control': 'no-cache',
-				Connection: 'keep-alive'
-			}
+				Connection: 'keep-alive',
+			},
 		});
 	} catch (error) {
 		console.error('Error proxying SSE stream:', error);

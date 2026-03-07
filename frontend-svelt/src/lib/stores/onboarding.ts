@@ -17,7 +17,7 @@ export const initialState = {
 	currentStep: 0,
 	answers: {} as OnboardAnswers,
 	uploadedFile: null as File | null,
-	loading: false
+	loading: false,
 };
 
 function createOnboardStore() {
@@ -33,7 +33,7 @@ function createOnboardStore() {
 			update((s) => ({ ...s, answers: { ...s.answers, [field]: value } })),
 		setUploadedFile: (file: File | null) => update((s) => ({ ...s, uploadedFile: file })),
 		setCampaignId: (id: string) =>
-			update((s) => ({ ...s, answers: { ...s.answers, campaign_id: id } }))
+			update((s) => ({ ...s, answers: { ...s.answers, campaign_id: id } })),
 	};
 }
 

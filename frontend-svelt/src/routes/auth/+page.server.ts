@@ -31,7 +31,7 @@ export const actions: Actions = {
 		const res = await fetch('/api/auth/sign-up', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ email, password })
+			body: JSON.stringify({ email, password }),
 		});
 		const payload = await res.json().catch(() => ({}));
 		if (!res.ok) return fail(res.status, { error: payload?.error || 'sign up failed' });
@@ -47,11 +47,11 @@ export const actions: Actions = {
 		const res = await fetch('/api/auth/sign-in', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ email, password })
+			body: JSON.stringify({ email, password }),
 		});
 		const payload = await res.json().catch(() => ({}));
 		if (!res.ok) return fail(res.status, { error: payload?.error || 'sign in failed' });
 		// if success, redirect to getting-started
 		throw redirect(303, '/getting-started');
-	}
+	},
 };

@@ -8,6 +8,6 @@ export const POST: RequestHandler = async ({ request }) => {
 	// Mock: in real backend send verification email and return pending status
 	return new Response(JSON.stringify({ ok: true, message: 'verification_sent' }), {
 		status: 200,
-		headers: { 'Content-Type': 'application/json' }
+		headers: { 'Content-Type': 'application/json' },
 	});
 };

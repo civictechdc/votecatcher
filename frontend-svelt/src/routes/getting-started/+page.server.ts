@@ -9,18 +9,18 @@ const steps = [
 	{
 		id: 'provider',
 		title: 'Choose AI provider',
-		description: 'Select a provider and paste your API key for signature validation.'
+		description: 'Select a provider and paste your API key for signature validation.',
 	},
 	{
 		id: 'campaign',
 		title: 'Campaign details',
-		description: 'Name your campaign and choose the election year.'
+		description: 'Name your campaign and choose the election year.',
 	},
 	{
 		id: 'upload',
 		title: 'Upload registration data',
-		description: 'Upload a voter registration file (CSV/Excel/JSON).'
-	}
+		description: 'Upload a voter registration file (CSV/Excel/JSON).',
+	},
 ];
 
 /** Generate a short range of election years centered around the current year. */
@@ -47,7 +47,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 	return {
 		user: json.user ?? null,
 		steps,
-		years: generateYears()
+		years: generateYears(),
 	};
 };
 
@@ -67,7 +67,7 @@ export const actions: Actions = {
 		const res = await fetch('/api/store-ocr-provider', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ provider, apiKey })
+			body: JSON.stringify({ provider, apiKey }),
 		});
 		const payload = await res.json().catch(() => ({ error: 'Invalid response' }));
 		if (!res.ok) return { status: res.status, body: payload };
@@ -83,7 +83,7 @@ export const actions: Actions = {
 		const res = await fetch('/api/create-campaign', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ name, year: Number(year), description })
+			body: JSON.stringify({ name, year: Number(year), description }),
 		});
 		const payload = await res.json().catch(() => ({ error: 'Invalid response' }));
 		if (!res.ok) return { status: res.status, body: payload };
@@ -99,7 +99,7 @@ export const actions: Actions = {
 		const res = await fetch('/api/upload-file', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ fileName, size: Number(size), campaignId })
+			body: JSON.stringify({ fileName, size: Number(size), campaignId }),
 		});
 		const payload = await res.json().catch(() => ({ error: 'Invalid response' }));
 		if (!res.ok) return { status: res.status, body: payload };
@@ -114,10 +114,10 @@ export const actions: Actions = {
 		const res = await fetch('/api/process-voter-file', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ filePath, campaignId })
+			body: JSON.stringify({ filePath, campaignId }),
 		});
 		const payload = await res.json().catch(() => ({ error: 'Invalid response' }));
 		if (!res.ok) return { status: res.status, body: payload };
 		return { status: 200, body: payload };
-	}
+	},
 };

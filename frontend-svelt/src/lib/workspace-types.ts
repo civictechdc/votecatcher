@@ -15,7 +15,7 @@ export interface UploadResult {
 }
 
 export enum MatchValueFormatKeys {
-	MATCH_SCORE = 'match_score'
+	MATCH_SCORE = 'match_score',
 }
 
 export type MatchValueTypes = string | number | boolean | null;

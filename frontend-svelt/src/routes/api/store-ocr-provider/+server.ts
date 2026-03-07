@@ -13,6 +13,6 @@ export const POST: RequestHandler = async ({ request }) => {
 	// In real app: store provider and key securely, return status
 	return new Response(JSON.stringify({ ok: true }), {
 		status: 200,
-		headers: { 'Content-Type': 'application/json' }
+		headers: { 'Content-Type': 'application/json' },
 	});
 };

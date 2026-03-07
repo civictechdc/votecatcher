@@ -1,14 +1,14 @@
 // Lightweight API client wrapper used by onboarding UI.
 // All direct Supabase calls in your previous app are replaced with REST endpoint calls.
 // For now endpoints are mocked under src/routes/api/*.
-import { VITE_API_URL } from '$env/static/private';
+import { PUBLIC_API_URL } from '$env/static/public';
 import type {
 	MatchResponse,
 	MatchResultResponse,
 	MatchingProgressResponse
 } from '$lib/api/response-types';
 
-const BASE_URL = VITE_API_URL ?? '';
+const BASE_URL = PUBLIC_API_URL ?? '';
 
 export type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
 

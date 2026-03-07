@@ -8,6 +8,6 @@ export const POST: RequestHandler = async ({ request }) => {
 	// Return a mock id
 	return new Response(JSON.stringify({ id: 'campaign_abc123' }), {
 		status: 200,
-		headers: { 'Content-Type': 'application/json' }
+		headers: { 'Content-Type': 'application/json' },
 	});
 };

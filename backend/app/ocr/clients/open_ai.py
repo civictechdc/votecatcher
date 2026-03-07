@@ -1,15 +1,15 @@
 import json
 import shutil
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import aiofiles
 import structlog
 from app.matching.match_repository import MatchingStatus
-from app.ocr.data.data_models import OCREntry
+from app.ocr.data.data_models import OCRData, OCREntry
 from app.ocr.ocr_manager import (
     OcrEncodedPage,
     OcrJobStatus,
@@ -85,7 +85,7 @@ class OpenAiOcrClient:
                             "type": "json_schema",
                             "json_schema": {
                                 "name": "OCREntry",
-                                "schema": to_strict_json_schema(model=OCREntry),
+                                "schema": to_strict_json_schema(model=OCRData),
                                 "strict": True,
                             },
                         },
@@ -269,12 +269,17 @@ class OpenAiOcrClient:
 
         return (campaign_id, file_name, page_num, page_total, entry_number)
 
-    def _extract_response_data(self, response_line: str) -> OCREntry:
+    def _extract_response_data(
+        self, response_line: str
+    ) -> Generator[OCREntry, Any, None]:
         json_item = json.loads(response_line)
         content_string = json_item["response"]["body"]["choices"][0]["message"][
             "content"
         ]
-        return OCREntry.model_validate_json(content_string)
+        ocr_data: OCRData = OCRData.model_validate_json(content_string)
+        for item in ocr_data.data:
+            yield item
+        # return OCREntry.model_validate_json(content_string)
 
     async def get_ocr_results(self, job_id: str) -> AsyncGenerator[OcrResult]:
         batch: Batch = await self.client.batches.retrieve(job_id)
@@ -293,21 +298,20 @@ class OpenAiOcrClient:
                             page_total,
                             entry_number,
                         ) = self._extract_custom_id_parts(l)
-                        item: OCREntry = self._extract_response_data(l)
-
-                        result_item: OcrResult = OcrResult(
-                            job_id=batch.id,
-                            campaign_id=campaign_id,
-                            page_num=page_num,
-                            row_num=row_idx,
-                            document_path=file_name,
-                            result_parts=[
-                                {"field_name": key, "value": value}
-                                for key, value in item.model_dump().items()
-                            ],
-                        )
-                        row_idx += 1
-                        yield result_item
+                        for idx, item in enumerate(self._extract_response_data(l)):
+                            result_item: OcrResult = OcrResult(
+                                job_id=batch.id,
+                                campaign_id=campaign_id,
+                                page_num=page_num,
+                                row_num=idx,
+                                document_path=file_name,
+                                result_parts=[
+                                    {"field_name": key, "value": value}
+                                    for key, value in item.model_dump().items()
+                                ],
+                            )
+                            row_idx += 1
+                            yield result_item
                     except Exception as parse_error:
                         logger.warning(
                             f"Failed to parse line {row_idx} for job {job_id}, skipping",

@@ -9,6 +9,6 @@ export const POST: RequestHandler = async ({ request }) => {
 	// Mock processing result
 	return new Response(JSON.stringify({ ok: true, records_processed: 42 }), {
 		status: 200,
-		headers: { 'Content-Type': 'application/json' }
+		headers: { 'Content-Type': 'application/json' },
 	});
 };

@@ -1,49 +1,36 @@
 <script lang="ts">
-	import type { MatchRow, ConfidenceThresholds } from '$lib/workspace-types';
+	import type { ConfidenceThresholds } from '$lib/workspace-types';
 
-	interface Props {
-		matchScore: number;
-		confidenceThreshold: ConfidenceThresholds;
-	}
+	// use Svelte 5 runes-style props to match the rest of the codebase
+	let { matchScore, confidenceThreshold } = $props();
 
-	let { matchScore, confidenceThreshold }: Props = $props();
-
-	type ConfidenceDescription = 'High' | 'Medium' | 'Low';
+	type ConfidenceDescription = 'High' | 'Medium' | 'Low' | 'No Score' | 'Invalid Score';
 	interface ConfidenceIndicator {
 		styleClasses: string;
 		score: number;
 		confidenceDescription: ConfidenceDescription;
 	}
 
-	let indicator = $derived(confidenceClass(matchScore, confidenceThreshold));
+	// compute indicator as a derived reactive value
+	import { confidenceClass } from './matchConfidence';
 
-	// helper to render confidence color
-	function confidenceClass(
-		matchScore: number,
-		thresholds: ConfidenceThresholds
-	): ConfidenceIndicator {
-		let styleClasses: string = 'bg-red-100 text-red-800';
-		let confidenceDescription: ConfidenceDescription = 'Low';
+	let indicator = $derived(() => confidenceClass(matchScore, confidenceThreshold));
 
-		if (matchScore >= thresholds.high) {
-			styleClasses = 'bg-green-100 text-green-800';
-			confidenceDescription = 'High';
-		} else if (matchScore >= thresholds.medium) {
-			styleClasses = 'bg-amber-100 text-amber-800';
-			confidenceDescription = 'Medium';
-		}
-
-		return {
-			styleClasses: styleClasses,
-			confidenceDescription: confidenceDescription,
-			score: matchScore
-		};
-	}
+	// Debug logging (effect)
+	$effect(() => {
+		console.log('MatchConfidenceIndicator received:', {
+			matchScore,
+			type: typeof matchScore,
+			thresholds: confidenceThreshold,
+			indicator
+		});
+	});
 </script>
 
 <span
-	class={indicator.styleClasses}
-	style="padding:.25rem .5rem; border-radius:6px; font-weight:600;"
+	role="status"
+	aria-label={'Match confidence: ' + indicator().confidenceDescription}
+	class="inline-flex items-center rounded px-2 py-1 text-sm font-medium ring-1 ring-inset {indicator().styleClasses}"
 >
-	{indicator.confidenceDescription}
+	{indicator().confidenceDescription}
 </span>

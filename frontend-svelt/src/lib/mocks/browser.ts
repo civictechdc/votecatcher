@@ -1,4 +1,4 @@
-import { setupWorker } from 'msw';
+import { setupWorker } from 'msw/browser';
 import { handlers } from './handlers';
 
 // Browser worker instance used for client-side interception in dev.
