@@ -72,6 +72,7 @@ When you encounter ANY issue, ambiguity, or blocker:
 | Phase 11 Docker/DevContainer deferred | 11 | Resolved | Blocker removed in Phase 12 - build now succeeds. Phase 11 ready to resume. | 2026-03-03 |
 | tests/api/match.test.ts fails | 13 | Resolved | Test had fundamental issues: (1) $env/static/public not mocked, (2) MSW handlers didn't match actual API URL patterns. Fixed by: adding $env/static/public alias in vitest.config.ts, updating web-server.ts to use hardcoded BASE_URL, and marking test as skipped with TODO for proper refactor. All other tests pass (25 passed, 4 skipped). | 2026-03-07 |
 | Simulation toggle UI placement bug | 13 | Noted | "Use Simulated Data" checkbox at +page.svelte:455-463 is wrapped in `{#if matchResults && matchResults.matchRecords.length > 0}` — only visible AFTER results exist. Docs say to toggle BEFORE running matching. FeatureFlagsPanel.svelte exists (69 lines) but never imported anywhere. Recommend: Fix placement OR add proper debug panel. See design doc: `.agent-workspace/debug-flag-system-design.md` | 2026-03-07 |
+| Matching results not rendering after smoke test | 13 | Open | Smoke test revealed matching results fail to render on frontend. Last known working commit: df12170 (WIP: Database integration). Our changes may have broken the data flow from backend to frontend. Requires systematic debugging WITHOUT real LLM OCR calls — simulation mode is critical here. May involve database setup analysis (potential sub-project). See: `.agent-workspace/debug-results-rendering.md` | 2026-03-07 |
 
 ### Concern Template
 
@@ -218,6 +219,7 @@ When you encounter ANY issue, ambiguity, or blocker:
 | 2026-03-07 Analyst Review | 2026-03-07T15:30 | All | Verified git history (46 commits), backend tests pass (19), frontend build succeeds. Found 1 Open concern: tests/api/match.test.ts fails with $env/static/public import error. New concern logged. | Fix unit test mock issue before merge, or mark test as skip/TODO. |
 | 2026-03-07 Test Fix | 2026-03-07T02:32 | - | Fixed tests/api/match.test.ts: Added $env/static/public mock, updated web-server.ts, marked test as skipped (fundamental URL pattern mismatch). All tests now pass: 25 passed, 5 skipped (4 localStorage + 1 match.test). | All tests passing. Project ready for merge. |
 | 2026-03-07 Debug System Design | 2026-03-07T02:45 | - | Documented simulation toggle UI bug (checkbox hidden until results exist). Created debug-flag-system-design.md with research on best practices, security considerations, and implementation plan (Phase 14). ~4 hours estimated work. | Future work: Implement unified debug panel, fix toggle placement, add URL param support. |
+| 2026-03-07 Smoke Test Failure | 2026-03-07T03:00 | - | User smoke test revealed matching results not rendering. Last known working: commit df12170. Created debug-results-rendering.md with systematic debugging plan (Phases A-D). **Critical:** Must use simulation mode only — no real LLM OCR calls. Blocked by simulation toggle placement bug. | P0: Fix simulation toggle, then debug data flow from backend → frontend using simulation mode. |
 
 ---
 
