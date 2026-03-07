@@ -55,7 +55,7 @@ Votecatcher aims to help campaigns rapidly get snapshots of signed petition ball
 - Integrate provider SSO
 - Enumerated list (can it be dynamically updated from a remote list)
 - Optional: Local/self hosted model options
-  -Campaign management
+- Campaign management
 - User management
 - Storage management and configuration
 - Hosting configuration
