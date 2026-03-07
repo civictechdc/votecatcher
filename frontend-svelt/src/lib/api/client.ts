@@ -181,7 +181,7 @@ export async function request<T = unknown>(
 
 // Convenience API surface
 export const api = {
-	getWorkspace: (id: string) => request(`${BASE_URL}workspace/${id}`, { method: 'GET' }),
+	getWorkspace: (id: string) => request(`${BASE_URL}api/workspace/${id}`, { method: 'GET' }),
 	getSession: () =>
 		request<{ user?: { id: string; email?: string } }>('/api/session', { method: 'GET' }),
 	storeApiKey: (provider: string, apiKey: string) =>

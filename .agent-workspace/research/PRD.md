@@ -7,7 +7,7 @@ Votecatcher aims to help campaigns rapidly get snapshots of signed petition ball
 ## Problem
 
 - Campaigns need to verify that the names and addresses on signed petitions match the names and addresses on their voter list.
-- Current methods is manual visual verification, which is slow, manual, tedious and very error prone
+- Current methods is manual visual verification, of paper petitions against an open spreadsheet with a list of voters which is slow, manual, tedious and very error prone.
 
 ## Proposed Solution
 
@@ -39,15 +39,28 @@ Votecatcher aims to help campaigns rapidly get snapshots of signed petition ball
     - Regional breakdown (if applicable)
     - Comparing to target total e.g. percentages, raw totals
 
-### Campaign Management
+### High Level Business Flow
+
+#### Golden Path
+
+1 - User sets up an instance
+2 - User onboards and/or authenticates to a campaign
+3 - User uploads a voter list or selects an existing list associated with the campaign
+4 - User uploads scanned petition(s)
+5 - User runs the asynchronous matching process
+6 - User is informed of progress/phase - User view
+7 - User recieves a well structured table of matching results
+8 - User recieves dashboard displaying an array of relevant metrics
+
+### Features
+
+#### Campaign Management
 
 - Campaigns tied to a season/year and region
 - Users can be associated with multiple campaigns
 - Campaign administration
   - User managment
 - Branding customisation
-
-### Configuration
 
 #### OCR Model selection
 
@@ -91,3 +104,12 @@ Votecatcher aims to help campaigns rapidly get snapshots of signed petition ball
 
 - Auto create local database
 - Auto connect to host provider given required credentials e.g. supabase
+
+## Key Milesone
+
+### Deployable MVP
+
+### Hosted Simulated Demo
+
+- We want to have a version of Votecatcher that is hosted on a public URL
+- This version will
