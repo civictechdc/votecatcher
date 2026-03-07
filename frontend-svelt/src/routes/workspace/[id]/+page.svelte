@@ -67,6 +67,14 @@
 		return rows.slice(start, start + pageSize);
 	});
 
+	$effect(() => {
+		console.log('[DEBUG] matchResults changed:', matchResults);
+		console.log('[DEBUG] matchRecords count:', matchResults?.matchRecords?.length);
+		console.log('[DEBUG] matchColumns count:', matchResults?.matchColumns?.length);
+		console.log('[DEBUG] Render condition (matchResults && matchRecords.length > 0):', 
+			!!(matchResults && matchResults.matchRecords && matchResults.matchRecords.length > 0));
+	});
+
 	// results / config
 	onMount(async () => {
 		try {
@@ -156,17 +164,40 @@
 	}
 
 	async function onOcrJobCompleted(jobId: string) {
+		console.log('[DEBUG] onOcrJobCompleted called with jobId:', jobId);
+		console.log('[DEBUG] simulationMode:', $featureFlags.simulationMode);
+		
 		if ($featureFlags.simulationMode) {
+			console.log('[DEBUG] Calling simulate endpoint...');
 			const res = await matchApi.simulateOcrResults(jobId);
+			console.log('[DEBUG] Simulate response:', res);
+			console.log('[DEBUG] Response ok?:', res.ok);
+			console.log('[DEBUG] Response data:', res.data);
+			
 			if (!res.ok) throw new Error(`Server returned ${res.status}`);
-			matchResults = convertMatchResponseToMatchResults(res.data.results);
+			
+			console.log('[DEBUG] Converting response data...');
+			const converted = convertMatchResponseToMatchResults(res.data.results);
+			console.log('[DEBUG] Converted results:', converted);
+			console.log('[DEBUG] Match records count:', converted?.matchRecords?.length);
+			
+			matchResults = converted;
+			console.log('[DEBUG] matchResults state updated:', matchResults);
 		} else {
+			console.log('[DEBUG] Calling real endpoint...');
 			const res = await matchApi.getMatchResults({
 				campaign_id: "demo",
 				job_id: jobId
 			});
+			console.log('[DEBUG] Real response:', res);
+			
 			if (!res.ok) throw new Error(`Server returned ${res.status}`);
-			matchResults = convertMatchResponseToMatchResults(res.data);
+			
+			const converted = convertMatchResponseToMatchResults(res.data);
+			console.log('[DEBUG] Converted results:', converted);
+			
+			matchResults = converted;
+			console.log('[DEBUG] matchResults state updated:', matchResults);
 		}
 	}
 
@@ -419,6 +450,21 @@
 				{/if}
 			</div>
 
+			<div style="margin-top:1rem;" class="rounded-lg border bg-muted p-3">
+				<label class="flex items-center gap-2">
+					<input
+						type="checkbox"
+						checked={$featureFlags.simulationMode}
+						onclick={() => featureFlags.toggle('simulationMode')}
+						class="h-4 w-4 rounded border-input"
+					/>
+					<span class="text-sm font-medium">Use Simulated Data</span>
+				</label>
+				<p class="text-xs text-muted-foreground mt-1">
+					Bypasses OCR and returns fake data for testing
+				</p>
+			</div>
+
 			<div style="margin-top:1rem;">
 				<button
 					onclick={runMatching}
@@ -450,17 +496,8 @@
 			</p>
 			{#if matchResults && matchResults.matchRecords.length > 0}
 				<div class="rounded-xl border bg-card shadow-sm">
-					<div class="flex items-center justify-between px-4 py-3 border-b">
+					<div class="px-4 py-3 border-b">
 						<h3 class="text-lg font-semibold">Match Results ({matchResults.matchRecords.length} records)</h3>
-						<label class="flex items-center gap-2 text-sm">
-							<input
-								type="checkbox"
-								checked={$featureFlags.simulationMode}
-								onchange={() => featureFlags.toggle('simulationMode')}
-								class="h-4 w-4 rounded border-input"
-							/>
-							Use Simulated Data
-						</label>
 					</div>
 					
 					<div style="overflow:scroll;">
