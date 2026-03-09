@@ -111,3 +111,7 @@ include = ["app"]
 exclude = ["**/node_modules", "**/__pycache__"]
 reportMissingImports = true
 reportMissingTypeStubs = false
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "node_modules"]
+skips = ["B101"]

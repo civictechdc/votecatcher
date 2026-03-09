@@ -1,0 +1,80 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install security tools
+        run: |
+          pip install bandit pip-audit
+
+      - name: Run bandit
+        run: bandit -c backend/pyproject.toml -r backend/
+
+      - name: Run pip-audit
+        run: uv pip audit
+        working-directory: backend
+
+  frontend-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install
+        working-directory: frontend-svelt
+
+      - name: Run bun audit
+        run: bun audit
+        working-directory: frontend-svelt
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  container-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend Docker image
+        run: docker build -t votecatcher-backend ./backend
+
+      - name: Build frontend Docker image
+        run: docker build -t votecatcher-frontend ./frontend-svelt
+
+      - name: Run Trivy on backend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: votecatcher-backend
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Run Trivy on frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: votecatcher-frontend
+          severity: CRITICAL,HIGH
+          exit-code: 1

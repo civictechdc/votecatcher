@@ -1,0 +1,633 @@
+openapi: 3.1.0
+info:
+  title: Votecatcher API
+  description: Petition signature verification API
+  version: 1.0.0
+  contact:
+    name: Votecatcher Team
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local development server
+
+tags:
+  - name: campaigns
+    description: Campaign management
+  - name: upload
+    description: File upload operations
+  - name: jobs
+    description: Job orchestration and status
+  - name: results
+    description: Match results
+  - name: sessions
+    description: Session management
+
+paths:
+  /campaigns:
+    get:
+      tags: [campaigns]
+      summary: List campaigns
+      operationId: listCampaigns
+      parameters:
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        '200':
+          description: List of campaigns
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignList'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [campaigns]
+      summary: Create campaign
+      operationId: createCampaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCampaign'
+      responses:
+        '201':
+          description: Campaign created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /campaigns/{campaign_id}:
+    get:
+      tags: [campaigns]
+      summary: Get campaign details
+      operationId: getCampaign
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+      responses:
+        '200':
+          description: Campaign details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /upload/voter-list:
+    post:
+      tags: [upload]
+      summary: Upload voter list CSV/Excel
+      operationId: uploadVoterList
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - region_id
+              properties:
+                file:
+                  type: string
+                  format: binary
+                region_id:
+                  type: integer
+      responses:
+        '201':
+          description: Voter list uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoterListUpload'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /upload/petition:
+    post:
+      tags: [upload]
+      summary: Upload petition PDF
+      operationId: uploadPetition
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - campaign_id
+              properties:
+                file:
+                  type: string
+                  format: binary
+                campaign_id:
+                  type: integer
+      responses:
+        '201':
+          description: Petition uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetitionUpload'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /jobs:
+    post:
+      tags: [jobs]
+      summary: Create matcher job
+      operationId: createJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJob'
+      responses:
+        '201':
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /jobs/{job_id}:
+    get:
+      tags: [jobs]
+      summary: Get job status
+      operationId: getJob
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /jobs/{job_id}/status:
+    get:
+      tags: [jobs]
+      summary: SSE endpoint for job status updates
+      operationId: getJobStatusStream
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /jobs/{job_id}/cancel:
+    post:
+      tags: [jobs]
+      summary: Cancel job
+      operationId: cancelJob
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Job cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /jobs/{job_id}/results:
+    get:
+      tags: [results]
+      summary: Get match results
+      operationId: getResults
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: confidence
+          in: query
+          description: Filter by confidence level
+          schema:
+            type: string
+            enum: [HIGH, MEDIUM, LOW]
+      responses:
+        '200':
+          description: Match results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultList'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /jobs/{job_id}/results/export:
+    get:
+      tags: [results]
+      summary: Export results to CSV
+      operationId: exportResults
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /sessions:
+    post:
+      tags: [sessions]
+      summary: Save session
+      operationId: saveSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveSession'
+      responses:
+        '201':
+          description: Session saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /sessions/{session_id}/load:
+    post:
+      tags: [sessions]
+      summary: Load session
+      operationId: loadSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session loaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /sessions/{session_id}/export:
+    get:
+      tags: [sessions]
+      summary: Export session as ZIP
+      operationId: exportSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: ZIP file
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  parameters:
+    CampaignId:
+      name: campaign_id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    JobId:
+      name: job_id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    SessionId:
+      name: session_id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+    Campaign:
+      type: object
+      required:
+        - id
+        - name
+        - year
+        - region_id
+        - created_at
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        year:
+          type: integer
+        region_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateCampaign:
+      type: object
+      required:
+        - name
+        - year
+        - region_id
+      properties:
+        name:
+          type: string
+          minLength: 1
+        year:
+          type: integer
+          minimum: 2020
+        region_id:
+          type: integer
+
+    CampaignList:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Campaign'
+        total:
+          type: integer
+
+    Job:
+      type: object
+      required:
+        - id
+        - campaign_id
+        - status
+        - created_at
+      properties:
+        id:
+          type: integer
+        campaign_id:
+          type: integer
+        status:
+          type: string
+          enum:
+            - NOT_STARTED
+            - OCR_PENDING
+            - OCR_STARTED
+            - OCR_COMPLETED
+            - OCR_FAILED
+            - OCR_TIMEOUT
+            - MATCHING_PENDING
+            - MATCHING
+            - MATCHING_COMPLETED
+            - MATCHING_ERROR
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        error_message:
+          type: string
+
+    CreateJob:
+      type: object
+      required:
+        - campaign_id
+        - petition_scan_ids
+      properties:
+        campaign_id:
+          type: integer
+        petition_scan_ids:
+          type: array
+          items:
+            type: integer
+
+    VoterListUpload:
+      type: object
+      required:
+        - id
+        - filename
+        - region_id
+        - row_count
+      properties:
+        id:
+          type: integer
+        filename:
+          type: string
+        region_id:
+          type: integer
+        row_count:
+          type: integer
+
+    PetitionUpload:
+      type: object
+      required:
+        - id
+        - filename
+        - campaign_id
+        - crop_count
+      properties:
+        id:
+          type: integer
+        filename:
+          type: string
+        campaign_id:
+          type: integer
+        crop_count:
+          type: integer
+
+    ResultList:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchResult'
+        total:
+          type: integer
+
+    MatchResult:
+      type: object
+      required:
+        - id
+        - ocr_result_id
+        - confidence
+        - predictions
+      properties:
+        id:
+          type: integer
+        ocr_result_id:
+          type: integer
+        confidence:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+        predictions:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/Prediction'
+
+    Prediction:
+      type: object
+      required:
+        - voter_id
+        - name_similarity
+        - address_similarity
+        - overall_score
+      properties:
+        voter_id:
+          type: integer
+        name_similarity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        address_similarity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        overall_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+
+    Session:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        data:
+          type: object
+          description: Reference-based snapshot data
+
+    SaveSession:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+
+    Error:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'

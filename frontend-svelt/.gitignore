@@ -26,3 +26,6 @@ test-results
 
 *storybook.log
 storybook-static
+
+# Generated API client
+src/lib/api/generated/
