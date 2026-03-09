@@ -3,8 +3,8 @@
   import { auth } from "$lib/stores/auth"
   import { get } from "svelte/store"
   import { featureFlags } from "$lib/config/featureFlags"
-  import Progress from "$lib/components/Progress.svelte"
-  import Navbar from "$lib/components/Navbar.svelte"
+  import { Progress } from "$lib/components/ui"
+  import { Navbar } from "$lib/components/layout"
   import DevFlags from "$lib/components/DevFlags.svelte"
 
   // Local state for form

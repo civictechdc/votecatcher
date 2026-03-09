@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { get } from 'svelte/store';
-	import Progress from '$lib/components/Progress.svelte';
-	import Navbar from '$lib/components/Navbar.svelte';
+	import { Progress } from '$lib/components/ui';
+	import { Navbar } from '$lib/components/layout';
 	import { onboard } from '$lib/stores/onboarding';
 	import { api } from '$lib/api/client';
 	import { initMocks } from '$lib/mocks/init';

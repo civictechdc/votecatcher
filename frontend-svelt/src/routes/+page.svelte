@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Navbar from '$lib/components/Navbar.svelte';
+	import { Navbar } from '$lib/components/layout';
 	import { ArrowRight, Users, Shield, Flag } from 'lucide-svelte';
 	import DevFlags from '$lib/components/DevFlags.svelte';
 

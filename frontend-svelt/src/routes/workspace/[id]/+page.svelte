@@ -16,7 +16,7 @@
 	import { onDestroy } from 'svelte';
 	import { convertMatchResponseToMatchResults } from '$lib/utils';
 	import { matchApi } from '$lib/api/matching-requests';
-	import Pagination from '$lib/components/Pagination.svelte';
+	import { Pagination } from '$lib/components/ui';
 	import { featureFlags } from '$lib/stores/featureFlags';
 
 	let petitionFiles = $state<FileList | null>(null);

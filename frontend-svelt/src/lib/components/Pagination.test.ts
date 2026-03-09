@@ -1,6 +1,6 @@
 import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
-import Pagination from "./Pagination.svelte";
+import { Pagination } from "./ui";
 
 describe("Pagination", () => {
   it("renders page size selector", () => {
