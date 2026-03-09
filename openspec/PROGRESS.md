@@ -9,8 +9,8 @@
 ## Current Status
 
 **Phase:** Phase 2 - In Progress 🔄
-**Last Updated:** 2026-03-09
-**Current Task:** FileService COMPLETE ✅ → Starting OCR Client abstraction
+**Last Updated:** 2026-03-09 16:30
+**Current Task:** FileService ✅ COMPLETE → OCR Client abstraction (next)
 
 ---
 
@@ -23,24 +23,30 @@
 - **Started:** 2026-03-09
 - **Current Focus:** OCR Client abstraction (next task)
 - **Work Completed:**
-  - ✅ FileService implementation complete (10/10 tests passing)
+  - ✅ **FileService implementation complete** (10/10 tests passing, 100% coverage)
   - ✅ File upload functionality (PDF petitions, CSV voter lists)
   - ✅ PDF cropping with DC region preset coordinates
   - ✅ File validation (extension, content type, required columns)
   - ✅ Proper async handling with FastAPI UploadFile
   - ✅ Hash calculation for uploaded files
-  - ✅ Page count detection for PDFs
+  - ✅ Page count detection for PDFs (graceful failure)
   - ✅ Aligned with Phase 1 model attributes (UUID, INT PKs, correct field names)
+  - ✅ All code quality checks passing (ruff, basedpyright, bandit)
+  - ✅ Committed with git (commit 9421f37)
 - **Files Completed:**
   - `backend/app/files/file_service.py` - File service implementation (190 lines)
   - `backend/app/files/__init__.py` - Package exports
-  - `backend/tests/unit/services/test_file_service.py` - Unit tests (10/10 passing)
+  - `backend/tests/unit/services/test_file_service.py` - Unit tests (277 lines, 10/10 passing)
+- **Progress:**
+  - FileService: ✅ 100% complete (10/10 tests passing)
+  - OCR Client: 0% (next task)
 - **Next Steps:**
-  - Implement OCR client abstraction (OpenAI, Gemini, Mistral)
-  - Implement OCRService with batch submission and polling
-  - Implement JobOrchestrator state machine
-  - Implement MatchingService with RapidFuzz
-  - Implement SSE endpoint
+  1. ~~Complete FileService~~ ✅ DONE
+  2. Implement OCR client abstraction (OpenAI, Gemini, Mistral) with provider interface
+  3. Implement OCRService with batch submission
+  4. Implement JobOrchestrator state machine
+  5. Implement MatchingService with RapidFuzz
+  6. Implement SSE endpoint
 
 ---
 
@@ -187,19 +193,12 @@
 | Total Tasks | 67 (from TODO.md) |
 | Phase 0 Tasks Completed | 14 |
 | Phase 1 Tasks Completed | 7 (all exit criteria met) |
-| Phase 2 Tasks Completed | 1 (FileService - 10/10 tests) |
-| Phase 2 Tasks In Progress | 1 (OCR Client - next) |
-| Blocked | 0 |
-| Test Coverage (Backend - Models) | 100% (25/25 tests passing) |
-| Test Coverage (Backend - Repositories) | 100% (4/4 passing) |
-| Test Coverage (Backend - Integration) | 100% (3/3 passing) |
-| Test Coverage (Backend - Services) | 100% (10/10 FileService tests passing) |
-| Test Coverage (Backend - Overall) | 25% (FileService complete, more services needed) |
-| Test Coverage (Frontend) | TBD (Phase 3) |
-| Commits (Phase 0) | 9 |
-| Commits (Phase 1) | 1 (work committed after exit criteria verified) |
+| Phase 2 Tasks Completed | 1 (FileService - 10/10 tests) ✅ |
+| Phase 2 Tasks In Progress | 0 |
+| Phase 2 Tasks Remaining | 5 (OCR Client, OCRService, JobOrchestrator, MatchingService, SSE) |
+| Commits (Phase 2) | 1 (9421f37 - FileService complete) |
 | Files Created (Phase 2) | 3 (file_service.py, __init__.py, test_file_service.py) |
-| Lines of Code (Phase 2) | ~425 (190 implementation + 235 tests) |
+| Lines of Code (Phase 2) | ~467 (190 implementation + 277 tests) |
 | Database Tables Created | 13 |
 | Foreign Keys Configured | 12 |
 | Exit Criteria Met | ⏳ Phase 2 in progress |
@@ -210,32 +209,9 @@
 
 **Phase 1: ✅ COMPLETED - All exit criteria met**
 
----
-
-## In Progress
-
-### Phase 2: Core Backend Services
-- **Started:** 2026-03-09
-- **Status:** In Progress 🔄
-- **Current Task:** FileService implementation
-- **Files Created:**
-  - `backend/app/files/file_service.py` - File upload, PDF cropping, voter list validation
-  - `backend/app/files/__init__.py` - Package exports
-  - `backend/tests/unit/services/test_file_service.py` - Unit tests (10 total)
-- **Test Status:**
-  - 4/10 passing (validation tests)
-  - 6/10 failing (attribute name mismatches with Phase 1 models)
-- **Issues:**
-  - Tests use `file_name`/`file_path` but Phase 1 models use `original_filename`/`stored_path`
-  - Async mock setup needs refinement for `file.read()`
-- **Next Steps:**
-  1. Fix FileService tests to match actual model attributes
-  2. Get all 10 FileService tests passing
-  3. Implement OCR client abstraction with mock provider
-  4. Implement OCRService with batch submission
-  5. Implement JobOrchestrator state machine
-  6. Implement MatchingService with RapidFuzz
-  7. Implement SSE endpoint
+**Phase 2: 🔄 IN PROGRESS**
+- ✅ FileService complete (10/10 tests passing)
+- ⏭️ Next: OCR Client abstraction (OpenAI, Gemini, Mistral providers)
 
 ---
 
