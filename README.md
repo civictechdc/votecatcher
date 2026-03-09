@@ -13,6 +13,22 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 - **Fuzzy Matching**: Advanced name and address matching algorithms
 - **Campaign Management**: Multi-campaign support with user isolation
 
+## Documentation
+
+### Architecture
+- [C4 Context Diagram](docs/architecture/c4-context.md) - System context
+- [C4 Containers Diagram](docs/architecture/c4-containers.md) - Container architecture
+- [C4 Components Diagram](docs/architecture/c4-components.md) - Component structure
+- [Architecture Decisions](docs/architecture/decisions/) - ADRs
+
+### Development
+- [Running Locally](docs/running-locally.md) - Local development setup
+- [Simulation Testing](docs/simulation-testing.md) - Testing strategies
+- [API Specification](backend/openapi.yaml) - OpenAPI 3.1 spec
+
+### Deployment
+- [Deployment Guide](docs/deployment/) - Production deployment
+
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
