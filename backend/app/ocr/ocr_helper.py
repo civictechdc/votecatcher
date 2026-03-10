@@ -25,7 +25,7 @@ from app.files.file_repository import (
 	ReadPetitionScan,
 	ScannedPetitionRepository,
 )
-from app.logging.app_logger import AppLogger
+from app.logger_config.app_logger import AppLogger
 from app.matching.match_repository import MatchingTask, is_terminal_matching_status
 from app.ocr import extract_from_encoding_async
 from app.ocr.batching.batch_handler import (

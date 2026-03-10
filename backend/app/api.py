@@ -10,13 +10,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.data import DbClient, get_db_client
 from app.data.database.session import get_db_session, init_db
 from app.data.memory_db import get_memory_db
-from app.logging.app_logger import (
+from app.logger_config.app_logger import (
 	configure_logger,
 )
 from app.routers import (
 	campaign_router,
 	job_router,
 	results_router,
+	session_router,
 	upload_router,
 )
 from app.settings.env_settings import get_settings
@@ -76,3 +77,4 @@ app.include_router(job_router)
 app.include_router(campaign_router)
 app.include_router(upload_router)
 app.include_router(results_router)
+app.include_router(session_router)
