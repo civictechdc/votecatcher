@@ -4,11 +4,15 @@ import { campaigns, resetCampaignsStore } from './campaigns';
 import type { Campaign } from '$lib/api/generated';
 
 const mockListCampaigns = vi.fn();
+const mockCreateCampaign = vi.fn();
+const mockDeleteCampaign = vi.fn();
 
 vi.mock('$lib/api/generated', () => {
 	return {
 		CampaignsApi: class {
 			listCampaigns = mockListCampaigns;
+			createCampaign = mockCreateCampaign;
+			deleteCampaign = mockDeleteCampaign;
 		}
 	};
 });
@@ -17,6 +21,8 @@ describe('Campaigns Store', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockListCampaigns.mockReset();
+		mockCreateCampaign.mockReset();
+		mockDeleteCampaign.mockReset();
 		resetCampaignsStore();
 	});
 
@@ -70,6 +76,79 @@ describe('Campaigns Store', () => {
 			const state = get(campaigns);
 			expect(state.error).toBe('Network error');
 			expect(state.campaigns).toEqual([]);
+		});
+	});
+
+	describe('create', () => {
+		it('creates a new campaign', async () => {
+			const newCampaign: Campaign = {
+				id: 2,
+				name: 'New Campaign',
+				year: 2024,
+				regionId: 1,
+				createdAt: new Date('2024-01-01T00:00:00Z')
+			};
+
+			mockListCampaigns.mockResolvedValue({ items: [], total: 0 });
+			mockCreateCampaign.mockResolvedValue(newCampaign);
+
+			await campaigns.fetchAll();
+			const result = await campaigns.create({ name: 'New Campaign', year: 2024, regionId: 1 });
+
+			const state = get(campaigns);
+			expect(state.campaigns).toContainEqual(newCampaign);
+			expect(result).toEqual(newCampaign);
+		});
+
+		it('handles create errors', async () => {
+			mockCreateCampaign.mockRejectedValue(new Error('Validation failed'));
+
+			await expect(
+				campaigns.create({ name: '', year: 2024, regionId: 1 })
+			).rejects.toThrow('Validation failed');
+
+			const state = get(campaigns);
+			expect(state.error).toBe('Validation failed');
+		});
+	});
+
+	describe('delete', () => {
+		it('removes campaign from store', async () => {
+			const existingCampaign: Campaign = {
+				id: 1,
+				name: 'Test',
+				year: 2024,
+				regionId: 1,
+				createdAt: new Date('2024-01-01T00:00:00Z')
+			};
+
+			mockListCampaigns.mockResolvedValue({ items: [existingCampaign], total: 1 });
+
+			await campaigns.fetchAll();
+			await campaigns.delete(1);
+
+			const state = get(campaigns);
+			expect(state.campaigns).not.toContainEqual(existingCampaign);
+			expect(state.campaigns).toHaveLength(0);
+		});
+
+		it('handles delete when campaign does not exist', async () => {
+			const existingCampaign: Campaign = {
+				id: 1,
+				name: 'Test',
+				year: 2024,
+				regionId: 1,
+				createdAt: new Date('2024-01-01T00:00:00Z')
+			};
+
+			mockListCampaigns.mockResolvedValue({ items: [existingCampaign], total: 1 });
+
+			await campaigns.fetchAll();
+			await campaigns.delete(999);
+
+			const state = get(campaigns);
+			expect(state.campaigns).toHaveLength(1);
+			expect(state.campaigns[0]).toEqual(existingCampaign);
 		});
 	});
 });
