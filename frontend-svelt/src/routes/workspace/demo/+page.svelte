@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { demo, isDemoModeEnabled } from '$lib/stores/demo';
+	import { demo, isDemoModeEnabled, type LoadedSessionInfo } from '$lib/stores/demo';
 	import { Button, LoadingSpinner, Modal } from '$lib/components/ui';
-	import { RefreshCw, Download, AlertTriangle } from 'lucide-svelte';
+	import { RefreshCw, Download, AlertTriangle, CheckCircle, Users, GitCompare } from 'lucide-svelte';
 
 	let demoEnabled = $state(isDemoModeEnabled());
 
@@ -81,6 +81,24 @@
 					<div class="mt-4 flex items-center gap-2">
 						<LoadingSpinner size="sm" />
 						<span class="text-slate-600">Loading...</span>
+					</div>
+				{:else if $demo.loadedSession}
+					<div class="mt-4 rounded-lg border border-green-200 bg-green-50 p-4">
+						<div class="flex items-center gap-2">
+							<CheckCircle class="h-5 w-5 text-green-600" />
+							<p class="font-medium text-green-800">{$demo.loadedSession.message}</p>
+						</div>
+						<div class="mt-3 grid grid-cols-2 gap-4 text-sm">
+							<div class="flex items-center gap-2">
+								<Users class="h-4 w-4 text-green-600" />
+								<span class="text-green-700"><strong>{$demo.loadedSession.voters_count}</strong> voters loaded</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<GitCompare class="h-4 w-4 text-green-600" />
+								<span class="text-green-700"><strong>{$demo.loadedSession.match_results_count}</strong> match results</span>
+							</div>
+						</div>
+						<p class="mt-2 text-xs text-green-600">Session ID: {$demo.loadedSession.session_id}</p>
 					</div>
 				{:else if $demo.prebakedSessions.length === 0}
 					<p class="mt-4 text-slate-500">No pre-baked sessions available.</p>

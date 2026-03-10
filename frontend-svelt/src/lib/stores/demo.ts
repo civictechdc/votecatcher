@@ -7,12 +7,22 @@ export interface PrebakedSession {
 	description: string;
 }
 
+export interface LoadedSessionInfo {
+	success: boolean;
+	session_id: string;
+	message: string;
+	campaign_id: string;
+	voters_count: number;
+	match_results_count: number;
+}
+
 interface DemoState {
 	showResetConfirmation: boolean;
 	resetting: boolean;
 	loading: boolean;
 	error: string | null;
 	prebakedSessions: PrebakedSession[];
+	loadedSession: LoadedSessionInfo | null;
 }
 
 let _demoModeEnabled = false;
@@ -31,7 +41,8 @@ function createDemoStore() {
 		resetting: false,
 		loading: false,
 		error: null,
-		prebakedSessions: []
+		prebakedSessions: [],
+		loadedSession: null
 	});
 
 	async function fetchWithAuth(url: string, options?: RequestInit) {
@@ -78,15 +89,15 @@ function createDemoStore() {
 			}
 		},
 
-		async loadPrebaked(sessionId: string): Promise<Record<string, unknown>> {
-			update((s) => ({ ...s, loading: true, error: null }));
+		async loadPrebaked(sessionId: string): Promise<LoadedSessionInfo> {
+			update((s) => ({ ...s, loading: true, error: null, loadedSession: null }));
 
 			try {
 				const response = await fetchWithAuth(`/demo/sessions/${sessionId}/load`, {
 					method: 'POST'
 				});
-				const session = await response.json();
-				update((s) => ({ ...s, loading: false }));
+				const session: LoadedSessionInfo = await response.json();
+				update((s) => ({ ...s, loading: false, loadedSession: session }));
 				return session;
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
@@ -122,7 +133,8 @@ function createDemoStore() {
 				resetting: false,
 				loading: false,
 				error: null,
-				prebakedSessions: []
+				prebakedSessions: [],
+				loadedSession: null
 			});
 		}
 	};
