@@ -11,7 +11,7 @@
 **Phase:** Phase 3 - Frontend Foundation
 **Started:** 2026-03-10
 **Last Updated:** 2026-03-11
-**Progress:** Parts A+B+Loading COMPLETE ✅ (177/177 tests) | Part C: API Integration PENDING
+**Progress:** Parts A+B+Loading COMPLETE (177 tests) | Part C: API Integration PENDING | Documentation cleanup COMPLETE
 
 **Test Summary:**
 - Part A: Base UI Components - 136 tests ✅
@@ -673,6 +673,48 @@ Frontend Ready for Phase 3 ✅
   - Setup GitHub Actions CI/CD workflows
   - Configured security scanning
   - Created ADR template and ADR-0001
+
+---
+
+### Documentation Cleanup COMPLETE (2026-03-11)
+
+**Updated Documents:**
+
+#### README.md
+- Removed outdated tech stack (Next.js, React, Supabase)
+- Updated with actual stack: FastAPI + SvelteKit + PostgreSQL
+- Corrected quick start guide with current commands
+- Removed decorative emojis
+- Added accurate project structure and links
+
+#### docs/running-locally.md
+- Updated ports (8000 not 8080)
+- Corrected commands (`uv run fastapi dev` not `uv run main.py`)
+- Removed legacy simulation mode references
+- Added current environment variables reference
+- Included troubleshooting section
+
+#### docs/development/README.md
+- Updated with current structure and links
+- Removed references to non-existent files
+- Added TDD workflow guidance
+
+#### docs/deployment/README.md
+- Created placeholder for future deployment guide
+- Listed target providers and costs ($5-20/mo)
+
+**Removed Documents:**
+- `docs/simulation-testing.md` - Legacy feature removed in Phase 2.5
+
+**Git Cleanup:**
+- Added `.agent-workspace/` and `.agent/` to `.gitignore`
+- Removed from git tracking (kept locally)
+- These directories contain local development tools only
+
+**Commits:**
+1. `docs: update user-facing documentation`
+2. `chore: remove .agent-workspace from git tracking`
+3. `chore: add .agent/ to gitignore`
 
 ---
 
