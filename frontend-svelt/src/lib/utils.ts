@@ -4,6 +4,12 @@ import type {
 } from '$lib/api/response-types';
 import type { MatchRow, MatchResults } from '$lib/workspace-types';
 import { MatchColumn } from '$lib/workspace-types';
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+	return twMerge(clsx(inputs));
+}
 
 export function convertMatchResponseToMatchResults(
 	matchResponse: MatchResultResponse
