@@ -5,7 +5,6 @@ import structlog
 from dotenv import find_dotenv, load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic_settings.main import SettingsConfigDict
 
 load_dotenv()
 
@@ -42,8 +41,12 @@ class AppSettings(BaseSettings):
 		alias="FEATURE_ENABLE_BETA_FEATURES", default=False
 	)
 	enable_debug_mode: bool = Field(alias="FEATURE_ENABLE_DEBUG_MODE", default=False)
+	demo_mode: bool = Field(alias="FEATURE_DEMO_MODE", default=False)
+	demo_reset: bool = Field(alias="FEATURE_DEMO_RESET", default=False)
 
 	def local_campaign_base_dir(self) -> Path:
+		if self.runtime_dir is None or self.campaigns_dir is None:
+			raise ValueError("runtime_dir and campaigns_dir must be set")
 		return self.runtime_dir.joinpath(self.campaigns_dir)
 
 

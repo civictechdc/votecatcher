@@ -15,6 +15,7 @@ from app.logger_config.app_logger import (
 )
 from app.routers import (
 	campaign_router,
+	demo_router,
 	job_router,
 	results_router,
 	session_router,
@@ -78,3 +79,5 @@ app.include_router(campaign_router)
 app.include_router(upload_router)
 app.include_router(results_router)
 app.include_router(session_router)
+app.include_router(demo_router)
+app.include_router(demo_router)
