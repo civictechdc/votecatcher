@@ -98,7 +98,7 @@
 								<span class="text-green-700"><strong>{$demo.loadedSession.match_results_count}</strong> match results</span>
 							</div>
 						</div>
-						<p class="mt-2 text-xs text-green-600">Session ID: {$demo.loadedSession.session_id}</p>
+						<p class="mt-2 text-xs text-green-600">Campaign ID: {$demo.loadedSession.campaign_id}</p>
 					</div>
 				{:else if $demo.prebakedSessions.length === 0}
 					<p class="mt-4 text-slate-500">No pre-baked sessions available.</p>
