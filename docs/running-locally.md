@@ -1,12 +1,15 @@
 # Running VoteCatcher Locally
 
+This guide covers local development setup. For a quick start, see the main [README.md](../README.md).
+
 ## Prerequisites
 
-- Python 3.13+
-- uv package manager
-- Node.js 20+
-- Bun package manager
-- PostgreSQL (optional, for full functionality)
+- **Python 3.12+** (3.13 recommended)
+- **uv package manager** - [Install](https://docs.astral.sh/uv/)
+- **Node.js 20+** or **Bun** - [Bun Install](https://bun.sh/)
+- **PostgreSQL** (optional, SQLite works for development)
+- **Git**
+- **API key** for at least one LLM provider (OpenAI, Gemini, or Mistral)
 
 ## Backend Setup
 
@@ -21,76 +24,51 @@ uv sync --dev
 
 Create `.env.local` in the backend directory:
 
-#### Required Variables
-
 ```env
-# OCR Provider (for petition text extraction)
+# OCR Provider Configuration
 OCR_PROVIDER_NAME=open_ai
 OCR_PROVIDER_MODEL=gpt-4o-mini
 OCR_PROVIDER_API_KEY=your-openai-api-key-here
+
+# Database (SQLite for development)
+DATABASE_URL=sqlite+aiosqlite:///./dev.db
+
+# Alternative: PostgreSQL
+# DATABASE_URL=postgresql+asyncpg://user:pass@localhost/votecatcher
+
+# Development Settings
+DEV_LOGGING_ENABLED=1
+DEV_LOCAL_DB_ENABLE_LOGGING=1
+
+# Feature Flags
+FEATURE_ENABLE_SIMULATION=0
+FEATURE_ENABLE_DEBUG_MODE=0
 ```
 
-#### Local Development Paths
-
-```env
-# Runtime directory structure (relative to backend/)
-DEV_LOCAL_RUNTIME_DIR=runtime
-DEV_LOCAL_RUNTIME_DB_DIR=database
-DEV_LOCAL_RUNTIME_DB_FILE=database/local_db.db
-DEV_LOCAL_BALLOT_CROP_DIR=crops
-DEV_LOCAL_CAMPAIGNS_DIR=campaigns
-DEV_LOCAL_PETITION_SCAN_DIR=scans
-DEV_LOCAL_VOTER_REGISTRATION_DIR=voters
-DEV_LOCAL_OCR_DIR=ocr
-
-# Clear runtime on launch (useful for clean dev starts)
-DEV_CLEAR_RUNTIME_ON_LAUNCH=1
-```
-
-#### Optional: Supabase (Production)
-
-```env
-SUPABASE_PROJECT_URL=your-project-url
-SUPABASE_PROJECT_KEY=your-project-key
-ENABLE_SUPABASE=0  # Set to 1 for production
-```
-
-#### Feature Flags
-
-```env
-FEATURE_ENABLE_SIMULATION=0      # Enable OCR simulation mode
-FEATURE_ENABLE_BETA_FEATURES=0   # Enable beta features
-FEATURE_ENABLE_DEBUG_MODE=0      # Enable debug mode
-```
-
-#### Development Settings
-
-```env
-DEV_LOGGING_ENABLED=1            # Enable detailed logging
-DEV_LOCAL_DB_ENABLE_LOGGING=1    # Enable database query logging
-```
-
-### Running
+### Database Setup
 
 ```bash
 cd backend
 
-# Local development
-uv run main.py --env local
+# Run migrations
+uv run alembic upgrade head
 
-# Debug mode
-uv run main.py --env debug
-
-# Development
-uv run main.py --env dev
-
-# Production
-uv run main.py --env prod
+# Verify tables created
+uv run python -c "from app.data.database.session import engine; print(engine.table_names())"
 ```
 
-The API will be available at http://localhost:8080
+### Running the Backend
 
-API documentation: http://localhost:8080/docs
+```bash
+cd backend
+
+# Development server with auto-reload
+uv run fastapi dev app/api.py
+
+# Server starts at http://localhost:8000
+# API documentation at http://localhost:8000/docs
+# ReDoc at http://localhost:8000/redoc
+```
 
 ### Testing
 
@@ -98,19 +76,21 @@ API documentation: http://localhost:8080/docs
 cd backend
 
 # Run all tests
-uv run pytest
-
-# Run with verbose output
 uv run pytest tests/ -v
 
 # Run with coverage
-uv run pytest --cov=app
+uv run pytest --cov=app --cov-report=html
 
-# Run specific test module
-uv run pytest tests/matching/ -v
+# Run specific test categories
+uv run pytest tests/unit/services/ -v        # Unit tests
+uv run pytest tests/integration/ -v          # Integration tests
+uv run pytest tests/integration/api/ -v      # API tests
+
+# Run specific test file
+uv run pytest tests/unit/services/test_file_service.py -v
 ```
 
-### Linting & Formatting
+### Code Quality
 
 ```bash
 cd backend
@@ -121,11 +101,11 @@ uv run basedpyright app/
 # Lint
 uv run ruff check app/
 
-# Format check
-uv run ruff format app/ --check
-
 # Auto-fix lint issues
 uv run ruff check app/ --fix
+
+# Format check
+uv run ruff format app/ --check
 
 # Auto-format
 uv run ruff format app/
@@ -144,146 +124,57 @@ bun install
 
 Create `.env.local` in the frontend directory:
 
-#### Required Variables
-
 ```env
-# Backend API URL (must include trailing slash)
-PUBLIC_API_URL="http://localhost:8080/"
+# Backend API URL
+PUBLIC_API_URL=http://localhost:8000
 
 # Demo mode (uses sample data)
 DEMO_MODE=1
 
-# Database connection (for server-side queries)
-DATABASE_URL="postgres://postgres:postgres@localhost:5432/votecatcher"
+# Database connection (for server-side operations)
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/votecatcher
 
-# App origin (for CORS and auth)
-ORIGIN="http://localhost:5173"
-
-# Better Auth secret (32+ chars for production)
-# Generate with: openssl rand -base64 32
-BETTER_AUTH_SECRET="dev-secret-key-for-local-development-32ch"
+# App origin
+ORIGIN=http://localhost:5173
 ```
 
-#### OCR Configuration (Frontend)
-
-```env
-# These mirror backend config for client-side reference
-OCR_PROVIDER_NAME="open_ai"
-OCR_PROVIDER_MODEL=gpt-4o-mini
-OCR_PROVIDER_API_KEY=your-openai-api-key-here
-```
-
-### Running
+### Running the Frontend
 
 ```bash
 cd frontend-svelt
 
 # Development server
 bun run dev
-```
 
-The app will be available at http://localhost:5173
+# Server starts at http://localhost:5173
+```
 
 ### Testing
 
 ```bash
 cd frontend-svelt
 
-# Unit tests
-bun run test:unit
+# Run all tests
+bun run test
 
-# Unit tests (watch mode)
-bun run test:unit --watch
+# Run in watch mode
+bun run test --watch
 
-# E2E tests
-bun run test:e2e
+# Run with coverage
+bun run test --coverage
 
-# E2E tests (interactive UI mode)
-bunx playwright test --ui
-
-# E2E tests (debug mode)
-bunx playwright test --debug
+# Run specific test file
+bun run test src/lib/components/ui/Button.test.ts
 ```
 
-### E2E Testing with Simulation Mode
-
-The simulation mode feature allows testing the OCR matching workflow without requiring real file uploads or OCR processing.
-
-#### Enabling Simulation Mode
-
-1. Navigate to the workspace page (`/workspace/demo`)
-2. Find the "Use Simulated Data" checkbox
-3. Check the box to enable simulation mode
-4. Upload files and click "Run Matching" button
-5. Simulated results (50-200 rows) will appear in the results table
-
-#### Simulation Mode Features
-
-- Generates realistic mock data using Faker
-- Returns 50-200 rows of match results
-- Includes columns: ocr_name, ocr_address, matched_name, matched_address, match_score, ocr_date, ocr_ward
-- No database operations required
-- no OCR API calls required
-
-#### Testing Workflow
-
-1. Enable simulation mode in the workspace UI
-2. Upload sample files (any CSV/pdf will work)
-3. Click "Run Matching" to trigger simulation
-4. Verify results table displays with pagination
-5. Test pagination controls (next/previous/page size)
-
-#### Troubleshooting E2E Issues
-
-- **Port conflicts**: `lsof -ti:4173 | xargs kill -9`
-- **Test failures**: Check browser console and backend logs
-- **Timeout issues**: Increase timeout in playwright.config.ts
-
-- **Build failures**: Ensure production build succeeds before e2e
-
-### Linting & Formatting
-
-### E2E Testing with Simulation Mode
-
-The simulation mode feature allows testing the OCR matching workflow without requiring real file uploads or OCR processing.
-
-**Enabling Simulation Mode:**
-
-1. Navigate to the workspace page (`/workspace/demo`)
-2. Find the "Use Simulated Data" checkbox
-3. Check the box to enable simulation mode
-4. Click "Run Matching" button
-5. Simulated results (50-200 rows) will appear in the results table
-
-**Simulation Mode Features:**
-
-- Generates realistic mock data using Faker
-- Returns 50-200 rows of match results
-- Includes columns: ocr_name, ocr_address, matched_name, matched_address, match_score, ocr_date, ocr_ward
-- No database operations required
-- No OCR API calls required
-
-**Testing Workflow:**
-
-1. **Unit Tests**: Test individual components (Pagination, feature flags, utilities)
-2. **E2E Tests**: Verify page rendering, element visibility, user interactions
-3. **Backend Tests**: Verify simulation endpoint returns valid data structure
-
-**Troubleshooting E2E Issues:**
-
-| Issue | Solution |
-|-------|----------|
-| Tests timeout | Increase timeout in test: `await expect(locator).toBeVisible({ timeout: 10000 })` |
-| Port 4173 in use | Kill process: `lsof -ti:4173 \| xargs kill -9` |
-| Flaky tests | Use `test.slow()` annotation or increase retries |
-| Browser not installed | Run: `bunx playwright install` |
-
-### Linting & Formatting
+### Code Quality
 
 ```bash
 cd frontend-svelt
 
 # Type check
+bun run typecheck
+# or
 bun run check
 
 # Lint
@@ -309,33 +200,9 @@ bun run build
 
 # Preview production build
 bun run preview
+
+# Build runs at http://localhost:4173
 ```
-
-## Feature Flags
-
-The application supports feature flags for development and testing:
-
-### Available Flags
-
-- `SIMULATE_OCR_RESULTS`: When enabled, returns simulated OCR results instead of calling real OCR service
-
-### Usage
-
-```typescript
-import { featureFlags } from '$lib/stores/featureFlags';
-
-// Check if simulation is enabled
-if (featureFlags.isFeatureEnabled('SIMULATE_OCR_RESULTS')) {
-  // Use simulated results
-}
-
-// Toggle feature
-featureFlags.toggleFeature('SIMULATE_OCR_RESULTS', true);
-```
-
-### Storage
-
-Feature flags are persisted in localStorage under the key `votecatcher_feature_overrides`.
 
 ## Full Development Workflow
 
@@ -343,7 +210,8 @@ Feature flags are persisted in localStorage under the key `votecatcher_feature_o
 
 ```bash
 cd backend
-uv run main.py --env local
+uv run fastapi dev app/api.py
+# http://localhost:8000
 ```
 
 ### Terminal 2 - Frontend
@@ -351,100 +219,181 @@ uv run main.py --env local
 ```bash
 cd frontend-svelt
 bun run dev
+# http://localhost:5173
 ```
 
-### Access
+### Access Points
 
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8080
-- API Docs: http://localhost:8080/docs
+| Service | URL | Description |
+|---------|-----|-------------|
+| Frontend | http://localhost:5173 | SvelteKit application |
+| Backend API | http://localhost:8000 | FastAPI application |
+| API Docs | http://localhost:8000/docs | Swagger UI |
+| ReDoc | http://localhost:8000/redoc | Alternative API docs |
+| Workspace | http://localhost:5173/workspace | Main application |
 
-## Docker Setup (Coming Soon)
+## Sample Data
+
+The repository includes sample data for testing:
+
+```
+samples/dc/
+├── fake_voter_records.csv        # 100K synthetic voter records
+├── fake_signed_petitions.pdf      # Sample petition PDFs
+└── fake_signed_petitions_1-10.pdf # Additional samples
+```
+
+These are used for:
+- API endpoint testing
+- OCR validation
+- Matching algorithm calibration
+- Demo sessions
+
+## Database Management
+
+### SQLite (Development)
 
 ```bash
-# Start all services
-docker-compose up -d
+# Location: backend/dev.db
+# Auto-created on first run
 
-# View logs
-docker-compose logs -f
+# Reset database
+rm backend/dev.db
+cd backend && uv run alembic upgrade head
+```
 
-# Stop services
-docker-compose down
+### PostgreSQL (Production-like)
+
+```bash
+# Start PostgreSQL with Docker
+docker run -d \
+  --name votecatcher-db \
+  -e POSTGRES_DB=votecatcher \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  postgres:16-alpine
+
+# Update .env.local
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/votecatcher
+
+# Run migrations
+cd backend && uv run alembic upgrade head
+```
+
+### Migrations
+
+```bash
+cd backend
+
+# Create new migration
+uv run alembic revision --autogenerate -m "Add new table"
+
+# Apply migrations
+uv run alembic upgrade head
+
+# Rollback one migration
+uv run alembic downgrade -1
+
+# View migration history
+uv run alembic history
 ```
 
 ## Troubleshooting
 
 ### Backend won't start
 
-1. Check Python version: `python --version` (should be 3.13+)
-2. Check uv is installed: `uv --version`
-3. Check .env.local exists and has correct values
-4. Try fresh install: `rm -rf .venv && uv sync --dev`
+1. **Check Python version**: `python --version` (needs 3.12+)
+2. **Check uv installed**: `uv --version`
+3. **Verify .env.local exists** with required variables
+4. **Try fresh install**:
+   ```bash
+   cd backend
+   rm -rf .venv
+   uv sync --dev
+   ```
 
 ### Frontend won't start
 
-1. Check Node version: `node --version` (should be 20+)
-2. Check Bun is installed: `bun --version`
-3. Try fresh install: `rm -rf node_modules && bun install`
+1. **Check Node/Bun version**: `node --version` or `bun --version`
+2. **Try fresh install**:
+   ```bash
+   cd frontend-svelt
+   rm -rf node_modules bun.lockb
+   bun install
+   ```
 
-### Tests failing
+### Database errors
 
-1. Ensure all dependencies are installed
-2. Check environment variables are set
-3. Run with verbose output for details
+1. **Check migrations applied**: `uv run alembic current`
+2. **Reset and reapply**:
+   ```bash
+   rm dev.db
+   uv run alembic upgrade head
+   ```
+
+### Test failures
+
+1. **Ensure all dependencies**: `uv sync --dev` (backend) / `bun install` (frontend)
+2. **Check environment variables**: `.env.local` present
+3. **Run with verbose output**: `uv run pytest -v` / `bun run test --reporter=verbose`
 
 ### Type errors
 
-1. Run `bun run check` in frontend
-2. Run `uv run basedpyright app/` in backend
-3. Check for missing type stubs
+1. **Backend**: `uv run basedpyright app/`
+2. **Frontend**: `bun run typecheck`
+3. **Check for missing type stubs**: `uv add --dev types-<package>`
 
-## Known Issues
+### Port conflicts
 
-### Pre-existing Frontend Errors
+```bash
+# Backend (8000)
+lsof -ti:8000 | xargs kill -9
 
-The frontend currently has pre-existing type and lint errors in legacy code:
+# Frontend (5173)
+lsof -ti:5173 | xargs kill -9
 
-- **Type errors**: ~89 errors in various files
-- **Lint errors**: ~28 errors
+# Preview (4173)
+lsof -ti:4173 | xargs kill -9
+```
 
-These errors existed before the recent refactoring work and do not affect the new features:
-
-- Pagination component
-- Feature flag system
-- Simulate OCR endpoint
-- Results table fixes
-
-A separate task will address these legacy errors.
-
-## Environment Variables Quick Reference
+## Environment Variables Reference
 
 ### Backend
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `OCR_PROVIDER_NAME` | OCR service provider | `open_ai` |
-| `OCR_PROVIDER_MODEL` | OCR model to use | `gpt-4o-mini` |
-| `OCR_PROVIDER_API_KEY` | API key for OCR provider | `sk-proj-...` |
-| `DEV_LOCAL_RUNTIME_DIR` | Base runtime directory *(dev only)* | `runtime` |
-| `DEV_LOGGING_ENABLED` | Enable dev logging *(dev only)* | `1` |
-| `FEATURE_ENABLE_SIMULATION` | Enable simulation mode *(dev only)* | `0` |
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `OCR_PROVIDER_NAME` | Yes | OCR service provider | `open_ai`, `gemini`, `mistral` |
+| `OCR_PROVIDER_MODEL` | Yes | Model to use | `gpt-4o-mini`, `gemini-1.5-flash` |
+| `OCR_PROVIDER_API_KEY` | Yes | API key for provider | `sk-proj-...` |
+| `DATABASE_URL` | Yes | Database connection string | `sqlite+aiosqlite:///./dev.db` |
+| `DEV_LOGGING_ENABLED` | No | Enable dev logging | `1` |
+| `FEATURE_ENABLE_DEBUG_MODE` | No | Enable debug mode | `0` |
 
 ### Frontend
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `PUBLIC_API_URL` | Backend API URL (trailing slash!) | `http://localhost:8080/` |
-| `DEMO_MODE` | Use sample data *(dev only)* | `1` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgres://...` |
-| `ORIGIN` | App origin for CORS/auth | `http://localhost:5173` |
-| `BETTER_AUTH_SECRET` | Auth encryption key (32+ chars) | `dev-secret-...` |
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `PUBLIC_API_URL` | Yes | Backend API URL | `http://localhost:8000` |
+| `DEMO_MODE` | No | Use sample data | `1` |
+| `DATABASE_URL` | No | Server-side DB access | `postgresql://...` |
+| `ORIGIN` | No | App origin for CORS | `http://localhost:5173` |
 
-### Production Checklist
+## Production Checklist
 
-- [ ] Set `ENABLE_SUPABASE=1` (if using Supabase)
-- [ ] Generate strong `BETTER_AUTH_SECRET` (32+ random chars)
-- [ ] Update `PUBLIC_API_URL` to production URL
-- [ ] Update `ORIGIN` to production domain
-- [ ] Secure `OCR_PROVIDER_API_KEY`
-- [ ] Set production `DATABASE_URL`
+Before deploying to production:
+
+- [ ] Strong database password in `DATABASE_URL`
+- [ ] Secure `OCR_PROVIDER_API_KEY` (use secrets manager)
+- [ ] `DEBUG_MODE=0` and `FEATURE_ENABLE_DEBUG_MODE=0`
+- [ ] `PUBLIC_API_URL` points to production backend
+- [ ] `ORIGIN` matches production domain
+- [ ] HTTPS enabled
+- [ ] Database backups configured
+- [ ] Rate limiting configured
+
+## Related Documentation
+
+- [Architecture Overview](architecture/README.md)
+- [API Specification](../backend/openapi.yaml)
+- [Development Guide](development/README.md)
+- [Deployment Guide](deployment/) - Coming soon

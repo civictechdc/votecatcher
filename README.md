@@ -1,261 +1,260 @@
-# VoteCatcher ✓
+# VoteCatcher
 
 **Open Source Campaign Infrastructure**
 
 Automate ballot signature recognition and validation. Put powerful organizing tools in the hands of grassroots campaigns. Democracy should be accessible to everyone.
 
-## 🚀 Features
+## Features
 
 - **Signature Validation**: High-accuracy signature triaging using multimodal LLMs integrated with voter files
 - **Grassroots Focused**: Built for community organizers and campaigns that need powerful tools without the high costs
 - **Open Source**: Transparent, community-driven technology that strengthens democratic participation
-- **PDF Processing**: OCR capabilities for processing petition documents
-- **Fuzzy Matching**: Advanced name and address matching algorithms
-- **Campaign Management**: Multi-campaign support with user isolation
+- **PDF Processing**: OCR capabilities for processing petition documents with pre-cropping
+- **Fuzzy Matching**: Advanced name and address matching with RapidFuzz
+- **Real-time Updates**: SSE-powered job status updates
+- **Campaign Management**: Multi-campaign support with session persistence
 
-## Documentation
+## Quick Start
 
-### Architecture
-- [C4 Context Diagram](docs/architecture/c4-context.md) - System context
-- [C4 Containers Diagram](docs/architecture/c4-containers.md) - Container architecture
-- [C4 Components Diagram](docs/architecture/c4-components.md) - Component structure
-- [Architecture Decisions](docs/architecture/decisions/) - ADRs
+### Prerequisites
 
-### Development
-- [Running Locally](docs/running-locally.md) - Local development setup
-- [Simulation Testing](docs/simulation-testing.md) - Testing strategies
-- [API Specification](backend/openapi.yaml) - OpenAPI 3.1 spec
-
-### Deployment
-- [Deployment Guide](docs/deployment/) - Production deployment
-
-## 🛠️ Tech Stack
-
-- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
-- **Backend**: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
-- **AI/ML**: OpenAI, Mistral, Gemini API integration
-- **PDF Processing**: PDF.js for client-side PDF handling
-- **UI Components**: Radix UI, Lucide React icons
-
-<a id="prerequisites"></a>
-
-## 📋 Prerequisites
-
-Before deploying VoteCatcher, ensure you have:
-
-- [Node.js](https://nodejs.org/en/download) 18+ installed
-- [Supabase CLI](https://supabase.com/docs/guides/local-development) installed
-- API keys for AI providers (OpenAI, Mistral, or Gemini)
-
-## 🚀 Deployment Guide
-
-The key objectives of this guide are to:
-
-- Clone and set-up the VoteCatcher project
-- Create and connect to the Supabase project
-- Configure and run the Votecatcher application locally or deploy to the web.
-
-This guide assumes you are using a Unix-like operating system (e.g. Linux, macOS). For Windows, make adjustments as necessary.
+- **Python 3.12+**
+- **Node.js 20+** or **Bun**
+- **PostgreSQL** (optional, SQLite works for development)
+- **API key** for at least one LLM provider (OpenAI, Gemini, or Mistral)
 
 ### 1. Clone and Setup
 
-1. Clone the repository to your local machine:
-
-```shell
+```bash
 git clone https://github.com/civictechdc/votecatcher
-```
-
-2. Open your terminal and navigate to the cloned project directory:
-
-```shell
 cd votecatcher
 ```
 
-3. Install project dependencies
+### 2. Backend Setup
 
-```shell
-npm install
+```bash
+cd backend
+
+# Install dependencies
+uv sync --dev
+
+# Create environment file
+cp .env.example .env.local
+
+# Edit .env.local and add your API keys:
+# OCR_PROVIDER_NAME=open_ai
+# OCR_PROVIDER_MODEL=gpt-4o-mini
+# OCR_PROVIDER_API_KEY=your-key-here
 ```
 
-### 2. Supabase Setup
+### 3. Frontend Setup
 
-Quick setup run the `setupSupabase.sh` script
+```bash
+cd frontend-svelt
 
-```sh
-supabase login YOUR_SUPABASE_ACCESS_TOKEN
-chmod +x setupSupabase.sh
-./setupSupabase.sh
+# Install dependencies
+bun install
+
+# Create environment file
+cp .env.example .env.local
 ```
 
-#### Create Supabase Project
+### 4. Run Development Servers
 
-1. Sign in or create an account at [supabase.com](https://supabase.com/dashboard/sign-up)
-2. [Create a new project](https://supabase.com/dashboard/new) or select an existing one.
-3. Locate your API key and project URL in the project dashboard under _Project Overview_. (You will need both for configuration.)
-4. Log in to Supabase using the API key:
-
-```shell
-supabase login YOUR_SUPABASE_ACCESS_TOKEN
+**Terminal 1 - Backend:**
+```bash
+cd backend
+uv run fastapi dev app/api.py
+# API runs at http://localhost:8000
+# Docs available at http://localhost:8000/docs
 ```
 
-### 3. Database Migration
-
-1. Open your terminal or file browser and navigate to the [supabase directory](https://github.com/civictechdc/votecatcher/tree/main/supabase) in your cloned project.
-2. Confirm the following numbered SQL migration files are in the `supabase` directory:
-
-   - [`1. campaign-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/1.%20campaign-schema.sql)
-   - [`2. api-keys-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/2.%20api-keys-schema.sql)
-   - [`3. voter-records-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/3.%20voter-records-schema.sql)
-   - [`4. registered-voters.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/4.%20registered-voters.sql)
-   - [`5. fuzzy-matching-schema.sql`](https://github.com/civictechdc/votecatcher/blob/main/supabase/5.%20fuzzy-matching-schema.sql)
-
-3. Run DB migrations. Enter the DB password when prompted
-
-```shell
-supabase db push
+**Terminal 2 - Frontend:**
+```bash
+cd frontend-svelt
+bun run dev
+# Frontend runs at http://localhost:5173
 ```
 
-### 4. Deploy [Edge Functions](https://supabase.com/docs/guides/functions)
+### 5. Access the Application
 
-1. Deploy the Edge Functions:
+Open http://localhost:5173/workspace to get started.
 
-```shell
-supabase functions deploy process-voter-file
-```
+## Tech Stack
 
-2. Select the desired project when prompted in the terminal.
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **Backend** | FastAPI + SQLModel | Async API with type-safe ORM |
+| **Frontend** | SvelteKit + TypeScript | Fast, compiled UI framework |
+| **Database** | PostgreSQL / SQLite | Production / Development |
+| **OCR** | LLM Batch APIs (OpenAI, Gemini, Mistral) | Cost-effective async processing |
+| **Matching** | RapidFuzz | Fast fuzzy string matching |
+| **Real-time** | Server-Sent Events (SSE) | Live job status updates |
+| **Styling** | Tailwind CSS v4 | Utility-first CSS |
+| **Build** | Vite + Bun | Fast frontend tooling |
 
-3. Verify the edge function is deployed successfully by checking the list of functions:
-
-```shell
-supabase functions list
-```
-This should return a table with a `STATUS` column indicating the functions are deployed and active.
-
-### 5. Environment Configuration
-
-1. In your terminal, navigate to the root project folder.
-2. Copy and rename the example `.env.local` file with either off the following commands:
-
-```shell
-cp .env.example.local .env.local
-```
-
-3. Open `.env.local` and fill in the required environment variables with the values collected in section [2. Supabase Setup](#2-supabase-setup):
-
-```shell
-# Required for Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://<project-id>.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<public anon key>
-# Required for encryption. Generate a secure 32-character hex string
-ENCRYPTION_KEY=0123456789abcdef0123456789abcdef
-```
-
-**Note:** Environment variables with working defaults not shown. Open the `.env.local` file to view and modify as needed.
-
-4. Save and close the `.env.local` file.
-
-### 6. Storage Buckets Setup
-
-The application automatically creates these storage buckets:
-
-- `petitions` - For petition PDF files
-- `voter-files` - For voter registration CSV files
-
-Verify these buckets exist in your Supabase project under: _Storage > All Buckets_.
-
-### 7. Run Locally for Development
-
-1. In your terminal, navigate to the project root directory.
-2. Start the development server:
-
-```shell
-npm run dev
-```
-
-3. Open your web browser and go to [http://localhost:3000](http://localhost:3000) to see the application.
-
-### 8. Deploy to Web
-
-#### Option A: Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Connect your repository to [Vercel](https://vercel.com)
-3. Add environment variables in Vercel dashboard
-4. Deploy
-
-#### Option B: Other Platforms
-
-1. Build the application:
-
-```shell
-npm run build
-```
-
-2. Start production server:
-
-```shell
-npm start
-```
-
-## 🔧 Configuration
-
-### Authentication
-
-VoteCatcher uses Supabase Auth. Configure authentication providers in your Supabase dashboard:
-
-1. Go to Authentication > Settings
-2. Configure your preferred providers (Email, Google, etc.)
-
-### Row Level Security (RLS)
-
-All tables have RLS enabled with policies that ensure:
-
-- Users can only access data from campaigns they own
-- Proper data isolation between campaigns
-- Secure API key management
-- No service role access - all operations use user authentication
-
-### API Key Management
-
-Users can store their own API keys for AI providers:
-
-- OpenAI API Key
-- Mistral API Key
-- Gemini API Key
-
-Keys are encrypted and stored securely with user-level access control.
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 votecatcher/
-├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   ├── auth/              # Authentication pages
-│   ├── workspace/         # Main application workspace
-│   └── globals.css        # Global styles
-├── components/            # Reusable UI components
-│   └── ui/               # Radix UI components
-├── lib/                   # Utility libraries
-│   ├── supabase/         # Supabase client configuration
-│   ├── encryption.ts     # Encryption utilities
-│   └── hooks/            # Custom React hooks
-├── supabase/             # Database and functions
-│   ├── functions/        # Edge functions
-│   └── *.sql            # Database schemas
-└── types/                # TypeScript type definitions
+├── backend/                  # FastAPI backend
+│   ├── app/
+│   │   ├── api.py           # Application entry point
+│   │   ├── routers/         # API route handlers
+│   │   ├── services/        # Business logic
+│   │   ├── data/            # Database models & migrations
+│   │   ├── ocr/             # OCR client implementations
+│   │   ├── matching/        # Fuzzy matching engine
+│   │   └── jobs/            # Job orchestration
+│   ├── tests/               # Test suites
+│   └── openapi.yaml         # API specification
+│
+├── frontend-svelt/          # SvelteKit frontend
+│   ├── src/
+│   │   ├── routes/          # Page routes
+│   │   ├── lib/
+│   │   │   ├── components/  # UI components
+│   │   │   ├── stores/      # Svelte stores
+│   │   │   └── api/         # API client
+│   │   └── app.html         # HTML template
+│   └── tests/               # Test suites
+│
+├── docs/                    # Documentation
+│   ├── architecture/        # C4 diagrams & ADRs
+│   ├── development/         # Dev guides
+│   └── running-locally.md   # Detailed setup
+│
+└── openspec/               # Technical specification
+    ├── SPEC.md             # Implementation blueprint
+    └── PROGRESS.md         # Implementation progress
 ```
 
-## 🔒 Security Features
+## Documentation
 
-- **Row Level Security**: All data is protected by RLS policies
-- **Encrypted API Keys**: User API keys are encrypted at rest
-- **User Isolation**: Campaigns are isolated by user ownership
-- **Secure File Upload**: Files are stored in private buckets with access controls
-- **User-Based Authentication**: All API operations use authenticated user context
-- **No Service Role Access**: Eliminated service role key dependency for enhanced security
+### For Users
 
-## 📄 License
+- **[Running Locally](docs/running-locally.md)** - Detailed setup and configuration
+- **[Deployment Guide](docs/deployment/)** - Production deployment (coming soon)
+
+### For Developers
+
+- **[Architecture Overview](docs/architecture/README.md)** - System design
+- **[C4 Diagrams](docs/architecture/)** - Context, containers, components
+- **[Architecture Decisions](docs/architecture/decisions/)** - ADRs
+- **[API Specification](backend/openapi.yaml)** - OpenAPI 3.1 spec
+
+### Technical Specification
+
+- **[SPEC.md](openspec/SPEC.md)** - Complete technical specification
+- **[PROGRESS.md](openspec/PROGRESS.md)** - Implementation status
+
+## Testing
+
+### Backend Tests
+
+```bash
+cd backend
+
+# Run all tests
+uv run pytest tests/ -v
+
+# Run with coverage
+uv run pytest --cov=app
+
+# Run specific test category
+uv run pytest tests/unit/services/ -v
+uv run pytest tests/integration/ -v
+```
+
+### Frontend Tests
+
+```bash
+cd frontend-svelt
+
+# Unit tests
+bun run test
+
+# E2E tests (coming in Phase 4)
+bun run test:e2e
+```
+
+## Development Commands
+
+### Backend
+
+```bash
+cd backend
+
+# Type check
+uv run basedpyright app/
+
+# Lint
+uv run ruff check app/
+
+# Format
+uv run ruff format app/
+
+# Database migrations
+uv run alembic upgrade head
+uv run alembic revision --autogenerate -m "description"
+```
+
+### Frontend
+
+```bash
+cd frontend-svelt
+
+# Type check
+bun run typecheck
+
+# Lint
+bun run lint
+
+# Format
+bun run lint:fix
+
+# Build
+bun run build
+```
+
+## Security
+
+- **Row Level Security**: Data isolated by campaign
+- **Encrypted API Keys**: User credentials encrypted at rest
+- **SSE Authentication**: Job updates require valid session
+- **CORS Protection**: Configured for production origins
+- **Input Validation**: All inputs validated via Pydantic
+
+See [Security Scanning](openspec/SPEC.md#appendix-c-security-scanning) for details on automated security checks.
+
+## Roadmap
+
+- [x] Phase 0: Setup & Infrastructure
+- [x] Phase 1: Data Layer
+- [x] Phase 2: Core Backend Services
+- [x] Phase 2.5: API Endpoints
+- [x] Phase 3: Frontend Foundation (in progress)
+- [ ] Phase 4: Integration & E2E Tests
+- [ ] Phase 5: Polish & Demo
+
+See [PROGRESS.md](openspec/PROGRESS.md) for detailed status.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes (with tests!)
+4. Run the test suite
+5. Commit your changes
+6. Push to the branch
+7. Open a Pull Request
+
+**Note:** All contributions must pass lint, typecheck, and tests.
+
+## License
 
 This project is open source. See [LICENSE](LICENSE) for details.
+
+## Acknowledgments
+
+Built by [Civic Tech DC](https://github.com/civictechdc) to strengthen democratic participation.
