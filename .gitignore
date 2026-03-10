@@ -102,8 +102,10 @@ dist
 tmp/
 temp/
 
+# Agent workspace (local development only)
+.agent-workspace/
+
 # Cursor
-<<<<<<< HEAD
 .cursor/
 
 # Additional security and development files
