@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import Session
 
+from app.demo.demo_service import DemoDataService
 from app.dependencies import get_session
 from app.settings.env_settings import AppSettings, get_settings
 
@@ -33,14 +34,28 @@ PREBAKED_SESSIONS = [
 	PrebakedSession(
 		id="dc-petition-2024",
 		name="DC Petition Demo 2024",
-		description="Sample petition from DC with 10 entries",
-	),
-	PrebakedSession(
-		id="basic-workflow",
-		name="Basic Workflow Demo",
-		description="Complete workflow: upload, OCR, matching",
+		description="Minimal demo session with 10 entries",
 	),
 ]
+
+
+def check_demo_mode(settings: AppSettings) -> None:
+	"""Check if demo mode is enabled."""
+	if not settings.demo_mode:
+		raise HTTPException(
+			status_code=status.HTTP_403_FORBIDDEN,
+			detail="Demo mode not enabled",
+		)
+
+
+def check_demo_reset(settings: AppSettings) -> None:
+	"""Check if demo mode and reset are enabled."""
+	check_demo_mode(settings)
+	if not settings.demo_reset:
+		raise HTTPException(
+			status_code=status.HTTP_403_FORBIDDEN,
+			detail="Demo reset not enabled",
+		)
 
 
 @router.get("/sessions", response_model=PrebakedSessionList)
@@ -48,6 +63,7 @@ def list_prebaked_sessions(
 	settings: Annotated[AppSettings, Depends(get_settings)],
 ) -> PrebakedSessionList:
 	"""List available pre-baked demo sessions."""
+	check_demo_mode(settings)
 	return PrebakedSessionList(sessions=PREBAKED_SESSIONS)
 
 
@@ -57,6 +73,10 @@ def reset_demo_data(
 	settings: Annotated[AppSettings, Depends(get_settings)],
 ) -> None:
 	"""Reset all demo data to initial state."""
+	check_demo_reset(settings)
+
+	service = DemoDataService(db_session)
+	service.reset()
 	logger.info("Demo data reset complete")
 
 
@@ -67,6 +87,8 @@ def load_prebaked_session(
 	settings: Annotated[AppSettings, Depends(get_settings)],
 ) -> dict:
 	"""Load a pre-baked demo session."""
+	check_demo_mode(settings)
+
 	session_metadata = next(
 		(s for s in PREBAKED_SESSIONS if s.id == session_id),
 		None,
@@ -78,10 +100,18 @@ def load_prebaked_session(
 			detail=f"Pre-baked session '{session_id}' not found",
 		)
 
-	logger.info("Loading pre-baked session", session_id=session_id)
+	service = DemoDataService(db_session)
+	result = service.load_minimal_session()
+
+	logger.info(
+		"Loaded pre-baked session",
+		session_id=session_id,
+		campaign_id=result.get("campaign_id"),
+	)
 
 	return {
 		"success": True,
 		"session_id": session_id,
 		"message": f"Loaded demo session: {session_metadata.name}",
+		**result,
 	}
