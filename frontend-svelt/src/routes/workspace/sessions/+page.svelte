@@ -74,7 +74,7 @@
 		</div>
 	{:else if $sessions.sessions.length === 0}
 		<div class="rounded-lg border border-slate-200 bg-white p-12 text-center">
-			<FileDown class="mx-auto h-12 w-12 text-slate-400" />
+			<FileDown class="mx-auto h-12 w-12 text-slate-400" aria-hidden="true" />
 			<p class="mt-4 text-lg font-medium text-slate-900">No saved sessions</p>
 			<p class="mt-2 text-slate-600">Save your current workspace state to access it later</p>
 		</div>
@@ -108,9 +108,15 @@
 							{/if}
 						</div>
 						<div class="flex gap-2">
-							<Button variant="secondary" size="sm" onclick={() => handleLoad(session.id)}>
-								<Upload class="mr-1 h-4 w-4" />
+						<Button variant="secondary" size="sm" onclick={() => handleLoad(session.id)}>
 								Load
+							</Button>
+							<Button variant="secondary" size="sm" onclick={() => handleExport(session.id)}>
+								<Download class="mr-1 h-4 w-4" />
+								Export
+							</Button>
+							<Button variant="danger" size="sm" onclick={() => handleDelete(session.id)} aria-label="Delete session">
+								<Trash2 class="h-4 w-4" aria-hidden="true" />
 							</Button>
 							<Button variant="secondary" size="sm" onclick={() => handleExport(session.id)}>
 								<Download class="mr-1 h-4 w-4" />

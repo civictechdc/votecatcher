@@ -35,6 +35,7 @@
 		"*": "oxfmt --no-error-on-unmatched-pattern"
 	},
 	"devDependencies": {
+		"@axe-core/playwright": "^4.11.1",
 		"@chromatic-com/storybook": "^5.0.1",
 		"@eslint/compat": "^2.0.2",
 		"@eslint/js": "^9.39.2",
