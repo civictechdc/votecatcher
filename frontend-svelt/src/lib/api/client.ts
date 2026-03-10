@@ -4,7 +4,6 @@
 import { PUBLIC_API_URL } from '$env/static/public';
 import type {
 	MatchResponse,
-	MatchResultResponse,
 	MatchingProgressResponse
 } from '$lib/api/response-types';
 

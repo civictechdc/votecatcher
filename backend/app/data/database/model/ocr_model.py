@@ -8,8 +8,8 @@ from sqlmodel import Field, Relationship, SQLModel
 from app.matching.match_repository import MatchingStatus
 
 
-class OcrProvider(SQLModel, table=True):
-	__tablename__ = "ocr_providers"
+class LegacyOcrProvider(SQLModel, table=True):
+	__tablename__ = "legacy_ocr_providers"
 	id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 	created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 	updated_at: datetime | None = Field(
@@ -20,7 +20,7 @@ class OcrProvider(SQLModel, table=True):
 	)
 	unique_name: str = Field(unique=True)
 	display_name: str = Field()
-	models: list["OcrAiModel"] = Relationship(back_populates="ocr_provider")
+	models: list["LegacyOcrAiModel"] = Relationship(back_populates="ocr_provider")
 
 
 class CreateOcrProvider(SQLModel):
@@ -38,8 +38,8 @@ class ReadOcrProvider(SQLModel):
 # TODO updating and fetching ocr providers
 
 
-class OcrAiModel(SQLModel, table=True):
-	__tablename__ = "ocr_ai_models"
+class LegacyOcrAiModel(SQLModel, table=True):
+	__tablename__ = "legacy_ocr_ai_models"
 	id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 	created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 	updated_at: datetime | None = Field(
@@ -50,8 +50,8 @@ class OcrAiModel(SQLModel, table=True):
 	)
 	unique_name: str = Field(unique=True)
 	display_name: str | None = Field(default=None)
-	provider_id: uuid.UUID = Field(foreign_key="ocr_providers.id")
-	ocr_provider: OcrProvider = Relationship(back_populates="models")
+	provider_id: uuid.UUID = Field(foreign_key="legacy_ocr_providers.id")
+	ocr_provider: LegacyOcrProvider = Relationship(back_populates="models")
 
 
 class AddOcrAiModel(SQLModel):
@@ -79,8 +79,8 @@ class OcrProviderRepository(Protocol):
 # OCR Job data
 
 
-class OcrJob(SQLModel, table=True):
-	__tablename__ = "ocr_jobs"
+class LegacyOcrJob(SQLModel, table=True):
+	__tablename__ = "legacy_ocr_jobs"
 	id: uuid.UUID = Field(primary_key=True, default_factory=uuid.uuid4)
 	job_id: str = Field(unique=True)
 	state: MatchingStatus = Field(default=MatchingStatus.NOT_STARTED)
@@ -97,7 +97,7 @@ class OcrJob(SQLModel, table=True):
 	model_version: str | None = Field(default=None)
 	error_message: str | None = Field(default=None)
 	status_message: str | None = Field(default=None)
-	provider_id: uuid.UUID = Field(foreign_key="ocr_providers.id")
+	provider_id: uuid.UUID = Field(foreign_key="legacy_ocr_providers.id")
 	campaign_id: uuid.UUID = Field(foreign_key="campaigns.id")
 	scan_id: uuid.UUID = Field(foreign_key="petition_scans.id")
 	match_task_id: uuid.UUID = Field(
@@ -135,14 +135,14 @@ class ReadOcrJobStatus(SQLModel):
 	provider_id: str | None
 
 
-class OcrJobDocumentLink(SQLModel, table=True):
-	__tablename__ = "ocr_job_document_links"
-	ocr_job_id: uuid.UUID = Field(foreign_key="ocr_jobs.id", primary_key=True)
+class LegacyOcrJobDocumentLink(SQLModel, table=True):
+	__tablename__ = "legacy_ocr_job_document_links"
+	ocr_job_id: uuid.UUID = Field(foreign_key="legacy_ocr_jobs.id", primary_key=True)
 	document_id: uuid.UUID = Field(foreign_key="petition_scans.id", primary_key=True)
 
 
-class OcrResult(SQLModel, table=True):
-	__tablename__ = "ocr_results_v1"
+class LegacyOcrResult(SQLModel, table=True):
+	__tablename__ = "legacy_ocr_results_v1"
 	id: uuid.UUID = Field(primary_key=True, default_factory=uuid.uuid4)
 	created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 	updated_at: datetime | None = Field(
@@ -159,6 +159,14 @@ class OcrResult(SQLModel, table=True):
 	ocr_date: str = Field()
 	ocr_ward: int = Field()
 	document_id: uuid.UUID = Field(foreign_key="petition_scans.id")
-	ocr_job_id: uuid.UUID = Field(foreign_key="ocr_jobs.id")
+	ocr_job_id: uuid.UUID = Field(foreign_key="legacy_ocr_jobs.id")
 	matching_task_id: uuid.UUID = Field(foreign_key="matching_tasks.id")
 	campaign_id: uuid.UUID = Field(foreign_key="campaigns.id")
+
+
+# Backward compatibility aliases for legacy demo code
+OcrProvider = LegacyOcrProvider
+OcrAiModel = LegacyOcrAiModel
+OcrJob = LegacyOcrJob
+OcrJobDocumentLink = LegacyOcrJobDocumentLink
+OcrResult = LegacyOcrResult

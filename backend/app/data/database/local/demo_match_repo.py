@@ -52,8 +52,8 @@ class DemoMatchResult(SQLModel, table=True):
 	# document_id: uuid.UUID = Field(foreign_key="petition_scans.id")
 
 
-class MatchResult(SQLModel, table=True):
-	__tablename__ = "match_results"
+class LegacyMatchResult(SQLModel, table=True):
+	__tablename__ = "legacy_match_results"
 	id: uuid.UUID = Field(primary_key=True, default_factory=uuid.uuid4)
 	created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 	updated_at: datetime | None = Field(

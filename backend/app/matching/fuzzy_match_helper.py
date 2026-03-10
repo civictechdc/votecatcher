@@ -170,7 +170,8 @@ def get_matched_name_address(
 			[x[0] for x in name_matches],
 			[x[0] for x in address_matches],
 			harmonic_means,
-			matched_indices, strict=False,
+			matched_indices,
+			strict=False,
 		)
 	)
 	results: list[tuple[str, str, float, int]] = sorted(

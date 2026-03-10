@@ -5,7 +5,7 @@ import type { RequestHandler } from '@sveltejs/kit';
  * - In development this returns a fake user when VITE_FEATURES contains 'mockAuth'
  * - Replace with real session validation (FastAPI) later.
  */
-export const GET: RequestHandler = async ({ request }) => {
+export const GET: RequestHandler = async () => {
 	// Simple dev mock: return a user if a cookie or header indicates it,
 	// or always return a mocked user to enable local flows. Adjust as needed.
 	// For now return a mock user to allow dev flows to proceed.

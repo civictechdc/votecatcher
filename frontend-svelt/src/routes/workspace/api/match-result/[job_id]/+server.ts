@@ -1,5 +1,4 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { isDemoMode } from '$lib/stores/demo';
 import { json } from '@sveltejs/kit';
 import { api, type ApiResult } from '$lib/api/client';
 import { error } from '@sveltejs/kit';

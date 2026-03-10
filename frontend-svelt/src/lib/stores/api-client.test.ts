@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Configuration } from '$lib/api/generated/runtime';
 
 describe('API Client', () => {
 	beforeEach(() => {

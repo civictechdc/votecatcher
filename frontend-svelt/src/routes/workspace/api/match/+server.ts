@@ -54,7 +54,7 @@ function createRandomMatch(thresholds: ConfidenceThresholds): MatchRow {
 
 	const person = faker.person;
 	const location = faker.location;
-	const registeredName = person.fullName();
+	const _registeredName = person.fullName();
 	const registeredAddress = location.streetAddress();
 	const firstName = person.firstName();
 	const middleName = person.middleName();

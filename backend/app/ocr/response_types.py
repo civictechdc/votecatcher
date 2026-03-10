@@ -41,9 +41,7 @@ def adapt_ocr_batch_status_to_progress_response(
 		task_id=task.id,
 		started_at=task.created_at,
 		job_status=task.status,
-		last_updated_at=(
-			task.updated_at if task.updated_at else datetime.now(UTC)
-		),
+		last_updated_at=(task.updated_at if task.updated_at else datetime.now(UTC)),
 		status_message=task.status_message,
 		failure_reason=task.failure_message if task.failure_message else None,
 		ended_at=task.ended_at if task.ended_at else None,

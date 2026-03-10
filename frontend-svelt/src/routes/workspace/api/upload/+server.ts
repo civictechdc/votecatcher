@@ -87,7 +87,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	const form = await request.formData();
 	const files: { name: string; size: number; id: string }[] = [];
 	for (const entry of form.entries()) {
-		const [key, value] = entry;
+		const [_key, value] = entry;
 		if (value instanceof File) {
 			files.push({ name: value.name, size: value.size, id: randomUUID() });
 			// NOTE: In production you'd stream the file to object storage (S3/Supabase) securely here.

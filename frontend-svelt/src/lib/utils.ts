@@ -1,9 +1,9 @@
 import type {
 	MatchResultResponse,
-	MatchRowsResponse,
 	MatchColumnsResponse,
 } from '$lib/api/response-types';
-import type { MatchResults, MatchRow, MatchColumn } from '$lib/workspace-types';
+import type { MatchRow, MatchResults } from '$lib/workspace-types';
+import { MatchColumn } from '$lib/workspace-types';
 
 export function convertMatchResponseToMatchResults(
 	matchResponse: MatchResultResponse

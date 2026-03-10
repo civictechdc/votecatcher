@@ -278,37 +278,44 @@ class TestGetOcrResults:
 		batch.output_file_id = "file-output-123"
 		batch.created_at = int(datetime.now(UTC).timestamp())
 
-		result_jsonl = json.dumps({
-			"custom_id": "cmpgnid-campaign-1__file-petition1.pdf__page-1__total-2__batch-0",
-			"response": {
-				"body": {
-					"choices": [{
-						"message": {
-							"content": json.dumps({
-								"data": [
-									{
-										"Name": "John Doe",
-										"Address": "123 Main St",
-										"Date": "2024-01-15",
-										"Ward": 1,
-									}
-								]
-							})
-						}
-					}]
-				}
-			},
-		})
+		result_jsonl = json.dumps(
+			{
+				"custom_id": "cmpgnid-campaign-1__file-p1.pdf__page-1__total-2__batch-0",
+				"response": {
+					"body": {
+						"choices": [
+							{
+								"message": {
+									"content": json.dumps(
+										{
+											"data": [
+												{
+													"Name": "John Doe",
+													"Address": "123 Main St",
+													"Date": "2024-01-15",
+													"Ward": 1,
+												}
+											]
+										}
+									)
+								}
+							}
+						]
+					}
+				},
+			}
+		)
 
-		with patch.object(
-			openai_client.client.batches, "retrieve", new_callable=AsyncMock
-		) as mock_retrieve, patch.object(
-			openai_client.client.files, "content", new_callable=AsyncMock
-		) as mock_content:
+		with (
+			patch.object(
+				openai_client.client.batches, "retrieve", new_callable=AsyncMock
+			) as mock_retrieve,
+			patch.object(
+				openai_client.client.files, "content", new_callable=AsyncMock
+			) as mock_content,
+		):
 			mock_retrieve.return_value = batch
-			mock_content.return_value = MagicMock(
-				content=result_jsonl.encode("utf-8")
-			)
+			mock_content.return_value = MagicMock(content=result_jsonl.encode("utf-8"))
 
 			results = []
 			async for result in openai_client.get_ocr_results("batch-123"):

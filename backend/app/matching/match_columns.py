@@ -1,5 +1,3 @@
-
-
 class MatchColumns:
 	__slots__ = ()
 	OCR_NAME = "OCR Name"

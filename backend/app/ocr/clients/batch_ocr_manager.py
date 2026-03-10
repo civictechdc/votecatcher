@@ -211,9 +211,7 @@ class BatchOcrHandler:
 					updated_at=datetime.now(UTC),
 					ocr_result_data=None,
 				)
-				(
-					await self.match_monitor.publish_updated_task_status(task_update)
-				)
+				(await self.match_monitor.publish_updated_task_status(task_update))
 				break
 
 		await asyncio.sleep(_POLLING_INTERVAL_IN_SECONDS)

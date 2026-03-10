@@ -1,5 +1,4 @@
 import type { RequestHandler } from './$types';
-import { json } from '@sveltejs/kit';
 import { PUBLIC_API_URL } from '$env/static/public';
 const BASE_URL = PUBLIC_API_URL ?? '';
 

@@ -21,6 +21,7 @@ class JobStatus(str, Enum):
 	MATCHING = "MATCHING"
 	MATCHING_COMPLETED = "MATCHING_COMPLETED"
 	MATCHING_ERROR = "MATCHING_ERROR"
+	CANCELLED = "CANCELLED"
 
 
 class MatcherJob(SQLModel, table=True):
@@ -49,9 +50,7 @@ class OcrJob(SQLModel, table=True):
 
 	id: int = Field(primary_key=True)
 	matcher_job_id: int = Field(foreign_key="matcher_jobs.id", index=True)
-	provider_job_id: str | None = Field(
-		default=None
-	)  # External batch ID from provider
+	provider_job_id: str | None = Field(default=None)  # External batch ID from provider
 	ocr_model_id: int | None = Field(default=None, foreign_key="ocr_models.id")
 	status: JobStatus = Field(default=JobStatus.NOT_STARTED)
 	started_on: datetime | None = Field(default=None)

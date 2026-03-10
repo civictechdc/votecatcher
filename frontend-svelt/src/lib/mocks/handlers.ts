@@ -25,7 +25,7 @@ async function jsonSafe(request: Request) {
 
 export const handlers = [
 	// session endpoint used by server-side load and client code
-	http.get('/api/session', async ({ request }) => {
+	http.get('/api/session', async () => {
 		// Dev override: allow local toggles
 		if (featureFlags.isEnabled('mock:session:loggedOut')) {
 			return new HttpResponse(JSON.stringify({ error: 'Not authenticated' }), {
