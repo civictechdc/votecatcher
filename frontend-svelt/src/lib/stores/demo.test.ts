@@ -100,10 +100,12 @@ describe('Demo Store', () => {
 	describe('loadPrebaked', () => {
 		it('should load pre-baked demo session', async () => {
 			const mockSession = {
-				id: 1,
-				name: 'DC Demo 2024',
-				session_type: 'DEMO',
-				snapshot_data: { campaign_id: 'demo-campaign' }
+				success: true,
+				session_id: 'dc-petition-2024',
+				message: 'Loaded demo session',
+				campaign_id: 'test-campaign-id',
+				voters_count: 10,
+				match_results_count: 50
 			};
 
 			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -111,13 +113,41 @@ describe('Demo Store', () => {
 				json: async () => mockSession
 			});
 
-			const result = await demo.loadPrebaked('dc-2024');
+			const result = await demo.loadPrebaked('dc-petition-2024');
 
 			expect(global.fetch).toHaveBeenCalledWith(
-				'http://localhost:8000/api/demo/sessions/dc-2024/load',
+				'http://localhost:8000/api/demo/sessions/dc-petition-2024/load',
 				expect.objectContaining({ method: 'POST' })
 			);
 			expect(result).toEqual(mockSession);
+		});
+
+		it('sets loadedSession state after successful load', async () => {
+			const mockSession = {
+				success: true,
+				session_id: 'dc-petition-2024',
+				message: 'Loaded demo session',
+				campaign_id: 'test-campaign-id',
+				voters_count: 10,
+				match_results_count: 50
+			};
+
+			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+				ok: true,
+				json: async () => mockSession
+			});
+
+			await demo.loadPrebaked('dc-petition-2024');
+
+			const state = get(demo);
+			expect(state.loadedSession).toEqual({
+				success: true,
+				session_id: 'dc-petition-2024',
+				message: 'Loaded demo session',
+				campaign_id: 'test-campaign-id',
+				voters_count: 10,
+				match_results_count: 50
+			});
 		});
 
 		it('should handle load errors', async () => {
@@ -148,7 +178,8 @@ describe('Demo Store', () => {
 				resetting: false,
 				loading: false,
 				error: null,
-				prebakedSessions: []
+				prebakedSessions: [],
+				loadedSession: null
 			});
 		});
 	});
