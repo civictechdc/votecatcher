@@ -74,7 +74,7 @@ describe('Table Component', () => {
 			const { getByText } = render(Table, {
 				props: { columns: testColumns, rows: testRows, sortable: true, onSortChange }
 			});
-			
+
 			await fireEvent.click(getByText('Name'));
 			expect(onSortChange).toHaveBeenCalledWith({ key: 'name', direction: 'asc' });
 		});
@@ -82,15 +82,15 @@ describe('Table Component', () => {
 		it('toggles sort direction on second click', async () => {
 			const onSortChange = vi.fn();
 			const { getByText } = render(Table, {
-				props: { 
-					columns: testColumns, 
-					rows: testRows, 
+				props: {
+					columns: testColumns,
+					rows: testRows,
 					sortable: true,
 					sortConfig: { key: 'name', direction: 'asc' },
-					onSortChange 
+					onSortChange
 				}
 			});
-			
+
 			await fireEvent.click(getByText('Name'));
 			expect(onSortChange).toHaveBeenCalledWith({ key: 'name', direction: 'desc' });
 		});
@@ -104,7 +104,7 @@ describe('Table Component', () => {
 					sortConfig: { key: 'name', direction: 'asc' }
 				}
 			});
-			
+
 			const header = getByText('Name').closest('[role="columnheader"]');
 			expect(header?.getAttribute('aria-sort')).toBe('ascending');
 		});
@@ -114,7 +114,7 @@ describe('Table Component', () => {
 			const { getByText } = render(Table, {
 				props: { columns: testColumns, rows: testRows, sortable: true, onSortChange }
 			});
-			
+
 			await fireEvent.click(getByText('Email'));
 			expect(onSortChange).not.toHaveBeenCalled();
 		});
@@ -132,14 +132,14 @@ describe('Table Component', () => {
 		it('selects individual row', async () => {
 			const onSelectionChange = vi.fn();
 			const { getAllByRole } = render(Table, {
-				props: { 
-					columns: testColumns, 
-					rows: testRows, 
+				props: {
+					columns: testColumns,
+					rows: testRows,
 					selectable: true,
-					onSelectionChange 
+					onSelectionChange
 				}
 			});
-			
+
 			const checkboxes = getAllByRole('checkbox');
 			await fireEvent.click(checkboxes[1]);
 			expect(onSelectionChange).toHaveBeenCalled();
@@ -148,14 +148,14 @@ describe('Table Component', () => {
 		it('selects all rows via header checkbox', async () => {
 			const onSelectionChange = vi.fn();
 			const { getAllByRole } = render(Table, {
-				props: { 
-					columns: testColumns, 
-					rows: testRows, 
+				props: {
+					columns: testColumns,
+					rows: testRows,
 					selectable: true,
-					onSelectionChange 
+					onSelectionChange
 				}
 			});
-			
+
 			const selectAllCheckbox = getAllByRole('checkbox')[0];
 			await fireEvent.click(selectAllCheckbox);
 			expect(onSelectionChange).toHaveBeenCalledWith(testRows.map(r => r.id));
@@ -163,14 +163,14 @@ describe('Table Component', () => {
 
 		it('shows indeterminate state for partial selection', () => {
 			const { getAllByRole } = render(Table, {
-				props: { 
-					columns: testColumns, 
-					rows: testRows, 
+				props: {
+					columns: testColumns,
+					rows: testRows,
 					selectable: true,
 					selectedRows: [1]
 				}
 			});
-			
+
 			const selectAllCheckbox = getAllByRole('checkbox')[0] as HTMLInputElement;
 			expect(selectAllCheckbox.indeterminate).toBe(true);
 		});
@@ -240,7 +240,7 @@ describe('Table Component', () => {
 					onPageSizeChange: () => {}
 				}
 			});
-			
+
 			await fireEvent.click(getByText('Next'));
 			expect(onPageChange).toHaveBeenCalledWith(2);
 		});
@@ -297,7 +297,7 @@ describe('Table Component', () => {
 			const { getByText } = render(Table, {
 				props: { columns: testColumns, rows: testRows, sortable: true }
 			});
-			
+
 			const nameHeader = getByText('Name').closest('[role="columnheader"]');
 			expect(nameHeader?.getAttribute('aria-sort')).toBe('none');
 		});

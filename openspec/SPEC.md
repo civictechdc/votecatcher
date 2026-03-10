@@ -617,31 +617,31 @@ curl http://localhost:8000/api/jobs/1           # Status returns via API
    - Use: `JobOrchestrator.create_matcher_job()`
    - Request: campaign_id, scan_ids, provider
    - Response: job_id, status, created_at
-   
+
 2. `GET /api/jobs/{id}` - Get job status (1h)
    - Use: Database query via JobOrchestrator
    - Response: job_id, status, progress, error_message
-   
+
 3. `POST /api/jobs/{id}/cancel` - Cancel job (2h)
    - Use: `JobOrchestrator` state update
    - Validation: only cancelable in certain states
-   
+
 4. `POST /api/upload/voter-list` - Upload voter list (1h)
    - Use: `FileService.save_voter_list_file()`
    - Validation: CSV/Excel, required columns
    - **Test Data:** Use `samples/dc/fake_voter_records.csv` (100K voters)
-   
+
 5. `POST /api/upload/petition` - Upload petition (1h)
    - Use: `FileService.save_petition_and_crops()`
    - Validation: PDF, creates crops
    - **Test Data:** Use `samples/dc/fake_signed_petitions*.pdf`
-   
+
 6. `POST /api/campaigns` - Create campaign (1h)
    - Use: `CampaignRepository.create()`
-   
+
 7. `GET /api/campaigns` - List campaigns (0.5h)
    - Use: `CampaignRepository.list()`
-   
+
 8. `GET /api/campaigns/{id}` - Get campaign (0.5h)
    - Use: `CampaignRepository.get()`
 
@@ -649,7 +649,7 @@ curl http://localhost:8000/api/jobs/1           # Status returns via API
 1. `GET /api/jobs/{job_id}/results` - Get results (2h)
    - Use: Database query with pagination
    - Filters: confidence_level, page, page_size
-   
+
 2. `GET /api/jobs/{job_id}/results/export` - Export CSV (2h)
    - Generate CSV from match results
    - Include: OCR text, predictions, scores
@@ -667,13 +667,13 @@ Create Architecture Decision Records for notable decisions:
   - Decision: Complete API endpoints before removing legacy (Option A)
   - Consequences: 2-3 day delay, clean architecture, no technical debt
   - Alternatives: Option B (hybrid), Option C (big bang)
-  
+
 - **ADR-XXXX: Service-First Architecture Approach**
   - Context: Backend development order for Phase 2
   - Decision: Implement and test services before API endpoints
   - Consequences: 122/122 tests passing, but API layer gap discovered
   - Lessons: Always define API contract alongside service design
-  
+
 - **ADR-XXXX: Session Endpoints Deferral**
   - Context: Session management endpoints in SPEC.md §5.2
   - Decision: Defer to Phase 4 (not blocking core flow)
@@ -1009,7 +1009,7 @@ After MVP completion and validation of all requirements through testing:
 
 **Decision:** Complete API endpoints before removing legacy (Option A)
 **Date:** 2026-03-10
-**Rationale:** 
+**Rationale:**
 - Services are tested and validated (122/122 tests passing)
 - Clean API ensures frontend can start immediately after completion
 - Integration tests provide safety net for removal
@@ -1083,14 +1083,14 @@ Feature: End-to-end job processing
     Given a campaign "DC 2024" exists
     And a voter list is uploaded for region "DC"
     And a petition scan with 10 crops is uploaded
-    
+
     When I create a matcher job
     Then the job status should be "NOT_STARTED"
-    
+
     When the OCR phase completes
     Then the job status should be "OCR_COMPLETED"
     And 10 OCR results should be created
-    
+
     When the matching phase completes
     Then the job status should be "MATCHING_COMPLETED"
     And 10 match results should be created
@@ -1108,7 +1108,7 @@ Feature: Viewing match results
       | HIGH       |
       | MEDIUM     |
       | LOW        |
-    
+
     When I filter by "HIGH" confidence
     Then I should see 2 results
     And all results should have "HIGH" confidence

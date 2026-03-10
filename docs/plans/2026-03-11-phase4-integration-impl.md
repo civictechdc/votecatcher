@@ -81,9 +81,9 @@ describe('Uploads Store', () => {
   describe('uploadPetition', () => {
     it('uploads petition with progress tracking', async () => {
       const mockClient = {
-        uploadPetition: vi.fn().mockResolvedValue({ 
-          scan_id: 'scan-1', 
-          crop_count: 10 
+        uploadPetition: vi.fn().mockResolvedValue({
+          scan_id: 'scan-1',
+          crop_count: 10
         })
       };
       vi.mocked(getApiClient).mockReturnValue(mockClient as any);
@@ -140,11 +140,11 @@ function createUploadsStore() {
     subscribe,
 
     async uploadVoterList(file: File) {
-      update(s => ({ 
-        ...s, 
-        voterListUploading: true, 
-        voterListProgress: 0, 
-        voterListError: null 
+      update(s => ({
+        ...s,
+        voterListUploading: true,
+        voterListProgress: 0,
+        voterListError: null
       }));
 
       try {
@@ -155,27 +155,27 @@ function createUploadsStore() {
         // Note: Real implementation would use XHR for progress
         await client.uploadVoterList(formData);
 
-        update(s => ({ 
-          ...s, 
-          voterListUploading: false, 
-          voterListProgress: 100 
+        update(s => ({
+          ...s,
+          voterListUploading: false,
+          voterListProgress: 100
         }));
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
-        update(s => ({ 
-          ...s, 
-          voterListUploading: false, 
-          voterListError: message 
+        update(s => ({
+          ...s,
+          voterListUploading: false,
+          voterListError: message
         }));
       }
     },
 
     async uploadPetition(file: File, campaignId: string) {
-      update(s => ({ 
-        ...s, 
-        petitionUploading: true, 
-        petitionProgress: 0, 
-        petitionError: null 
+      update(s => ({
+        ...s,
+        petitionUploading: true,
+        petitionProgress: 0,
+        petitionError: null
       }));
 
       try {
@@ -186,9 +186,9 @@ function createUploadsStore() {
 
         const result = await client.uploadPetition(formData);
 
-        update(s => ({ 
-          ...s, 
-          petitionUploading: false, 
+        update(s => ({
+          ...s,
+          petitionUploading: false,
           petitionProgress: 100,
           lastUploadResult: result as any
         }));
@@ -196,20 +196,20 @@ function createUploadsStore() {
         return result;
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
-        update(s => ({ 
-          ...s, 
-          petitionUploading: false, 
-          petitionError: message 
+        update(s => ({
+          ...s,
+          petitionUploading: false,
+          petitionError: message
         }));
         throw error;
       }
     },
 
     clearErrors() {
-      update(s => ({ 
-        ...s, 
-        voterListError: null, 
-        petitionError: null 
+      update(s => ({
+        ...s,
+        voterListError: null,
+        petitionError: null
       }));
     },
 
@@ -295,16 +295,16 @@ describe('Voter List Upload Page', () => {
 
   it('calls uploadVoterList when file selected', async () => {
     vi.mocked(uploads.uploadVoterList).mockResolvedValue(undefined);
-    
+
     render(Page);
-    
+
     const file = new File(['name,email,voter_id\nJohn,john@test.com,1'], 'voters.csv', {
       type: 'text/csv'
     });
-    
+
     const input = screen.getByLabelText(/file/i) as HTMLInputElement;
     await fireEvent.change(input, { target: { files: [file] } });
-    
+
     await waitFor(() => {
       expect(uploads.uploadVoterList).toHaveBeenCalledWith(file);
     });
@@ -386,8 +386,8 @@ Expected: FAIL - Page doesn't exist or missing elements
         <div class="flex-1">
           <p class="font-medium text-slate-900">Uploading...</p>
           <div class="mt-2 h-2 w-full rounded-full bg-slate-200">
-            <div 
-              class="h-full rounded-full bg-blue-600 transition-all" 
+            <div
+              class="h-full rounded-full bg-blue-600 transition-all"
               style="width: {$uploads.voterListProgress}%"
             ></div>
           </div>
@@ -400,7 +400,7 @@ Expected: FAIL - Page doesn't exist or missing elements
       <p class="text-green-800">Voter list uploaded successfully!</p>
     </div>
   {:else}
-    <div 
+    <div
       class="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-12 text-center"
       ondrop={handleDrop}
       ondragover={(e) => e.preventDefault()}
@@ -410,15 +410,15 @@ Expected: FAIL - Page doesn't exist or missing elements
       <Upload class="mx-auto h-12 w-12 text-slate-400" />
       <p class="mt-4 text-lg font-medium text-slate-900">Drag and drop your file here</p>
       <p class="mt-2 text-sm text-slate-600">or click to browse</p>
-      
-      <input 
-        type="file" 
+
+      <input
+        type="file"
         accept=".csv,.xlsx,.xls"
         onchange={handleFileSelect}
         class="mt-4"
         aria-label="File"
       />
-      
+
       <p class="mt-4 text-xs text-slate-500">
         Supported formats: CSV, Excel (.xlsx, .xls)
       </p>
@@ -463,7 +463,7 @@ vi.mock('$lib/stores/campaigns');
 describe('Petition Upload Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     vi.mocked(uploads.subscribe).mockImplementation((fn) => {
       fn({
         voterListUploading: false,
@@ -476,7 +476,7 @@ describe('Petition Upload Page', () => {
       });
       return () => {};
     });
-    
+
     vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
       fn({
         campaigns: [{ id: 'camp-1', name: 'DC 2024' }],
@@ -493,18 +493,18 @@ describe('Petition Upload Page', () => {
   });
 
   it('calls uploadPetition with campaign ID', async () => {
-    vi.mocked(uploads.uploadPetition).mockResolvedValue({ 
-      scan_id: 'scan-1', 
-      crop_count: 10 
+    vi.mocked(uploads.uploadPetition).mockResolvedValue({
+      scan_id: 'scan-1',
+      crop_count: 10
     } as any);
-    
+
     render(Page);
-    
+
     const file = new File(['pdf content'], 'petition.pdf', { type: 'application/pdf' });
     const input = screen.getByLabelText(/file/i) as HTMLInputElement;
-    
+
     await fireEvent.change(input, { target: { files: [file] } });
-    
+
     await waitFor(() => {
       expect(uploads.uploadPetition).toHaveBeenCalledWith(file, 'camp-1');
     });
@@ -556,7 +556,7 @@ describe('Petition Upload Page', () => {
         onmessage: null,
         onerror: null
       };
-      
+
       vi.stubGlobal('EventSource', vi.fn(() => mockEventSource));
 
       jobs.connectToJob('job-1');
@@ -575,7 +575,7 @@ describe('Petition Upload Page', () => {
         onmessage: null,
         onerror: null
       };
-      
+
       vi.stubGlobal('EventSource', vi.fn(() => mockEventSource));
 
       jobs.connectToJob('job-1');
@@ -603,7 +603,7 @@ describe('Petition Upload Page', () => {
         onmessage: null,
         onerror: null
       };
-      
+
       vi.stubGlobal('EventSource', vi.fn(() => mockEventSource));
       vi.useFakeTimers();
 
@@ -629,7 +629,7 @@ describe('Petition Upload Page', () => {
       const mockEventSource = {
         close: vi.fn()
       };
-      
+
       vi.stubGlobal('EventSource', vi.fn(() => mockEventSource));
 
       jobs.connectToJob('job-1');
@@ -689,9 +689,9 @@ function createJobsStore() {
       case 'matching_progress':
         update(s => ({
           ...s,
-          currentJob: { 
-            ...s.currentJob, 
-            progress: data.data.processed / data.data.total * 100 
+          currentJob: {
+            ...s.currentJob,
+            progress: data.data.processed / data.data.total * 100
           } as Job
         }));
         break;
@@ -724,9 +724,9 @@ function createJobsStore() {
     eventSource = new EventSource(`${baseUrl}/api/jobs/${jobId}/status`);
 
     eventSource.onopen = () => {
-      update(s => ({ 
-        ...s, 
-        sse: { connected: true, reconnectAttempts: 0, error: null } 
+      update(s => ({
+        ...s,
+        sse: { connected: true, reconnectAttempts: 0, error: null }
       }));
     };
 
@@ -742,7 +742,7 @@ function createJobsStore() {
     eventSource.onerror = () => {
       update(s => {
         const attempts = s.sse.reconnectAttempts + 1;
-        
+
         if (attempts < maxRetries) {
           const delay = baseRetryDelay * Math.pow(2, attempts);
           setTimeout(() => connectToJob(jobId), delay);

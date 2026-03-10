@@ -230,7 +230,7 @@ MVP scope (SPEC.md §1) explicitly states "DC region only initially". Can refact
 ```python
 class TestFileUpload:
     """Tests for file upload functionality"""
-    
+
     @pytest.fixture
     def mock_pdf_file(self):
         """Reusable PDF file mock"""
@@ -240,7 +240,7 @@ class TestFileUpload:
         file.content_type = "application/pdf"
         file.size = 1024
         return file
-    
+
     async def test_upload_valid_pdf(self, mock_pdf_file):
         # Test implementation using fixture
         pass
@@ -260,7 +260,7 @@ From SPEC.md §7.3 Phase 2 Exit Criteria:
   - Status: ⚠️ Partial
   - Evidence: Implementation correct, tests failing
   - Gap: Tests use wrong attribute names
-  
+
 - [ ] **Criterion:** Service tests achieve >85% coverage
   - Status: ❌ Not Met
   - Evidence: 4/10 tests passing (40%)
@@ -328,7 +328,7 @@ None critical. File validation is present. Recommend adding:
 1. [ ] **CRITICAL:** Fix test attribute names to match Phase 1 models (ETA: 1 hour)
    - Update 6 tests with correct attribute names
    - Verify against `backend/app/data/models/petition.py`
-   
+
 2. [ ] **CRITICAL:** Fix async mock setup (ETA: 30 minutes)
    - Update `file.read` mock pattern
    - Verify all async operations mocked correctly

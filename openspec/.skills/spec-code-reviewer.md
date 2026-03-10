@@ -25,17 +25,17 @@ Before reviewing ANY code:
    - Understand architecture decisions
    - Note technical constraints
    - Identify phase requirements
-   
+
 2. Check @openspec/TODO.md
    - Current phase and tasks
    - Entry/exit criteria
    - Task dependencies
-   
+
 3. Review @openspec/PROGRESS.md
    - Completed work
    - Known issues
    - Technical debt
-   
+
 4. Load relevant skills:
    - code-review-excellence (for review patterns)
    - verification-before-completion (for exit criteria)
@@ -221,7 +221,7 @@ From SPEC.md §7.3:
 - [ ] **Criterion 1:** [Description]
   - Status: ✅ Met / ❌ Not Met
   - Evidence: [How to verify]
-  
+
 - [ ] **Criterion 2:** [Description]
   - Status: ⚠️ Partial / ❌ Not Met
   - Gap: [What's missing]

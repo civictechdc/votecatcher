@@ -8,11 +8,12 @@
 
 	const navItems = [
 		{ href: '/workspace', label: 'Dashboard', icon: 'home' as const },
-		{ href: '/workspace/campaigns', label: 'Campaigns', icon: 'folder' as const },
-		{ href: '/workspace/jobs', label: 'Jobs', icon: 'activity' as const },
-		{ href: '/workspace/results', label: 'Results', icon: 'check-circle' as const },
-		{ href: '/workspace/settings', label: 'Settings', icon: 'settings' as const }
-	];
+	 { href: '/workspace/campaigns', label: 'Campaigns', icon: 'folder' as const },
+    { href: '/workspace/jobs', label: 'Jobs', icon: 'activity' as const },
+    { href: '/workspace/results', label: 'Results', icon: 'check-circle' as const },
+    { href: '/workspace/sessions', label: 'Sessions', icon: 'save' as const },
+    { href: '/workspace/settings', label: 'Settings', icon: 'settings' as const }
+];
 
 	function toggleMenu() {
 		isOpen = !isOpen;

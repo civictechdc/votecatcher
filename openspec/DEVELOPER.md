@@ -120,7 +120,7 @@ Each phase has **entry criteria** (verify before starting) and **exit criteria**
    cd backend && uv run pytest tests/ -v
    uv run ruff check .
    uv run basedpyright
-   
+
    # Frontend
    cd frontend-svelt && bun run test
    bun run lint

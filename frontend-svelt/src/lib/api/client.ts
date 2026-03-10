@@ -146,10 +146,10 @@ export async function request<T = unknown>(
 			// New calling convention: request({ opts, path, query, base_url })
 			const { opts: reqOpts, path, query, base_url } = pathOrOpts;
 			const pathStr = path ? '/' + path.join('/') : '';
-			const queryString = query && Object.keys(query).length > 0 
-				? '?' + new URLSearchParams(query).toString() 
+			const queryString = query && Object.keys(query).length > 0
+				? '?' + new URLSearchParams(query).toString()
 				: '';
-			resolvedPath = base_url 
+			resolvedPath = base_url
 				? `${base_url}${pathStr}${queryString}`
 				: `${BASE_URL}${pathStr}${queryString}`;
 			requestOpts = reqOpts;

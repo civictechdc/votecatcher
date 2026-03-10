@@ -81,19 +81,21 @@ def get_results(
 		)
 
 	statement = select(MatchResult).where(MatchResult.matcher_job_id == job_id)
-	
+
 	if confidence:
 		statement = statement.where(MatchResult.confidence_level == confidence)
 
 	total_statement = select(MatchResult).where(MatchResult.matcher_job_id == job_id)
 	if confidence:
-		total_statement = total_statement.where(MatchResult.confidence_level == confidence)
-	
+		total_statement = total_statement.where(
+			MatchResult.confidence_level == confidence
+		)
+
 	total = len(session.exec(total_statement).all())
 
 	offset = (page - 1) * page_size
 	statement = statement.offset(offset).limit(page_size)
-	
+
 	match_results = session.exec(statement).all()
 
 	results = []
@@ -104,7 +106,9 @@ def get_results(
 				voter_name=pred.predicted_voter_name or "",
 				voter_address=pred.predicted_address or "",
 				similarity_score=pred.similarity_score or 0.0,
-				confidence=result.confidence_level.value if result.confidence_level else "LOW",
+				confidence=result.confidence_level.value
+				if result.confidence_level
+				else "LOW",
 			)
 			for i, pred in enumerate(result.predictions[:5])
 		]
@@ -112,7 +116,9 @@ def get_results(
 		results.append(
 			ResultResponse(
 				ocr_result_id=result.ocr_result_id or 0,
-				extracted_text=result.ocr_result.extracted_text if result.ocr_result else "",
+				extracted_text=result.ocr_result.extracted_text
+				if result.ocr_result
+				else "",
 				crop_id=result.ocr_result.crop_id if result.ocr_result else 0,
 				predictions=predictions,
 			)
@@ -153,7 +159,7 @@ def export_results_csv(
 		)
 
 	statement = select(MatchResult).where(MatchResult.matcher_job_id == job_id)
-	
+
 	if confidence:
 		statement = statement.where(MatchResult.confidence_level == confidence)
 
@@ -162,27 +168,31 @@ def export_results_csv(
 	output = io.StringIO()
 	writer = csv.writer(output)
 
-	writer.writerow([
-		"Crop ID",
-		"Extracted Text",
-		"Rank",
-		"Predicted Name",
-		"Predicted Address",
-		"Similarity Score",
-		"Confidence",
-	])
+	writer.writerow(
+		[
+			"Crop ID",
+			"Extracted Text",
+			"Rank",
+			"Predicted Name",
+			"Predicted Address",
+			"Similarity Score",
+			"Confidence",
+		]
+	)
 
 	for result in match_results:
 		for i, pred in enumerate(result.predictions[:5]):
-			writer.writerow([
-				result.ocr_result.crop_id if result.ocr_result else "",
-				result.ocr_result.extracted_text if result.ocr_result else "",
-				i + 1,
-				pred.predicted_voter_name or "",
-				pred.predicted_address or "",
-				pred.similarity_score or 0.0,
-				result.confidence_level.value if result.confidence_level else "LOW",
-			])
+			writer.writerow(
+				[
+					result.ocr_result.crop_id if result.ocr_result else "",
+					result.ocr_result.extracted_text if result.ocr_result else "",
+					i + 1,
+					pred.predicted_voter_name or "",
+					pred.predicted_address or "",
+					pred.similarity_score or 0.0,
+					result.confidence_level.value if result.confidence_level else "LOW",
+				]
+			)
 
 	output.seek(0)
 

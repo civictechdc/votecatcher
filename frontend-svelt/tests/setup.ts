@@ -1,4 +1,18 @@
 import { vi } from 'vitest';
+import { JSDOM } from 'jsdom';
+
+// Set up jsdom environment
+const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+	url: 'http://localhost',
+	pretendToBeVisual: true
+});
+
+globalThis.document = dom.window.document;
+globalThis.window = dom.window as any;
+globalThis.navigator = dom.window.navigator;
+globalThis.HTMLElement = dom.window.HTMLElement;
+globalThis.Event = dom.window.Event;
+globalThis.MessageEvent = dom.window.MessageEvent;
 
 // Stub localStorage for jsdom
 const localStorageMock = (() => {

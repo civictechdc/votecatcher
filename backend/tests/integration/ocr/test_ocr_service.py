@@ -19,7 +19,8 @@ from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign, Region
 from app.data.database.model.user import User
 from app.matching.match_repository import MatchingStatus
-from app.ocr.ocr_manager import OcrJobStatus, OcrResult as OcrResultData
+from app.ocr.ocr_manager import OcrJobStatus
+from app.ocr.ocr_manager import OcrResult as OcrResultData
 from app.ocr.ocr_service import OCRService
 
 

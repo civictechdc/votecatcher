@@ -4,26 +4,28 @@
 	import Activity from 'lucide-svelte/icons/activity';
 	import CheckCircle from 'lucide-svelte/icons/check-circle';
 	import Settings from 'lucide-svelte/icons/settings';
+	import Save from 'lucide-svelte/icons/save';
 	import { cn } from '$lib/utils/cn';
 
 	interface Props {
-		href: string;
-		label: string;
-		isActive?: boolean;
-		icon?: 'home' | 'folder' | 'activity' | 'check-circle' | 'settings';
-	}
+	 href: string;
+        label: string;
+        isActive?: boolean;
+        icon?: 'home' | 'folder' | 'activity' | 'check-circle' | 'settings' | 'save';
+    }
 
-	let { href, label, isActive = false, icon }: Props = $props();
+    let { href, label, isActive = false, icon }: Props = $props();
 
-	const iconMap = {
-		home: Home,
-		folder: FolderOpen,
-		activity: Activity,
-		'check-circle': CheckCircle,
-		settings: Settings
-	};
+    const iconMap = {
+        home: Home,
+        folder: FolderOpen,
+        activity: Activity,
+        'check-circle': CheckCircle,
+        settings: Settings,
+        save: Save
+    };
 
-	const IconComponent = icon ? iconMap[icon] : null;
+    const IconComponent = icon ? iconMap[icon] : null;
 </script>
 
 <a

@@ -55,12 +55,12 @@ describe('Select Component', () => {
 			const { getByRole, queryByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			expect(queryByRole('listbox')).toBeNull();
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			expect(queryByRole('listbox')).toBeTruthy();
 		});
 
@@ -68,11 +68,11 @@ describe('Select Component', () => {
 			const { getByRole, queryByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
 			expect(queryByRole('listbox')).toBeTruthy();
-			
+
 			await fireEvent.click(document.body);
 			expect(queryByRole('listbox')).toBeNull();
 		});
@@ -81,10 +81,10 @@ describe('Select Component', () => {
 			const { getByRole, getAllByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			const options = getAllByRole('option');
 			expect(options).toHaveLength(3);
 		});
@@ -96,13 +96,13 @@ describe('Select Component', () => {
 			const { getByRole, getAllByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions, onValueChange }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			const options = getAllByRole('option');
 			await fireEvent.click(options[1]);
-			
+
 			expect(onValueChange).toHaveBeenCalledWith('medium');
 		});
 
@@ -110,13 +110,13 @@ describe('Select Component', () => {
 			const { getByRole, getAllByRole, queryByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			const options = getAllByRole('option');
 			await fireEvent.click(options[0]);
-			
+
 			expect(queryByRole('listbox')).toBeNull();
 		});
 
@@ -124,10 +124,10 @@ describe('Select Component', () => {
 			const { getByRole, getAllByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions, value: 'high' }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			const options = getAllByRole('option');
 			expect(options[0].getAttribute('aria-selected')).toBe('true');
 		});
@@ -138,11 +138,11 @@ describe('Select Component', () => {
 			const { getByRole, queryByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.focus(combobox);
 			await fireEvent.keyDown(combobox, { key: 'Enter' });
-			
+
 			expect(queryByRole('listbox')).toBeTruthy();
 		});
 
@@ -150,11 +150,11 @@ describe('Select Component', () => {
 			const { getByRole, queryByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.focus(combobox);
 			await fireEvent.keyDown(combobox, { key: ' ' });
-			
+
 			expect(queryByRole('listbox')).toBeTruthy();
 		});
 
@@ -162,11 +162,11 @@ describe('Select Component', () => {
 			const { getByRole, queryByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
 			expect(queryByRole('listbox')).toBeTruthy();
-			
+
 			await fireEvent.keyDown(combobox, { key: 'Escape' });
 			expect(queryByRole('listbox')).toBeNull();
 		});
@@ -175,14 +175,14 @@ describe('Select Component', () => {
 			const { getByRole, getAllByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			await fireEvent.keyDown(combobox, { key: 'ArrowDown' });
 			const options = getAllByRole('option');
 			expect(options[0].getAttribute('data-highlighted')).toBe('true');
-			
+
 			await fireEvent.keyDown(combobox, { key: 'ArrowDown' });
 			expect(options[1].getAttribute('data-highlighted')).toBe('true');
 		});
@@ -192,14 +192,14 @@ describe('Select Component', () => {
 			const { getByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions, onValueChange }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			await fireEvent.keyDown(combobox, { key: 'ArrowDown' });
 			await fireEvent.keyDown(combobox, { key: 'ArrowDown' });
 			await fireEvent.keyDown(combobox, { key: 'Enter' });
-			
+
 			expect(onValueChange).toHaveBeenCalledWith('medium');
 		});
 	});
@@ -217,10 +217,10 @@ describe('Select Component', () => {
 			const { getByRole, queryByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions, disabled: true }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			expect(queryByRole('listbox')).toBeNull();
 		});
 
@@ -234,11 +234,11 @@ describe('Select Component', () => {
 
 		it('renders with error message', () => {
 			const { getByText } = render(Select, {
-				props: { 
-					id: 'test-select', 
-					options: defaultOptions, 
-					error: true, 
-					errorMessage: 'This field is required' 
+				props: {
+					id: 'test-select',
+					options: defaultOptions,
+					error: true,
+					errorMessage: 'This field is required'
 				}
 			});
 			expect(getByText('This field is required')).toBeTruthy();
@@ -258,10 +258,10 @@ describe('Select Component', () => {
 			const { getByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			expect(combobox.getAttribute('aria-expanded')).toBe('false');
-			
+
 			await fireEvent.click(combobox);
 			expect(combobox.getAttribute('aria-expanded')).toBe('true');
 		});
@@ -270,7 +270,7 @@ describe('Select Component', () => {
 			const { getByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			expect(combobox.getAttribute('aria-controls')).toBe('test-select-listbox');
 		});
@@ -279,7 +279,7 @@ describe('Select Component', () => {
 			const { getByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			expect(combobox.getAttribute('aria-haspopup')).toBe('listbox');
 		});
@@ -288,10 +288,10 @@ describe('Select Component', () => {
 			const { getByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions, label: 'Priority' }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			const listbox = getByRole('listbox');
 			expect(listbox.getAttribute('aria-label')).toBe('Priority options');
 		});
@@ -300,10 +300,10 @@ describe('Select Component', () => {
 			const { getByRole, getAllByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			const options = getAllByRole('option');
 			expect(options[0].getAttribute('data-value')).toBe('high');
 			expect(options[1].getAttribute('data-value')).toBe('medium');
@@ -316,13 +316,13 @@ describe('Select Component', () => {
 			const { getByRole, getAllByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions, searchable: true }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			const searchInput = getByRole('textbox');
 			await fireEvent.input(searchInput, { target: { value: 'hi' } });
-			
+
 			const options = getAllByRole('option');
 			expect(options).toHaveLength(1);
 			expect(options[0].textContent).toContain('High');
@@ -332,13 +332,13 @@ describe('Select Component', () => {
 			const { getByRole, getByText } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions, searchable: true }
 			});
-			
+
 			const combobox = getByRole('combobox');
 			await fireEvent.click(combobox);
-			
+
 			const searchInput = getByRole('textbox');
 			await fireEvent.input(searchInput, { target: { value: 'xyz' } });
-			
+
 			expect(getByText('No options found')).toBeTruthy();
 		});
 	});
@@ -348,25 +348,25 @@ describe('Select Component', () => {
 			const { getByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions, value: 'high', clearable: true }
 			});
-			
+
 			expect(getByRole('button', { name: /clear/i })).toBeTruthy();
 		});
 
 		it('clears selection when clear button is clicked', async () => {
 			const onValueChange = vi.fn();
 			const { getByRole } = render(Select, {
-				props: { 
-					id: 'test-select', 
-					options: defaultOptions, 
-					value: 'high', 
+				props: {
+					id: 'test-select',
+					options: defaultOptions,
+					value: 'high',
 					clearable: true,
 					onValueChange
 				}
 			});
-			
+
 			const clearButton = getByRole('button', { name: /clear/i });
 			await fireEvent.click(clearButton);
-			
+
 			expect(onValueChange).toHaveBeenCalledWith(undefined);
 		});
 
@@ -374,7 +374,7 @@ describe('Select Component', () => {
 			const { queryByRole } = render(Select, {
 				props: { id: 'test-select', options: defaultOptions, value: 'high', clearable: false }
 			});
-			
+
 			expect(queryByRole('button', { name: /clear/i })).toBeNull();
 		});
 	});

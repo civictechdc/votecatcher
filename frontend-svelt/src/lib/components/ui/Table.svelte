@@ -90,7 +90,7 @@
 
 	function handleSelectAll() {
 		if (!onSelectionChange) return;
-		
+
 		if (allSelected) {
 			onSelectionChange([]);
 		} else {

@@ -9,12 +9,10 @@ Tests the complete SSE workflow:
 
 import asyncio
 import uuid
-from typing import AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-from fastapi.testclient import TestClient
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 from app.api import app
 from app.data.database.model.jobs import JobStatus, MatcherJob

@@ -154,12 +154,12 @@ sequenceDiagram
     Orchestrator->>OCRService: start_ocr_phase()
     OCRService->>LLM: submit_batch()
     OCRService-->>SSE: status_update (OCR_STARTED)
-    
+
     loop Poll until complete
         OCRService->>LLM: check_status()
         OCRService-->>SSE: status_update
     end
-    
+
     OCRService->>Orchestrator: ocr_complete()
     Orchestrator->>MatchingService: start_matching()
     MatchingService-->>SSE: status_update (MATCHING)

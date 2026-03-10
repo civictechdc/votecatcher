@@ -47,7 +47,7 @@
 
 	function handleKeyDown(e: KeyboardEvent) {
 		if (!open) return;
-		
+
 		if (e.key === 'Escape') {
 			onClose();
 			return;
@@ -57,7 +57,7 @@
 			const focusableElements = modalRef.querySelectorAll<HTMLElement>(
 				'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 			);
-			
+
 			if (focusableElements.length === 0) {
 				e.preventDefault();
 				return;
@@ -79,9 +79,9 @@
 	$effect(() => {
 		if (open) {
 			previouslyFocusedElement = document.activeElement as HTMLElement;
-			
+
 			document.addEventListener('keydown', handleKeyDown);
-			
+
 			tick().then(() => {
 				if (closeButtonRef) {
 					closeButtonRef.focus();
@@ -102,18 +102,18 @@
 
 {#if open}
 	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div 
+	<div
 		class="fixed inset-0 z-50 flex items-center justify-center"
 		onclick={handleBackdropClick}
 	>
 		<!-- Backdrop -->
-		<div 
+		<div
 			class="fixed inset-0 bg-black/50 transition-opacity"
 			aria-hidden="true"
 		></div>
-		
+
 		<!-- Modal -->
-		<div 
+		<div
 			bind:this={modalRef}
 			role="dialog"
 			aria-modal="true"
@@ -127,7 +127,7 @@
 						{title}
 					</h2>
 				{/if}
-				
+
 				<button
 					bind:this={closeButtonRef}
 					type="button"
@@ -135,23 +135,23 @@
 					aria-label="Close modal"
 					onclick={onClose}
 				>
-					<svg 
-						class="w-5 h-5" 
-						fill="none" 
-						stroke="currentColor" 
+					<svg
+						class="w-5 h-5"
+						fill="none"
+						stroke="currentColor"
 						viewBox="0 0 24 24"
 						xmlns="http://www.w3.org/2000/svg"
 					>
-						<path 
-							stroke-linecap="round" 
-							stroke-linejoin="round" 
-							stroke-width="2" 
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
 							d="M6 18L18 6M6 6l12 12"
 						/>
 					</svg>
 				</button>
 			</div>
-			
+
 			<!-- Content -->
 			<div class="p-4">
 				{#if children}

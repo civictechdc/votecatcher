@@ -107,7 +107,7 @@ describe('Modal Component', () => {
 
 			const closeButton = getByLabelText('Close modal');
 			await fireEvent.click(closeButton);
-			
+
 			expect(onClose).toHaveBeenCalledTimes(1);
 		});
 	});
@@ -126,7 +126,7 @@ describe('Modal Component', () => {
 			if (backdrop) {
 				await fireEvent.click(backdrop);
 			}
-			
+
 			expect(onClose).toHaveBeenCalledTimes(1);
 		});
 
@@ -144,7 +144,7 @@ describe('Modal Component', () => {
 			if (backdrop) {
 				await fireEvent.click(backdrop);
 			}
-			
+
 			expect(onClose).not.toHaveBeenCalled();
 		});
 	});
@@ -160,7 +160,7 @@ describe('Modal Component', () => {
 			});
 
 			await fireEvent.keyDown(document, { key: 'Escape' });
-			
+
 			expect(onClose).toHaveBeenCalled();
 		});
 
@@ -175,7 +175,7 @@ describe('Modal Component', () => {
 
 			await fireEvent.keyDown(document, { key: 'Enter' });
 			await fireEvent.keyDown(document, { key: 'Tab' });
-			
+
 			expect(onClose).not.toHaveBeenCalled();
 		});
 	});
@@ -241,9 +241,9 @@ describe('Modal Component', () => {
 					onClose: () => {}
 				}
 			});
-			
+
 			await new Promise(resolve => setTimeout(resolve, 0));
-			
+
 			const closeButton = getByLabelText('Close modal');
 			expect(document.activeElement).toBe(closeButton);
 		});
@@ -256,14 +256,14 @@ describe('Modal Component', () => {
 					onClose
 				}
 			});
-			
+
 			await new Promise(resolve => setTimeout(resolve, 0));
-			
+
 			const closeButton = getByLabelText('Close modal');
 			closeButton.focus();
-			
+
 			await fireEvent.keyDown(closeButton, { key: 'Tab' });
-			
+
 			expect(document.activeElement).toBe(closeButton);
 		});
 
@@ -275,14 +275,14 @@ describe('Modal Component', () => {
 					onClose
 				}
 			});
-			
+
 			await new Promise(resolve => setTimeout(resolve, 0));
-			
+
 			const closeButton = getByLabelText('Close modal');
 			closeButton.focus();
-			
+
 			await fireEvent.keyDown(closeButton, { key: 'Tab', shiftKey: true });
-			
+
 			expect(document.activeElement).toBe(closeButton);
 		});
 	});

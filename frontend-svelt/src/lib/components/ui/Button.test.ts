@@ -12,7 +12,7 @@ describe('Button Component', () => {
 		});
 
 		it('renders with primary variant', () => {
-			const { getByRole } = render(Button, { 
+			const { getByRole } = render(Button, {
 				variant: 'primary',
 				text: 'Primary'
 			});
@@ -21,7 +21,7 @@ describe('Button Component', () => {
 		});
 
 		it('renders with secondary variant', () => {
-			const { getByRole } = render(Button, { 
+			const { getByRole } = render(Button, {
 				variant: 'secondary',
 				text: 'Secondary'
 			});
@@ -30,7 +30,7 @@ describe('Button Component', () => {
 		});
 
 		it('renders with danger variant', () => {
-			const { getByRole } = render(Button, { 
+			const { getByRole } = render(Button, {
 				variant: 'danger',
 				text: 'Delete'
 			});
@@ -41,7 +41,7 @@ describe('Button Component', () => {
 
 	describe('Sizes', () => {
 		it('renders with small size', () => {
-			const { getByRole } = render(Button, { 
+			const { getByRole } = render(Button, {
 				size: 'sm',
 				text: 'Small'
 			});
@@ -60,7 +60,7 @@ describe('Button Component', () => {
 		});
 
 		it('renders with large size', () => {
-			const { getByRole } = render(Button, { 
+			const { getByRole } = render(Button, {
 				size: 'lg',
 				text: 'Large'
 			});
@@ -73,7 +73,7 @@ describe('Button Component', () => {
 
 	describe('States', () => {
 		it('renders as disabled', () => {
-			const { getByRole } = render(Button, { 
+			const { getByRole } = render(Button, {
 				disabled: true,
 				text: 'Disabled'
 			});
@@ -84,7 +84,7 @@ describe('Button Component', () => {
 		});
 
 		it('renders loading state', () => {
-			const { getByRole, getByTestId } = render(Button, { 
+			const { getByRole, getByTestId } = render(Button, {
 				loading: true,
 				text: 'Loading'
 			});
@@ -96,7 +96,7 @@ describe('Button Component', () => {
 
 	describe('Accessibility', () => {
 		it('has proper type attribute', () => {
-			const { getByRole } = render(Button, { 
+			const { getByRole } = render(Button, {
 				type: 'submit',
 				text: 'Submit'
 			});
@@ -111,7 +111,7 @@ describe('Button Component', () => {
 		});
 
 		it('accepts aria-label', () => {
-			const { getByRole } = render(Button, { 
+			const { getByRole } = render(Button, {
 				'aria-label': 'Close dialog',
 				text: '×'
 			});
@@ -123,7 +123,7 @@ describe('Button Component', () => {
 	describe('Events', () => {
 		it('handles click events', async () => {
 			let clicked = false;
-			const { getByRole } = render(Button, { 
+			const { getByRole } = render(Button, {
 				text: 'Click',
 				onclick: () => {
 					clicked = true;
@@ -132,7 +132,7 @@ describe('Button Component', () => {
 
 			const button = getByRole('button');
 			button.click();
-			
+
 			expect(clicked).toBe(true);
 		});
 	});

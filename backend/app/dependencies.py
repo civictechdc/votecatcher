@@ -19,7 +19,7 @@ oauth2_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
 demo_petition_path: Path = Path("temp")
 
 
-def get_session() -> Generator[Session, None, None]:
+def get_session() -> Generator[Session]:
 	"""Get database session for API endpoints."""
 	with Session(engine) as session:
 		yield session

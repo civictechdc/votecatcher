@@ -63,7 +63,7 @@ async def job_status_stream(job_id: int):
             if job.status in ["MATCHING_COMPLETED", "ERROR"]:
                 break
             await asyncio.sleep(5)
-    
+
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream"

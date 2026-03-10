@@ -446,13 +446,13 @@ function createJobsStore() {
 
       eventSource.onerror = () => {
         const attempts = get(currentState).sse.reconnectAttempts + 1;
-        
+
         if (attempts < maxRetries) {
           setTimeout(() => this.connectToJob(jobId), retryDelay * Math.pow(2, attempts));
         } else {
-          update(s => ({ 
-            ...s, 
-            sse: { connected: false, reconnectAttempts: attempts, error: 'Connection lost' } 
+          update(s => ({
+            ...s,
+            sse: { connected: false, reconnectAttempts: attempts, error: 'Connection lost' }
           }));
         }
       };
@@ -484,7 +484,7 @@ async function uploadWithProgress(
 ): Promise<Response> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    
+
     xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable) {
         onProgress({
@@ -543,7 +543,7 @@ async fetchResults(jobId: string, page: number = 1) {
     });
 
     const response = await client.getJobResults(jobId, params);
-    
+
     update(s => ({
       ...s,
       results: response.results,

@@ -45,6 +45,9 @@ cp .env.example .env.local
 # OCR_PROVIDER_NAME=open_ai
 # OCR_PROVIDER_MODEL=gpt-4o-mini
 # OCR_PROVIDER_API_KEY=your-key-here
+
+# Initialize database
+uv run alembic upgrade head
 ```
 
 ### 3. Frontend Setup
@@ -174,7 +177,7 @@ cd frontend-svelt
 # Unit tests
 bun run test
 
-# E2E tests (coming in Phase 4)
+# E2E tests
 bun run test:e2e
 ```
 
@@ -233,8 +236,8 @@ See [Security Scanning](openspec/SPEC.md#appendix-c-security-scanning) for detai
 - [x] Phase 1: Data Layer
 - [x] Phase 2: Core Backend Services
 - [x] Phase 2.5: API Endpoints
-- [x] Phase 3: Frontend Foundation (in progress)
-- [ ] Phase 4: Integration & E2E Tests
+- [x] Phase 3: Frontend Foundation
+- [x] Phase 4: Integration & E2E Tests
 - [ ] Phase 5: Polish & Demo
 
 See [PROGRESS.md](openspec/PROGRESS.md) for detailed status.

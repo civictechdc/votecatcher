@@ -68,7 +68,7 @@ make spec-review
 # Code Review: FileService Implementation
 
 ## Executive Summary
-FileService implements PDF cropping correctly but missing confidence 
+FileService implements PDF cropping correctly but missing confidence
 calibration required by SPEC.md §3.4. Cannot proceed to Phase 3.
 
 ## Phase Gate Assessment
