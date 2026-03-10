@@ -1,16 +1,21 @@
 import asyncio
 import random
-from collections.abc import AsyncGenerator, Iterable
 from pathlib import Path
 from typing import Annotated, Any
 
 import pandas as pd
 import structlog
-from app.campaign.campaign_repository import CampaignRepository, ReadCampaign
-from app.data.demo_data import IN_MEMORY_DEMO_CAMPAIGN_ID
+from faker import Faker
+from fastapi import APIRouter, Depends, HTTPException, status
+from pandas import DataFrame
+from pandas.core.frame import DataFrame
+from sse_starlette.sse import EventSourceResponse
+from starlette.status import HTTP_404_NOT_FOUND
+
+from app.campaign.campaign_repository import CampaignRepository
 from app.data.memory_db import get_memory_db
-from app.dependencies import demo_petition_path  # get_ocr_job_repository,
 from app.dependencies import (
+	demo_petition_path,  # get_ocr_job_repository,
 	get_campaign_repository,
 	get_file_repository,
 	get_matching_results_repository,
@@ -19,7 +24,6 @@ from app.dependencies import (
 	get_ocr_handler,
 	get_ocr_results_repository,
 	get_scanned_documents_repository,
-	oauth2_scheme,
 )
 from app.events.matching_task_events import MatchingTaskMonitor
 from app.files.file_repository import (
@@ -27,9 +31,7 @@ from app.files.file_repository import (
 	RegisteredVoterRepository,
 	ScannedPetitionRepository,
 )
-from app.logging.app_logger import AppLogger
 from app.matching.fuzzy_match_helper import (
-	create_ocr_match_result_response,
 	create_ocr_matched_df,
 	create_select_voter_records,
 	perform_fuzzy_matching,
@@ -47,20 +49,15 @@ from app.matching.response_adapter import (
 	OcrMatchResults,
 	OcrMatchRow,
 	OcrMatchValueItem,
+	create_ocr_match_result_response,
 )
 from app.ocr.batching.batch_handler import (
 	get_ocr_provider_config,
-	get_ocr_results,
-	observe_batch_job_status,
 )
-from app.ocr.batching.batch_ocr_client import BatchJobStatus, JobStatus
-from app.ocr.data.data_models import OcrResultItem
+from app.ocr.batching.batch_ocr_client import BatchJobStatus
 from app.ocr.ocr_helper import (
-	OCR_COLUMNS,
 	create_batched_ocr_job,
-	create_ocr_df,
 	create_ocr_results,
-	emit_batch_job_status,
 	emit_matching_job_status,
 )
 from app.ocr.ocr_manager import OcrHandler
@@ -68,14 +65,7 @@ from app.ocr.ocr_result_repo import OcrResultRepository
 from app.ocr.response_types import MatchingJobStatusProgress
 from app.schemas import OcrMatchResponse, OcrProviderPayload
 from app.settings.env_settings import AppSettings, get_settings
-from app.voter.voter_processor import DEMO_VOTER_RECORD_STATE, RegisteredVotersData
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from faker import Faker
-from pandas import DataFrame
-from pandas.core.frame import DataFrame
-from sse_starlette.sse import EventSourceResponse
-from starlette.status import HTTP_404_NOT_FOUND
+from app.voter.voter_processor import RegisteredVotersData
 
 logger = structlog.get_logger(__name__)
 
@@ -148,7 +138,6 @@ async def ocr_demo(
 	db: Annotated[dict[str, Any], Depends(get_memory_db)],
 	ocr_provider: OcrProviderPayload | None = None,
 ):
-
 	logger.debug(f"demo petition path ${demo_petition_path.exists()}")
 	DEMO_VOTER_RECORD_STATE: Any | None = db.get("voter_list")
 
@@ -167,7 +156,7 @@ async def ocr_demo(
 	# Temporary shortcut to set the OCR provider without config
 	if ocr_provider:
 		try:
-			provider_config = get_ocr_provider_config(
+			get_ocr_provider_config(
 				provider_name=ocr_provider.provider_name,
 				api_key=ocr_provider.api_key,
 				model_name=ocr_provider.provider_model,
@@ -191,7 +180,7 @@ async def ocr_demo(
     ocr_df = pd.concat(df_list)
     """
 
-	files: list[Path] = [file for file in demo_petition_path.iterdir()]
+	files: list[Path] = list(demo_petition_path.iterdir())
 	df_list: list[DataFrame] = await create_ocr_results(files)
 	ocr_df: DataFrame = pd.concat(df_list)
 
@@ -236,7 +225,6 @@ async def start_demo_batch_ocr(
 	ocr_handler: Annotated[OcrHandler, Depends(get_ocr_handler)],
 	ocr_provider: OcrProviderPayload,
 ) -> MatchingJobStatusProgress:
-
 	logger.debug(f"demo petition path ${demo_petition_path.exists()}")
 	DEMO_VOTER_RECORD_STATE: Any | None = db.get("voter_list")
 
@@ -351,7 +339,6 @@ async def get_batch_result(
 	db: Annotated[dict[str, Any], Depends(get_memory_db)],
 	task_id: str,
 ) -> OcrMatchResponse:
-
 	DEMO_VOTER_RECORD_STATE: RegisteredVotersData | None = db.get("voter_list")
 
 	if not DEMO_VOTER_RECORD_STATE:
@@ -418,7 +405,6 @@ async def get_batch_result(
 	job_id: str,
 	db: Annotated[dict[str, Any], Depends(get_memory_db)],
 ) -> OcrMatchResponse:
-
 	raise HTTPException(
 		status_code=status.HTTP_501_NOT_IMPLEMENTED,
 	)
@@ -429,9 +415,9 @@ async def get_batch_result(
 async def ocr(
     response: Response, token: Annotated[OAuth2PasswordBearer, Depends(oauth2_scheme)]
 ):
-    
+
     # Triggers the OCR process on the uploaded petition signatures PDF file.
-    
+
 
     if not os.path.exists("temp/ballot.pdf"):
         logger.error("No PDF file found for petition signatures")

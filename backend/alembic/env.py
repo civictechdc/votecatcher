@@ -1,13 +1,12 @@
-from logging.config import fileConfig
 import os
+import sys
+from logging.config import fileConfig
+from pathlib import Path
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
+from sqlmodel import SQLModel
 
 from alembic import context
-from sqlmodel import SQLModel
-import sys
-from pathlib import Path
 
 # Add path to app module
 sys.path.insert(0, str(Path(__file__).parent.parent))

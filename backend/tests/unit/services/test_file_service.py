@@ -1,13 +1,13 @@
 """Unit tests for FileService."""
 
 import tempfile
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
 
 import pytest
 from fastapi import UploadFile
-from io import BytesIO
-from uuid import uuid4
 
 from app.files.file_service import FileService, FileValidationError
 

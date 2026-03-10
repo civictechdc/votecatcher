@@ -65,6 +65,7 @@ dependencies = [
     "unsync>=1.4.0",
     "uvicorn>=0.38.0",
     "uvloop>=0.22.1",
+    "pdf2image>=1.17.0",
 ]
 
 [dependency-groups]
@@ -98,19 +99,46 @@ addopts = ["--import-mode=importlib"]
 [tool.ruff]
 line-length = 88
 target-version = "py313"
-lint.select = ["E", "F", "W"]
-lint.ignore = ["E203"]
+lint.select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM"]
+lint.ignore = ["E203", "W191"]
 exclude = ["notebooks", "cross_referencing_tests"]
 
 [tool.ruff.format]
 indent-style = "tab"
 docstring-code-format = true
 
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
 [tool.basedpyright]
 include = ["app"]
-exclude = ["**/node_modules", "**/__pycache__"]
+exclude = [
+	"**/node_modules",
+	"**/__pycache__",
+	# TEMPORARY: Pre-existing code to type-check in Phase 1-2
+	"app/data/database/local/demo_*.py",  # Demo DB code - Phase 1
+	"app/settings/settings_repo.py",      # Settings repo - Phase 1
+	"app/ocr",                            # OCR clients/handlers - Phase 2
+	"app/routers/file_route.py",          # File upload routes - Phase 2
+	"app/matching/fuzzy_match_helper.py", # Fuzzy matching - Phase 2
+	# PERMANENT: None currently
+]
+typeCheckingMode = "standard"
 reportMissingImports = true
 reportMissingTypeStubs = false
+reportAny = "none"
+reportUnknownVariableType = "none"
+reportUnknownMemberType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownParameterType = "none"
+reportExplicitAny = "none"
+reportUnusedImport = "warning"
+reportUnusedVariable = "warning"
+reportUnreachable = "error"
+reportOptionalMemberAccess = "error"
+reportOptionalOperand = "error"
+reportAssignmentType = "warning"
+reportUnannotatedClassAttribute = "none"
 
 [tool.bandit]
 exclude_dirs = ["tests", ".venv", "node_modules"]

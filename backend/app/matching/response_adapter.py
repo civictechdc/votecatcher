@@ -1,6 +1,4 @@
-from typing import Any
 
-import pandas as pd
 import structlog
 from pandas import DataFrame
 from pydantic import BaseModel, Field, field_validator
@@ -55,7 +53,7 @@ def create_ocr_match_result_response(match_results: DataFrame) -> OcrMatchResult
 	]
 
 	results_data: list[OcrMatchRow] = []
-	for i, (idx, row) in enumerate(match_results.iterrows()):
+	for i, (_idx, row) in enumerate(match_results.iterrows()):
 		entry: OcrMatchRow = OcrMatchRow(
 			row_idx=i,
 			values=[

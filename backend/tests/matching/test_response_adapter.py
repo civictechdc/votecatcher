@@ -1,11 +1,10 @@
 """Tests for response adapter column ordering."""
 
-import pytest
 from app.matching.response_adapter import (
 	OcrMatchColumnSpec,
+	OcrMatchResults,
 	OcrMatchRow,
 	OcrMatchValueItem,
-	OcrMatchResults,
 )
 
 

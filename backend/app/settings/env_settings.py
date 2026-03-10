@@ -6,7 +6,6 @@ from dotenv import find_dotenv, load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic_settings.main import SettingsConfigDict
-from typing_extensions import runtime
 
 load_dotenv()
 
