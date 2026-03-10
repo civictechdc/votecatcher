@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent, waitFor } from '@testing-library/svelte';
+import { describe, it, expect, vi } from 'vitest';
+import { render, fireEvent } from '@testing-library/svelte';
 import Sidebar from './Sidebar.svelte';
 
 // Mock $app/stores
@@ -31,7 +31,7 @@ describe('Sidebar Component', () => {
 
 	describe('Active State', () => {
 		it('highlights active nav item based on current path', () => {
-			const { container, getByText } = render(Sidebar);
+			const { getByText } = render(Sidebar);
 			const dashboardLink = getByText('Dashboard').closest('a');
 			expect(dashboardLink?.classList.contains('bg-blue-50')).toBe(true);
 		});
