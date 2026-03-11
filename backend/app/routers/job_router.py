@@ -54,6 +54,9 @@ class JobListResponse(BaseModel):
 
 def _build_job_response(job: MatcherJob, session: Session) -> JobResponse:
 	campaign = session.get(Campaign, job.campaign_id)
+	error_message = None
+	if job.error_data and isinstance(job.error_data, dict):
+		error_message = job.error_data.get("message") or job.error_data.get("error")
 	return JobResponse(
 		job_id=job.id,
 		status=job.current_status.value,
@@ -61,7 +64,7 @@ def _build_job_response(job: MatcherJob, session: Session) -> JobResponse:
 		campaign_name=campaign.unique_name if campaign else None,
 		created_at=job.created_at,
 		updated_at=job.updated_on,
-		error_message=None,
+		error_message=error_message,
 	)
 
 
