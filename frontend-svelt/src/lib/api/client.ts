@@ -192,19 +192,19 @@ export const api = {
 
 	// high-level (returns ApiResult)
 	demoUploadVoters: (formData: FormData) =>
-		request(`${BASE_URL}/api/upload/voter-records`, { method: 'POST', body: formData }),
+		request(`${BASE_URL}/api/upload/voter-list`, { method: 'POST', body: formData }),
 
 	// low-level raw fetch (useful in +server to forward response)
 	demoUploadVotersRaw: (formData: FormData) =>
-		fetchRaw(`${BASE_URL}/api/upload/voter-records`, { method: 'POST', body: formData }),
+		fetchRaw(`${BASE_URL}/api/upload/voter-list`, { method: 'POST', body: formData }),
 
 	// high-level (returns ApiResult)
 	demoUploadPetitions: (formData: FormData) =>
-		request(`${BASE_URL}/api/upload/petition-entries`, { method: 'POST', body: formData }),
+		request(`${BASE_URL}/api/upload/petition`, { method: 'POST', body: formData }),
 
 	// low-level raw fetch (useful in +server to forward response)
 	demoUploadPetitionsRaw: (formData: FormData) =>
-		fetchRaw(`${BASE_URL}/api/upload/petition-entries`, { method: 'POST', body: formData }),
+		fetchRaw(`${BASE_URL}/api/upload/petition`, { method: 'POST', body: formData }),
 
 	triggerProcessFile: (payload: { filePath: string; campaignId: string }) =>
 		request('/api/process-voter-file', { method: 'POST', body: payload }),

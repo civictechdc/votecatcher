@@ -4,8 +4,10 @@
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Button, LoadingState } from '$lib/components/ui';
 	import UploadItem from '$lib/components/match-results/UploadItem.svelte';
+	import { PUBLIC_API_URL } from '$env/static/public';
 
 	let campaignId = $derived($page.params.id);
+	const API_BASE = PUBLIC_API_URL || 'http://localhost:8000';
 
 	type Tab = 'voters' | 'petitions';
 	let activeTab = $state<Tab>('voters');
@@ -33,7 +35,7 @@
 		uploading = true;
 
 		try {
-			const response = await fetch('/workspace/api/upload', {
+			const response = await fetch(`${API_BASE}/api/upload/voter-list`, {
 				method: 'POST',
 				body: formData
 			});
@@ -56,11 +58,12 @@
 
 		const files = Array.from(petitionFiles);
 		const formData = new FormData();
-		files.forEach((f) => formData.append('petition', f, f.name));
+		formData.append('campaign_id', campaignId);
+		files.forEach((f) => formData.append('file', f, f.name));
 		uploading = true;
 
 		try {
-			const response = await fetch('/workspace/api/upload', {
+			const response = await fetch(`${API_BASE}/api/upload/petition`, {
 				method: 'POST',
 				body: formData
 			});

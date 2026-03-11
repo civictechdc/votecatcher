@@ -5,6 +5,9 @@
 	import { jobs } from '$lib/stores/jobs';
 	import { Button, LoadingState } from '$lib/components/ui';
 	import { ConfidenceDonut } from '$lib/components/dashboard';
+	import { PUBLIC_API_URL } from '$env/static/public';
+
+	const API_BASE = PUBLIC_API_URL || 'http://localhost:8000';
 
 	let campaignId = $derived($page.params.id);
 
@@ -21,12 +24,21 @@
 
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
 	const campaignJobs = $derived($jobs.jobs.filter(job => String(job.campaignId) === String(campaignId)));
+	const highPercentage = $derived(metrics.totalSignatures > 0 ? (metrics.highConfidence / metrics.totalSignatures) * 100 : 0);
 
 	async function fetchMetrics() {
 		try {
-			const response = await fetch(`/api/campaigns/${campaignId}/metrics`);
+			const response = await fetch(`${API_BASE}/api/campaigns/${campaignId}/metrics`);
 			if (response.ok) {
-				metrics = await response.json();
+				const data = await response.json();
+				metrics = {
+					totalSignatures: data.total_signatures ?? 0,
+					processed: data.processed ?? 0,
+					highConfidence: data.high_confidence ?? 0,
+					mediumConfidence: data.medium_confidence ?? 0,
+					lowConfidence: data.low_confidence ?? 0,
+					progressPercentage: data.progress_percentage ?? 0
+				};
 			}
 		} catch (error) {
 			console.error('Failed to fetch metrics:', error);
