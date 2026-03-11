@@ -2,6 +2,7 @@
 
 import io
 import json
+import uuid
 import zipfile
 from datetime import datetime
 from typing import Annotated
@@ -61,9 +62,19 @@ def create_session(
 		SessionType.DEMO if request.session_type == "DEMO" else SessionType.REAL
 	)
 
+	campaign_id_uuid = None
+	if request.campaign_id:
+		try:
+			campaign_id_uuid = uuid.UUID(request.campaign_id)
+		except ValueError:
+			raise HTTPException(
+				status_code=status.HTTP_400_BAD_REQUEST,
+				detail=f"Invalid campaign_id format: {request.campaign_id}",
+			) from None
+
 	new_session = SessionModel(
 		name=request.name,
-		campaign_id=request.campaign_id,
+		campaign_id=campaign_id_uuid,
 		session_type=session_type,
 		snapshot_data=request.snapshot_data,
 	)

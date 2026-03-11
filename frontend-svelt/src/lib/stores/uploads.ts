@@ -9,10 +9,9 @@ export interface UploadResult {
 
 export interface UploadsState {
 	voterListUploading: boolean;
-	voterListProgress: number;
+	voterListSuccess: boolean;
 	voterListError: string | null;
 	petitionUploading: boolean;
-	petitionProgress: number;
 	petitionError: string | null;
 	lastUploadResult: UploadResult | null;
 }
@@ -20,10 +19,9 @@ export interface UploadsState {
 function createUploadsStore() {
 	const { subscribe, set, update } = writable<UploadsState>({
 		voterListUploading: false,
-		voterListProgress: 0,
+		voterListSuccess: false,
 		voterListError: null,
 		petitionUploading: false,
-		petitionProgress: 0,
 		petitionError: null,
 		lastUploadResult: null
 	});
@@ -35,7 +33,7 @@ function createUploadsStore() {
 			update(s => ({
 				...s,
 				voterListUploading: true,
-				voterListProgress: 0,
+				voterListSuccess: false,
 				voterListError: null
 			}));
 
@@ -56,7 +54,7 @@ function createUploadsStore() {
 				update(s => ({
 					...s,
 					voterListUploading: false,
-					voterListProgress: 100
+					voterListSuccess: true
 				}));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
@@ -72,7 +70,6 @@ function createUploadsStore() {
 			update(s => ({
 				...s,
 				petitionUploading: true,
-				petitionProgress: 0,
 				petitionError: null
 			}));
 
@@ -96,7 +93,6 @@ function createUploadsStore() {
 				update(s => ({
 					...s,
 					petitionUploading: false,
-					petitionProgress: 100,
 					lastUploadResult: result
 				}));
 
@@ -120,13 +116,20 @@ function createUploadsStore() {
 			}));
 		},
 
+		clearSuccess() {
+			update(s => ({
+				...s,
+				voterListSuccess: false,
+				lastUploadResult: null
+			}));
+		},
+
 		reset() {
 			set({
 				voterListUploading: false,
-				voterListProgress: 0,
+				voterListSuccess: false,
 				voterListError: null,
 				petitionUploading: false,
-				petitionProgress: 0,
 				petitionError: null,
 				lastUploadResult: null
 			});

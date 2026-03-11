@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { getApiClient } from './api-client';
+import { PUBLIC_DEMO_MODE } from '$env/static/public';
 
 export interface PrebakedSession {
 	id: string;
@@ -17,6 +18,7 @@ export interface LoadedSessionInfo {
 }
 
 interface DemoState {
+	initialized: boolean;
 	showResetConfirmation: boolean;
 	resetting: boolean;
 	loading: boolean;
@@ -25,7 +27,7 @@ interface DemoState {
 	loadedSession: LoadedSessionInfo | null;
 }
 
-let _demoModeEnabled = false;
+let _demoModeEnabled = PUBLIC_DEMO_MODE === 'true';
 
 export function setDemoMode(enabled: boolean): void {
 	_demoModeEnabled = enabled;
@@ -37,6 +39,7 @@ export function isDemoModeEnabled(): boolean {
 
 function createDemoStore() {
 	const { subscribe, set, update } = writable<DemoState>({
+		initialized: false,
 		showResetConfirmation: false,
 		resetting: false,
 		loading: false,
@@ -114,12 +117,13 @@ function createDemoStore() {
 				const data = await response.json();
 				update((s) => ({
 					...s,
+					initialized: true,
 					prebakedSessions: data.sessions || [],
 					loading: false
 				}));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
-				update((s) => ({ ...s, error: message, loading: false, prebakedSessions: [] }));
+				update((s) => ({ ...s, initialized: true, error: message, loading: false, prebakedSessions: [] }));
 			}
 		},
 
@@ -129,6 +133,7 @@ function createDemoStore() {
 
 		resetStore() {
 			set({
+				initialized: false,
 				showResetConfirmation: false,
 				resetting: false,
 				loading: false,

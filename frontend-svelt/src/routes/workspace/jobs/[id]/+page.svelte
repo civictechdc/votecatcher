@@ -3,9 +3,9 @@
 	import { jobs } from '$lib/stores/jobs';
 	import { Button, LoadingSpinner, ErrorDisplay } from '$lib/components/ui';
 	import { onMount, onDestroy } from 'svelte';
-	import type { Job } from '$lib/api/generated';
+	import type { JobResponse } from '$lib/api/generated';
 
-	type JobWithProgress = Job & { progress?: number };
+	type JobWithProgress = JobResponse & { progress?: number };
 
 	let jobId = $derived($page.params.id);
 
@@ -68,7 +68,7 @@
 	{:else if $jobs.currentJob}
 		<div>
 			<h1 class="text-3xl font-bold text-slate-900">Job Status</h1>
-			<p class="mt-2 text-slate-600">Job ID: {$jobs.currentJob.id}</p>
+			<p class="mt-2 text-slate-600">Job ID: {$jobs.currentJob.jobId}</p>
 		</div>
 
 		<div class="grid gap-6 md:grid-cols-2">
@@ -130,10 +130,6 @@
 			<div class="rounded-lg border border-slate-200 bg-white p-6">
 				<h2 class="text-lg font-semibold text-slate-900">Job Details</h2>
 				<dl class="mt-4 space-y-3">
-					<div>
-						<dt class="text-sm font-medium text-slate-600">Campaign ID</dt>
-						<dd class="mt-1 text-sm text-slate-900">{$jobs.currentJob.campaignId}</dd>
-					</div>
 					<div>
 						<dt class="text-sm font-medium text-slate-600">Created At</dt>
 						<dd class="mt-1 text-sm text-slate-900">

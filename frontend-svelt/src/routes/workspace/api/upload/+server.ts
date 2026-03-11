@@ -7,9 +7,9 @@ import { json } from '@sveltejs/kit';
 import { randomUUID } from 'crypto';
 import type { UploadResult } from '$lib/workspace-types';
 import { api } from '$lib/api/client';
-import { isDemoMode } from '$lib/stores/demo';
+import { DEMO_MODE } from '$env/static/private';
 
-const SERVER_DEMO = isDemoMode();
+const SERVER_DEMO = DEMO_MODE === 'true';
 
 async function uploadPetitions(formData: FormData) {
 	const petitions = formData.getAll('petition');

@@ -2,22 +2,70 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { results } from '$lib/stores/results';
-	import { Table, LoadingState, Button } from '$lib/components/ui';
+	import { Table, LoadingState, Button, ErrorDisplay } from '$lib/components/ui';
 	import CsvExportButton from '$lib/components/results/CsvExportButton.svelte';
 	import ConfidenceBadge from '$lib/components/results/ConfidenceBadge.svelte';
 
-	$: jobId = Number($page.url.searchParams.get('jobId') || 1);
+	let jobId = $derived(Number($page.url.searchParams.get('jobId') || 1));
 
 	const columns = [
-		{ key: 'prediction_1_name', label: 'Matched Name', sortable: true },
-		{ key: 'prediction_1_score', label: 'Score', sortable: true },
-		{ key: 'confidence_level', label: 'Confidence', sortable: true }
+		{ key: 'extracted_text', label: 'Extracted Text', sortable: true },
+		{ key: 'matched_name', label: 'Matched Name', sortable: true },
+		{ key: 'score', label: 'Score', sortable: true },
+		{ key: 'confidence', label: 'Confidence', sortable: true }
 	];
 
 	onMount(() => {
 		results.fetchResults(jobId);
 	});
+
+	function getTableRows(resultList: typeof $results.results) {
+		return resultList.map((result) => {
+			const topPrediction = result.predictions[0];
+			return {
+				id: result.ocrResultId,
+				extracted_text: result.extractedText || '-',
+				matched_name: topPrediction?.voterName || '-',
+				score: topPrediction?.similarityScore ? `${(topPrediction.similarityScore * 100).toFixed(1)}%` : '-',
+				confidence: topPrediction?.confidence
+					? `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(topPrediction.confidence)}">${topPrediction.confidence}</span>`
+					: '-'
+			};
+		});
+	}
+
+	function getConfidenceColor(confidence: string): string {
+		switch (confidence) {
+			case 'HIGH': return 'bg-green-100 text-green-800';
+			case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
+			case 'LOW': return 'bg-red-100 text-red-800';
+			default: return 'bg-gray-100 text-gray-800';
+		}
+	}
+
+	function handlePrevious() {
+		const newPage = Math.max(1, $results.page - 1);
+		results.fetchResults(jobId, { page: newPage, pageSize: $results.pageSize });
+	}
+
+	function handleNext() {
+		const newPage = $results.page + 1;
+		results.fetchResults(jobId, { page: newPage, pageSize: $results.pageSize });
+	}
+
+	function handleRetry() {
+		results.fetchResults(jobId);
+	}
+
+	let totalPages = $derived(Math.ceil($results.total / $results.pageSize));
+	let startItem = $derived(($results.page - 1) * $results.pageSize + 1);
+	let endItem = $derived(Math.min($results.page * $results.pageSize, $results.total));
 </script>
+
+<svelte:head>
+	<title>Results — Votecatcher</title>
+	<meta name="description" content="View signature matching results. Filter by confidence, export to CSV." />
+</svelte:head>
 
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
@@ -31,7 +79,7 @@
 	{#if $results.loading}
 		<LoadingState loading={true} />
 	{:else if $results.error}
-		<LoadingState error={$results.error} />
+		<ErrorDisplay message={$results.error} onRetry={handleRetry} />
 	{:else if $results.results.length === 0}
 		<div class="rounded-lg border border-slate-200 bg-white p-12 text-center">
 			<p class="text-lg text-slate-600">No results found</p>
@@ -40,35 +88,33 @@
 	{:else}
 		<div class="space-y-4">
 			<Table
-				{columns}
-				rows={$results.results}
+				columns={columns}
+				rows={getTableRows($results.results)}
 				sortable={true}
 				emptyMessage="No results to display"
 			/>
 
-			<div class="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-				<p class="text-sm text-slate-600">
-					Showing {$results.offset + 1} to {Math.min($results.offset + $results.limit, $results.total)} of {$results.total} results
-				</p>
-				<div class="flex gap-2">
-					<Button
-						variant="secondary"
-						size="sm"
-						disabled={$results.offset === 0}
-						onclick={() => results.fetchResults(jobId, { offset: Math.max(0, $results.offset - $results.limit) })}
-					>
-						Previous
-					</Button>
-					<Button
-						variant="secondary"
-						size="sm"
-						disabled={$results.offset + $results.limit >= $results.total}
-						onclick={() => results.fetchResults(jobId, { offset: $results.offset + $results.limit })}
-					>
-						Next
-					</Button>
+			{#if $results.total > 0}
+				<div class="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+					<p class="text-sm text-slate-600">
+						Showing {startItem} to {endItem} of {$results.total} results
+					</p>
+					<div class="flex gap-2">
+						<Button
+							variant="secondary"
+							text="Previous"
+							disabled={$results.page <= 1}
+							onclick={handlePrevious}
+						/>
+						<Button
+							variant="secondary"
+							text="Next"
+							disabled={$results.page >= totalPages}
+							onclick={handleNext}
+						/>
+					</div>
 				</div>
-			</div>
+			{/if}
 		</div>
 	{/if}
 </div>

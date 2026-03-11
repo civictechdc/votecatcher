@@ -78,6 +78,27 @@ class TestDemoDataService:
 		assert len(session.exec(select(OcrResult)).all()) == 0
 		assert len(session.exec(select(MatchResult)).all()) == 0
 
+	def test_load_minimal_session_resets_before_loading(self, session: Session):
+		"""Test that loading twice doesn't cause UNIQUE constraint errors."""
+		service = DemoDataService(session)
+
+		# First load
+		result1 = service.load_minimal_session()
+		assert result1["success"] is True
+		assert len(session.exec(select(Region)).all()) == 1
+		assert len(session.exec(select(Campaign)).all()) == 1
+		assert len(session.exec(select(RegisteredVoter)).all()) == 10
+
+		# Second load should reset first and not raise UNIQUE constraint error
+		result2 = service.load_minimal_session()
+		assert result2["success"] is True
+		assert len(session.exec(select(Region)).all()) == 1
+		assert len(session.exec(select(Campaign)).all()) == 1
+		assert len(session.exec(select(RegisteredVoter)).all()) == 10
+
+		# Campaign ID should be different (new data, not same records)
+		assert result1["campaign_id"] != result2["campaign_id"]
+
 	def test_reset_preserves_non_demo_data(self, session: Session):
 		"""Test that reset preserves non-demo data."""
 		non_demo_region = Region(

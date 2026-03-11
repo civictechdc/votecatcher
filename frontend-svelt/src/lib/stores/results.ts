@@ -1,38 +1,30 @@
 import { writable } from 'svelte/store';
 import { ResultsApi } from '$lib/api/generated';
 import { getApiClient } from './api-client';
-
-interface MatchResult {
-	id: number;
-	ocr_result_id: number;
-	prediction_1_name: string;
-	prediction_1_score: number;
-	confidence_level: 'HIGH' | 'MEDIUM' | 'LOW';
-	[key: string]: any;
-}
+import type { ResultResponse } from '$lib/api/generated';
 
 interface ResultsState {
-	results: MatchResult[];
+	results: ResultResponse[];
 	total: number;
-	offset: number;
-	limit: number;
-	confidence?: 'HIGH' | 'MEDIUM' | 'LOW';
+	page: number;
+	pageSize: number;
+	confidence?: string;
 	loading: boolean;
 	error: string | null;
 }
 
 interface FetchOptions {
-	offset?: number;
-	limit?: number;
-	confidence?: 'HIGH' | 'MEDIUM' | 'LOW';
+	page?: number;
+	pageSize?: number;
+	confidence?: string;
 }
 
 function createResultsStore() {
 	const { subscribe, set, update } = writable<ResultsState>({
 		results: [],
 		total: 0,
-		offset: 0,
-		limit: 50,
+		page: 1,
+		pageSize: 50,
 		confidence: undefined,
 		loading: false,
 		error: null
@@ -42,33 +34,33 @@ function createResultsStore() {
 		subscribe,
 
 		async fetchResults(jobId: number, options: FetchOptions = {}) {
-			const offset = options.offset ?? 0;
-			const limit = options.limit ?? 50;
-			const confidence = options.confidence;
+			const page = options.page ?? 1;
+			const pageSize = options.pageSize ?? 50;
+			const confidence = options.confidence as 'HIGH' | 'MEDIUM' | 'LOW' | undefined;
 
 			update((s) => ({
 				...s,
 				loading: true,
 				error: null,
-				offset,
-				limit,
+				page,
+				pageSize,
 				confidence
 			}));
 
 			try {
 				const client = getApiClient();
 				const api = new ResultsApi(client);
-				const response = await api.getResults({
+				const response = await api.getResultsJobsJobIdResultsGet({
 					jobId,
-					offset,
-					limit,
-					confidence
+					page,
+					pageSize,
+					confidence: confidence ?? null
 				});
 
 				update((s) => ({
 					...s,
-					results: (response as any).items || [],
-					total: (response as any).total || 0,
+					results: response.results,
+					total: response.total,
 					loading: false
 				}));
 			} catch (error) {
@@ -81,10 +73,24 @@ function createResultsStore() {
 			}
 		},
 
-		async exportCSV(jobId: number): Promise<string> {
+		async exportCSV(jobId: number, confidence?: string): Promise<void> {
 			const client = getApiClient();
 			const api = new ResultsApi(client);
-			return await api.exportResults({ jobId });
+
+			const response = await api.exportResultsCsvJobsJobIdResultsExportGet({
+				jobId,
+				confidence: confidence as 'HIGH' | 'MEDIUM' | 'LOW' | null ?? null
+			});
+
+			const blob = new Blob([response], { type: 'text/csv' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `results-job-${jobId}.csv`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
 		},
 
 		clearError() {
@@ -95,8 +101,8 @@ function createResultsStore() {
 			set({
 				results: [],
 				total: 0,
-				offset: 0,
-				limit: 50,
+				page: 1,
+				pageSize: 50,
 				confidence: undefined,
 				loading: false,
 				error: null

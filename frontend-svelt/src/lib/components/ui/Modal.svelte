@@ -118,7 +118,7 @@
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby={title ? 'modal-title' : undefined}
-			class={modalClasses}
+			class={cn(modalClasses, 'relative z-10')}
 		>
 			<!-- Header -->
 			<div class="flex items-center justify-between p-4 border-b border-gray-200">
@@ -131,7 +131,7 @@
 				<button
 					bind:this={closeButtonRef}
 					type="button"
-					class="ml-auto text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md p-1 -mr-1"
+					class="ml-auto text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-300 rounded-md p-1 -mr-1"
 					aria-label="Close modal"
 					onclick={onClose}
 				>

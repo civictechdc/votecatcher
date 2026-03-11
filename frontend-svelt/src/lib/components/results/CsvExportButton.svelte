@@ -16,18 +16,7 @@
 		error = null;
 
 		try {
-			const csv = await results.exportCSV(jobId);
-
-			// Create download
-			const blob = new Blob([csv], { type: 'text/csv' });
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = `results-job-${jobId}.csv`;
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
-			URL.revokeObjectURL(url);
+			await results.exportCSV(jobId);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Export failed';
 		} finally {

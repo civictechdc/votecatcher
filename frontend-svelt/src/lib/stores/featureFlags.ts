@@ -65,7 +65,7 @@ function createFeatureFlagStore() {
 
 		async load(): Promise<void> {
 			try {
-				const response = await fetch(`${BASE_URL}/api/config/features`);
+				const response = await fetch(`${BASE_URL}/config/features`);
 				if (response.ok) {
 					serverFlags = await response.json();
 					const merged = mergeFlags(serverFlags, overrides);

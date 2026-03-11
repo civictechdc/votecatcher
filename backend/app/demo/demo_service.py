@@ -106,6 +106,9 @@ class DemoDataService:
 		campaign = None
 
 		try:
+			# Reset existing demo data first to avoid UNIQUE constraint errors
+			self.reset()
+
 			# 1. Create Region (with demo prefix for selective reset)
 			region = Region(
 				region_key=f"{self.DEMO_PREFIX}dc",

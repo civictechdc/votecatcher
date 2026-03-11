@@ -23,5 +23,10 @@ export default defineConfig({
 		url: 'http://localhost:5173',
 		reuseExistingServer: !process.env.CI,
 		timeout: 120000,
+		env: {
+			DEMO_MODE: 'true',
+			DEMO_RESET: 'true',
+			PUBLIC_API_URL: 'http://localhost:8000',
+		},
 	},
 });

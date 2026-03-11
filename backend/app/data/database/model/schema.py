@@ -19,7 +19,7 @@ class Campaign(SQLModel, table=True):
 	created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 	unique_name: str = Field(unique=True)
 	title: str = Field()
-	description: str = Field(nullable=True)
+	description: str | None = Field(default=None, nullable=True)
 	year: str = Field()
 	updated_at: datetime | None = Field(
 		default=None,

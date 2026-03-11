@@ -10,6 +10,11 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Dashboard — Votecatcher</title>
+	<meta name="description" content="Votecatcher campaign signature verification dashboard. View campaigns, jobs, and matching results." />
+</svelte:head>
+
 {#if $campaigns.loading}
 	<LoadingState loading={true} />
 {:else if $campaigns.error}

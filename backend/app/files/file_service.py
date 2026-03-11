@@ -1,10 +1,13 @@
 """File service for handling petition PDFs and voter lists."""
 
+import contextlib
 import hashlib
+import os
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
+import pandas as pd
 from pdf2image import convert_from_path
 from pydantic import BaseModel
 
@@ -13,6 +16,7 @@ from app.data.database.model.petition_scan import PetitionScan
 
 if TYPE_CHECKING:
 	from fastapi import UploadFile
+	from sqlmodel import Session
 
 
 class FileValidationError(Exception):
@@ -32,31 +36,19 @@ class VoterListUploadResult(BaseModel):
 class FileService:
 	"""Service for file upload, storage, and PDF cropping."""
 
-	DC_CROP_REGIONS: list[dict[str, float]] = [
-		{"top": 0.0, "bottom": 0.5},
-		{"top": 0.5, "bottom": 1.0},
-	]
+	DC_CROP_REGION = {"top": 0.385, "bottom": 0.725}
+	storage_base: Path
 
-	def __init__(self, storage_base: Path) -> None:
-		self.storage_base = storage_base
+	def __init__(
+		self, session: "Session | Any" = None, storage_base: Path | None = None
+	) -> None:
+		self.session = session
+		self.storage_base = storage_base or Path(os.getenv("UPLOAD_DIR", "./uploads"))
 
 	async def upload_petition(
 		self, file: "UploadFile", campaign_id: UUID, user_id: int
 	) -> PetitionScan:
-		"""
-		Upload and validate a petition PDF file.
-
-		Args:
-		    file: UploadFile object from FastAPI
-		    campaign_id: UUID of the campaign
-		    user_id: ID of the user uploading
-
-		Returns:
-		    PetitionScan model with file metadata
-
-		Raises:
-		    FileValidationError: If file validation fails
-		"""
+		"""Upload and validate a petition PDF file."""
 		if not file.filename or not file.filename.lower().endswith(".pdf"):
 			raise FileValidationError("Invalid file type. Only PDF files are allowed.")
 
@@ -96,72 +88,44 @@ class FileService:
 		campaign_id: int,
 		region: str = "dc",
 	) -> list[PetitionCrop]:
-		"""
-		Crop petition PDF into individual signature entries.
-
-		Args:
-		    pdf_path: Path to the PDF file
-		    petition_scan_id: ID of the PetitionScan record
-		    campaign_id: ID of the campaign
-		    region: Region code for crop coordinates (default: dc)
-
-		Returns:
-		    List of PetitionCrop models
-		"""
+		"""Crop petition PDF into individual signature entries."""
 		images = convert_from_path(str(pdf_path))
 		crops = []
 		crop_dir = self.storage_base / "campaigns" / str(campaign_id) / "crops"
 		crop_dir.mkdir(parents=True, exist_ok=True)
 
-		crop_regions = self.DC_CROP_REGIONS if region == "dc" else self.DC_CROP_REGIONS
+		crop_region = self.DC_CROP_REGION
 
-		crop_index = 0
 		for page_num, image in enumerate(images, start=1):
 			width, height = image.size
 
-			for region_spec in crop_regions:
-				crop_index += 1
-				top = int(height * region_spec["top"])
-				bottom = int(height * region_spec["bottom"])
+			top = int(height * crop_region["top"])
+			bottom = int(height * crop_region["bottom"])
 
-				cropped = image.crop((0, top, width, bottom))
+			cropped = image.crop((0, top, width, bottom))
 
-				crop_filename = (
-					f"{petition_scan_id}_page{page_num}_crop{crop_index}.png"
-				)
-				crop_path = crop_dir / crop_filename
-				cropped.save(crop_path, "PNG")
+			crop_filename = f"{petition_scan_id}_page{page_num}_crop{page_num}.png"
+			crop_path = crop_dir / crop_filename
+			cropped.save(crop_path, "PNG")
 
-				crop = PetitionCrop(
-					scan_id=petition_scan_id,
-					crop_index=crop_index,
-					stored_path=str(crop_path),
-					crop_coordinates={
-						"top": region_spec["top"],
-						"bottom": region_spec["bottom"],
-					},
-					page_number=page_num,
-				)
-				crops.append(crop)
+			crop = PetitionCrop(
+				scan_id=petition_scan_id,
+				crop_index=page_num,
+				stored_path=str(crop_path),
+				crop_coordinates={
+					"top": crop_region["top"],
+					"bottom": crop_region["bottom"],
+				},
+				page_number=page_num,
+			)
+			crops.append(crop)
 
 		return crops
 
 	async def upload_voter_list(
 		self, file: "UploadFile", region_id: int
 	) -> VoterListUploadResult:
-		"""
-		Upload and validate a voter list CSV file.
-
-		Args:
-		    file: UploadFile object from FastAPI
-		    region_id: ID of the region
-
-		Returns:
-		    VoterListUploadResult with file metadata
-
-		Raises:
-		    FileValidationError: If file validation fails
-		"""
+		"""Upload and validate a voter list CSV file."""
 		if not file.filename or not file.filename.lower().endswith(".csv"):
 			raise FileValidationError("Invalid file type. Only CSV files are allowed.")
 
@@ -188,3 +152,78 @@ class FileService:
 			stored_path=str(file_path),
 			original_filename=file.filename,
 		)
+
+	async def save_voter_list_file(self, file: "UploadFile") -> tuple[str, int]:
+		"""Save voter list file and return path and row count."""
+		if not file.filename:
+			raise FileValidationError("No filename provided")
+
+		valid_extensions = (".csv", ".xlsx", ".xls")
+		if not file.filename.lower().endswith(valid_extensions):
+			raise FileValidationError(
+				f"Invalid file type. Supported formats: {', '.join(valid_extensions)}"
+			)
+
+		content = await file.read()
+
+		voter_dir = self.storage_base / "voter-lists"
+		voter_dir.mkdir(parents=True, exist_ok=True)
+
+		file_path = voter_dir / file.filename
+		file_path.write_bytes(content)
+		_ = await file.seek(0)
+
+		row_count = 0
+		if file.filename.lower().endswith(".csv"):
+			content_str = content.decode("utf-8")
+			row_count = (
+				len([line for line in content_str.strip().split("\n") if line]) - 1
+			)
+		elif file.filename.lower().endswith((".xlsx", ".xls")):
+			import io
+
+			df = pd.read_excel(io.BytesIO(content))
+			row_count = len(df)
+
+		return (str(file_path), max(0, row_count))
+
+	async def process_petition_upload(
+		self, file: "UploadFile", campaign_id: str, region: str = "DC"
+	) -> tuple[int, int]:
+		"""Upload petition PDF, save it, and create crops."""
+		if not file.filename or not file.filename.lower().endswith(".pdf"):
+			raise FileValidationError("Invalid file type. Only PDF files are allowed.")
+
+		petition_dir = self.storage_base / "campaigns" / campaign_id / "petitions"
+		petition_dir.mkdir(parents=True, exist_ok=True)
+
+		file_path = petition_dir / file.filename
+		content = await file.read()
+		file_path.write_bytes(content)
+		_ = await file.seek(0)
+
+		images: list[Any] = []
+		with contextlib.suppress(Exception):
+			images = convert_from_path(str(file_path))
+
+		scan_id = hash(str(file_path)) % 1000000
+
+		crop_dir = self.storage_base / "campaigns" / campaign_id / "crops"
+		crop_dir.mkdir(parents=True, exist_ok=True)
+
+		crop_count = 0
+
+		for page_num, image in enumerate(images, start=1):
+			width, height = image.size
+
+			top = int(height * self.DC_CROP_REGION["top"])
+			bottom = int(height * self.DC_CROP_REGION["bottom"])
+
+			cropped = image.crop((0, top, width, bottom))
+
+			crop_filename = f"{scan_id}_page{page_num}_crop{page_num}.png"
+			crop_path = crop_dir / crop_filename
+			cropped.save(crop_path, "PNG")
+			crop_count += 1
+
+		return (scan_id, crop_count)

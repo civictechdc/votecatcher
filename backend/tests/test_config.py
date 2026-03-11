@@ -6,8 +6,6 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from app.settings.env_settings import AppSettings, get_settings
-
 
 @pytest.fixture(autouse=True)
 def setup_env(tmp_path: Path, monkeypatch):
@@ -23,6 +21,14 @@ def setup_env(tmp_path: Path, monkeypatch):
 	monkeypatch.setenv("DEV_LOCAL_VOTER_REGISTRATION_DIR", "registration")
 	monkeypatch.setenv("DEV_LOCAL_OCR_DIR", "ocr")
 
+	monkeypatch.delenv("FEATURE_ENABLE_SIMULATION", raising=False)
+	monkeypatch.delenv("FEATURE_ENABLE_BETA_FEATURES", raising=False)
+	monkeypatch.delenv("FEATURE_ENABLE_DEBUG_MODE", raising=False)
+	monkeypatch.delenv("FEATURE_DEMO_MODE", raising=False)
+	monkeypatch.delenv("FEATURE_DEMO_RESET", raising=False)
+
+	from app.settings.env_settings import get_settings
+
 	get_settings.cache_clear()
 
 
@@ -37,9 +43,18 @@ def client():
 class TestFeatureFlags:
 	"""Tests for feature flag configuration."""
 
-	def test_settings_default_values(self):
-		"""Feature flags should default to False."""
-		settings = AppSettings()
+	def test_settings_default_values(self, tmp_path: Path, monkeypatch):
+		"""Feature flags should default to False when no env vars are set."""
+		from app.settings.env_settings import get_settings
+
+		monkeypatch.delenv("FEATURE_ENABLE_SIMULATION", raising=False)
+		monkeypatch.delenv("FEATURE_ENABLE_BETA_FEATURES", raising=False)
+		monkeypatch.delenv("FEATURE_ENABLE_DEBUG_MODE", raising=False)
+		monkeypatch.delenv("FEATURE_DEMO_MODE", raising=False)
+		monkeypatch.delenv("FEATURE_DEMO_RESET", raising=False)
+		get_settings.cache_clear()
+
+		settings = get_settings()
 
 		assert settings.enable_simulation is False
 		assert settings.enable_beta_features is False
@@ -47,18 +62,24 @@ class TestFeatureFlags:
 
 	def test_settings_can_enable_simulation(self):
 		"""Feature flag can be enabled via environment."""
+		from app.settings.env_settings import AppSettings
+
 		settings = AppSettings(FEATURE_ENABLE_SIMULATION=True)
 
 		assert settings.enable_simulation is True
 
 	def test_settings_can_enable_beta_features(self):
 		"""Beta features flag can be enabled."""
+		from app.settings.env_settings import AppSettings
+
 		settings = AppSettings(FEATURE_ENABLE_BETA_FEATURES=True)
 
 		assert settings.enable_beta_features is True
 
 	def test_settings_can_enable_debug_mode(self):
 		"""Debug mode flag can be enabled."""
+		from app.settings.env_settings import AppSettings
+
 		settings = AppSettings(FEATURE_ENABLE_DEBUG_MODE=True)
 
 		assert settings.enable_debug_mode is True
@@ -92,7 +113,9 @@ class TestFeatureFlags:
 
 	def test_feature_endpoint_reflects_enabled_simulation(self, client):
 		"""/config/features should reflect enabled simulation flag."""
-		with patch("app.routers.config_route.get_settings") as mock_get_settings:
+		from app.settings.env_settings import AppSettings
+
+		with patch("app.routers.config_router.get_settings") as mock_get_settings:
 			mock_settings = AppSettings(FEATURE_ENABLE_SIMULATION=True)
 			mock_get_settings.return_value = mock_settings
 
@@ -103,7 +126,9 @@ class TestFeatureFlags:
 
 	def test_feature_endpoint_reflects_enabled_beta_features(self, client):
 		"""/config/features should reflect enabled beta features."""
-		with patch("app.routers.config_route.get_settings") as mock_get_settings:
+		from app.settings.env_settings import AppSettings
+
+		with patch("app.routers.config_router.get_settings") as mock_get_settings:
 			mock_settings = AppSettings(FEATURE_ENABLE_BETA_FEATURES=True)
 			mock_get_settings.return_value = mock_settings
 
@@ -114,7 +139,9 @@ class TestFeatureFlags:
 
 	def test_feature_endpoint_reflects_enabled_debug_mode(self, client):
 		"""/config/features should reflect enabled debug mode."""
-		with patch("app.routers.config_route.get_settings") as mock_get_settings:
+		from app.settings.env_settings import AppSettings
+
+		with patch("app.routers.config_router.get_settings") as mock_get_settings:
 			mock_settings = AppSettings(FEATURE_ENABLE_DEBUG_MODE=True)
 			mock_get_settings.return_value = mock_settings
 
@@ -125,8 +152,7 @@ class TestFeatureFlags:
 
 	def test_get_settings_caching(self):
 		"""get_settings should be cached (singleton)."""
-		# Clear the cache first
-		get_settings.cache_clear()
+		from app.settings.env_settings import get_settings
 
 		settings1 = get_settings()
 		settings2 = get_settings()

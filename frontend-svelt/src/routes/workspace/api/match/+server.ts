@@ -3,15 +3,16 @@
 // Replace implementation with FastAPI backend later.
 
 import type { RequestHandler } from '@sveltejs/kit';
-import { isDemoMode } from '$lib/stores/demo';
 import { json } from '@sveltejs/kit';
 import type { MatchRow, ConfidenceThresholds, MatchResults } from '$lib/workspace-types';
 import { MatchColumn } from '$lib/workspace-types';
 import { faker } from '@faker-js/faker';
 import { api, type ApiResult } from '$lib/api/client';
 import { OCR_PROVIDER_API_KEY, OCR_PROVIDER_NAME, OCR_PROVIDER_MODEL } from '$env/static/private';
+import { DEMO_MODE } from '$env/static/private';
 import type { MatchingProgressResponse } from '$lib/api/response-types';
-const SERVER_DEMO = isDemoMode();
+
+const SERVER_DEMO = DEMO_MODE === 'true';
 
 const MATCH_TABLE_COLUMNS: MatchColumn[] = [
 	new MatchColumn('Registration Name', function (first: MatchRow, second: MatchRow) {

@@ -6,14 +6,15 @@ from dotenv import find_dotenv, load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
+env_local = Path(__file__).parent.parent.parent / ".env.local"
+load_dotenv(env_local, override=True)
 
 logger = structlog.get_logger(__name__)
 
 
 class AppSettings(BaseSettings):
 	model_config = SettingsConfigDict(
-		env_file=find_dotenv(), extra="ignore", env_file_encoding="utf-8"
+		env_file=str(env_local), extra="ignore", env_file_encoding="utf-8"
 	)
 
 	app_name: str = "Votecatcher Backend"

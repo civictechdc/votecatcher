@@ -1,9 +1,16 @@
 <script lang="ts">
-	import { demo, isDemoModeEnabled, type LoadedSessionInfo } from '$lib/stores/demo';
+	import { onMount } from 'svelte';
+	import { demo, isDemoModeEnabled } from '$lib/stores/demo';
 	import { Button, LoadingSpinner, Modal } from '$lib/components/ui';
 	import { RefreshCw, Download, AlertTriangle, CheckCircle, Users, GitCompare } from 'lucide-svelte';
 
 	let demoEnabled = $state(isDemoModeEnabled());
+
+	onMount(() => {
+		if (demoEnabled) {
+			demo.fetchPrebakedSessions();
+		}
+	});
 
 	async function handleReset() {
 		await demo.resetData();
@@ -77,7 +84,7 @@
 					Load a pre-configured demo session with sample data.
 				</p>
 
-				{#if $demo.loading}
+				{#if !$demo.initialized || $demo.loading}
 					<div class="mt-4 flex items-center gap-2">
 						<LoadingSpinner size="sm" />
 						<span class="text-slate-600">Loading...</span>

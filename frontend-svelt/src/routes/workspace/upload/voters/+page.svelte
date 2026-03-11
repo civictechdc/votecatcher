@@ -26,6 +26,10 @@
 		event.preventDefault();
 	}
 
+	function handleDropzoneClick() {
+		fileInput?.click();
+	}
+
 	function handleRetry() {
 		selectedFile = null;
 		uploads.clearErrors();
@@ -60,19 +64,10 @@
 		<div class="rounded-lg border border-slate-200 bg-white p-6">
 			<div class="flex items-center gap-4">
 				<LoadingSpinner />
-				<div class="flex-1">
-					<p class="font-medium text-slate-900">Uploading voter list...</p>
-					<div class="mt-2 h-2 w-full rounded-full bg-slate-200">
-						<div
-							class="h-full rounded-full bg-blue-600 transition-all"
-							style="width: {$uploads.voterListProgress}%"
-						></div>
-					</div>
-					<p class="mt-1 text-sm text-slate-600">{$uploads.voterListProgress}%</p>
-				</div>
+				<p class="font-medium text-slate-900">Uploading voter list...</p>
 			</div>
 		</div>
-	{:else if $uploads.voterListProgress === 100}
+	{:else if $uploads.voterListSuccess}
 		<div class="rounded-lg bg-green-50 border border-green-200 p-6">
 			<div class="flex items-center gap-4">
 				<CheckCircle class="h-6 w-6 text-green-600" />
@@ -87,20 +82,26 @@
 			class="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-12 text-center"
 			ondrop={handleDrop}
 			ondragover={handleDragOver}
-			role="button"
-			tabindex="0"
 		>
 			<Upload class="mx-auto h-12 w-12 text-slate-400" />
 			<p class="mt-4 text-lg font-medium text-slate-900">Drag and drop your file here</p>
-			<p class="mt-2 text-sm text-slate-600">or click to browse</p>
+			<p class="mt-2 text-sm text-slate-600">or</p>
+
+			<button
+				type="button"
+				onclick={handleDropzoneClick}
+				class="mt-3 px-6 py-2.5 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+			>
+				Browse files
+			</button>
 
 			<input
 				bind:this={fileInput}
 				type="file"
 				accept=".csv,.xlsx,.xls"
 				onchange={handleFileSelect}
-				class="mt-4"
-				aria-label="File"
+				class="sr-only"
+				aria-hidden="true"
 			/>
 
 			<p class="mt-4 text-xs text-slate-500">

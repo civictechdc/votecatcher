@@ -1,5 +1,6 @@
 """Campaign management router."""
 
+import uuid
 from datetime import datetime
 from typing import Annotated
 
@@ -8,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
-from app.data.database.model.schema import Campaign
+from app.data.database.model.schema import Campaign, Region
 from app.dependencies import get_session
 
 logger = structlog.get_logger(__name__)
@@ -18,16 +19,42 @@ router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
+DEFAULT_REGION_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+
+
+def _ensure_default_region(session: Session) -> uuid.UUID:
+	region = session.exec(select(Region).where(Region.region_key == "DC")).first()
+	if region:
+		return region.id
+	region = Region(
+		id=DEFAULT_REGION_ID,
+		region_key="DC",
+		region_name="Washington, DC",
+		country_code="US",
+	)
+	session.add(region)
+	session.commit()
+	return region.id
+
 
 class CampaignResponse(BaseModel):
 	"""Response schema for campaign."""
 
-	id: int | None
-	name: str
-	year: int
+	id: uuid.UUID | None
+	unique_name: str
+	title: str
+	year: str
 	region: str | None
+	region_id: uuid.UUID | None
 	created_at: datetime | None
 	updated_at: datetime | None
+
+
+def _get_region_key(session: Session, region_id: uuid.UUID | None) -> str | None:
+	if not region_id:
+		return None
+	region = session.get(Region, region_id)
+	return region.region_key if region else None
 
 
 class CampaignListResponse(BaseModel):
@@ -51,10 +78,12 @@ def create_campaign(
 	session: SessionDep,
 ) -> CampaignResponse:
 	"""Create a new campaign."""
+	region_id = _ensure_default_region(session)
 	campaign = Campaign(
-		name=request.name,
-		year=request.year,
-		region=request.region,
+		unique_name=request.name,
+		title=request.name,
+		year=str(request.year),
+		region_id=region_id,
 	)
 	session.add(campaign)
 	session.commit()
@@ -63,17 +92,19 @@ def create_campaign(
 	logger.info(
 		"Campaign created",
 		campaign_id=campaign.id,
-		name=campaign.name,
+		unique_name=campaign.unique_name,
 		year=campaign.year,
 	)
 
 	return CampaignResponse(
 		id=campaign.id,
-		name=campaign.name,
+		unique_name=campaign.unique_name,
+		title=campaign.title,
 		year=campaign.year,
-		region=campaign.region,
-		created_at=campaign.created_on,
-		updated_at=campaign.updated_on,
+		region=_get_region_key(session, campaign.region_id),
+		region_id=campaign.region_id,
+		created_at=campaign.created_at,
+		updated_at=campaign.updated_at,
 	)
 
 
@@ -94,11 +125,13 @@ def list_campaigns(
 		campaigns=[
 			CampaignResponse(
 				id=c.id,
-				name=c.name,
+				unique_name=c.unique_name,
+				title=c.title,
 				year=c.year,
-				region=c.region,
-				created_at=c.created_on,
-				updated_at=c.updated_on,
+				region=_get_region_key(session, c.region_id),
+				region_id=c.region_id,
+				created_at=c.created_at,
+				updated_at=c.updated_at,
 			)
 			for c in campaigns
 		],
@@ -108,7 +141,7 @@ def list_campaigns(
 
 @router.get("/{campaign_id}", response_model=CampaignResponse)
 def get_campaign(
-	campaign_id: int,
+	campaign_id: uuid.UUID,
 	session: SessionDep,
 ) -> CampaignResponse:
 	"""Get campaign details."""
@@ -121,9 +154,28 @@ def get_campaign(
 
 	return CampaignResponse(
 		id=campaign.id,
-		name=campaign.name,
+		unique_name=campaign.unique_name,
+		title=campaign.title,
 		year=campaign.year,
-		region=campaign.region,
-		created_at=campaign.created_on,
-		updated_at=campaign.updated_on,
+		region=_get_region_key(session, campaign.region_id),
+		region_id=campaign.region_id,
+		created_at=campaign.created_at,
+		updated_at=campaign.updated_at,
 	)
+
+
+@router.delete("/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_campaign(
+	campaign_id: uuid.UUID,
+	session: SessionDep,
+) -> None:
+	"""Delete a campaign."""
+	campaign = session.get(Campaign, campaign_id)
+	if not campaign:
+		raise HTTPException(
+			status_code=status.HTTP_404_NOT_FOUND,
+			detail=f"Campaign {campaign_id} not found",
+		)
+	session.delete(campaign)
+	session.commit()
+	logger.info("Campaign deleted", campaign_id=campaign_id)

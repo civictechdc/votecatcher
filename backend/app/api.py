@@ -1,5 +1,6 @@
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated
 
 import structlog
@@ -15,6 +16,7 @@ from app.logger_config.app_logger import (
 )
 from app.routers import (
 	campaign_router,
+	config_router,
 	demo_router,
 	job_router,
 	results_router,
@@ -25,7 +27,8 @@ from app.settings.env_settings import get_settings
 
 logger = structlog.get_logger(__name__)
 
-load_dotenv()
+env_local = Path(__file__).parent.parent / ".env.local"
+load_dotenv(env_local, override=True)
 
 
 @asynccontextmanager
@@ -80,4 +83,4 @@ app.include_router(upload_router)
 app.include_router(results_router)
 app.include_router(session_router)
 app.include_router(demo_router)
-app.include_router(demo_router)
+app.include_router(config_router)

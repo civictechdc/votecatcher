@@ -10,7 +10,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.data.database.model.jobs import JobStatus, MatcherJob
 from app.data.database.model.schema import Campaign
@@ -38,9 +38,40 @@ class JobResponse(BaseModel):
 
 	job_id: int
 	status: str
+	campaign_id: uuid.UUID
+	campaign_name: str | None = None
 	created_at: datetime | None = None
 	updated_at: datetime | None = None
 	error_message: str | None = None
+
+
+class JobListResponse(BaseModel):
+	"""Response schema for listing jobs."""
+
+	jobs: list[JobResponse]
+	total: int
+
+
+def _build_job_response(job: MatcherJob, session: Session) -> JobResponse:
+	campaign = session.get(Campaign, job.campaign_id)
+	return JobResponse(
+		job_id=job.id,
+		status=job.current_status.value,
+		campaign_id=job.campaign_id,
+		campaign_name=campaign.unique_name if campaign else None,
+		created_at=job.created_at,
+		updated_at=job.updated_on,
+		error_message=None,
+	)
+
+
+@router.get("", response_model=JobListResponse)
+def list_jobs(session: SessionDep) -> JobListResponse:
+	jobs = session.exec(select(MatcherJob)).all()
+	return JobListResponse(
+		jobs=[_build_job_response(job, session) for job in jobs],
+		total=len(jobs),
+	)
 
 
 @router.post("", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
@@ -82,12 +113,7 @@ def create_job(
 		provider=request.provider,
 	)
 
-	return JobResponse(
-		job_id=job.id,
-		status=job.current_status.value,
-		created_at=job.created_at,
-		updated_at=job.updated_on,
-	)
+	return _build_job_response(job, session)
 
 
 @router.get("/{job_id}", response_model=JobResponse)
@@ -114,13 +140,7 @@ def get_job(
 			detail=f"Job {job_id} not found",
 		)
 
-	return JobResponse(
-		job_id=job.id,
-		status=job.current_status.value,
-		created_at=job.created_at,
-		updated_at=job.updated_on,
-		error_message=None,
-	)
+	return _build_job_response(job, session)
 
 
 @router.post("/{job_id}/cancel", response_model=JobResponse)
@@ -166,12 +186,7 @@ def cancel_job(
 
 	logger.info("Cancelled job", job_id=job_id)
 
-	return JobResponse(
-		job_id=job.id,
-		status=job.current_status.value,
-		created_at=job.created_at,
-		updated_at=job.updated_on,
-	)
+	return _build_job_response(job, session)
 
 
 @router.get("/{job_id}/status", response_class=StreamingResponse)
@@ -214,16 +229,7 @@ async def _generate_events(
 	job: MatcherJob,
 	session: Session,
 ) -> AsyncGenerator[str]:
-	"""Generate SSE events for job status updates.
-
-	Args:
-	    job_id: Job ID
-	    job: Initial job state
-	    session: Database session
-
-	Yields:
-	    SSE formatted event strings
-	"""
+	"""Generate SSE events for job status updates."""
 	queue: asyncio.Queue[str] = asyncio.Queue()
 	await sse_manager.connect(job_id, queue)
 
@@ -264,14 +270,7 @@ async def _generate_events(
 
 
 def _get_phase(status: str) -> str:
-	"""Determine current phase from status.
-
-	Args:
-	    status: Job status string
-
-	Returns:
-	    Phase name (ocr, matching, complete, error)
-	"""
+	"""Determine current phase from status."""
 	if "OCR" in status:
 		return "ocr"
 	elif "MATCHING" in status:

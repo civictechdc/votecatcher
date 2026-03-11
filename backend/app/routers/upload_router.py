@@ -3,7 +3,7 @@
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
 from sqlmodel import Session
 
@@ -40,8 +40,8 @@ class PetitionUploadResponse(BaseModel):
 	status_code=status.HTTP_201_CREATED,
 )
 async def upload_voter_list(
-	file: UploadFile = File(...),
-	session: SessionDep = None,
+	file: UploadFile = File(...),  # noqa: B008
+	session: SessionDep = None,  # pyright: ignore[reportArgumentType]
 ) -> VoterListUploadResponse:
 	"""Upload voter list CSV/Excel file.
 
@@ -77,7 +77,7 @@ async def upload_voter_list(
 		raise HTTPException(
 			status_code=status.HTTP_400_BAD_REQUEST,
 			detail=str(e),
-		)
+		) from None
 
 
 @router.post(
@@ -86,10 +86,10 @@ async def upload_voter_list(
 	status_code=status.HTTP_201_CREATED,
 )
 async def upload_petition(
-	campaign_id: int,
-	file: UploadFile = File(...),
-	region: str = "DC",
-	session: SessionDep = None,
+	campaign_id: str = Form(...),
+	file: UploadFile = File(...),  # noqa: B008
+	region: str = Form("DC"),
+	session: SessionDep = None,  # pyright: ignore[reportArgumentType]
 ) -> PetitionUploadResponse:
 	"""Upload petition PDF with pre-cropping.
 
@@ -108,7 +108,7 @@ async def upload_petition(
 	"""
 	try:
 		file_service = FileService(session)
-		scan_id, crop_count = await file_service.save_petition_and_crops(
+		scan_id, crop_count = await file_service.process_petition_upload(
 			file=file,
 			campaign_id=campaign_id,
 			region=region,
@@ -133,4 +133,4 @@ async def upload_petition(
 		raise HTTPException(
 			status_code=status.HTTP_400_BAD_REQUEST,
 			detail=str(e),
-		)
+		) from None
