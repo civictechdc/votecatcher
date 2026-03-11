@@ -190,11 +190,26 @@ class FileService:
 	async def process_petition_upload(
 		self, file: "UploadFile", campaign_id: str, region: str = "DC"
 	) -> tuple[int, int]:
-		"""Upload petition PDF, save it, and create crops."""
+		"""Upload petition PDF, save it, and create crops.
+
+		Args:
+			file: Uploaded PDF file
+			campaign_id: Campaign ID to associate with
+			region: Region for crop coordinates (default: DC)
+
+		Returns:
+			Tuple of (scan_id, crop_count)
+
+		Raises:
+			FileValidationError: If file is invalid
+		"""
 		if not file.filename or not file.filename.lower().endswith(".pdf"):
 			raise FileValidationError("Invalid file type. Only PDF files are allowed.")
 
-		petition_dir = self.storage_base / "campaigns" / campaign_id / "petitions"
+		# Normalize campaign_id (remove hyphens if present)
+		campaign_id_clean = campaign_id.replace("-", "")
+
+		petition_dir = self.storage_base / "campaigns" / campaign_id_clean / "petitions"
 		petition_dir.mkdir(parents=True, exist_ok=True)
 
 		file_path = petition_dir / file.filename
@@ -202,13 +217,26 @@ class FileService:
 		file_path.write_bytes(content)
 		_ = await file.seek(0)
 
+		file_hash = hashlib.sha256(content).hexdigest()
+
 		images: list[Any] = []
 		with contextlib.suppress(Exception):
 			images = convert_from_path(str(file_path))
 
-		scan_id = hash(str(file_path)) % 1000000
+		# Create PetitionScan record
+		scan = PetitionScan(
+			campaign_id=UUID(campaign_id_clean),
+			original_filename=file.filename,
+			stored_path=str(file_path),
+			file_hash=file_hash,
+			page_count=len(images),
+		)
+		self.session.add(scan)
+		self.session.commit()
+		self.session.refresh(scan)
+		scan_id = scan.id
 
-		crop_dir = self.storage_base / "campaigns" / campaign_id / "crops"
+		crop_dir = self.storage_base / "campaigns" / campaign_id_clean / "crops"
 		crop_dir.mkdir(parents=True, exist_ok=True)
 
 		crop_count = 0
@@ -224,6 +252,22 @@ class FileService:
 			crop_filename = f"{scan_id}_page{page_num}_crop{page_num}.png"
 			crop_path = crop_dir / crop_filename
 			cropped.save(crop_path, "PNG")
+
+			# Create PetitionCrop record
+			crop = PetitionCrop(
+				scan_id=scan_id,
+				crop_index=page_num,
+				stored_path=str(crop_path),
+				crop_coordinates={
+					"top": self.DC_CROP_REGION["top"],
+					"bottom": self.DC_CROP_REGION["bottom"],
+				},
+				page_number=page_num,
+			)
+			self.session.add(crop)
 			crop_count += 1
+
+		if crop_count > 0:
+			self.session.commit()
 
 		return (scan_id, crop_count)
