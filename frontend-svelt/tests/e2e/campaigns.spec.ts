@@ -1,13 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Campaign Management', () => {
-	test.beforeEach(async ({ page }) => {
-		await page.goto('/workspace');
-	});
-
 	test('should display campaigns page', async ({ page }) => {
-		await page.click('text=Campaigns');
-		await expect(page).toHaveURL(/.*workspace\/campaigns/);
+		await page.goto('/workspace/campaigns');
 		await expect(page.locator('h1')).toContainText('Campaigns');
 	});
 
@@ -17,16 +12,25 @@ test.describe('Campaign Management', () => {
 		await expect(page.locator('button:has-text("Create Campaign")')).toBeVisible();
 	});
 
-	test('should navigate between pages', async ({ page }) => {
+	test('workspace redirects to campaigns', async ({ page }) => {
 		await page.goto('/workspace');
 
-		await page.click('text=Campaigns');
+		await page.waitForURL(/.*campaigns/, { timeout: 5000 });
+
 		await expect(page).toHaveURL(/.*campaigns/);
+	});
 
-		await page.click('text=Jobs');
-		await expect(page).toHaveURL(/.*jobs/);
+	test('should navigate to campaign dashboard from list', async ({ page }) => {
+		await page.goto('/workspace/campaigns');
+		await page.waitForLoadState('networkidle');
 
-		await page.click('text=Results');
-		await expect(page).toHaveURL(/.*results/);
+		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
+		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
+			await campaignLink.click();
+
+			await expect(page.locator('h1').first()).toBeVisible();
+		} else {
+			test.skip();
+		}
 	});
 });

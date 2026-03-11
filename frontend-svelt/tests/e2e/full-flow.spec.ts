@@ -1,51 +1,44 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Dashboard', () => {
-	test('should display workspace page', async ({ page }) => {
+	test('should redirect workspace to campaigns', async ({ page }) => {
 		await page.goto('/workspace');
 
-		// Either the dashboard loads with content, or shows an error (if backend unavailable)
-		// Both are valid states
-		const hasHeading = await page.locator('h1, h2').first().isVisible().catch(() => false);
-		const hasError = await page.locator('[role="alert"]').isVisible().catch(() => false);
-		expect(hasHeading || hasError).toBeTruthy();
+		await page.waitForURL(/.*campaigns/, { timeout: 5000 }).catch(() => {});
+
+		await expect(page).toHaveURL(/.*campaigns/);
+	});
+
+	test('should display campaigns page', async ({ page }) => {
+		await page.goto('/workspace/campaigns');
+
+		await expect(page.locator('h1')).toContainText('Campaigns');
 	});
 
 	test('should navigate via sidebar', async ({ page }) => {
-		await page.goto('/workspace');
-
-		await page.click('text=Campaigns');
-		await expect(page).toHaveURL(/.*campaigns/);
-
-		await page.click('text=Jobs');
-		await expect(page).toHaveURL(/.*jobs/);
-
-		await page.click('text=Results');
-		await expect(page).toHaveURL(/.*results/);
+		await page.goto('/workspace/campaigns');
+		await page.waitForLoadState('networkidle');
 
 		await page.click('text=Settings');
 		await expect(page).toHaveURL(/.*settings/);
+
+		await page.click('text=Campaigns');
+		await expect(page).toHaveURL(/.*campaigns/);
 	});
 });
 
-test.describe('Sessions', () => {
-	test('should display sessions page', async ({ page }) => {
-		await page.goto('/workspace/sessions');
+test.describe('Campaign Dashboard Flow', () => {
+	test('should navigate to campaign dashboard', async ({ page }) => {
+		await page.goto('/workspace/campaigns');
+		await page.waitForLoadState('networkidle');
 
-		await expect(page.locator('h1')).toContainText('Sessions');
-	});
-});
+		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
+		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
+			await campaignLink.click();
 
-test.describe('Upload Pages', () => {
-	test('should display voter upload page', async ({ page }) => {
-		await page.goto('/workspace/upload/voters');
-
-		await expect(page.locator('h1')).toContainText('Voter List');
-	});
-
-	test('should display petition upload page', async ({ page }) => {
-		await page.goto('/workspace/upload/petitions');
-
-		await expect(page.locator('h1')).toContainText('Petition');
+			await expect(page.locator('h1').first()).toBeVisible();
+		} else {
+			test.skip();
+		}
 	});
 });

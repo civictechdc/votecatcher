@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { jobs } from '$lib/stores/jobs';
+	import { campaigns } from '$lib/stores/campaigns';
 	import { Button, LoadingSpinner, ErrorDisplay } from '$lib/components/ui';
 	import { onMount, onDestroy } from 'svelte';
 	import type { JobResponse } from '$lib/api/generated';
 
 	type JobWithProgress = JobResponse & { progress?: number };
 
-	let jobId = $derived($page.params.id);
+	let campaignId = $derived($page.params.id);
+	let jobId = $derived($page.params.job_id);
 
 	onMount(() => {
+		campaigns.fetchAll();
 		if (jobId) {
 			jobs.connectToJob(jobId);
 			jobs.fetch(parseInt(jobId));
@@ -52,13 +55,34 @@
 	function getProgress(job: JobWithProgress): number {
 		return Math.round(job.progress || 0);
 	}
+
+	function formatDate(date: Date | string | null | undefined): string {
+		if (!date) return '-';
+		const d = typeof date === 'string' ? new Date(date) : date;
+		return d.toLocaleString();
+	}
+
+	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
 </script>
 
 <svelte:head>
-	<title>Job Status - Votecatcher</title>
+	<title>Job #{jobId} — {campaign?.unique_name || campaign?.title || 'Campaign'} — Votecatcher</title>
+	<meta name="description" content="Job status and progress details." />
 </svelte:head>
 
 <div class="space-y-6">
+	<div>
+		<nav class="mb-2 text-sm text-slate-500">
+			<a href="/workspace/{campaignId}" class="hover:text-slate-700">Dashboard</a>
+			<span class="mx-2">/</span>
+			<a href="/workspace/{campaignId}/jobs" class="hover:text-slate-700">Jobs</a>
+			<span class="mx-2">/</span>
+			<span class="text-slate-900">Job #{jobId}</span>
+		</nav>
+		<h1 class="text-3xl font-bold text-slate-900">Job Status</h1>
+		<p class="mt-1 text-slate-600">{campaign?.unique_name || campaign?.title || 'Campaign'}</p>
+	</div>
+
 	{#if $jobs.error}
 		<ErrorDisplay title="Error loading job" message={$jobs.error} />
 	{:else if $jobs.loading}
@@ -66,13 +90,7 @@
 			<LoadingSpinner size="lg" />
 		</div>
 	{:else if $jobs.currentJob}
-		<div>
-			<h1 class="text-3xl font-bold text-slate-900">Job Status</h1>
-			<p class="mt-2 text-slate-600">Job ID: {$jobs.currentJob.jobId}</p>
-		</div>
-
 		<div class="grid gap-6 md:grid-cols-2">
-			<!-- Status Card -->
 			<div class="rounded-lg border border-slate-200 bg-white p-6">
 				<div class="space-y-4">
 					<div>
@@ -82,7 +100,6 @@
 						</p>
 					</div>
 
-					<!-- SSE Connection Status -->
 					<div class="flex items-center gap-2">
 						<div
 							class="h-2 w-2 rounded-full {$jobs.sse.connected ? 'bg-green-500' : 'bg-red-500'}"
@@ -92,7 +109,6 @@
 						</span>
 					</div>
 
-					<!-- Progress -->
 					{#if isActiveStatus($jobs.currentJob.status)}
 						<div class="space-y-2">
 							<div class="flex justify-between text-sm">
@@ -117,7 +133,6 @@
 						</div>
 					{/if}
 
-					<!-- Cancel Button (only for active jobs) -->
 					{#if isActiveStatus($jobs.currentJob.status)}
 						<div class="pt-4">
 							<Button variant="danger" onclick={handleCancel}>Cancel Job</Button>
@@ -126,16 +141,31 @@
 				</div>
 			</div>
 
-			<!-- Additional Info Card -->
 			<div class="rounded-lg border border-slate-200 bg-white p-6">
 				<h2 class="text-lg font-semibold text-slate-900">Job Details</h2>
 				<dl class="mt-4 space-y-3">
 					<div>
+						<dt class="text-sm font-medium text-slate-600">Job ID</dt>
+						<dd class="mt-1 text-sm text-slate-900">{$jobs.currentJob.jobId}</dd>
+					</div>
+					<div>
 						<dt class="text-sm font-medium text-slate-600">Created At</dt>
 						<dd class="mt-1 text-sm text-slate-900">
-							{new Date($jobs.currentJob.createdAt).toLocaleString()}
+							{formatDate($jobs.currentJob.createdAt)}
 						</dd>
 					</div>
+					{#if $jobs.currentJob.providerName}
+						<div>
+							<dt class="text-sm font-medium text-slate-600">Provider</dt>
+							<dd class="mt-1 text-sm text-slate-900">{$jobs.currentJob.providerName}</dd>
+						</div>
+					{/if}
+					{#if $jobs.currentJob.providerModel}
+						<div>
+							<dt class="text-sm font-medium text-slate-600">Model</dt>
+							<dd class="mt-1 text-sm text-slate-900">{$jobs.currentJob.providerModel}</dd>
+						</div>
+					{/if}
 					{#if $jobs.currentJob.errorMessage}
 						<div>
 							<dt class="text-sm font-medium text-red-600">Error</dt>

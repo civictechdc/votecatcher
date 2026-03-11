@@ -7,8 +7,10 @@ from typing import Annotated
 
 import structlog
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
+from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.data import DbClient, get_db_client
 from app.data.database.session import get_db_session, init_db
@@ -32,6 +34,12 @@ logger = structlog.get_logger(__name__)
 
 env_local = Path(__file__).parent.parent / ".env.local"
 load_dotenv(env_local, override=True)
+
+CORS_HEADERS = {
+	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Methods": "*",
+	"Access-Control-Allow-Headers": "*",
+}
 
 
 @asynccontextmanager
@@ -69,6 +77,60 @@ else:
 			Depends(get_db_session),
 		],
 		lifespan=lifespan,
+	)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+	"""Validation error handler that ensures CORS headers."""
+	errors = exc.errors()
+	detail = errors[0]["msg"] if errors else "Validation error"
+	field = errors[0].get("loc", ["unknown"])[-1] if errors else "unknown"
+
+	return JSONResponse(
+		status_code=422,
+		content={
+			"detail": detail,
+			"error_code": "VALIDATION_ERROR",
+			"retryable": False,
+			"field": field,
+		},
+		headers=CORS_HEADERS,
+	)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+	"""HTTP exception handler that ensures CORS headers on error responses."""
+	return JSONResponse(
+		status_code=exc.status_code,
+		content={
+			"detail": exc.detail,
+			"error_code": f"HTTP_{exc.status_code}",
+			"retryable": False,
+		},
+		headers=CORS_HEADERS,
+	)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+	"""Global exception handler that ensures CORS headers on all error responses."""
+	logger.error(
+		"Unhandled exception",
+		path=request.url.path,
+		method=request.method,
+		error=str(exc),
+		exc_info=True,
+	)
+	return JSONResponse(
+		status_code=500,
+		content={
+			"detail": "Something went wrong. Please try again.",
+			"error_code": "INTERNAL_ERROR",
+			"retryable": True,
+		},
+		headers=CORS_HEADERS,
 	)
 
 

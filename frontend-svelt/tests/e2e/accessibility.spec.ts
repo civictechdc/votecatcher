@@ -2,11 +2,8 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test.describe('Accessibility Audit', () => {
-	test.beforeEach(async ({ page }) => {
-		await page.goto('/workspace');
-	});
-
-	test('dashboard page should have no WCAG 2.2 AA violations', async ({ page }) => {
+	test('landing page should have no WCAG 2.2 AA violations', async ({ page }) => {
+		await page.goto('/');
 		await page.waitForLoadState('networkidle');
 
 		const accessibilityScanResults = await new AxeBuilder({ page })
@@ -27,28 +24,13 @@ test.describe('Accessibility Audit', () => {
 		expect(accessibilityScanResults.violations).toEqual([]);
 	});
 
-	test('jobs page should have no WCAG 2.2 AA violations', async ({ page }) => {
-		await page.goto('/workspace/jobs');
+	test('demo page should have no WCAG 2.2 AA violations', async ({ page }) => {
+		await page.goto('/workspace/demo');
 		await page.waitForLoadState('networkidle');
 
 		const accessibilityScanResults = await new AxeBuilder({ page })
 			.withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
 			.analyze();
-
-		expect(accessibilityScanResults.violations).toEqual([]);
-	});
-
-	test('sessions page should have no WCAG 2.2 AA violations', async ({ page }) => {
-		await page.goto('/workspace/sessions');
-		await page.waitForLoadState('networkidle');
-
-		const accessibilityScanResults = await new AxeBuilder({ page })
-			.withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
-			.analyze();
-
-		if (accessibilityScanResults.violations.length > 0) {
-			console.log('Violations:', JSON.stringify(accessibilityScanResults.violations, null, 2));
-		}
 
 		expect(accessibilityScanResults.violations).toEqual([]);
 	});
@@ -63,11 +45,30 @@ test.describe('Accessibility Audit', () => {
 
 		expect(accessibilityScanResults.violations).toEqual([]);
 	});
+
+	test('campaign dashboard should have no WCAG 2.2 AA violations', async ({ page }) => {
+		await page.goto('/workspace/campaigns');
+		await page.waitForLoadState('networkidle');
+
+		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
+		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
+			await campaignLink.click();
+			await page.waitForLoadState('networkidle');
+
+			const accessibilityScanResults = await new AxeBuilder({ page })
+				.withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
+				.analyze();
+
+			expect(accessibilityScanResults.violations).toEqual([]);
+		} else {
+			test.skip();
+		}
+	});
 });
 
 test.describe('Color Contrast', () => {
 	test('all text should meet minimum contrast ratio', async ({ page }) => {
-		await page.goto('/workspace');
+		await page.goto('/workspace/campaigns');
 		await page.waitForLoadState('networkidle');
 
 		const contrastResults = await new AxeBuilder({ page })
@@ -81,7 +82,7 @@ test.describe('Color Contrast', () => {
 
 test.describe('Keyboard Navigation', () => {
 	test('sidebar navigation should be keyboard accessible', async ({ page }) => {
-		await page.goto('/workspace');
+		await page.goto('/workspace/campaigns');
 		await page.waitForLoadState('networkidle');
 
 		await page.keyboard.press('Tab');

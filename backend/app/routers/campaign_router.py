@@ -179,3 +179,48 @@ def delete_campaign(
 	session.delete(campaign)
 	session.commit()
 	logger.info("Campaign deleted", campaign_id=campaign_id)
+
+
+class CampaignMetricsResponse(BaseModel):
+	"""Response schema for campaign metrics."""
+
+	total_signatures: int
+	processed: int
+	high_confidence: int
+	medium_confidence: int
+	low_confidence: int
+	progress_percentage: float
+	last_job: dict | None
+
+
+@router.get("/{campaign_id}/metrics", response_model=CampaignMetricsResponse)
+def get_campaign_metrics(
+	campaign_id: uuid.UUID,
+	session: SessionDep,
+) -> CampaignMetricsResponse:
+	"""Get campaign metrics including signature counts and confidence breakdown.
+
+	Args:
+		campaign_id: Campaign UUID
+		session: Database session
+
+	Returns:
+		Metrics including total signatures, processed count, confidence
+		breakdown, progress percentage, and last job information.
+
+	Raises:
+		HTTPException: 404 if campaign not found
+	"""
+	from app.services.metrics import MetricsService
+
+	campaign = session.get(Campaign, campaign_id)
+	if not campaign:
+		raise HTTPException(
+			status_code=status.HTTP_404_NOT_FOUND,
+			detail=f"Campaign {campaign_id} not found",
+		)
+
+	service = MetricsService(session)
+	metrics = service.compute_campaign_metrics(campaign_id)
+
+	return CampaignMetricsResponse(**metrics)

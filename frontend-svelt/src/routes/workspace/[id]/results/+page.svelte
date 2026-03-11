@@ -2,10 +2,11 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { results } from '$lib/stores/results';
+	import { campaigns } from '$lib/stores/campaigns';
 	import { Table, LoadingState, Button, ErrorDisplay } from '$lib/components/ui';
 	import CsvExportButton from '$lib/components/results/CsvExportButton.svelte';
-	import ConfidenceBadge from '$lib/components/results/ConfidenceBadge.svelte';
 
+	let campaignId = $derived($page.params.id);
 	let jobId = $derived(Number($page.url.searchParams.get('jobId') || 1));
 
 	const columns = [
@@ -17,6 +18,7 @@
 
 	onMount(() => {
 		results.fetchResults(jobId);
+		campaigns.fetchAll();
 	});
 
 	function getTableRows(resultList: typeof $results.results) {
@@ -60,18 +62,20 @@
 	let totalPages = $derived(Math.ceil($results.total / $results.pageSize));
 	let startItem = $derived(($results.page - 1) * $results.pageSize + 1);
 	let endItem = $derived(Math.min($results.page * $results.pageSize, $results.total));
+
+	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
 </script>
 
 <svelte:head>
-	<title>Results — Votecatcher</title>
-	<meta name="description" content="View signature matching results. Filter by confidence, export to CSV." />
+	<title>Results — {campaign?.unique_name || campaign?.title || 'Campaign'} — Votecatcher</title>
+	<meta name="description" content="View signature matching results for this campaign." />
 </svelte:head>
 
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="text-3xl font-bold text-slate-900">Results</h1>
-			<p class="mt-2 text-slate-600">Matched signatures for job #{jobId}</p>
+			<p class="mt-1 text-slate-600">{campaign?.unique_name || campaign?.title || 'Campaign'}</p>
 		</div>
 		<CsvExportButton {jobId} />
 	</div>

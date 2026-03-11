@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import { jobs } from '$lib/stores/jobs';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Button, Table, LoadingState, Modal, ErrorDisplay } from '$lib/components/ui';
 	import type { JobResponse } from '$lib/api/generated';
 
+	let campaignId = $derived($page.params.id);
+
 	let showCreateModal = $state(false);
 	let showCancelModal = $state(false);
 	let jobToCancel = $state<{ id: number; status: string } | null>(null);
 	let formData = $state({
-		campaignId: '',
 		provider: 'openai'
 	});
 
@@ -47,7 +49,6 @@
 
 	const columns = [
 		{ key: 'id', label: 'ID', sortable: true },
-		{ key: 'campaign', label: 'Campaign', sortable: true },
 		{ key: 'status', label: 'Status', sortable: true },
 		{ key: 'created', label: 'Created', sortable: true },
 		{ key: 'actions', label: 'Actions', sortable: false }
@@ -58,17 +59,18 @@
 		campaigns.fetchAll();
 	});
 
+	const campaignJobs = $derived($jobs.jobs.filter(job => String(job.campaignId) === String(campaignId)));
+
 	function getTableRows(jobList: JobResponse[]) {
 		return jobList.map((job) => {
 			const canCancel = CANCELABLE_STATES.includes(job.status);
 			return {
-				id: job.jobId,
-				campaign: job.campaignName || job.campaignId,
+				id: `<a href="/workspace/${campaignId}/jobs/${job.jobId}" class="text-blue-600 hover:text-blue-800 font-medium">#${job.jobId}</a>`,
 				status: `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[job.status] || 'bg-gray-100 text-gray-800'}">${formatStatus(job.status)}</span>`,
 				created: formatDate(job.createdAt),
 				actions: canCancel
-					? `<button data-job-id="${job.jobId}" data-job-status="${job.status}" class="cancel-btn text-red-600 hover:text-red-800 text-sm font-medium" aria-label="Cancel job ${job.jobId}">Cancel</button>`
-					: `<span class="text-gray-400 text-sm">-</span>`
+					? `<button data-job-id="${job.jobId}" data-job-status="${job.status}" class="cancel-btn text-red-600 hover:text-red-800 text-sm font-medium mr-3" aria-label="Cancel job ${job.jobId}">Cancel</button><a href="/workspace/${campaignId}/jobs/${job.jobId}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View</a>`
+					: `<a href="/workspace/${campaignId}/jobs/${job.jobId}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View</a>`
 			};
 		});
 	}
@@ -92,7 +94,6 @@
 				showCancelModal = false;
 				jobToCancel = null;
 			} catch (error) {
-				// Error handled by store
 			}
 		}
 	}
@@ -100,13 +101,12 @@
 	async function handleCreate() {
 		try {
 			await jobs.create({
-				campaignId: formData.campaignId,
+				campaignId: campaignId,
 				provider: formData.provider
 			});
 			showCreateModal = false;
-			formData = { campaignId: '', provider: 'openai' };
+			formData = { provider: 'openai' };
 		} catch (error) {
-			// Error handled by store
 		}
 	}
 
@@ -114,12 +114,12 @@
 		jobs.fetchAll();
 	}
 
-	let availableCampaigns = $derived($campaigns.campaigns);
+	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
 </script>
 
 <svelte:head>
-	<title>Jobs — Votecatcher</title>
-	<meta name="description" content="View and manage OCR and matching jobs. Monitor job progress in real-time." />
+	<title>Jobs — {campaign?.unique_name || campaign?.title || 'Campaign'} — Votecatcher</title>
+	<meta name="description" content="View and manage OCR and matching jobs for this campaign." />
 </svelte:head>
 
 {#if $jobs.loading && $jobs.jobs.length === 0}
@@ -129,37 +129,23 @@
 {:else}
 	<div class="space-y-6" onclick={handleCancelClick} role="region" aria-label="Jobs list">
 		<div class="flex items-center justify-between">
-			<h1 class="text-3xl font-bold text-slate-900">Jobs</h1>
+			<div>
+				<h1 class="text-3xl font-bold text-slate-900">Jobs</h1>
+				<p class="mt-1 text-slate-600">{campaign?.unique_name || campaign?.title || 'Campaign'}</p>
+			</div>
 			<Button variant="primary" text="Create Job" onclick={() => (showCreateModal = true)} />
 		</div>
 
 		<Table
 			columns={columns}
-			rows={getTableRows($jobs.jobs)}
-			emptyMessage="No jobs yet. Create your first job to get started."
+			rows={getTableRows(campaignJobs)}
+			emptyMessage="No jobs yet for this campaign. Create your first job to get started."
 		/>
 	</div>
 {/if}
 
 <Modal open={showCreateModal} onClose={() => (showCreateModal = false)} title="Create Job">
 	<form onsubmit={(e) => { e.preventDefault(); handleCreate(); }} class="space-y-4">
-		<div>
-			<label for="campaign" class="block text-sm font-medium text-slate-700 mb-1">
-				Campaign
-			</label>
-			<select
-				id="campaign"
-				bind:value={formData.campaignId}
-				class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
-				required
-			>
-				<option value="" disabled>Select a campaign</option>
-				{#each availableCampaigns as campaign}
-					<option value={campaign.id}>{campaign.unique_name || campaign.title}</option>
-				{/each}
-			</select>
-		</div>
-
 		<div>
 			<label for="provider" class="block text-sm font-medium text-slate-700 mb-1">
 				OCR Provider

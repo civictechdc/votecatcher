@@ -27,7 +27,7 @@
 	function getTableRows(campaignList: CampaignResponse[]) {
 		return campaignList.map((campaign) => ({
 			id: campaign.id,
-			name: campaign.unique_name || campaign.title || '',
+			name: `<a href="/workspace/${campaign.id}" class="text-blue-600 hover:text-blue-800 font-medium">${campaign.unique_name || campaign.title || ''}</a>`,
 			year: campaign.year,
 			region: campaign.region || '',
 			actions: `<button data-campaign-id="${campaign.id}" data-campaign-name="${campaign.unique_name || campaign.title || ''}" class="delete-btn text-red-600 hover:text-red-800 text-sm font-medium" aria-label="Delete ${campaign.unique_name || campaign.title}">Delete</button>`
@@ -40,7 +40,6 @@
 			showCreateModal = false;
 			formData = { name: '', year: 2024, region: 'DC' };
 		} catch (error) {
-			// Error handled by store
 		}
 	}
 
