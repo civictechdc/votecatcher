@@ -1,66 +1,42 @@
-# OpenSpec Integration
+# Votecatcher OpenSpec
 
-This directory contains the technical specification and generated implementation tasks for Votecatcher.
+Implementation specification and progress tracking for Votecatcher MVP.
 
-## Files
+## Documents
 
 | File | Purpose |
 |------|---------|
-| `SPEC.md` | Technical specification (source of truth for implementation) |
-| `TODO.md` | Generated task list with phase breakdown |
-| `PROGRESS.md` | Track completed tasks and blockers |
+| [SPEC.md](SPEC.md) | Technical specification v1.2 - architecture, data model, API, implementation plan |
+| [REQUIREMENTS.md](REQUIREMENTS.md) | Requirements update 2026-03-11 - user stories, BDD scenarios, decisions |
+| [PROGRESS.md](PROGRESS.md) | Active progress tracking - phase status, issues, deviations |
+| [diagrams/](diagrams/) | Architecture and UI diagrams |
 
-## Usage
+## Getting Started
 
-### Generate Tasks from Spec
+1. Read [SPEC.md](SPEC.md) for the full technical specification
+2. Check [PROGRESS.md](PROGRESS.md) for current status
+3. Reference [REQUIREMENTS.md](REQUIREMENTS.md) for user stories and BDD scenarios
 
-```bash
-# If you have openspec CLI installed
-npx openspec generate TODO.md
+## Phase Gates
 
-# Or manually: Open the SPEC.md and create tasks based on Phase Verification Gates
-```
+Each phase has entrance/exit criteria defined in SPEC.md §6. No phase may proceed without meeting exit criteria.
 
-### Workflow
-
-1. **Read SPEC.md** - Understand the full architecture and approach
-2. **Check TODO.md** - See current phase and tasks
-3. **Pick a task** - Mark as "in_progress" in TODO.md
-4. **Implement with TDD** - Write test first, then code
-5. **Run exit criteria** - Verify before marking complete
-6. **Mark complete** - Update TODO.md and PROGRESS.md
-7. **Next task** - Continue until phase complete
-
-### Phase Gates
-
-Each phase has entry/exit criteria in SPEC.md §7.3. **Do not skip these.**
+### Critical Path
 
 ```
-Phase 0 → verify exit criteria → Phase 1 → verify → Phase 2 → ...
+Phase 1 (Stability) ────────┐
+                             ├──▶ Phase 2 (Polish) ──▶ MVP Ready
+Phase 3 (Page Hierarchy) ───┘
 ```
 
-### Referencing Supporting Docs
+Phase 1 and Phase 3 can run in parallel.
 
-When implementing, reference the detailed docs as needed:
+## Validation Requirements
 
-- Phase 1 (Data): `../.agent-workspace/design-session/data-model.md`
-- Phase 2 (Backend): `../.agent-workspace/design-session/architecture.md`
-- Phase 2 (API): `../.agent-workspace/design-session/api-spec.md`
-- Phase 3 (Frontend): `../.agent-workspace/design-session/frontend-architecture.md`
+- All tasks validated through BDD/TDD
+- Tests must pass before marking tasks complete
+- PROGRESS.md updated at each milestone
 
-## Task Status Convention
+## Archive
 
-In TODO.md, use these markers:
-
-- `[ ]` - Not started
-- `[~]` - In progress
-- `[x]` - Complete
-- `[!]` - Blocked (note reason)
-
-## Syncing with SPEC.md
-
-If SPEC.md is updated (architecture changes, new decisions):
-
-1. Review changes in SPEC.md
-2. Update TODO.md tasks if needed
-3. Note any completed work that needs rework
+Previous specifications archived in `archive-2026-03-11/`

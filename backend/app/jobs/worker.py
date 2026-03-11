@@ -343,17 +343,17 @@ class JobWorker:
 
 			voter_name = " ".join(
 				[
-					name_data.get("first_name", ""),
-					name_data.get("last_name", ""),
+					name_data.get("first_name") or "",
+					name_data.get("last_name") or "",
 				]
 			).strip()
 
 			voter_address = " ".join(
 				[
-					address_data.get("street", ""),
-					address_data.get("city", ""),
-					address_data.get("state", ""),
-					address_data.get("zip", ""),
+					address_data.get("street") or "",
+					address_data.get("city") or "",
+					address_data.get("state") or "",
+					address_data.get("zip") or "",
 				]
 			).strip()
 

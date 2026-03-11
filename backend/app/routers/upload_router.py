@@ -1,5 +1,6 @@
 """File upload router for voter lists and petitions."""
 
+import uuid
 from typing import Annotated
 
 import structlog
@@ -7,6 +8,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from pydantic import BaseModel
 from sqlmodel import Session
 
+from app.data.database.model.schema import Region
 from app.dependencies import get_session
 from app.files.file_service import FileService
 
@@ -24,6 +26,7 @@ class VoterListUploadResponse(BaseModel):
 	message: str
 	file_path: str
 	row_count: int
+	imported_count: int | None = None
 
 
 class PetitionUploadResponse(BaseModel):
@@ -40,36 +43,61 @@ class PetitionUploadResponse(BaseModel):
 	status_code=status.HTTP_201_CREATED,
 )
 async def upload_voter_list(
+	campaign_id: str = Form(...),
 	file: UploadFile = File(...),  # noqa: B008
 	session: SessionDep = None,  # pyright: ignore[reportArgumentType]
 ) -> VoterListUploadResponse:
-	"""Upload voter list CSV/Excel file.
+	"""Upload and import voter list CSV file.
 
 	Args:
-		file: Uploaded file (CSV or Excel)
+		campaign_id: Campaign ID to get region from
+		file: Uploaded file (CSV)
 		session: Database session
 
 	Returns:
-		Upload confirmation with file path and row count
+		Upload confirmation with file path and imported count
 
 	Raises:
 		HTTPException: 400 if file validation fails
+		HTTPException: 404 if campaign/region not found
 	"""
 	try:
+		from app.data.database.model.schema import Campaign
+
+		campaign_uuid = uuid.UUID(campaign_id.replace("-", ""))
+		campaign = session.get(Campaign, campaign_uuid)
+		if not campaign:
+			raise HTTPException(
+				status_code=status.HTTP_404_NOT_FOUND,
+				detail=f"Campaign {campaign_id} not found",
+			)
+
+		region = session.get(Region, campaign.region_id)
+		if not region:
+			raise HTTPException(
+				status_code=status.HTTP_404_NOT_FOUND,
+				detail="Region for campaign not found",
+			)
+
 		file_service = FileService(session)
-		file_path, row_count = await file_service.save_voter_list_file(file)
+		file_path, imported_count = await file_service.import_voter_list(
+			file=file,
+			region_id=region.id,
+		)
 
 		logger.info(
-			"Voter list uploaded",
+			"Voter list uploaded and imported",
 			file_name=file.filename,
 			file_path=file_path,
-			row_count=row_count,
+			region_id=str(region.id),
+			imported_count=imported_count,
 		)
 
 		return VoterListUploadResponse(
-			message="Voter list uploaded successfully",
+			message="Voter list uploaded and imported successfully",
 			file_path=file_path,
-			row_count=row_count,
+			row_count=imported_count,
+			imported_count=imported_count,
 		)
 
 	except ValueError as e:

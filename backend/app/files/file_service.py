@@ -2,6 +2,7 @@
 
 import contextlib
 import hashlib
+import io
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -13,6 +14,7 @@ from pydantic import BaseModel
 
 from app.data.database.model.petition_crop import PetitionCrop
 from app.data.database.model.petition_scan import PetitionScan
+from app.data.database.model.registered_voter import RegisteredVoter
 
 if TYPE_CHECKING:
 	from fastapi import UploadFile
@@ -186,6 +188,111 @@ class FileService:
 			row_count = len(df)
 
 		return (str(file_path), max(0, row_count))
+
+	async def import_voter_list(
+		self, file: "UploadFile", region_id: UUID
+	) -> tuple[str, int]:
+		"""Import voter list CSV into registered_voters table.
+
+		Args:
+			file: Uploaded CSV file
+			region_id: Region UUID to associate voters with
+
+		Returns:
+			Tuple of (file_path, imported_count)
+
+		Raises:
+			FileValidationError: If file is invalid
+		"""
+		if not file.filename or not file.filename.lower().endswith(".csv"):
+			raise FileValidationError("Invalid file type. Only CSV files are allowed.")
+
+		content = await file.read()
+		await file.seek(0)
+
+		df = pd.read_csv(io.BytesIO(content))
+		df.columns = [col.strip() for col in df.columns]
+
+		required_columns = ["First_Name", "Last_Name"]
+		missing = [col for col in required_columns if col not in df.columns]
+		if missing:
+			raise FileValidationError(f"Missing required columns: {', '.join(missing)}")
+
+		voter_dir = self.storage_base / "voter-lists"
+		voter_dir.mkdir(parents=True, exist_ok=True)
+		file_path = voter_dir / file.filename
+		file_path.write_bytes(content)
+
+		from sqlmodel import col, select
+
+		result = self.session.exec(
+			select(RegisteredVoter.id).order_by(col(RegisteredVoter.id).desc()).limit(1)
+		)
+		max_id = result.first() or 0
+
+		voters_to_insert = []
+		for _idx, row in df.iterrows():
+			name_data = {
+				"first_name": str(row.get("First_Name", "")).strip(),
+				"last_name": str(row.get("Last_Name", "")).strip(),
+				"middle_name": str(row.get("Middle_Name", "")).strip()
+				if pd.notna(row.get("Middle_Name"))
+				else None,
+			}
+
+			street_parts = [
+				str(row.get("Street_Number", "")).strip()
+				if pd.notna(row.get("Street_Number"))
+				else "",
+				str(row.get("Street_Name", "")).strip()
+				if pd.notna(row.get("Street_Name"))
+				else "",
+				str(row.get("Street_Type", "")).strip()
+				if pd.notna(row.get("Street_Type"))
+				else "",
+				str(row.get("Street_Dir_Suffix", "")).strip()
+				if pd.notna(row.get("Street_Dir_Suffix"))
+				else "",
+			]
+			street = " ".join(p for p in street_parts if p)
+
+			address_data = {
+				"street": street,
+				"city": str(row.get("City", "")).strip()
+				if pd.notna(row.get("City"))
+				else None,
+				"state": str(row.get("State", "")).strip()
+				if pd.notna(row.get("State"))
+				else None,
+				"zip": str(row.get("Zip", "")).strip()
+				if pd.notna(row.get("Zip"))
+				else None,
+			}
+
+			other_data = {
+				"party": str(row.get("Party", "")).strip()
+				if pd.notna(row.get("Party"))
+				else None,
+				"registration_date": str(row.get("Registration_Date", "")).strip()
+				if pd.notna(row.get("Registration_Date"))
+				else None,
+			}
+
+			max_id += 1
+			voter = RegisteredVoter(
+				id=max_id,
+				region_id=region_id,
+				name_data=name_data,
+				address_data=address_data,
+				other_field_data=other_data,
+			)
+			voters_to_insert.append(voter)
+
+		for voter in voters_to_insert:
+			self.session.add(voter)
+		self.session.commit()
+
+		return (str(file_path), len(voters_to_insert))
 
 	async def process_petition_upload(
 		self, file: "UploadFile", campaign_id: str, region: str = "DC"

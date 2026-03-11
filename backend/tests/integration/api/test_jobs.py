@@ -6,12 +6,15 @@ Tests the complete job lifecycle:
 - Job cancellation
 """
 
+import uuid
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.api import app
 from app.data.database.model.jobs import JobStatus, MatcherJob
+from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
 
 
@@ -28,6 +31,15 @@ class TestCreateJob:
 		self, client: TestClient, test_campaign: Campaign, session: Session
 	):
 		"""Should create matcher job successfully."""
+		petition_scan = PetitionScan(
+			campaign_id=test_campaign.id,
+			original_filename="test.pdf",
+			stored_path=f"/tmp/test_{uuid.uuid4()}.pdf",
+			file_hash=f"hash_{uuid.uuid4()}",
+		)
+		session.add(petition_scan)
+		session.commit()
+
 		response = client.post(
 			"/api/jobs",
 			json={
@@ -47,6 +59,23 @@ class TestCreateJob:
 		job = session.get(MatcherJob, data["job_id"])
 		assert job is not None
 		assert job.campaign_id == test_campaign.id
+
+	def test_create_job_no_petition_scans(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Should return 400 if campaign has no petition scans."""
+		response = client.post(
+			"/api/jobs",
+			json={
+				"campaign_id": str(test_campaign.id),
+				"scan_ids": [],
+				"provider": "openai",
+			},
+		)
+
+		assert response.status_code == 400
+		data = response.json()
+		assert "No petition scans" in data["detail"]
 
 	def test_create_job_invalid_campaign(self, client: TestClient, session: Session):
 		"""Should return 404 for non-existent campaign."""

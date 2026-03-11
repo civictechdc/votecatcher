@@ -1,7 +1,7 @@
-# Votecatcher Technical Specification
+# Votecatcher MVP Technical Specification
 
-**Status:** Draft - Phase 4 Planning Review
-**Version:** 1.3.0
+**Status:** Draft
+**Version:** 1.2
 **Last Updated:** 2026-03-11
 **Author:** Solutions Architect Agent
 
@@ -9,120 +9,48 @@
 
 ## Executive Summary
 
-Votecatcher is an open-source MVP tool that automates petition signature verification using LLM-based OCR and fuzzy matching. The system reduces manual verification from hours to minutes by extracting handwritten text from scanned petitions and matching it against official voter registration lists.
-
-**Key Design Decisions:**
-- Async-first architecture leveraging LLM batch APIs (no complex job queues)
-- Hybrid matching: DB pre-filtering + Python RapidFuzz for fuzzy matching
-- Real-time updates via Server-Sent Events (SSE)
-- Self-hosted deployment on single VPS ($5-20/mo)
-- OpenAPI-generated TypeScript client for type safety
-- Strict TDD methodology for all features
-
-**MVP Scope:**
-- Single-user demo mode
-- DC region preset with manual crop coordinates
-- End-to-end flow: upload → OCR → matching → results
-- Session persistence and demo reset capability
-
-**Timeline:** 4-6 weeks for complete MVP
-
----
-
-## Table of Contents
-
-1. [Problem Statement](#1-problem-statement)
-2. [Solution Overview](#2-solution-overview)
-3. [Architecture](#3-architecture)
-4. [Data Model](#4-data-model)
-5. [API Specification](#5-api-specification)
-6. [Frontend Architecture](#6-frontend-architecture)
-7. [Implementation Plan](#7-implementation-plan)
-8. [Technical Decisions](#8-technical-decisions)
-9. [Risks & Mitigations](#9-risks--mitigations)
-10. [Open Questions](#10-open-questions)
-11. [References](#11-references)
-    - Appendix A: BDD Test Examples
-    - Appendix B: Configuration Reference
-    - Appendix C: Security Scanning
-    - Appendix D: Glossary
+This specification defines the technical implementation for Votecatcher MVP completion, focusing on stability, page hierarchy redesign, and LLM provider configuration. The MVP targets a 3-4 week timeline with clear phase gates. Key architectural decisions include: campaign-scoped navigation with numeric IDs, snapshot-based provider storage (no foreign keys), on-demand status computation, and polling-based dashboard updates. Phase 1 (Stability) and Phase 3 (Page Hierarchy) can proceed in parallel.
 
 ---
 
 ## 1. Problem Statement
 
-Campaigns collecting ballot petition signatures face a manual, error-prone verification process:
-
-- **Current state:** Visual comparison of paper petitions against spreadsheet data
-- **Pain points:** Slow, tedious, highly error-prone
-- **Scale:** Hundreds to thousands of signatures per campaign
-
-**Business Value:**
-- Speed: Reduce verification time from hours to minutes
-- Accuracy: Systematic matching reduces human error
-- Transparency: Clear confidence indicators and audit trail
-
-**MVP Constraints:**
-- Single VPS deployment ($5-20/mo)
-- 1-5 concurrent users
-- Pre-release state (no backward compatibility required)
-- DC region only initially
+Votecatcher needs to reach MVP readiness with:
+1. Stable background job processing with test coverage
+2. Campaign-scoped navigation replacing flat route structure
+3. Dashboard with real metrics and confidence visualization
+4. LLM provider configuration UI (no external config files)
+5. Baseline accessibility and error handling
 
 ---
 
 ## 2. Solution Overview
 
-### 2.1 Core Workflow
+### Key Architectural Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| URL format | Numeric ID (`/workspace/123`) | Simpler, no slug management |
+| Provider storage | Snapshot only (no FK) | Survives provider deletion, simpler queries |
+| Campaign status | On-demand compute | No cache invalidation, always fresh |
+| Dashboard updates | Polling (10s) | Simpler than SSE for aggregate metrics |
+| Demo data | In-memory only | Resets on reload, no persistence complexity |
+| Route migration | Not needed | App not in production |
+
+### Target Route Structure
 
 ```
-Upload Petition → Pre-crop Signatures → OCR Extraction → Fuzzy Matching → Results
+/                             → Marketing landing (placeholder)
+/workspace                    → Redirect to /workspace/campaigns
+/workspace/campaigns          → Campaign list (enhanced table)
+/workspace/[id]               → Campaign dashboard
+/workspace/[id]/jobs          → Jobs scoped to campaign
+/workspace/[id]/jobs/[job_id] → Job details
+/workspace/[id]/results       → Results scoped to campaign
+/workspace/[id]/upload        → Upload page with tabs (Voter List / Petitions)
+/workspace/settings           → Global settings + LLM providers
+/workspace/demo               → Demo mode (virtual campaign)
 ```
-
-### 2.2 Key Components
-
-1. **File Processing**
-   - PDF upload and pre-cropping into individual signature entries
-   - Region-level voter list storage (shared across campaigns)
-
-2. **OCR Processing**
-   - Multi-provider support: OpenAI, Gemini, Mistral
-   - Batch API with async polling
-   - Per-crop extraction results
-
-3. **Job Orchestration**
-   - Matcher job orchestrates: OCR → Matching phases
-   - State machine with loose coupling
-   - Partial failure handling
-
-4. **Matching Engine**
-   - DB pre-filtering (region, zipcode)
-   - Python RapidFuzz fuzzy matching
-   - Top 5 predictions with confidence scores
-
-5. **Results Visualization**
-   - Paginated, filterable results table
-   - Side-by-side source/prediction comparison
-   - Confidence distribution dashboard
-
-6. **Session Management**
-   - Workspace snapshots
-   - Full export/import (ZIP)
-   - Demo mode with pre-baked sessions
-
-### 2.3 Technology Stack
-
-**Backend:**
-- Python 3.12+, FastAPI
-- SQLModel/SQLAlchemy, PostgreSQL/SQLite
-- structlog, pytest
-
-**Frontend:**
-- SvelteKit, TypeScript
-- Tailwind CSS v4, Vite, Bun
-- Vitest, Playwright
-
-**External:**
-- LLM Providers: OpenAI, Gemini, Mistral (batch APIs)
 
 ---
 
@@ -131,1180 +59,999 @@ Upload Petition → Pre-crop Signatures → OCR Extraction → Fuzzy Matching �
 ### 3.1 System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  SvelteKit Frontend                                             │
-│  ├── Routes: /workspace, /campaigns, /jobs, /results            │
-│  ├── OpenAPI-generated API client                               │
-│  └── SSE Client for real-time updates                           │
-└─────────────────────────────────────────────────────────────────┘
-                              │ HTTP/SSE
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  FastAPI Backend                                                │
-│  ├── Feature-based packages: ocr, matching, jobs, files, etc.   │
-│  ├── SSE endpoints for job status                               │
-│  ├── BackgroundTasks for OCR polling                            │
-│  └── Router → Service pattern                                   │
-└─────────────────────────────────────────────────────────────────┘
-              │                    │                    │
-              ▼                    ▼                    ▼
-    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-    │ LLM Providers   │  │ PostgreSQL/     │  │ File Storage    │
-    │ (Batch APIs)    │  │ SQLite          │  │ (local fs)      │
-    └─────────────────┘  └─────────────────┘  └─────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      Frontend (SvelteKit)                    │
+├──────────────┬──────────────┬──────────────┬────────────────┤
+│   Campaign   │   Dashboard  │    Jobs      │    Settings    │
+│    List      │   + Metrics  │   + Results  │   + Providers  │
+└──────┬───────┴──────┬───────┴──────┬───────┴───────┬────────┘
+       │              │              │               │
+       ▼              ▼              ▼               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Backend (FastAPI)                         │
+├──────────────┬──────────────┬──────────────┬────────────────┤
+│  Campaigns   │   Metrics    │    Jobs      │   Providers    │
+│    API       │    API       │   + Worker   │     API        │
+└──────┬───────┴──────────────┴──────┬───────┴────────────────┘
+       │                             │
+       ▼                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   SQLite (SQLModel/Drizzle)                  │
+├─────────────────────────────────────────────────────────────┤
+│ campaigns │ matcher_job │ match_result │ llm_provider_config │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Backend Structure
+### 3.2 Component Design
+
+#### Frontend Components
+
+| Component | Location | Purpose | MVP Status |
+|-----------|----------|---------|------------|
+| `CampaignDashboard` | `/workspace/[id]` | Metrics cards, donut chart, recent jobs | Required |
+| `CampaignSidebar` | Layout | Campaign-scoped nav + switcher | Required |
+| `UploadTabs` | `/workspace/[id]/upload` | Tabbed voter/petition upload | Required |
+| `ProviderSettings` | `/workspace/settings` | LLM provider configuration | Stretch |
+| `ConfidenceDonut` | Dashboard | High/Medium/Low distribution | Required |
+| `StatusBadge` | Shared | Campaign/job status indicators | Required |
+| `CampaignList` | `/workspace/campaigns` | Enhanced table with status, filtering | **Phase 4 Stretch** |
+
+> **Note:** Enhanced CampaignList (US-018 partial) is deferred to Phase 4. MVP includes basic campaign list only.
+
+#### Settings Scope
+
+| Route | Scope | Contents | MVP Status |
+|-------|-------|----------|------------|
+| `/workspace/settings` | Global | LLM providers, app preferences | **Required** |
+| `/workspace/[id]/settings` | Per-campaign | Name, region, year, target | **Deferred** |
+
+**Campaign settings for MVP:** Edit via modal from campaign list or dashboard (not separate page).
+
+#### Backend Services
+
+| Service | File | Purpose |
+|---------|------|---------|
+| `WorkerService` | `backend/app/jobs/worker.py` | Background job processing |
+| `MetricsService` | `backend/app/services/metrics.py` | Campaign metric aggregation |
+| `ProviderService` | `backend/app/services/providers.py` | LLM provider CRUD + validation |
+| `StatusService` | `backend/app/services/status.py` | Campaign status computation |
+
+### 3.3 Data Flow
+
+#### Job Processing Flow
 
 ```
-backend/
-├── app/
-│   ├── api.py
-│   ├── campaign/     # Campaign CRUD
-│   ├── jobs/         # Job orchestration, SSE
-│   ├── ocr/          # OCR clients, service, polling
-│   ├── matching/     # Fuzzy matching, pre-filtering
-│   ├── files/        # Upload, cropping, storage
-│   ├── sessions/     # Save/load/export
-│   ├── voters/       # Voter list import
-│   ├── data/         # Database, migrations
-│   ├── settings/     # Config, feature flags
-│   └── logging/      # structlog setup
+Upload PDF → Create Crops → Create Job (status: NOT_STARTED)
+                                    │
+                                    ▼
+                    Worker polls for NOT_STARTED jobs
+                                    │
+                                    ▼
+                    OCR processing (status: OCR_STARTED)
+                                    │
+                                    ▼
+                    OCR complete (status: OCR_COMPLETED)
+                                    │
+                                    ▼
+                    Matching (status: MATCHING)
+                                    │
+                                    ▼
+                    Results created (status: MATCHING_COMPLETED)
+                                    │
+                                    ▼
+                    SSE events emitted throughout
 ```
 
-### 3.3 Job Orchestration State Machine
+#### Dashboard Polling Flow
 
 ```
-NOT_STARTED
-    ↓ start_ocr
-OCR_PENDING → OCR_STARTED → OCR_COMPLETED
-                               ↓ start_matching
-                         MATCHING_PENDING → MATCHING → MATCHING_COMPLETED
-
-Error paths: OCR_FAILED, OCR_TIMEOUT, MATCHING_ERROR
+Page mount → GET /api/campaigns/{id}/metrics
+                    │
+                    ▼
+            Set 10s interval
+                    │
+                    ▼
+            Re-fetch metrics on interval
+                    │
+                    ▼
+            Update UI reactively
+                    │
+                    ▼
+            Cleanup interval on unmount
 ```
-
-**Key Design:** OCR and matching are loosely coupled phases. Partial OCR successes proceed to matching; matching can be re-run independently.
-
-### 3.4 Matching Pipeline
-
-```
-Load Voter List → Load OCR Results
-         ↓
-For each OCR result:
-  1. DB pre-filter (region, zipcode)
-  2. Extract name + address components
-  3. RapidFuzz fuzzy match
-  4. Calculate weighted similarity score
-  5. Rank top 5 predictions
-  6. Store match results with confidence levels
-```
-
-**Confidence Mapping (Initial Defaults):**
-- HIGH: ≥ 0.85
-- MEDIUM: 0.60 - 0.84
-- LOW: < 0.60
-
-> **Note:** These thresholds are starting points. During implementation (Phase 2), the developer agent should work with the user to experiment and calibrate optimal values based on real petition samples.
-
-**Confidence Calibration Process:**
-
-During Phase 2 backend implementation, after the matching service is functional:
-
-1. **Prepare Test Dataset**
-   - Use existing sample data from `samples/dc/`:
-     - `fake_voter_records.csv` (100K voters for DB pre-filtering tests)
-     - `fake_signed_petitions.pdf` and `fake_signed_petitions_1-10.pdf` (petition samples)
-   - Select 20-50 representative petition crops from samples
-   - Manually verify correct matches (ground truth)
-   - Include edge cases: handwriting variations, common names, address variations
-
-2. **Run Initial Matching**
-   - Process test dataset with default thresholds (0.85/0.60)
-   - Generate matching results with similarity scores
-
-3. **Collaborative Analysis**
-   - Review results together (developer agent + user)
-   - Identify false positives (incorrect HIGH confidence)
-   - Identify false negatives (correct matches marked LOW)
-   - Analyze score distribution
-
-4. **Iterate on Thresholds**
-   - Adjust thresholds based on analysis
-   - Re-run matching on test dataset
-   - Measure precision/recall at each threshold
-
-5. **Finalize Defaults**
-   - Document chosen thresholds with rationale
-   - Record precision/recall metrics
-   - Make thresholds configurable for future tuning
-
-**Expected Outcome:**
-- Confidence levels that minimize false positives
-- Clear documentation of threshold rationale
-- Test dataset retained for regression testing
 
 ---
 
 ## 4. Data Model
 
-### 4.1 Core Entities
+### 4.1 Schema Changes
 
-```
-campaign ──── 1:N ───► petition_scan ──── 1:N ───► petition_crop
-    │                                              │
-    │                                              1:1
-    │                                              │
-    │                                              ▼
-    │                                         ocr_result
-    │                                              │
-    │                                              1:N
-    │                                              │
-    │                                              ▼
-    └────────────────────────────────────► match_result
+#### New Table: `llm_provider_config`
 
-matcher_job ──── 1:N ───► ocr_job
-    │
-    └───────────────────► match_result (via ocr_result)
+```sql
+CREATE TABLE llm_provider_config (
+  id INTEGER PRIMARY KEY,
+  provider TEXT NOT NULL UNIQUE,    -- 'openai', 'gemini', 'mistral'
+  api_key TEXT,                     -- Plaintext (MVP), encrypt post-MVP
+  model TEXT NOT NULL,
+  is_configured BOOLEAN DEFAULT FALSE,
+  last_validated DATETIME,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME
+);
 ```
 
-### 4.2 Key Tables
+#### Modified Table: `matcher_job`
 
-| Table | Purpose |
-|-------|---------|
-| `campaign` | Organizing unit for election year/region |
-| `petition_scan` | Uploaded PDF metadata |
-| `petition_crop` | Individual signature entry (pre-cropped) |
-| `ocr_result` | Extracted text from crop (1:1) |
-| `match_result` | Top 5 predictions per OCR result |
-| `matcher_job` | Orchestrator job tracking OCR → Matching |
-| `ocr_job` | Child job for batch OCR processing |
-| `session` | Workspace snapshot (reference-based) |
-| `registered_voters` | Voter list data |
-
-### 4.3 File Storage
-
-```
-data/
-├── regions/{region_id}/voter-lists/    # Shared across campaigns
-└── campaigns/{campaign_id}/
-    ├── petitions/                       # Original PDFs
-    └── crops/                           # Pre-cropped images
+```sql
+ALTER TABLE matcher_job ADD COLUMN provider_name TEXT;    -- Snapshot: 'openai'
+ALTER TABLE matcher_job ADD COLUMN provider_model TEXT;   -- Snapshot: 'gpt-4o'
+ALTER TABLE matcher_job ADD COLUMN parent_job_id INTEGER REFERENCES matcher_job(id);
 ```
 
-### 4.4 Sample Data
+**Note:** No FK to `llm_provider_config` - jobs store snapshot only.
 
-The repository includes sample data for testing and development:
+### 4.2 Status Computation (On-Demand)
 
+Campaign status computed via priority cascade:
+
+```python
+def compute_campaign_status(campaign_id: int) -> str:
+    """
+    Priority: ERROR > IN_PROGRESS > COMPLETED > NOT_STARTED
+    """
+    jobs = get_jobs_for_campaign(campaign_id)
+    uploads = get_uploads_for_campaign(campaign_id)
+    results = get_results_for_campaign(campaign_id)
+
+    # Check for error (only if NO usable results)
+    if jobs and jobs[-1].status == JobStatus.FAILED:
+        if not results or len(results) == 0:
+            return "ERROR"
+
+    # Check for in progress
+    if uploads or any(j.status in [JobStatus.RUNNING, JobStatus.OCR_STARTED] for j in jobs):
+        return "IN_PROGRESS"
+    if results and len(get_processed_results(campaign_id)) < len(get_all_signatures(campaign_id)):
+        return "IN_PROGRESS"
+
+    # Check for completed
+    if results and len(get_processed_results(campaign_id)) == len(get_all_signatures(campaign_id)):
+        return "COMPLETED"
+
+    return "NOT_STARTED"
 ```
-samples/dc/                              # DC region sample data
-├── fake_voter_records.csv               # 100K synthetic voter records
-├── fake_signed_petitions.pdf            # Sample petition PDFs
-└── fake_signed_petitions_1-10.pdf       # Additional petition samples
+
+### 4.3 Indexes
+
+```sql
+-- Campaign metrics queries
+CREATE INDEX idx_match_result_campaign ON match_result(campaign_id);
+CREATE INDEX idx_match_result_confidence ON match_result(campaign_id, confidence_tier);
+
+-- Job queries
+CREATE INDEX idx_matcher_job_campaign ON matcher_job(campaign_id);
+CREATE INDEX idx_matcher_job_status ON matcher_job(status);
 ```
-
-**Purpose:**
-- **Development Testing:** Use for API endpoint testing during Phase 2.5
-- **OCR Testing:** Validate OCR extraction with real PDF samples
-- **Matching Calibration:** Use for confidence threshold tuning (see §3.4)
-- **Demo Mode:** Pre-baked sessions for demo walkthrough (Phase 4)
-- **Integration Tests:** Consistent test data across all phases
-
-**Usage Notes:**
-- Voter list contains 100,000 synthetic records (good for testing DB pre-filtering at scale)
-- Petition PDFs simulate real-world handwriting variations
-- Data is synthetic/fake - safe for public repository
-- Can be used for both unit tests and manual testing
 
 ---
 
 ## 5. API Specification
 
-### 5.1 Design Principles
+### 5.1 New Endpoints
 
-- RESTful endpoints
-- RFC 7807 Problem Details for errors
-- Offset-based pagination
-- OpenAPI 3.1 specification
+#### Campaign Metrics
 
-### 5.2 Key Endpoints
+```
+GET /api/campaigns/{id}/metrics
 
-**Campaign Management:**
-- `GET /api/campaigns` - List campaigns
-- `POST /api/campaigns` - Create campaign
-- `GET /api/campaigns/{id}` - Get campaign details
+Response:
+{
+  "total_signatures": 850,
+  "processed": 847,
+  "high_confidence": 723,
+  "medium_confidence": 98,
+  "low_confidence": 26,
+  "progress_percentage": 99.6,
+  "last_job": {
+    "id": 42,
+    "status": "MATCHING_COMPLETED",
+    "completed_at": "2026-03-11T10:30:00Z"
+  }
+}
+```
 
-**File Upload:**
-- `POST /api/upload/voter-list` - Upload voter list CSV/Excel
-- `POST /api/upload/petition` - Upload petition PDF (pre-crops)
+#### Provider Configuration
 
-**Job Orchestration:**
-- `POST /api/jobs` - Create matcher job
-- `GET /api/jobs/{id}` - Get job status
-- `GET /api/jobs/{id}/status` - SSE endpoint for real-time updates
-- `POST /api/jobs/{id}/cancel` - Cancel job
+```
+GET /api/settings/providers
+Response: [{ "provider": "openai", "model": "gpt-4o", "is_configured": true, ... }]
 
-**Results:**
-- `GET /api/jobs/{job_id}/results` - Get match results (paginated, filterable)
-- `GET /api/jobs/{job_id}/results/export` - Export to CSV
+POST /api/settings/providers/{provider}
+Body: { "api_key": "sk-...", "model": "gpt-4o" }
+Response: { "success": true, "last_validated": "..." }
 
-**Session Management:**
-- `POST /api/sessions` - Save session
-- `POST /api/sessions/{id}/load` - Load session
-- `GET /api/sessions/{id}/export` - Export session as ZIP
+POST /api/settings/providers/{provider}/test
+Response: { "valid": true, "models": ["gpt-4o", "gpt-4o-mini"] }
 
-### 5.3 SSE Events
+DELETE /api/settings/providers/{provider}
+Response: { "success": true }
+```
+
+### 5.2 Modified Endpoints
+
+#### Job Creation (with provider selection)
+
+```
+POST /api/jobs
+Body: {
+  "campaign_id": 123,
+  "petition_id": 456,
+  "provider_name": "openai",    // NEW
+  "provider_model": "gpt-4o"    // NEW
+}
+```
+
+### 5.3 Error Handling
+
+All errors include CORS headers and user-friendly messages.
+
+#### Error Response Categories
+
+| Error Type | HTTP Code | User Message | Action |
+|------------|-----------|--------------|--------|
+| Network unreachable | N/A (client-side) | "Unable to connect. Please check your connection." | "Try Again" button |
+| API 500 error | 500 | "Something went wrong. Please try again." | "Retry" button |
+| Job failed | 200 (job status) | "Job failed: {error_message}" | "Retry" button (creates new job) |
+| Validation error | 400 | Field-specific message | Fix input |
+| Not found | 404 | "Campaign not found" | Navigate to list |
+| Unauthorized | 401 | "Authentication required" | N/A |
+| Rate limited | 429 | "Too many requests. Please wait before retrying." | Wait and retry |
+
+#### Backend Error Response Format
+
+```json
+{
+  "detail": "User-friendly message",
+  "error_code": "OPTIONAL_ERROR_CODE",
+  "retryable": true
+}
+```
+
+#### Concrete API Response Examples
+
+**Network unreachable (client-side, no HTTP):**
+```typescript
+// Frontend-generated error when fetch fails
+{
+  "detail": "Unable to connect. Please check your connection.",
+  "error_code": "NETWORK_ERROR",
+  "retryable": true
+}
+```
+
+**API 500 error:**
+```json
+HTTP/1.1 500 Internal Server Error
+{
+  "detail": "Something went wrong. Please try again.",
+  "error_code": "INTERNAL_ERROR",
+  "retryable": true
+}
+```
+
+**Job failed (returned in job status, not error response):**
+```json
+HTTP/1.1 200 OK
+{
+  "id": 42,
+  "status": "FAILED",
+  "error_message": "OCR provider returned invalid response",
+  "error_code": "OCR_ERROR",
+  "retryable": true
+}
+```
+
+**Validation error (400):**
+```json
+HTTP/1.1 400 Bad Request
+{
+  "detail": "Email must be a valid email address",
+  "error_code": "VALIDATION_ERROR",
+  "retryable": false,
+  "field": "email"
+}
+```
+
+**Not found (404):**
+```json
+HTTP/1.1 404 Not Found
+{
+  "detail": "Campaign not found",
+  "error_code": "NOT_FOUND",
+  "retryable": false
+}
+```
+
+**Rate limited (429):**
+```json
+HTTP/1.1 429 Too Many Requests
+{
+  "detail": "Too many requests. Please wait before retrying.",
+  "error_code": "RATE_LIMITED",
+  "retryable": true,
+  "retry_after": 60
+}
+```
+
+#### Global Exception Handler
+
+```python
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Something went wrong. Please try again.", "error_code": "INTERNAL_ERROR", "retryable": True},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+```
+
+---
+
+## 6. Implementation Plan
+
+### Phase 1: Stability (Week 1) - PARALLEL with Phase 3
+
+| Task | Priority | Effort | Dependencies |
+|------|----------|--------|--------------|
+| Worker tests | HIGH | 4-6h | None |
+| Dashboard metrics API | HIGH | 3-4h | None |
+| Confidence donut component | HIGH | 2-3h | Metrics API |
+| Error handling CORS | MEDIUM | 2-3h | None |
+
+**BDD Scenarios:**
+- Worker processes NOT_STARTED job → OCR results created → status transitions
+- Dashboard shows real metrics with confidence breakdown
+- API errors include CORS headers
+
+### Phase 2: Polish (Week 2)
+
+| Task | Priority | Effort | Dependencies |
+|------|----------|--------|--------------|
+| Keyboard navigation | MEDIUM | 3-4h | Phase 3 routes |
+| E2E test suite | MEDIUM | 4-6h | Phase 3 routes |
+| Documentation | LOW | 2-3h | All features |
+
+**BDD Scenarios:**
+- Tab through all interactive elements
+- Full campaign workflow E2E test passes
+- README reflects new routes
+
+### Phase 3: Page Hierarchy (Week 2, PARALLEL with Phase 1)
+
+| Task | Priority | Effort | Dependencies |
+|------|----------|--------|--------------|
+| Restructure routes | HIGH | 1-2 days | None |
+| Campaign dashboard page | HIGH | 1 day | Routes |
+| Campaign-scoped sidebar | HIGH | 1 day | Routes |
+| Upload page with tabs | MEDIUM | 1 day | Routes |
+| Demo mode integration | MEDIUM | 4h | Routes |
+| Root landing placeholder | LOW | 2h | None |
+
+**BDD Scenarios (Campaign-Scoped Navigation):**
+
+```gherkin
+Feature: Campaign-Scoped Navigation
+
+  Scenario 1: Navigate to campaign dashboard
+    Given a campaign with ID 123 exists
+    When I navigate to /workspace/123
+    Then I see the campaign dashboard
+    And the sidebar shows campaign-scoped navigation
+    And the campaign name is in the header
+
+  Scenario 2: Jobs are scoped to campaign
+    Given campaign 123 has 2 jobs
+    And campaign 456 has 3 jobs
+    When I navigate to /workspace/123/jobs
+    Then I see only jobs for campaign 123
+    And I see 2 jobs in the list
+
+  Scenario 3: Campaign switcher navigates
+    Given I am on /workspace/123/jobs
+    When I use the campaign switcher to select campaign 456
+    Then I navigate to /workspace/456/jobs
+    And I see jobs for campaign 456
+
+  Scenario 4: Results scoped to campaign
+    Given campaign 123 has 50 match results
+    When I navigate to /workspace/123/results
+    Then I see results for campaign 123 only
+    And pagination works within campaign scope
+
+  Scenario 5: Upload scoped to campaign
+    Given I am on /workspace/123/upload
+    When I upload a voter list
+    Then it is associated with campaign 123
+    When I upload a petition
+    Then it is associated with campaign 123
+
+  Scenario 6: Root landing page exists
+    When I navigate to /
+    Then I see a landing page
+    And I see a "Get Started" button
+    And clicking it navigates to /workspace
+```
+
+**Test File:** `frontend-svelt/tests/e2e/navigation.spec.ts`
+
+### Phase 4: New Features (Week 3-4) - STRETCH
+
+| Task | Priority | Effort | Dependencies |
+|------|----------|--------|--------------|
+| LLM provider config UI | HIGH | 2-3 days | Phase 1-3 |
+| Provider selection on job | MEDIUM | 1-2 days | Provider config |
+| Campaign list enhancement (US-018 partial) | LOW | 1-2 days | Phase 3 |
+
+> **Note:** Campaign list enhancement includes status badges, progress bars, confidence display, and filtering. Basic campaign list is included in MVP; enhanced version is stretch.
+
+### Critical Path
+
+```
+Phase 1 (Stability) ────────┐
+                             ├──▶ Phase 2 (Polish) ──▶ MVP Ready
+Phase 3 (Page Hierarchy) ───┘
+```
+
+### Phase Gate Criteria
+
+Each phase has explicit entrance and exit criteria. No phase may proceed without meeting exit criteria.
+
+#### Phase 1: Stability
+
+| Gate | Criteria |
+|------|----------|
+| **Entrance** | Development environment functional, existing tests pass |
+| **Exit** | - Worker tests pass (≥3 scenarios) <br> - Dashboard metrics API returns real data <br> - Confidence donut renders correctly <br> - Error responses include CORS headers |
+
+#### Phase 2: Polish
+
+| Gate | Criteria |
+|------|----------|
+| **Entrance** | Phase 1 exit criteria met, Phase 3 routes exist |
+| **Exit** | - Keyboard navigation works (Tab through all pages) <br> - E2E full-flow test passes <br> - README updated with new routes <br> - No console errors in normal flows |
+
+#### Phase 3: Page Hierarchy
+
+| Gate | Criteria |
+|------|----------|
+| **Entrance** | None (parallel with Phase 1) |
+| **Exit** | - All 6 navigation BDD scenarios pass <br> - Campaign-scoped routes work <br> - Campaign switcher preserves route segment <br> - Demo mode functional at /workspace/demo <br> - Root landing page exists |
+
+#### Phase 4: Stretch Features
+
+| Gate | Criteria |
+|------|----------|
+| **Entrance** | Phase 1, 2, 3 complete |
+| **Exit** | - LLM provider config saves to DB <br> - Provider selection on job creation works <br> - Campaign list shows status badges |
+
+#### Phase Gate Verification
+
+```bash
+# Run before declaring phase complete
+bun run test:unit && bun run test:e2e && bun run build
+
+# All must pass with 0 failures
+# Exit code 0 required to proceed
+```
+
+### Validation Protocol
+
+All tasks must be validated through BDD/TDD before marking complete.
+
+#### Test-First Requirements
+
+1. **Write test first**: Before implementing any feature, write the failing test
+2. **Implement minimum**: Write only enough code to make the test pass
+3. **Refactor**: Clean up implementation while keeping tests green
+4. **Document**: Update test file comments with any edge cases discovered
+
+#### Test Coverage Requirements
+
+| Test Type | Minimum Coverage | Phase Requirement |
+|-----------|------------------|-------------------|
+| Unit tests (backend) | 80% of new code | Mandatory |
+| Integration tests (API) | All new endpoints | Mandatory |
+| E2E tests | All user flows | Mandatory |
+| Component tests | Deferred (Svelte 5 + jsdom incompatibility) | Post-MVP |
+
+#### BDD Scenario Completion
+
+Each BDD scenario must:
+1. Have a corresponding test file
+2. Pass independently
+3. Pass when run with full suite
+4. Be reviewed for edge cases
+
+**Completion Checklist (per scenario):**
+```
+[ ] Scenario written in Gherkin
+[ ] Test file created
+[ ] Test passes in isolation
+[ ] Test passes in full suite
+[ ] Edge cases documented
+[ ] Code reviewed
+```
+
+#### Verification Commands
+
+```bash
+# Backend unit tests
+cd backend && uv run pytest tests/unit -v --cov=app --cov-report=term-missing
+
+# Backend integration tests
+cd backend && uv run pytest tests/integration -v
+
+# Frontend E2E tests
+cd frontend-svelt && bun run test:e2e
+
+# All tests (pre-commit)
+bun run test:all
+```
+
+### Progress Reporting
+
+Developers must maintain a PROGRESS.md file with regular updates.
+
+#### File Location
+
+`.agent-workspace/problem/PROGRESS.md`
+
+#### Required Sections
+
+```markdown
+# Votecatcher MVP Progress
+
+**Last Updated:** YYYY-MM-DD HH:MM
+**Current Phase:** [Phase X]
+**Overall Status:** [On Track / At Risk / Blocked]
+
+---
+
+## Phase Status
+
+| Phase | Status | Completion % | Notes |
+|-------|--------|--------------|-------|
+| Phase 1: Stability | [Not Started / In Progress / Complete] | X% | Brief note |
+| Phase 2: Polish | [Not Started / In Progress / Complete] | X% | Brief note |
+| Phase 3: Page Hierarchy | [Not Started / In Progress / Complete] | X% | Brief note |
+| Phase 4: Stretch | [Not Started / In Progress / Complete] | X% | Brief note |
+
+---
+
+## Current Work
+
+**Task:** [Task name from SPEC]
+**Started:** YYYY-MM-DD
+**Status:** [In Progress / Blocked / Review]
+
+### Progress
+- [ ] Subtask 1
+- [ ] Subtask 2
+- [x] Completed subtask
+
+### Test Results
+```
+[Paste relevant test output]
+```
+
+---
+
+## Issues & Questions
+
+| # | Type | Description | Status | Resolution |
+|---|------|-------------|--------|------------|
+| 1 | Blocker | Description of issue | Open/Resolved | How resolved or proposed solution |
+| 2 | Question | Clarification needed | Pending/Answered | Answer or awaiting input |
+
+---
+
+## SPEC Deviations
+
+| Date | Section | Deviation | Reason | Approved By |
+|------|---------|-----------|--------|-------------|
+| YYYY-MM-DD | §X.X | What changed | Why | [User/Architect] |
+
+---
+
+## Daily Log
+
+### YYYY-MM-DD
+- Completed: [list]
+- In Progress: [list]
+- Blocked: [list]
+- Next: [list]
+```
+
+#### Update Cadence
+
+| Event | Action |
+|-------|--------|
+| Start task | Update "Current Work" section |
+| Complete subtask | Check off in "Progress" list |
+| Test pass/fail | Update "Test Results" |
+| Encounter issue | Add to "Issues & Questions" |
+| Deviate from SPEC | Add to "SPEC Deviations", get approval |
+| End of work session | Update "Phase Status" and "Daily Log" |
+| Phase gate | Run verification, update "Phase Status" |
+
+#### Issue Triage
+
+When adding issues, classify by type:
+
+| Type | Definition | Response Time |
+|------|------------|---------------|
+| **Blocker** | Cannot proceed without resolution | Immediate |
+| **Technical** | Implementation challenge | Same day |
+| **Question** | Clarification on requirements/spec | Next session |
+| **Enhancement** | Nice-to-have, not blocking | Defer |
+
+---
+
+## 7. Technical Decisions
+
+### 7.1 Provider Storage: Snapshot Only
+
+**Decision:** Jobs store `provider_name` and `provider_model` as text columns, no FK to `llm_provider_config`.
+
+**Rationale:**
+- Provider config may be deleted - job history preserved
+- Simpler queries - no JOINs needed
+- Matches requirements for "Provider removed" badge
+
+**Alternatives Rejected:**
+- FK with ON DELETE SET NULL - adds complexity, still need snapshot for display
+
+### 7.2 Dashboard Updates: Polling
+
+**Decision:** Dashboard uses 10-second polling for metrics.
+
+**Rationale:**
+- Aggregate metrics don't need sub-second updates
+- 5 lines of code vs SSE connection management
+- SSE retained for job progress page (already works)
+
+### 7.3 Demo Mode: Virtual Campaign
+
+**Decision:** Demo at `/workspace/demo` as in-memory virtual campaign.
+
+**Rationale:**
+- Preserves existing demo functionality
+- Same route structure as real campaigns
+- No database writes
+- Always available (no campaign required)
+
+#### Demo Route Structure
+
+| Route | Behavior |
+|-------|----------|
+| `/workspace/demo` | Demo dashboard with pre-baked data |
+| `/workspace/demo/jobs` | Demo jobs (in-memory) |
+| `/workspace/demo/results` | Demo results (pre-baked) |
+| `/workspace/demo/upload` | Disabled (demo uses sample data) |
+
+#### In-Memory Data Structure
 
 ```typescript
-// Status update
-{ "event": "status_update", "data": { "status": "OCR_STARTED", ... } }
+// frontend-svelt/src/lib/stores/demoData.ts
+import { writable } from 'svelte/store';
 
-// Matching progress
-{ "event": "matching_progress", "data": { "processed": 50, "total": 100 } }
+interface DemoData {
+  campaign: {
+    id: 'demo';
+    name: 'Demo Campaign';
+    region: 'DC';
+    election_year: number;
+  };
+  jobs: DemoJob[];
+  results: DemoMatchResult[];
+}
 
-// Job complete
-{ "event": "job_complete", "data": { "status": "MATCHING_COMPLETED", "summary": {...} } }
+const initialDemoData: DemoData = {
+  campaign: { id: 'demo', name: 'Demo Campaign', region: 'DC', election_year: 2024 },
+  jobs: [
+    { id: 'demo-job-1', status: 'MATCHING_COMPLETED', provider_name: 'openai', provider_model: 'gpt-4o', ... }
+  ],
+  results: [...preBakedMatchResults], // ~50 sample results with H/M/L confidence
+};
+
+export const demoData = writable<DemoData>(structuredClone(initialDemoData));
 ```
 
----
+#### Pre-Baked Fixtures
 
-## 6. Frontend Architecture
-
-### 6.1 Technology Choices
-
-- **State Management:** Svelte stores (writable, derived)
-- **API Client:** OpenAPI-generated TypeScript client
-- **Components:** Custom with Tailwind CSS
-- **Accessibility:** WCAG 2.2 AA target
-
-### 6.2 Directory Structure
-
-```
-src/
-├── routes/              # SvelteKit routes
-├── lib/
-│   ├── api/            # Generated API client
-│   ├── stores/         # Svelte stores
-│   ├── components/     # UI components
-│   │   ├── ui/         # Base components (Button, Input, etc.)
-│   │   ├── job/        # Job-specific components
-│   │   └── results/    # Results-specific components
-│   └── utils/          # Helpers
+```typescript
+// frontend-svelt/src/lib/data/demoFixtures.ts
+export const preBakedMatchResults: DemoMatchResult[] = [
+  // ~50 results with confidence distribution:
+  // 35 High (≥0.8), 10 Medium (0.5-0.8), 5 Low (<0.5)
+  { id: 1, petition_name: 'John Smith', confidence: 0.95, tier: 'HIGH', voter: {...} },
+  { id: 2, petition_name: 'Jane Doe', confidence: 0.72, tier: 'MEDIUM', voter: {...} },
+  { id: 3, petition_name: 'Bob Wilson', confidence: 0.35, tier: 'LOW', voter: null },
+  // ... more results
+];
 ```
 
-### 6.3 Key Components
+#### Reset Flow
 
-- `FileUpload` - Drag-and-drop with progress
-- `JobProgress` - Real-time status with SSE
-- `ResultsTable` - Paginated, filterable results
-- `ConfidenceBadge` - High/Medium/Low indicators
-- `CropImage` - Lazy-loaded crop preview
-
----
-
-## 7. Implementation Plan
-
-### 7.1 Timeline: 4-6 Weeks
-
-| Phase | Duration | Focus | Status |
-|-------|----------|-------|--------|
-| Phase 0: Setup | 3-4 days | Dev environment, CI/CD, OpenAPI spec | ✅ Complete |
-| Phase 1: Data Layer | 5-7 days | Schema, models, migrations | ✅ Complete |
-| Phase 2: Backend Services | 7-10 days | File, OCR, jobs, matching, SSE | ✅ Complete (122/122 tests) |
-| Phase 2.5: API & Migration | 2-3 days | API endpoints, legacy removal | ✅ Complete (8/8 API tests) |
-| Phase 3: Frontend | 5-7 days | UI foundation, pages, stores | ⏳ In Progress (5/5 base components) |
-| Phase 4: Integration | 5-7 days | Results, dashboard, sessions, demo | Pending |
-| Phase 5: Polish | 3-5 days | Accessibility, errors, docs, demo prep | Pending |
-
-### 7.2 Methodology: Strict TDD
-
-All phases follow test-driven development:
-
-1. **Write BDD test scenario first** - Define expected behavior before implementation
-2. **Implement minimum code to pass** - Write only what's needed
-3. **Refactor with confidence** - Tests provide safety net
-4. **Repeat** - Incremental, validated progress
-
-**Test Categories:**
-- **Unit tests:** Service logic, matching algorithm, state transitions
-- **Integration tests:** API endpoints, database operations, OCR providers
-- **E2E tests:** Complete user flows, cross-cutting concerns
-
-**Coverage Target:** >85% for critical paths
-
-### 7.3 Phase Verification Gates
-
-Each phase has **entry criteria** (verified before starting) and **exit criteria** (verified before sign-off).
-
----
-
-#### Phase 0: Setup & Infrastructure (3-4 days)
-
-**Entry Criteria:**
-- [ ] Repository cloned and accessible
-- [ ] Development machine meets prerequisites (Python 3.12+, Node 20+, Docker)
-- [ ] Access to LLM provider API keys (at least one)
-
-**Implementation:**
-- Initialize FastAPI project structure
-- Configure UV package manager, structlog, pytest
-- Initialize SvelteKit project with Bun, Tailwind, Vitest
-- Write OpenAPI 3.1 spec for all MVP endpoints
-- Generate TypeScript client from spec
-- Setup GitHub Actions CI/CD
-- Configure pre-commit hooks (ruff, oxlint)
-
-**Exit Criteria (run before sign-off):**
-```bash
-# Backend verification
-cd backend && uv run pytest tests/ -v           # All tests pass
-uv run ruff check .                             # No lint errors
-uv run basedpyright                            # Type check passes
-
-# Frontend verification
-cd frontend-svelt && bun run test              # All tests pass
-bun run lint                                   # No lint errors
-bun run typecheck                              # Type check passes
-
-# Integration verification
-docker-compose up -d                           # Stack starts
-curl http://localhost:8000/health              # Health check OK
-curl http://localhost:5173                     # Frontend loads
-docker-compose down
+```
+User clicks "Reset Demo"
+       │
+       ▼
+Confirmation dialog: "This will clear all demo data. Continue?"
+       │
+       ▼ (Confirm)
+demoData.set(structuredClone(initialDemoData))
+       │
+       ▼
+UI refreshes to initial state
 ```
 
-**Sign-off Checklist:**
-- [ ] `docker-compose up` starts full stack without errors
-- [ ] OpenAPI spec validates (`npx @apidevtools/swagger-cli validate openapi.yaml`)
-- [ ] Generated TypeScript client compiles
-- [ ] CI pipeline runs green on empty PR
+**Behavior:**
+- `/workspace/demo/*` routes read from `demoData` store
+- Reset button clears `demoData` back to initial state
+- No API calls to backend (frontend-only)
+- Data resets on page reload (no localStorage persistence)
 
----
+### 7.4 Upload Page: Tabbed Interface
 
-#### Phase 1: Data Layer (5-7 days)
+**Decision:** Single upload route with tabs for Voter List and Petitions.
 
-**Entry Criteria:**
-- [ ] Phase 0 exit criteria verified and signed off
-- [ ] Database server accessible (PostgreSQL or SQLite)
+**Route:** `/workspace/[id]/upload`
 
-**Implementation:**
-- Create Alembic migrations for all tables
-- Define SQLModel classes with relationships
-- Implement basic repository pattern for CRUD
-- Add database indexes for performance
-
-**Exit Criteria (run before sign-off):**
-```bash
-# Migration verification
-cd backend && uv run alembic upgrade head       # Migrations apply
-uv run alembic downgrade -1                     # Rollback works
-uv run alembic upgrade head                     # Re-apply
-
-# Model verification
-uv run pytest tests/unit/models/ -v             # Model tests pass
-uv run pytest tests/unit/repositories/ -v       # Repository tests pass
-
-# Integration verification
-uv run pytest tests/integration/database/ -v    # DB integration tests pass
+**Layout:**
+```
+┌─────────────────────────────────────┐
+│  [Voter List]  [Petitions]          │  ← Tab navigation
+├─────────────────────────────────────┤
+│                                     │
+│  Tab content here                   │
+│  - Voter List: CSV upload           │
+│  - Petitions: PDF upload            │
+│                                     │
+└─────────────────────────────────────┘
 ```
 
-**Sign-off Checklist:**
-- [ ] All migrations run forward without errors
-- [ ] All migrations rollback cleanly
-- [ ] Foreign key constraints enforced
-- [ ] Repository tests achieve >90% coverage
-- [ ] Can query all tables via repository methods
-
----
-
-#### Phase 2: Core Backend Services (7-10 days)
-
-**Status:** ✅ SERVICES COMPLETE (2026-03-09) | ⚠️ API ENDPOINTS IN PROGRESS
-
-**Entry Criteria:**
-- [x] Phase 1 exit criteria verified and signed off
-- [x] At least one LLM provider API key configured
-
-**Implementation:**
-
-**Part A: Service Layer (COMPLETE - 122/122 tests passing):**
-- ✅ Implement `FileService` with PDF cropping (10/10 tests)
-- ✅ Implement OCR client abstraction (OpenAI, Gemini, Mistral - 40/40 tests)
-- ✅ Implement `OCRService` with batch submission and polling (7/7 tests)
-- ✅ Implement `JobOrchestrator` state machine (11/11 tests)
-- ✅ Implement `MatchingService` with RapidFuzz (15/15 tests)
-- ✅ Implement SSE endpoint and connection manager (14/14 tests)
-- ✅ **Collaborative:** Calibrate confidence thresholds with user (see §3.4)
-
-**Part B: API Endpoints (IN PROGRESS - 2-3 days remaining):**
-- ⏳ Job Management Endpoints:
-  - `POST /api/jobs` - Create matcher job
-  - `GET /api/jobs/{id}` - Get job status (JSON)
-  - `POST /api/jobs/{id}/cancel` - Cancel running job
-- ⏳ Results Endpoints:
-  - `GET /api/jobs/{job_id}/results` - Get match results (paginated, filterable)
-  - `GET /api/jobs/{job_id}/results/export` - Export to CSV
-- ⏳ File Upload Endpoints:
-  - `POST /api/upload/voter-list` - Upload voter list CSV/Excel
-  - `POST /api/upload/petition` - Upload petition PDF with pre-crops
-- ⏳ Campaign Management Endpoints:
-  - `GET /api/campaigns` - List campaigns
-  - `POST /api/campaigns` - Create campaign
-  - `GET /api/campaigns/{id}` - Get campaign details
-- ⏳ Write integration tests for all new endpoints
-- ⏳ Remove legacy routers after validation
-
-**Exit Criteria (run before sign-off):**
-```bash
-# Unit tests (COMPLETE)
-uv run pytest tests/unit/services/ -v           # Service tests pass
-uv run pytest tests/unit/ocr/ -v                # OCR client tests pass
-uv run pytest tests/unit/matching/ -v           # Matching tests pass
-
-# Integration tests (with mocks)
-uv run pytest tests/integration/ocr/ -v         # OCR integration pass
-uv run pytest tests/integration/jobs/ -v        # Job orchestration pass
-uv run pytest tests/integration/matching/ -v    # Matching integration pass
-
-# SSE verification (COMPLETE)
-uv run pytest tests/integration/sse/ -v         # SSE tests pass
-
-# API endpoint verification (IN PROGRESS)
-uv run pytest tests/integration/api/ -v         # API endpoint tests pass
-curl -X POST http://localhost:8000/api/jobs     # Job creates via API
-curl http://localhost:8000/api/jobs/1           # Status returns via API
-```
-
-**Sign-off Checklist:**
-- [x] File upload creates crops correctly (via FileService)
-- [x] OCR clients return results (with mock or real API)
-- [x] Job orchestrator transitions through all states
-- [x] Matching produces top 5 predictions with scores
-- [x] SSE delivers real-time updates to connected client
-- [x] All service tests achieve >85% coverage (100% achieved)
-- [ ] **API endpoints expose all services** (IN PROGRESS)
-- [ ] All SPEC.md §5.2 endpoints implemented and tested
-- [ ] Legacy routers removed, no duplication
-- [ ] Confidence thresholds calibrated with user
-
----
-
-#### Phase 2.5: API Endpoint Implementation & Legacy Migration (2-3 days)
-
-**Status:** IN PROGRESS (Started 2026-03-10)
-
-**Purpose:** Bridge the gap between tested backend services and frontend accessibility by implementing all API endpoints per SPEC.md §5.2 and removing legacy code.
-
-**Context:**
-- Phase 2 services are complete and tested (122/122 tests passing)
-- Legacy routers exist alongside new code (1,187 lines)
-- Only SSE endpoint is currently exposed via API
-- Frontend needs REST API endpoints to proceed with Phase 3
-
-**Migration Strategy: Option A (Chosen)**
-
-**Approach:** Implement all missing API endpoints using tested Phase 2 services, then remove legacy code with confidence.
-
-**Timeline:**
-- Day 1: Job management + upload endpoints
-- Day 2: Campaign + results endpoints
-- Day 3: Integration tests + legacy router removal
-
-**Implementation Steps:**
-
-**Day 1: Job & Upload Endpoints (~9 hours)**
-1. `POST /api/jobs` - Create matcher job (2h)
-   - Use: `JobOrchestrator.create_matcher_job()`
-   - Request: campaign_id, scan_ids, provider
-   - Response: job_id, status, created_at
-
-2. `GET /api/jobs/{id}` - Get job status (1h)
-   - Use: Database query via JobOrchestrator
-   - Response: job_id, status, progress, error_message
-
-3. `POST /api/jobs/{id}/cancel` - Cancel job (2h)
-   - Use: `JobOrchestrator` state update
-   - Validation: only cancelable in certain states
-
-4. `POST /api/upload/voter-list` - Upload voter list (1h)
-   - Use: `FileService.save_voter_list_file()`
-   - Validation: CSV/Excel, required columns
-   - **Test Data:** Use `samples/dc/fake_voter_records.csv` (100K voters)
-
-5. `POST /api/upload/petition` - Upload petition (1h)
-   - Use: `FileService.save_petition_and_crops()`
-   - Validation: PDF, creates crops
-   - **Test Data:** Use `samples/dc/fake_signed_petitions*.pdf`
-
-6. `POST /api/campaigns` - Create campaign (1h)
-   - Use: `CampaignRepository.create()`
-
-7. `GET /api/campaigns` - List campaigns (0.5h)
-   - Use: `CampaignRepository.list()`
-
-8. `GET /api/campaigns/{id}` - Get campaign (0.5h)
-   - Use: `CampaignRepository.get()`
-
-**Day 2: Results & Integration (~4 hours)**
-1. `GET /api/jobs/{job_id}/results` - Get results (2h)
-   - Use: Database query with pagination
-   - Filters: confidence_level, page, page_size
-
-2. `GET /api/jobs/{job_id}/results/export` - Export CSV (2h)
-   - Generate CSV from match results
-   - Include: OCR text, predictions, scores
-
-**Day 3: Testing, Cleanup & Documentation (~8 hours)**
-1. Integration tests for all endpoints (4h)
-2. API contract validation (2h)
-3. Remove legacy routers (1h)
-4. Full test suite verification (1h)
-
-**ADR Documentation (Concurrent with Day 3):**
-Create Architecture Decision Records for notable decisions:
-- **ADR-XXXX: Legacy Code Migration Strategy** (Option A chosen)
-  - Context: Phase 2 services complete, API endpoints missing, legacy code duplication
-  - Decision: Complete API endpoints before removing legacy (Option A)
-  - Consequences: 2-3 day delay, clean architecture, no technical debt
-  - Alternatives: Option B (hybrid), Option C (big bang)
-
-- **ADR-XXXX: Service-First Architecture Approach**
-  - Context: Backend development order for Phase 2
-  - Decision: Implement and test services before API endpoints
-  - Consequences: 122/122 tests passing, but API layer gap discovered
-  - Lessons: Always define API contract alongside service design
-
-- **ADR-XXXX: Session Endpoints Deferral**
-  - Context: Session management endpoints in SPEC.md §5.2
-  - Decision: Defer to Phase 4 (not blocking core flow)
-  - Consequences: Faster path to frontend work, session features in Phase 4
-
-**Exit Criteria (run before sign-off):**
-```bash
-# All API endpoints functional
-curl -X POST http://localhost:8000/api/campaigns -d '{"name":"Test","year":2024}'
-curl -X POST http://localhost:8000/api/upload/voter-list -F "file=@voters.csv"
-curl -X POST http://localhost:8000/api/upload/petition -F "file=@petition.pdf"
-curl -X POST http://localhost:8000/api/jobs -d '{"campaign_id":1,"scan_ids":[1]}'
-curl http://localhost:8000/api/jobs/1
-curl http://localhost:8000/api/jobs/1/results
-
-# Integration tests pass
-uv run pytest tests/integration/api/ -v           # All API tests pass
-
-# No legacy code remains
-grep -r "legacy" backend/app/                     # No matches
-grep -r "file_route\|ocr_route\|config_route" backend/app/  # No matches
-
-# Full test suite green
-uv run pytest tests/ -v                           # All tests pass
-```
-
-**Sign-off Checklist:**
-- [ ] All SPEC.md §5.2 endpoints implemented
-- [ ] All endpoints have integration tests
-- [ ] API contract matches OpenAPI spec
-- [ ] Legacy routers removed (auth.py, file_route.py, ocr_route.py, config_route.py, workspace.py)
-- [ ] No test regressions (122/122 still passing)
-- [ ] Can complete full workflow via API only (no legacy code needed)
-- [ ] Frontend can start Phase 3 with clean API
-- [ ] **ADRs created for notable decisions** (migration strategy, service-first approach, session deferral)
-
-**Risk Mitigation:**
-- **Risk:** Removing legacy code breaks existing functionality
-  - **Mitigation:** Integration tests validate all endpoints before removal
-- **Risk:** API design doesn't match frontend expectations
-  - **Mitigation:** Follow OpenAPI spec exactly, frontend validates in Phase 3
-- **Risk:** Timeline slips
-  - **Mitigation:** 2-3 day estimate is conservative, can parallelize endpoint implementation
-
----
-
-#### Phase 3: Frontend Foundation (5-7 days)
-
-**Status:** ⏳ IN PROGRESS (Started 2026-03-10)
-
-**Entry Criteria:**
-- [x] Phase 2.5 exit criteria verified and signed off
-- [x] Backend API endpoints functional (166/174 tests passing)
-
-**Implementation:**
-
-**Part A: Base UI Components (COMPLETE - 136/136 tests):**
-- ✅ Button component (13 tests) - 3 variants, 3 sizes, loading state
-- ✅ Input component (20 tests) - 5 types, labels, error states
-- ✅ Table component (27 tests) - sortable, selectable, pagination
-- ✅ Select component (31 tests) - keyboard nav, search, ARIA combobox
-- ✅ Modal component (20 tests) - focus trap, sizes, accessibility
-
-**Part B: Layout & Navigation (PLANNED - docs/plans/2026-03-09-workspace-layout-impl.md):**
-- ⏳ SidebarNavItem component (8 tests planned)
-- ⏳ Sidebar component (5 tests planned)
-- ⏳ Workspace layout (+layout.svelte)
-- ⏳ Placeholder pages (Campaigns, Jobs, Results, Settings)
-
-**Part C: API Integration (PENDING):**
-- ⏳ Dashboard metrics with real data fetching
-- ⏳ Campaign management pages with API calls
-- ⏳ File upload pages with progress tracking
-- ⏳ Job status page with SSE integration
-- ⏳ Svelte stores for state management
-
-**Exit Criteria (run before sign-off):**
-```bash
-# Unit tests
-bun run test tests/unit/components/ -v          # Component tests pass
-bun run test tests/unit/stores/ -v              # Store tests pass
-
-# E2E tests (with running backend)
-bun run test:e2e tests/e2e/campaign.spec.ts     # Campaign CRUD works
-bun run test:e2e tests/e2e/upload.spec.ts       # Upload works
-bun run test:e2e tests/e2e/job-status.spec.ts   # Job status page works
-
-# Build verification
-bun run build                                   # Production build succeeds
-bun run preview                                 # Preview server starts
-```
-
-**Sign-off Checklist:**
-- [ ] All base components render correctly
-- [ ] Navigation works between all pages
-- [ ] Campaign create/edit/delete works in UI
-- [ ] File upload shows progress and completes
-- [ ] Job status page shows real-time updates via SSE
-- [ ] Store state persists across navigation
-- [ ] E2E tests for core flows pass
-
----
-
-#### Phase 4: Integration & E2E (5-7 days)
-
-**Status:** 📋 PLANNING IN PROGRESS (Design docs reviewed 2026-03-11)
-
-**Planning Documents:**
-- Design: `docs/plans/2026-03-11-phase4-integration-design.md`
-- Implementation: `docs/plans/2026-03-11-phase4-integration-impl.md`
-
-**Entry Criteria:**
-- [ ] Phase 3 exit criteria verified and signed off
-- [ ] Full backend stack running and accessible
-
-**Implementation:**
-
-**Part A: File Upload Pages (~4 hours)**
-- Voter list upload with CSV/Excel validation
-- Petition upload with progress tracking
-- Pre-crop preview for petitions
-
-**Part B: Job Status & SSE (~3 hours)**
-- SSE connection in jobs store
-- Real-time job status updates
-- Cancel job functionality
-- Auto-reconnect with exponential backoff
-
-**Part C: Results Visualization (~3 hours)**
-- Results store (paginated, filtered)
-- Results table with confidence badges
-- CSV export functionality
-- Summary stats display
-
-**Part D: Session Management (~2 hours)**
-- Session save/load with workspace state
-- Session export as ZIP
-
-**Part E: E2E Testing (~4 hours)**
-- Full workflow E2E test
-- Error scenario tests
-- Accessibility audit
-
-**Exit Criteria (run before sign-off):**
-```bash
-# E2E tests
-bun run test:e2e tests/e2e/results.spec.ts      # Results page works
-bun run test:e2e tests/e2e/dashboard.spec.ts    # Dashboard works
-bun run test:e2e tests/e2e/session.spec.ts      # Session management works
-bun run test:e2e tests/e2e/demo.spec.ts         # Demo mode works
-
-# Full flow test
-bun run test:e2e tests/e2e/full-flow.spec.ts    # Complete user journey
-
-# API contract test
-uv run pytest tests/integration/api_contract/ -v  # API matches spec
-```
-
-**Sign-off Checklist:**
-- [ ] Results table paginates and filters correctly
-- [ ] Dashboard shows accurate metrics
-- [ ] Session save/load preserves all state
-- [ ] Session export creates valid ZIP file
-- [ ] Demo mode resets all data
-- [ ] Full E2E flow test passes (create → upload → job → results)
-- [ ] API contract tests pass (frontend/backend integration)
-
-**Plan Evaluation (Solutions Architect Review - 2026-03-11):**
-
-The Phase 4 plans (`2026-03-11-phase4-integration-design.md` and `2026-03-11-phase4-integration-impl.md`) provide a solid TDD foundation. However, the following gaps require attention:
-
-| Gap | Severity | Requirement | Recommendation |
-|-----|----------|-------------|----------------|
-| Dashboard metrics not detailed | **HIGH** | US-009 | Add explicit dashboard store + API calls for: total signatures, confidence breakdown, progress bars |
-| Demo mode (reset, pre-baked) missing | **HIGH** | US-011, US-014 | Add Part F: Demo Mode (~2h) - reset API, pre-baked session loader |
-| Session endpoints marked "deferred" | **HIGH** | FR-023 | Part D says endpoints deferred, but this IS Phase 4 - clarify: implement session API endpoints |
-| Loading states not detailed | MEDIUM | FR-020 | Add LoadingSpinner usage, error boundaries to all async operations |
-| Progress indicators for upload | MEDIUM | NFR-001 | Add upload progress bar with percentage display |
-| CSV export test missing | MEDIUM | US-017 | Add test case for CSV download in Part C |
-
-**Required Additions to Phase 4:**
-
-1. **Part F: Demo Mode (~2 hours)** - NEW
-   - Demo reset button with feature flag check
-   - Pre-baked demo session loader
-   - Files: `src/lib/stores/demo.ts`, demo reset API call
-
-2. **Dashboard Enhancements** - ADD to Part C
-   - Add `dashboard.ts` store with API calls
-   - Fetch: total signatures, confidence distribution, job status
-   - Update metrics on SSE job_complete event
-
-3. **Session API Endpoints** - CLARIFY in Part D
-   - These are NOT deferred - implement in Phase 4:
-     - `POST /api/sessions` - Save session
-     - `GET /api/sessions/{id}` - Load session
-     - `GET /api/sessions/{id}/export` - Export ZIP
-
-**Recommendation:** Update Phase 4 plans to address these gaps before implementation begins.
-
----
-
-#### Phase 5: Polish & Demo (3-5 days)
-
-**Entry Criteria:**
-- [ ] Phase 4 exit criteria verified and signed off
-- [ ] All MVP features implemented
-
-**Implementation:**
-- Accessibility audit and fixes (WCAG 2.2 AA)
-- Error handling improvements
-- Performance optimization
-- Documentation (README, deployment guide)
-- Demo session creation and rehearsal
-
-**Exit Criteria (run before sign-off):**
-```bash
-# Accessibility tests
-bun run test:a11y                               # Accessibility tests pass
-npx axe-cli http://localhost:5173               # axe audit passes
-
-# Performance tests
-bun run lighthouse http://localhost:5173        # Lighthouse score >80
-
-# Error handling tests
-uv run pytest tests/integration/errors/ -v      # Error scenarios handled
-
-# Documentation verification
-markdown-link-check README.md                   # Links valid
-markdown-link-check docs/deployment.md
-```
-
-**Sign-off Checklist:**
-- [ ] Keyboard navigation works on all pages
-- [ ] Screen reader testing complete (NVDA/JAWS)
-- [ ] Color contrast ratios meet WCAG AA
-- [ ] All error states have user-friendly messages
-- [ ] Page load < 2s, API response < 500ms
-- [ ] README includes setup, run, deploy instructions
-- [ ] Deployment guide tested on clean machine
-- [ ] Demo walkthrough successful (recorded)
-- [ ] Pre-baked demo session loads correctly
-
----
-
-### 7.3 Critical Path
-
-**Updated (2026-03-11):**
-```
-Setup (✅) → Data Layer (✅) → Backend Services (✅) → API Endpoints (✅) → Frontend (⏳) → Results → Demo
-```
-
-**Current Phase:** Phase 3 (Frontend Foundation) in progress
-- Part A: Base UI Components - COMPLETE (136/136 tests)
-- Part B: Layout & Navigation - PLANNED (see `docs/plans/2026-03-09-workspace-layout-impl.md`)
-- Part C: API Integration - PENDING
-
-**Phase 4 Planning Status:**
-- Design and implementation plans reviewed 2026-03-11
-- Gaps identified (see §7.2 Phase 4 section)
-- Recommendations documented
-- Plan updated with new parts
-
-**Implementation Plan Review (2026-03-09-workspace-layout-impl.md):**
-
-The layout implementation plan provides a solid TDD foundation with 18 tests across SidebarNavItem and Sidebar components. However, the following gaps should be addressed before or during execution:
-
-| Gap | Impact | Recommendation |
-|-----|--------|----------------|
-| Exit criteria pre-checked | Medium | Reset all checkboxes to `[ ]` before starting |
-| No API integration for dashboard | High | Add API client calls for metrics (not hardcoded "0") |
-| Missing loading/error states | High | Add LoadingSpinner component, error boundaries |
-| No Svelte stores mentioned | Medium | Create stores for sidebar state, active nav item |
-| Missing help/documentation links | Low | Add to sidebar nav (per FR-019) |
-
-**Estimated Phase 3 Completion:** 2026-03-15 (4-5 days remaining)
-
-### 7.4 Post-MVP Cleanup
-
-After MVP completion and validation of all requirements through testing:
-
-1. **Rename `frontend-svelt` → `frontend`**
-   - Delete/archive the existing `frontend/` directory
-   - Rename `frontend-svelt/` to `frontend/`
-   - Update all references in:
-     - `docker-compose.yml`
-     - CI/CD workflows
-     - Documentation
-     - Any hardcoded paths in scripts
-
-2. **Validation Checklist Before Promotion**
-   - [ ] All E2E tests pass
-   - [ ] All user stories from REQUIREMENTS.md validated
-   - [ ] Accessibility audit complete (WCAG 2.2 AA)
-   - [ ] Demo walkthrough successful
-   - [ ] No references to old frontend in codebase
-
----
-
-## 8. Technical Decisions
-
-### 8.1 Job Orchestration
-
-**Decision:** State machine + FastAPI BackgroundTasks
-**Rationale:** LLM batch APIs are inherently async; no need for Celery/RQ complexity
-**Alternatives Considered:** Event-driven, workflow engine (overkill)
-
-### 8.2 Real-time Updates
-
-**Decision:** Server-Sent Events (SSE) per job
-**Rationale:** Better UX than polling, simpler than WebSockets
-**Alternatives Considered:** Polling, WebSockets
-
-### 8.3 Matching Strategy
-
-**Decision:** Hybrid DB pre-filter + Python RapidFuzz
-**Rationale:** Scales to 500K records; simple in-memory for MVP
-**Alternatives Considered:** DB-only, full in-memory
-
-### 8.4 Session Storage
-
-**Decision:** Reference-based snapshots (IDs in JSON)
-**Rationale:** Smaller storage, maintains data integrity
-**Alternatives Considered:** Full data copy
-
-### 8.5 API Client
-
-**Decision:** OpenAPI-generated TypeScript client
-**Rationale:** Type safety, auto-adapts to spec changes
-**Alternatives Considered:** Custom fetch wrapper
-
-### 8.6 Legacy Code Migration (Phase 2.5)
-
-**Decision:** Complete API endpoints before removing legacy (Option A)
-**Date:** 2026-03-10
 **Rationale:**
-- Services are tested and validated (122/122 tests passing)
-- Clean API ensures frontend can start immediately after completion
-- Integration tests provide safety net for removal
-- Avoids hybrid state with duplicated code paths
-**Alternatives Considered:**
-- Option B: Hybrid approach (keep legacy, use new code only for SSE) - Rejected due to technical debt
-- Option C: Big bang migration (delete legacy, rush endpoints) - Rejected due to high risk
-**Impact:** 2-3 day delay to Phase 3 start, but ensures clean architecture for remaining phases
+- Reduces navigation depth
+- User often uploads both in sequence
+- Tabs preserve campaign context
 
----
+**State Management:**
+- Active tab stored in component state
+- Both tabs share campaign context from route param
+- Upload success shows toast notification, stays on tab
 
-## 9. Risks & Mitigations
+### 7.5 Retry Flow: New Job Creation
 
-| Risk | Impact | Probability | Mitigation | Status |
-|------|--------|-------------|------------|--------|
-| OCR accuracy low | High | Medium | Test with real samples early; allow manual correction | Active monitoring |
-| LLM API changes | High | Medium | Provider abstraction layer; mock for tests | Mitigated (abstraction complete) |
-| Matching slow | Medium | Low | Profile early; DB indexing; chunked processing | Mitigated (RapidFuzz implemented) |
-| SSE connection issues | Medium | Medium | Reconnection logic; fallback to polling | Active monitoring |
-| Timeline slip | High | Medium | 1-2 week buffer; weekly checkpoints | **Active (Phase 2.5 delay)** |
-| API endpoint gaps | High | Medium | Integration tests before legacy removal; OpenAPI spec validation | **Active (Phase 2.5 in progress)** |
-| Legacy code removal breaks features | Medium | Low | Comprehensive integration tests; phased rollout | **Active (Phase 2.5 in progress)** |
-| Frontend blocked by missing API | High | **Certain** | Prioritize API endpoints (Phase 2.5); parallel development where possible | **Mitigating (Phase 2.5 prioritized)** |
+**Decision:** Retry creates a NEW job (not restart same job).
 
----
+**Rationale:**
+- Clear audit trail (preserves failed job history)
+- Failed job remains viewable for debugging
+- New job can use different provider if original was deleted
 
-## 10. Open Questions
-
-| Question | Recommendation | Decision | Date |
-|----------|----------------|----------|------|
-| UUID vs INT for PKs? | INT for MVP simplicity | **Decided: INT** | 2026-03-09 |
-| Duplicate detection? | File hash + row-level for voter lists | **Decided: Hash-based** | 2026-03-09 |
-| 500K voter list support? | Hybrid approach, document as supported | **Decided: Yes** | 2026-03-09 |
-| Dashboard updates? | SSE for now, WebSockets stretch | **Decided: SSE** | 2026-03-09 |
-| Legacy code migration strategy? | Option A: Complete API endpoints first, then remove legacy | **Decided: Option A** | 2026-03-10 |
-| Session endpoints timing? | Defer to Phase 4 per original SPEC | **Decided: Defer** | 2026-03-10 |
-| Legacy router removal? | Delete immediately after API validation | **Decided: Immediate removal** | 2026-03-10 |
-
----
-
-## 11. References
-
-### Design Documents
-- [Data Model](./data-model.md)
-- [Architecture Details](./architecture.md)
-- [API Specification](./api-spec.md)
-- [Frontend Architecture](./frontend-architecture.md)
-- [Implementation Roadmap](./implementation-roadmap.md)
-- [Architecture Decision Records (ADRs)](../docs/adr/) - Notable technical decisions
-
-### Implementation Plans
-- [Workspace Layout Implementation](../docs/plans/2026-03-09-workspace-layout-impl.md) - Phase 3 layout and navigation
-
-### External Resources
-- [Requirements Document](../problem/REQUIREMENTS.md)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [SvelteKit Documentation](https://kit.svelte.dev/)
-- [OpenAPI Specification](https://swagger.io/specification/)
-- [ADR GitHub](https://adr.github.io/) - Architecture Decision Records guidance
-
----
-
-## Appendix A: BDD Test Examples
-
-### Job Orchestration
-
-```gherkin
-Feature: End-to-end job processing
-
-  Scenario: Successful OCR and matching
-    Given a campaign "DC 2024" exists
-    And a voter list is uploaded for region "DC"
-    And a petition scan with 10 crops is uploaded
-
-    When I create a matcher job
-    Then the job status should be "NOT_STARTED"
-
-    When the OCR phase completes
-    Then the job status should be "OCR_COMPLETED"
-    And 10 OCR results should be created
-
-    When the matching phase completes
-    Then the job status should be "MATCHING_COMPLETED"
-    And 10 match results should be created
+**Flow:**
+```
+User clicks "Retry"
+       │
+       ▼
+Job creation modal opens
+       │
+       ▼
+Pre-filled with: same petition, same voter list
+       │
+       ▼
+User can change provider (if original deleted or different choice)
+       │
+       ▼
+Submit creates NEW job with parent_job_id reference
+       │
+       ▼
+Original failed job preserved for audit
 ```
 
-### Results Filtering
+**Database:**
+```sql
+ALTER TABLE matcher_job ADD COLUMN parent_job_id INTEGER REFERENCES matcher_job(id);
+```
 
-```gherkin
-Feature: Viewing match results
+**Modal Pre-fill Logic:**
+```typescript
+function openRetryModal(failedJob: Job) {
+  const prefillData = {
+    petition_id: failedJob.petition_id,
+    voter_list_id: failedJob.voter_list_id,
+    // Provider NOT pre-filled - user must select
+    provider_name: null,
+    provider_model: null,
+    parent_job_id: failedJob.id,
+  };
+  // Open modal with prefillData
+}
+```
 
-  Scenario: Filter results by confidence
-    Given a completed job with results:
-      | confidence |
-      | HIGH       |
-      | HIGH       |
-      | MEDIUM     |
-      | LOW        |
+### 7.6 Campaign Switcher: Route Preservation
 
-    When I filter by "HIGH" confidence
-    Then I should see 2 results
-    And all results should have "HIGH" confidence
+**Decision:** Switcher preserves current route segment when switching campaigns.
+
+**Behavior Table:**
+
+| Current Route | Switch to Campaign 456 | Result |
+|---------------|------------------------|--------|
+| `/workspace/123/jobs` | Campaign 456 | `/workspace/456/jobs` |
+| `/workspace/123/results` | Campaign 456 | `/workspace/456/results` |
+| `/workspace/123` (dashboard) | Campaign 456 | `/workspace/456` |
+| `/workspace/123/upload` | Campaign 456 | `/workspace/456/upload` |
+
+**Dropdown Contents:**
+- All campaigns (sorted alphabetically)
+- "Demo" option (if demo mode available)
+- Current campaign highlighted with checkmark
+
+**Implementation:**
+```typescript
+function switchCampaign(newCampaignId: string | number) {
+  const currentPath = $page.url.pathname;
+  const currentSegment = currentPath.replace(/^\/workspace\/\d+/, '');
+  goto(`/workspace/${newCampaignId}${currentSegment}`);
+}
 ```
 
 ---
 
-## Appendix B: Configuration Reference
+## 8. Risks & Mitigations
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| Phase 1/3 parallel conflicts | HIGH | MEDIUM | Clear file ownership, daily sync |
+| Worker test complexity | MEDIUM | MEDIUM | Start with happy path, add edge cases |
+| Route refactor breaks E2E | HIGH | HIGH | Update E2E tests as routes change |
+| Provider API validation fails | LOW | LOW | Graceful degradation, show validation error |
+| Dashboard polling performance | LOW | LOW | Debounce, cancel on unmount |
+
+---
+
+## 9. Open Questions
+
+| Question | Status | Owner |
+|----------|--------|-------|
+| None outstanding | Resolved | - |
+
+---
+
+## 10. References
+
+- Requirements: `.agent-workspace/problem/REQUIREMENTS-UPDATE-2026-03-11.md`
+- Diagrams: `.agent-workspace/problem/diagrams/`
+- Existing codebase: FastAPI + SvelteKit + SQLModel/Drizzle
+
+---
+
+## Appendix A: Code Examples
+
+### Dashboard Polling (Svelte)
+
+```svelte
+<script lang="ts">
+  import { onMount, onDestroy } from 'svelte';
+  import { page } from '$app/stores';
+
+  let metrics = $state(null);
+  let interval: number;
+
+  onMount(async () => {
+    await fetchMetrics();
+    interval = setInterval(fetchMetrics, 10000);
+  });
+
+  onDestroy(() => clearInterval(interval));
+
+  async function fetchMetrics() {
+    const res = await fetch(`/api/campaigns/${$page.params.id}/metrics`);
+    metrics = await res.json();
+  }
+</script>
+```
+
+### Provider Validation (Python)
+
+```python
+async def validate_provider_key(provider: str, api_key: str) -> tuple[bool, list[str]]:
+    """Validate API key by calling list models endpoint."""
+    if provider == "openai":
+        client = OpenAI(api_key=api_key)
+        models = client.models.list()
+        return True, [m.id for m in models if "gpt" in m.id]
+    # ... other providers
+```
+
+### Status Computation (Python)
+
+```python
+def compute_campaign_status(campaign_id: int, db: Session) -> CampaignStatus:
+    jobs = db.query(MatcherJob).filter_by(campaign_id=campaign_id).order_by(MatcherJob.created_at).all()
+
+    if not jobs and not has_uploads(campaign_id, db):
+        return CampaignStatus.NOT_STARTED
+
+    last_job = jobs[-1] if jobs else None
+    results_count = db.query(MatchResult).filter_by(campaign_id=campaign_id).count()
+
+    if last_job and last_job.status == JobStatus.FAILED and results_count == 0:
+        return CampaignStatus.ERROR
+
+    if last_job and last_job.status in [JobStatus.OCR_STARTED, JobStatus.MATCHING]:
+        return CampaignStatus.IN_PROGRESS
+
+    # ... additional logic
+```
+
+---
+
+## Appendix B: Configuration
 
 ### Environment Variables
 
 ```bash
-# Database
-DATABASE_URL=postgresql://user:pass@localhost/votecatcher
+# LLM Provider Keys (fallback for testing)
+LLM_KEYS={"openai":"sk-...","gemini":"...","mistral":"..."}
 
-# OCR Providers
-OPENAI_API_KEY=sk-...
-GEMINI_API_KEY=...
-MISTRAL_API_KEY=...
+# Demo Mode
+DEMO_MODE=false
 
-# Feature Flags
-FEATURE_DEMO_MODE=true
-FEATURE_DEMO_RESET=true
-FEATURE_DEBUG_LOGGING=false
-
-# App Settings
-API_BASE_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:5173
+# Polling Interval (seconds)
+DASHBOARD_POLL_INTERVAL=10
 ```
 
-### Feature Flags
+### Static Configuration
 
-| Flag | Purpose | Default |
-|------|---------|---------|
-| `demo_mode` | Enable demo features | `false` |
-| `demo_reset` | Allow data reset | `false` |
-| `load_prebaked_results` | Skip OCR/matching | `false` |
-| `debug_logging` | Verbose logs | `false` |
+```typescript
+// frontend-svelt/src/lib/config/providers.ts
+export const PROVIDERS = {
+  openai: {
+    name: 'OpenAI',
+    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4']
+  },
+  gemini: {
+    name: 'Gemini',
+    models: ['gemini-1.5-pro', 'gemini-1.5-flash']
+  },
+  mistral: {
+    name: 'Mistral',
+    models: ['mistral-large-latest', 'pixtral-12b-2409']
+  }
+};
+```
 
 ---
 
-## Appendix C: Security Scanning
-
-### Baseline Security Tools (Free)
-
-| Layer | Tool | Purpose | When to Run |
-|-------|------|---------|-------------|
-| **Backend Code** | Bandit | Static security analysis for Python | CI + pre-commit |
-| **Backend Deps** | pip-audit | CVE scanning for Python dependencies | CI |
-| **Frontend Deps** | npm audit | CVE scanning for npm dependencies | CI |
-| **Secrets** | Gitleaks | Detect committed secrets/credentials | CI + pre-push |
-| **Container** | Trivy | Container image vulnerability scanning | Pre-deploy |
-| **GitHub** | Dependabot | Automated dependency updates | Continuous |
-
-### Configuration
-
-#### Backend (pyproject.toml)
-```toml
-[project.optional-dependencies]
-dev = [
-    "bandit[toml]>=1.7.0",
-    "pip-audit>=2.6.0",
-]
-
-[tool.bandit]
-exclude_dirs = ["tests", ".venv"]
-skips = ["B101"]  # Skip assert_used test (OK in pytest)
-```
-
-#### CI/CD Security Jobs (GitHub Actions)
-```yaml
-# .github/workflows/security.yml
-name: Security Scanning
-
-on: [push, pull_request]
-
-jobs:
-  backend-security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run Bandit
-        run: pip install bandit && bandit -r backend/app
-      - name: Run pip-audit
-        run: pip install pip-audit && cd backend && pip-audit
-
-  frontend-security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run npm audit
-        run: cd frontend-svelt && bun audit
-
-  secrets-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  container-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build image
-        run: docker build -t votecatcher:latest .
-      - name: Run Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'votecatcher:latest'
-          format: 'table'
-          exit-code: '1'  # Fail on vulnerabilities
-          severity: 'CRITICAL,HIGH'
-```
-
-#### Pre-commit Hooks
-```yaml
-# .pre-commit-config.yaml
-repos:
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.5
-    hooks:
-      - id: bandit
-        args: ["-c", "pyproject.toml"]
-        additional_dependencies: ["bandit[toml]"]
-
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.4.0
-    hooks:
-      - id: detect-secrets
-        args: ["--baseline", ".secrets.baseline"]
-```
-
-### Security Checklist
-
-Before each release:
-- [ ] `bandit -r backend/app` passes with no HIGH/CRITICAL
-- [ ] `pip-audit` shows no known vulnerabilities
-- [ ] `bun audit` shows no known vulnerabilities
-- [ ] No secrets in git history (gitleaks clean)
-- [ ] Container scan shows no CRITICAL vulnerabilities
-- [ ] Dependabot enabled for automated updates
-
-### Handling Vulnerabilities
-
-| Severity | Action |
-|----------|--------|
-| CRITICAL | Fix immediately, block deployment |
-| HIGH | Fix within 1 week, warn in CI |
-| MEDIUM | Fix within sprint, track in backlog |
-| LOW | Fix opportunistically |
-
----
-
-## Appendix D: Glossary
+## Appendix C: Glossary
 
 | Term | Definition |
 |------|------------|
-| **Petition** | Physical document with handwritten voter signatures |
-| **Crop** | Individual signature entry extracted from petition scan |
-| **Matcher Job** | Orchestrator job tracking OCR → Matching → Results |
-| **OCR Job** | Child job for batch text extraction |
-| **Confidence Score** | Match quality rating (HIGH/MEDIUM/LOW) |
-| **Session** | Workspace snapshot (uploads, jobs, results) |
+| Campaign | A petition verification project with voters and signatures |
+| Job | A batch OCR + matching operation for a campaign |
+| Provider | LLM service (OpenAI, Gemini, Mistral) used for OCR |
+| Snapshot | Stored copy of provider name/model at job creation time |
+| Confidence tier | High (≥0.8), Medium (0.5-0.8), Low (<0.5) match confidence |
+| Virtual campaign | In-memory campaign for demo mode (not persisted) |
 
 ---
 
-**Document Status:** Draft - Phase 4 Planning Review (2026-03-11)
-
-**Current Phase:** Phase 3 - Frontend Foundation (In Progress)
-
-**Phase 4 Planning Status:** Design docs reviewed, gaps identified
-
-**Phase 4 Planning Documents:**
-- Design: `docs/plans/2026-03-11-phase4-integration-design.md`
-- Implementation: `docs/plans/2026-03-11-phase4-integration-impl.md`
-
-**Identified Gaps (see §7.2 Phase 4 section for details):**
-1. Dashboard metrics - need real API calls, not hardcoded values
-2. Demo mode - reset and pre-baked session loading missing
-3. Session API endpoints - incorrectly marked as deferred
-4. CSV export - missing from test coverage
-
-**Next Steps:**
-1. ✅ Phase 0: Setup & Infrastructure - COMPLETE
-2. ✅ Phase 1: Data Layer - COMPLETE
-3. ✅ Phase 2: Core Backend Services - COMPLETE (122/122 tests passing)
-4. ✅ Phase 2.5: API Endpoints & Legacy Migration - COMPLETE (8/8 API tests passing)
-5. ⏳ **Phase 3: Frontend Foundation - IN PROGRESS** (4-5 days remaining)
-   - Part A: Base UI Components - COMPLETE (136/136 tests)
-   - Part B: Layout & Navigation - See `docs/plans/2026-03-09-workspace-layout-impl.md`
-   - Part C: API Integration - PENDING
-6. 📋 **Phase 4: Integration & E2E - PLANNING IN PROGRESS**
-   - Address identified gaps before implementation
-   - Update planning docs with recommendations
-7. Track implementation with GitHub Issues/Projects
+**Document Status:** Draft v1.2 - Added phase gate criteria, BDD/TDD validation protocol, PROGRESS.md reporting requirements
+**Last Updated:** 2026-03-11

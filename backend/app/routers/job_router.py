@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from app.data.database.model.jobs import JobStatus, MatcherJob
+from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
 from app.dependencies import get_session
 from app.events.sse_manager import format_sse_message, sse_manager
@@ -99,6 +100,18 @@ def create_job(
 		raise HTTPException(
 			status_code=status.HTTP_404_NOT_FOUND,
 			detail=f"Campaign {request.campaign_id} not found",
+		)
+
+	petition_scans = session.exec(
+		select(PetitionScan).where(PetitionScan.campaign_id == request.campaign_id)
+	).all()
+	if not petition_scans:
+		raise HTTPException(
+			status_code=status.HTTP_400_BAD_REQUEST,
+			detail=(
+				"Cannot create job: No petition scans uploaded for this campaign. "
+				"Please upload a petition PDF first."
+			),
 		)
 
 	job = MatcherJob(
