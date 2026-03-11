@@ -1,3 +1,5 @@
+import asyncio
+import contextlib
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -11,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.data import DbClient, get_db_client
 from app.data.database.session import get_db_session, init_db
 from app.data.memory_db import get_memory_db
+from app.jobs import worker as job_worker
 from app.logger_config.app_logger import (
 	configure_logger,
 )
@@ -40,7 +43,16 @@ async def lifespan(app: FastAPI):
 
 	init_db()
 
+	logger.info("Starting job worker")
+	worker_task = asyncio.create_task(job_worker.start_worker())
+
 	yield
+
+	logger.info("Stopping job worker")
+	await job_worker.stop_worker()
+	worker_task.cancel()
+	with contextlib.suppress(asyncio.CancelledError):
+		await worker_task
 
 
 # TODO: Improve switching between different databases
