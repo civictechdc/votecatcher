@@ -10,6 +10,7 @@ from app.data.database.model.petition_crop import PetitionCrop
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.schema import Campaign, Region
+from app.data.database.model.user import User
 
 logger = structlog.get_logger(__name__)
 
@@ -109,6 +110,14 @@ class DemoDataService:
 			# Reset existing demo data first to avoid UNIQUE constraint errors
 			self.reset()
 
+			# 0. Create demo user (for foreign key reference)
+			demo_user = User(
+				email=f"{self.DEMO_PREFIX}user@example.com",
+				name="Demo User",
+			)
+			self.session.add(demo_user)
+			self.session.flush()
+
 			# 1. Create Region (with demo prefix for selective reset)
 			region = Region(
 				region_key=f"{self.DEMO_PREFIX}dc",
@@ -156,6 +165,7 @@ class DemoDataService:
 				stored_path=f"/data/campaigns/{campaign.id}/petitions/demo_petition.pdf",
 				file_hash="demo_hash_" + str(campaign.id),
 				page_count=1,
+				uploaded_by=demo_user.id,
 			)
 			self.session.add(scan)
 			self.session.flush()
@@ -363,6 +373,11 @@ class DemoDataService:
 
 			deleted_counts["regions"] = conn.execute(
 				text("DELETE FROM regions WHERE region_key LIKE :prefix"),
+				prefix_param,
+			).rowcount
+
+			deleted_counts["users"] = conn.execute(
+				text("DELETE FROM users WHERE email LIKE :prefix"),
 				prefix_param,
 			).rowcount
 
