@@ -67,9 +67,9 @@ cp .env.example .env.local
 **Terminal 1 - Backend:**
 ```bash
 cd backend
-uv run fastapi dev app/api.py
-# API runs at http://localhost:8000
-# Docs available at http://localhost:8000/docs
+uv run python main.py --env local
+# API runs at http://localhost:8080
+# Docs available at http://localhost:8080/docs
 ```
 
 **Terminal 2 - Frontend:**

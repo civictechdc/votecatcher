@@ -63,12 +63,15 @@ uv run python -c "from app.data.database.session import engine; print(engine.tab
 cd backend
 
 # Development server with auto-reload
-uv run fastapi dev app/api.py
+uv run python main.py --env local
 
-# Server starts at http://localhost:8000
-# API documentation at http://localhost:8000/docs
-# ReDoc at http://localhost:8000/redoc
+# Server starts at http://localhost:8080
+# API documentation at http://localhost:8080/docs
+# ReDoc at http://localhost:8080/redoc
 ```
+
+> **Note:** The API uses `/api` as the root path, so endpoints are accessed at
+> `http://localhost:8080/api/<endpoint>`. The Swagger docs show the full paths.
 
 ### Testing
 
@@ -210,8 +213,8 @@ bun run preview
 
 ```bash
 cd backend
-uv run fastapi dev app/api.py
-# http://localhost:8000
+uv run python main.py --env local
+# http://localhost:8080
 ```
 
 ### Terminal 2 - Frontend
@@ -227,9 +230,9 @@ bun run dev
 | Service | URL | Description |
 |---------|-----|-------------|
 | Frontend | http://localhost:5173 | SvelteKit application |
-| Backend API | http://localhost:8000 | FastAPI application |
-| API Docs | http://localhost:8000/docs | Swagger UI |
-| ReDoc | http://localhost:8000/redoc | Alternative API docs |
+| Backend API | http://localhost:8080 | FastAPI application |
+| API Docs | http://localhost:8080/docs | Swagger UI |
+| ReDoc | http://localhost:8080/redoc | Alternative API docs |
 | Workspace | http://localhost:5173/workspace | Main application |
 
 ## Sample Data
@@ -346,8 +349,8 @@ uv run alembic history
 ### Port conflicts
 
 ```bash
-# Backend (8000)
-lsof -ti:8000 | xargs kill -9
+# Backend (8080)
+lsof -ti:8080 | xargs kill -9
 
 # Frontend (5173)
 lsof -ti:5173 | xargs kill -9
@@ -358,25 +361,34 @@ lsof -ti:4173 | xargs kill -9
 
 ## Environment Variables Reference
 
++
 ### Backend
 
-| Variable | Required | Description | Example |
+| Variable | Required | Description | Default |
 |----------|----------|-------------|---------|
-| `OCR_PROVIDER_NAME` | Yes | OCR service provider | `open_ai`, `gemini`, `mistral` |
-| `OCR_PROVIDER_MODEL` | Yes | Model to use | `gpt-4o-mini`, `gemini-1.5-flash` |
-| `OCR_PROVIDER_API_KEY` | Yes | API key for provider | `sk-proj-...` |
-| `DATABASE_URL` | Yes | Database connection string | `sqlite+aiosqlite:///./dev.db` |
+| `OCR_PROVIDER_NAME` | Yes | OCR service provider | `open_ai` |
+| `OCR_PROVIDER_MODEL` | Yes | Model to use | `gpt-4o-mini` |
+| `OCR_PROVIDER_API_KEY` | Yes | API key for provider | - |
+| `DATABASE_URL` | No | Database connection string | `sqlite+aiosqlite:///./dev.db` |
 | `DEV_LOGGING_ENABLED` | No | Enable dev logging | `1` |
+| `DEV_LOCAL_DB_ENABLE_LOGGING` | No | Enable DB query logging | `0` |
+| `FEATURE_ENABLE_SIMULATION` | No | Enable simulation mode | `0` |
 | `FEATURE_ENABLE_DEBUG_MODE` | No | Enable debug mode | `0` |
+| `FEATURE_DEMO_MODE` | No | Enable demo mode | `false` |
+| `FEATURE_DEMO_RESET` | No | Enable demo data reset | `false` |
 
+> **Note:** The `FEATURE_*` flags are for development/testing only. Disable in production.
+
++
 ### Frontend
 
-| Variable | Required | Description | Example |
+| Variable | Required | Description | Default |
 |----------|----------|-------------|---------|
-| `PUBLIC_API_URL` | Yes | Backend API URL | `http://localhost:8000` |
+| `PUBLIC_API_URL` | Yes | Backend API URL | `http://localhost:8080` |
 | `DEMO_MODE` | No | Use sample data | `1` |
-| `DATABASE_URL` | No | Server-side DB access | `postgresql://...` |
 | `ORIGIN` | No | App origin for CORS | `http://localhost:5173` |
+| `DATABASE_URL` | No | Server-side DB access | - |
+| `BETTER_auth_secret` | No | Auth secret for sessions | (auto-generated) |
 
 ## Production Checklist
 
