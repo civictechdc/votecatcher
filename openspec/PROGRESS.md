@@ -1,6 +1,6 @@
 # Votecatcher MVP Progress
 
-**Last Updated:** 2026-03-12 20:15
+**Last Updated:** 2026-03-12 21:30
 **Current Phase:** MVP Complete
 **Overall Status:** Complete
 
@@ -14,6 +14,7 @@
 | Phase 2: Polish | Complete | 100% | E2E tests, keyboard nav, docs |
 | Phase 3: Page Hierarchy | Complete | 100% | Route restructure complete |
 | Phase 4: Stretch | Complete | 100% | Provider selection on job creation |
+| Post-MVP Docs | Complete | 100% | Configuration modes documentation |
 
 ---
 
@@ -179,6 +180,25 @@ Results: 20 match results created
 
 ## Daily Log
 
+### 2026-03-12 (Evening Session 5 - Configuration Documentation)
+- **Completed:** Configuration modes documentation
+  - Created `docs/configuration-modes.md` (542 lines) with all config permutations
+  - Documented 5 modes: Production, Dev (Real LLM), Simulation, Demo, Testing
+  - Fixed hardcoded `.env.local` in backend settings module
+  - Added `ENV_FILE` environment variable support for backend
+  - Updated `main.py` to set `ENV_FILE` based on `--env` flag
+  - Fixed flaky tests to use FastAPI `dependency_overrides` instead of mock.patch
+  - Updated `.env.example` files for both backend and frontend
+  - Updated `docs/running-locally.md` with env switching tables
+  - Updated `README.md` with simulation mode option
+- **Backend Changes:**
+  - `backend/app/settings/env_settings.py` - Respects `ENV_FILE` env var
+  - `backend/main.py` - Sets `ENV_FILE` based on `--env` flag
+  - `backend/tests/test_config.py` - Fixed tests to use dependency_overrides
+- **Verification:**
+  - Backend unit tests: 156 passed (11 config tests all pass)
+  - Env file loading verified for `.env.local`, `.env.dev`
+
 ### 2026-03-12 (Evening Session 4 - MVP Completion)
 - **Completed:** Fixed E2E test infrastructure
   - Fixed API port mismatch in playwright.config.ts (8000 → 8080)
@@ -243,6 +263,16 @@ Results: 20 match results created
 ---
 
 ## Files Changed
+
+### Session 5 - Configuration Documentation (2026-03-12)
+- `docs/configuration-modes.md` - Comprehensive configuration guide (NEW)
+- `docs/running-locally.md` - Added env switching tables and examples
+- `README.md` - Added simulation mode option, config modes link
+- `backend/.env.example` - Added all feature flags
+- `backend/app/settings/env_settings.py` - Respects ENV_FILE variable
+- `backend/main.py` - Sets ENV_FILE based on --env flag
+- `backend/tests/test_config.py` - Fixed tests to use dependency_overrides
+- `frontend-svelt/.env.example` - Added PUBLIC_DEMO_MODE, updated comments
 
 ### Session 4 - MVP Completion (2026-03-12)
 - `frontend-svelt/playwright.config.ts` - Fixed API port, added backend server config

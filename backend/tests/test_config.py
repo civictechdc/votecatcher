@@ -1,7 +1,6 @@
 """Tests for configuration and feature flags."""
 
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -113,42 +112,51 @@ class TestFeatureFlags:
 
 	def test_feature_endpoint_reflects_enabled_simulation(self, client):
 		"""/config/features should reflect enabled simulation flag."""
-		from app.settings.env_settings import AppSettings
+		from app.api import app
+		from app.settings.env_settings import AppSettings, get_settings
 
-		with patch("app.routers.config_router.get_settings") as mock_get_settings:
-			mock_settings = AppSettings(FEATURE_ENABLE_SIMULATION=True)
-			mock_get_settings.return_value = mock_settings
+		mock_settings = AppSettings(FEATURE_ENABLE_SIMULATION=True)
 
+		app.dependency_overrides[get_settings] = lambda: mock_settings
+		try:
 			response = client.get("/config/features")
 			data = response.json()
 
 			assert data["simulationMode"] is True
+		finally:
+			app.dependency_overrides.clear()
 
 	def test_feature_endpoint_reflects_enabled_beta_features(self, client):
 		"""/config/features should reflect enabled beta features."""
-		from app.settings.env_settings import AppSettings
+		from app.api import app
+		from app.settings.env_settings import AppSettings, get_settings
 
-		with patch("app.routers.config_router.get_settings") as mock_get_settings:
-			mock_settings = AppSettings(FEATURE_ENABLE_BETA_FEATURES=True)
-			mock_get_settings.return_value = mock_settings
+		mock_settings = AppSettings(FEATURE_ENABLE_BETA_FEATURES=True)
 
+		app.dependency_overrides[get_settings] = lambda: mock_settings
+		try:
 			response = client.get("/config/features")
 			data = response.json()
 
 			assert data["betaFeatures"] is True
+		finally:
+			app.dependency_overrides.clear()
 
 	def test_feature_endpoint_reflects_enabled_debug_mode(self, client):
 		"""/config/features should reflect enabled debug mode."""
-		from app.settings.env_settings import AppSettings
+		from app.api import app
+		from app.settings.env_settings import AppSettings, get_settings
 
-		with patch("app.routers.config_router.get_settings") as mock_get_settings:
-			mock_settings = AppSettings(FEATURE_ENABLE_DEBUG_MODE=True)
-			mock_get_settings.return_value = mock_settings
+		mock_settings = AppSettings(FEATURE_ENABLE_DEBUG_MODE=True)
 
+		app.dependency_overrides[get_settings] = lambda: mock_settings
+		try:
 			response = client.get("/config/features")
 			data = response.json()
 
 			assert data["debugMode"] is True
+		finally:
+			app.dependency_overrides.clear()
 
 	def test_get_settings_caching(self):
 		"""get_settings should be cached (singleton)."""

@@ -21,7 +21,7 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 - **Python 3.12+**
 - **Node.js 20+** or **Bun**
 - **PostgreSQL** (optional, SQLite works for development)
-- **API key** for at least one LLM provider (OpenAI, Gemini, or Mistral)
+- **API key** for at least one LLM provider (optional - use simulation mode without)
 
 ### 1. Clone and Setup
 
@@ -41,7 +41,10 @@ uv sync --dev
 # Create environment file
 cp .env.example .env.local
 
-# Edit .env.local and add your API keys:
+# For quick start without API keys, enable simulation mode:
+# Edit .env.local and set FEATURE_ENABLE_SIMULATION=1
+#
+# For real OCR, add your API keys:
 # OCR_PROVIDER_NAME=open_ai
 # OCR_PROVIDER_MODEL=gpt-4o-mini
 # OCR_PROVIDER_API_KEY=your-key-here
@@ -49,6 +52,8 @@ cp .env.example .env.local
 # Initialize database
 uv run alembic upgrade head
 ```
+
+> **See [Configuration Modes](docs/configuration-modes.md) for all setup options.**
 
 ### 3. Frontend Setup
 
@@ -60,7 +65,11 @@ bun install
 
 # Create environment file
 cp .env.example .env.local
+
+# For demo mode, set PUBLIC_DEMO_MODE=true and DEMO_MODE=true
 ```
+
+> **See [Configuration Modes](docs/configuration-modes.md) for all setup options.**
 
 ### 4. Run Development Servers
 
@@ -151,7 +160,9 @@ votecatcher/
 
 ### For Users
 
+- **[Configuration Modes](docs/configuration-modes.md)** - All configuration options (production, dev, simulation, demo)
 - **[Running Locally](docs/running-locally.md)** - Detailed setup and configuration
+- **[Demo Walkthrough](docs/demo-walkthrough.md)** - Demo script for presentations
 - **[Deployment Guide](docs/deployment/)** - Production deployment (coming soon)
 
 ### For Developers

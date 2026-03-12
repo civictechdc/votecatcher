@@ -1,20 +1,29 @@
+import os
 from functools import lru_cache
 from pathlib import Path
 
 import structlog
-from dotenv import find_dotenv, load_dotenv
+from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-env_local = Path(__file__).parent.parent.parent / ".env.local"
-load_dotenv(env_local, override=True)
-
 logger = structlog.get_logger(__name__)
+
+backend_dir = Path(__file__).parent.parent.parent
+
+env_file = os.getenv("ENV_FILE")
+env_path = backend_dir / env_file if env_file else backend_dir / ".env.local"
+
+if env_path.exists():
+	load_dotenv(env_path, override=True)
+	logger.debug(f"Loaded environment from: {env_path}")
+else:
+	logger.debug(f"No env file found at {env_path}, using system environment")
 
 
 class AppSettings(BaseSettings):
 	model_config = SettingsConfigDict(
-		env_file=str(env_local), extra="ignore", env_file_encoding="utf-8"
+		extra="ignore",
 	)
 
 	app_name: str = "Votecatcher Backend"
@@ -53,5 +62,5 @@ class AppSettings(BaseSettings):
 
 @lru_cache
 def get_settings() -> AppSettings:
-	logger.debug(f"Env file path: {find_dotenv()}")
+	logger.debug(f"Using env file path: {env_path}")
 	return AppSettings()

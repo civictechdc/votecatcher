@@ -9,7 +9,9 @@ This guide covers local development setup. For a quick start, see the main [READ
 - **Node.js 20+** or **Bun** - [Bun Install](https://bun.sh/)
 - **PostgreSQL** (optional, SQLite works for development)
 - **Git**
-- **API key** for at least one LLM provider (OpenAI, Gemini, or Mistral)
+- **API key** for at least one LLM provider (optional - use simulation mode without)
+
+> **Note:** See [Configuration Modes](configuration-modes.md) for running without API keys using simulation mode.
 
 ## Backend Setup
 
@@ -22,27 +24,38 @@ uv sync --dev
 
 ### Environment Configuration
 
-Create `.env.local` in the backend directory:
+Create `.env.local` in the backend directory. See [Configuration Modes](configuration-modes.md) for all supported modes.
+
+**Quick Start (Simulation Mode - no API key required):**
 
 ```env
-# OCR Provider Configuration
+# Database
+DATABASE_URL=sqlite+aiosqlite:///./dev.db
+
+# OCR Provider (not used in simulation)
+OCR_PROVIDER_NAME=open_ai
+OCR_PROVIDER_MODEL=gpt-4o-mini
+OCR_PROVIDER_API_KEY=
+
+# Feature Flags
+FEATURE_ENABLE_SIMULATION=1
+FEATURE_ENABLE_DEBUG_MODE=1
+```
+
+**Development Mode (with real LLM):**
+
+```env
+# Database
+DATABASE_URL=sqlite+aiosqlite:///./dev.db
+
+# OCR Provider (required)
 OCR_PROVIDER_NAME=open_ai
 OCR_PROVIDER_MODEL=gpt-4o-mini
 OCR_PROVIDER_API_KEY=your-openai-api-key-here
 
-# Database (SQLite for development)
-DATABASE_URL=sqlite+aiosqlite:///./dev.db
-
-# Alternative: PostgreSQL
-# DATABASE_URL=postgresql+asyncpg://user:pass@localhost/votecatcher
-
-# Development Settings
-DEV_LOGGING_ENABLED=1
-DEV_LOCAL_DB_ENABLE_LOGGING=1
-
 # Feature Flags
 FEATURE_ENABLE_SIMULATION=0
-FEATURE_ENABLE_DEBUG_MODE=0
+FEATURE_ENABLE_DEBUG_MODE=1
 ```
 
 ### Database Setup
@@ -62,16 +75,19 @@ uv run python -c "from app.data.database.session import engine; print(engine.tab
 ```bash
 cd backend
 
-# Development server with auto-reload
+# Development server with auto-reload (uses .env.local)
 uv run python main.py --env local
+
+# Use a different environment file
+uv run python main.py --env dev      # Loads .env.dev
+uv run python main.py --env prod     # Loads .env.prod
 
 # Server starts at http://localhost:8080
 # API documentation at http://localhost:8080/docs
 # ReDoc at http://localhost:8080/redoc
 ```
 
-> **Note:** The API uses `/api` as the root path, so endpoints are accessed at
-> `http://localhost:8080/api/<endpoint>`. The Swagger docs show the full paths.
+> **Note:** The `--env` flag loads different `.env` files. See [Configuration Modes](configuration-modes.md#switching-between-modes) for all options.
 
 ### Testing
 
@@ -125,20 +141,33 @@ bun install
 
 ### Environment Configuration
 
-Create `.env.local` in the frontend directory:
+Create `.env.local` in the frontend directory. See [Configuration Modes](configuration-modes.md) for all supported modes.
+
+**Quick Start:**
 
 ```env
 # Backend API URL
-PUBLIC_API_URL=http://localhost:8000
+PUBLIC_API_URL=http://localhost:8080
 
-# Demo mode (uses sample data)
-DEMO_MODE=1
+# Demo mode (set to true for presentations)
+PUBLIC_DEMO_MODE=false
+DEMO_MODE=false
 
-# Database connection (for server-side operations)
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/votecatcher
-
-# App origin
+# App origin for CORS
 ORIGIN=http://localhost:5173
+
+# Auth secret for sessions
+BETTER_AUTH_SECRET=your-secret-here
+```
+
+**Demo Mode:**
+
+```env
+PUBLIC_API_URL=http://localhost:8080
+PUBLIC_DEMO_MODE=true
+DEMO_MODE=true
+ORIGIN=http://localhost:5173
+BETTER_AUTH_SECRET=demo-secret
 ```
 
 ### Running the Frontend
@@ -146,11 +175,19 @@ ORIGIN=http://localhost:5173
 ```bash
 cd frontend-svelt
 
-# Development server
+# Development server (loads .env, .env.local, .env.development)
 bun run dev
+
+# Run with demo mode (loads .env, .env.local, .env.demo)
+MODE=demo bun run dev
+
+# Production build (loads .env, .env.local, .env.production)
+bun run build
 
 # Server starts at http://localhost:5173
 ```
+
+> **Note:** Use `MODE=<name>` to load `.env.<name>` files. See [Configuration Modes](configuration-modes.md#switching-between-modes) for details.
 
 ### Testing
 
@@ -361,34 +398,33 @@ lsof -ti:4173 | xargs kill -9
 
 ## Environment Variables Reference
 
-+
 ### Backend
 
 | Variable | Required | Description | Default |
 |----------|----------|-------------|---------|
-| `OCR_PROVIDER_NAME` | Yes | OCR service provider | `open_ai` |
-| `OCR_PROVIDER_MODEL` | Yes | Model to use | `gpt-4o-mini` |
-| `OCR_PROVIDER_API_KEY` | Yes | API key for provider | - |
+| `OCR_PROVIDER_NAME` | Yes* | OCR service provider (`open_ai`, `gemini_ai`, `mistral_ai`) | `open_ai` |
+| `OCR_PROVIDER_MODEL` | Yes* | Model to use | `gpt-4o-mini` |
+| `OCR_PROVIDER_API_KEY` | Yes* | API key for provider | - |
 | `DATABASE_URL` | No | Database connection string | `sqlite+aiosqlite:///./dev.db` |
 | `DEV_LOGGING_ENABLED` | No | Enable dev logging | `1` |
 | `DEV_LOCAL_DB_ENABLE_LOGGING` | No | Enable DB query logging | `0` |
-| `FEATURE_ENABLE_SIMULATION` | No | Enable simulation mode | `0` |
+| `FEATURE_ENABLE_SIMULATION` | No | Enable simulation mode (mock OCR) | `0` |
 | `FEATURE_ENABLE_DEBUG_MODE` | No | Enable debug mode | `0` |
-| `FEATURE_DEMO_MODE` | No | Enable demo mode | `false` |
-| `FEATURE_DEMO_RESET` | No | Enable demo data reset | `false` |
+| `FEATURE_ENABLE_BETA_FEATURES` | No | Enable beta features | `0` |
+| `FEATURE_DEMO_MODE` | No | Enable demo mode | `0` |
+| `FEATURE_DEMO_RESET` | No | Enable demo data reset | `0` |
 
-> **Note:** The `FEATURE_*` flags are for development/testing only. Disable in production.
+> **Note:** `*` Not required when `FEATURE_ENABLE_SIMULATION=1`. See [Configuration Modes](configuration-modes.md) for details.
 
-+
 ### Frontend
 
 | Variable | Required | Description | Default |
 |----------|----------|-------------|---------|
-| `PUBLIC_API_URL` | Yes | Backend API URL | `http://localhost:8080` |
-| `DEMO_MODE` | No | Use sample data | `1` |
+| `PUBLIC_API_URL` | Yes | Backend API URL (no /api suffix) | `http://localhost:8080` |
+| `PUBLIC_DEMO_MODE` | No | Client-side demo mode flag | `false` |
+| `DEMO_MODE` | No | Server-side demo mode flag | `false` |
 | `ORIGIN` | No | App origin for CORS | `http://localhost:5173` |
-| `DATABASE_URL` | No | Server-side DB access | - |
-| `BETTER_auth_secret` | No | Auth secret for sessions | (auto-generated) |
+| `BETTER_AUTH_SECRET` | No | Auth secret for sessions | (auto-generated) |
 
 ## Production Checklist
 
@@ -403,8 +439,39 @@ Before deploying to production:
 - [ ] Database backups configured
 - [ ] Rate limiting configured
 
+## Switching Environment Files
+
+### Backend
+
+Use the `--env` flag to load different `.env` files:
+
+| Command | Loads | Use Case |
+|---------|-------|----------|
+| `uv run python main.py` | `.env.local` | Default local dev |
+| `uv run python main.py --env local` | `.env.local` | Local development |
+| `uv run python main.py --env dev` | `.env.dev` | Development mode |
+| `uv run python main.py --env prod` | `.env.prod` | Production mode |
+
+For scripts/tests, set `ENV_FILE`:
+```bash
+ENV_FILE=.env.simulation uv run pytest tests/
+```
+
+### Frontend
+
+Use `MODE` to load different `.env` files:
+
+| Command | Loads | Use Case |
+|---------|-------|----------|
+| `bun run dev` | `.env.development` | Development |
+| `MODE=demo bun run dev` | `.env.demo` | Demo mode |
+| `bun run build` | `.env.production` | Production build |
+
+> **See [Configuration Modes](configuration-modes.md) for complete configuration guide.**
+
 ## Related Documentation
 
+- [Configuration Modes](configuration-modes.md) - All configuration modes explained
 - [Architecture Overview](architecture/README.md)
 - [API Specification](../backend/openapi.yaml)
 - [Development Guide](development/README.md)
