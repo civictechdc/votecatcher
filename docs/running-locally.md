@@ -29,8 +29,8 @@ Create `.env.local` in the backend directory. See [Configuration Modes](configur
 **Quick Start (Simulation Mode - no API key required):**
 
 ```env
-# Database
-DATABASE_URL=sqlite+aiosqlite:///./dev.db
+# Database (use sqlite:// not sqlite+aiosqlite://)
+DATABASE_URL=sqlite:///./dev.db
 
 # OCR Provider (not used in simulation)
 OCR_PROVIDER_NAME=open_ai
@@ -45,8 +45,8 @@ FEATURE_ENABLE_DEBUG_MODE=1
 **Development Mode (with real LLM):**
 
 ```env
-# Database
-DATABASE_URL=sqlite+aiosqlite:///./dev.db
+# Database (use sqlite:// not sqlite+aiosqlite://)
+DATABASE_URL=sqlite:///./dev.db
 
 # OCR Provider (required)
 OCR_PROVIDER_NAME=open_ai

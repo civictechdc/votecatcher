@@ -371,7 +371,7 @@ frontend-svelt/
 
 **Backend `.env.simulation` (no API keys needed):**
 ```bash
-DATABASE_URL=sqlite+aiosqlite:///./dev.db
+DATABASE_URL=sqlite:///./dev.db
 OCR_PROVIDER_NAME=open_ai
 OCR_PROVIDER_MODEL=gpt-4o-mini
 OCR_PROVIDER_API_KEY=
@@ -381,9 +381,11 @@ FEATURE_DEMO_MODE=0
 FEATURE_DEMO_RESET=0
 ```
 
+> **Note:** Use `sqlite:///` (sync driver) not `sqlite+aiosqlite:///` (async). The `init_db()` function uses synchronous SQLAlchemy calls.
+
 **Backend `.env.demo` (for presentations):**
 ```bash
-DATABASE_URL=sqlite+aiosqlite:///./demo.db
+DATABASE_URL=sqlite:///./demo.db
 OCR_PROVIDER_NAME=open_ai
 OCR_PROVIDER_MODEL=gpt-4o-mini
 OCR_PROVIDER_API_KEY=
