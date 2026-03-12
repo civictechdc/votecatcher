@@ -21,6 +21,9 @@ def init_db() -> None:
 		OcrModel,
 		OcrProvider,
 	)
+	from app.data.database.model.llm_provider_config import (
+		LlmProviderConfig,  # noqa: F401
+	)
 	from app.data.database.model.match_result import MatchResult  # noqa: F401
 	from app.data.database.model.ocr_result import OcrResult  # noqa: F401
 	from app.data.database.model.petition_crop import PetitionCrop  # noqa: F401

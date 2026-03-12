@@ -4,7 +4,7 @@ import AxeBuilder from '@axe-core/playwright';
 test.describe('Accessibility Audit', () => {
 	test('landing page should have no WCAG 2.2 AA violations', async ({ page }) => {
 		await page.goto('/');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const accessibilityScanResults = await new AxeBuilder({ page })
 			.withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
@@ -15,7 +15,7 @@ test.describe('Accessibility Audit', () => {
 
 	test('campaigns page should have no WCAG 2.2 AA violations', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const accessibilityScanResults = await new AxeBuilder({ page })
 			.withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
@@ -26,7 +26,7 @@ test.describe('Accessibility Audit', () => {
 
 	test('demo page should have no WCAG 2.2 AA violations', async ({ page }) => {
 		await page.goto('/workspace/demo');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const accessibilityScanResults = await new AxeBuilder({ page })
 			.withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
@@ -37,7 +37,7 @@ test.describe('Accessibility Audit', () => {
 
 	test('settings page should have no WCAG 2.2 AA violations', async ({ page }) => {
 		await page.goto('/workspace/settings');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const accessibilityScanResults = await new AxeBuilder({ page })
 			.withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
@@ -48,12 +48,12 @@ test.describe('Accessibility Audit', () => {
 
 	test('campaign dashboard should have no WCAG 2.2 AA violations', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
 			await campaignLink.click();
-			await page.waitForLoadState('networkidle');
+			await page.waitForLoadState('domcontentloaded');
 
 			const accessibilityScanResults = await new AxeBuilder({ page })
 				.withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
@@ -69,7 +69,7 @@ test.describe('Accessibility Audit', () => {
 test.describe('Color Contrast', () => {
 	test('all text should meet minimum contrast ratio', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const contrastResults = await new AxeBuilder({ page })
 			.withRules(['color-contrast'])
@@ -83,7 +83,7 @@ test.describe('Color Contrast', () => {
 test.describe('Keyboard Navigation', () => {
 	test('sidebar navigation should be keyboard accessible', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		await page.keyboard.press('Tab');
 
@@ -95,7 +95,7 @@ test.describe('Keyboard Navigation', () => {
 
 	test('can navigate to all sidebar links with Tab', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const tabPresses = 10;
 		for (let i = 0; i < tabPresses; i++) {
@@ -114,7 +114,7 @@ test.describe('Keyboard Navigation', () => {
 
 	test('landing page CTA is keyboard accessible', async ({ page }) => {
 		await page.goto('/');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const ctaButton = page.locator('a:has-text("Start")').first();
 		await expect(ctaButton).toBeVisible();

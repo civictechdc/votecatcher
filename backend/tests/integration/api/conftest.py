@@ -1,21 +1,38 @@
 import uuid
 
 import pytest
-from sqlmodel import Session
+from fastapi.testclient import TestClient
+from sqlmodel import Session, SQLModel, create_engine
 
+from app.api import app
 from app.data.database.model.schema import Campaign, Region
-from app.data.database.session import engine, init_db
+from app.dependencies import get_session as get_db_session
 
 
 @pytest.fixture(name="session", scope="function")
 def session_fixture():
-	"""Create a test database session using the real database.
+	"""Create a test database session using an in-memory SQLite database.
 
-	Ensures tables exist before running tests.
+	Uses check_same_thread=False to to prevent threading issues with SQLite.
 	"""
-	init_db()
-	with Session(engine) as session:
+	test_engine = create_engine("sqlite:///:memory:")
+	SQLModel.metadata.create_all(test_engine)
+
+	with Session(test_engine) as session:
 		yield session
+
+
+@pytest.fixture
+def client(session: Session):
+	"""Create a test client with the test database session."""
+
+	def override_get_session():
+		yield session
+
+	app.dependency_overrides[get_db_session] = override_get_session
+	with TestClient(app) as test_client:
+		yield test_client
+	app.dependency_overrides.clear()
 
 
 @pytest.fixture

@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 import structlog
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from app.data.database.model.jobs import JobStatus, MatcherJob, OcrJob
 from app.data.database.model.match_result import ConfidenceLevel, MatchResult
@@ -108,11 +108,16 @@ class JobWorker:
 		job.started_on = datetime.now(UTC)
 		session.commit()
 
+		job_campaign_normalized = str(job.campaign_id).replace("-", "")
+
 		crops = list(
 			session.exec(
 				select(PetitionCrop)
 				.join(PetitionScan, PetitionCrop.scan_id == PetitionScan.id)
-				.where(PetitionScan.campaign_id == job.campaign_id)
+				.where(
+					func.replace(PetitionScan.campaign_id, "-", "")
+					== job_campaign_normalized
+				)
 			).all()
 		)
 

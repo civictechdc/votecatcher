@@ -24,6 +24,7 @@ from app.routers import (
 	config_router,
 	demo_router,
 	job_router,
+	provider_router,
 	results_router,
 	session_router,
 	upload_router,
@@ -158,3 +159,4 @@ app.include_router(results_router)
 app.include_router(session_router)
 app.include_router(demo_router)
 app.include_router(config_router)
+app.include_router(provider_router)

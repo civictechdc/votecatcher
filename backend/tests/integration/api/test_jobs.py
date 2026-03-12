@@ -8,20 +8,12 @@ Tests the complete job lifecycle:
 
 import uuid
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.api import app
 from app.data.database.model.jobs import JobStatus, MatcherJob
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
-
-
-@pytest.fixture
-def client():
-	"""Create test client."""
-	return TestClient(app)
 
 
 class TestCreateJob:
@@ -45,7 +37,8 @@ class TestCreateJob:
 			json={
 				"campaign_id": str(test_campaign.id),
 				"scan_ids": [],
-				"provider": "openai",
+				"provider_name": "openai",
+				"provider_model": "gpt-4o",
 			},
 		)
 
@@ -54,11 +47,42 @@ class TestCreateJob:
 
 		assert "job_id" in data
 		assert data["status"] == "NOT_STARTED"
+		assert data["provider_name"] == "openai"
+		assert data["provider_model"] == "gpt-4o"
 		assert "created_at" in data
 
 		job = session.get(MatcherJob, data["job_id"])
 		assert job is not None
 		assert job.campaign_id == test_campaign.id
+		assert job.provider_name == "openai"
+		assert job.provider_model == "gpt-4o"
+
+	def test_create_job_without_provider(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Should create job with null provider fields if not specified."""
+		petition_scan = PetitionScan(
+			campaign_id=test_campaign.id,
+			original_filename="test.pdf",
+			stored_path=f"/tmp/test_{uuid.uuid4()}.pdf",
+			file_hash=f"hash_{uuid.uuid4()}",
+		)
+		session.add(petition_scan)
+		session.commit()
+
+		response = client.post(
+			"/api/jobs",
+			json={
+				"campaign_id": str(test_campaign.id),
+				"scan_ids": [],
+			},
+		)
+
+		assert response.status_code == 201
+		data = response.json()
+
+		assert data["provider_name"] is None
+		assert data["provider_model"] is None
 
 	def test_create_job_no_petition_scans(
 		self, client: TestClient, test_campaign: Campaign, session: Session
@@ -69,7 +93,7 @@ class TestCreateJob:
 			json={
 				"campaign_id": str(test_campaign.id),
 				"scan_ids": [],
-				"provider": "openai",
+				"provider_name": "openai",
 			},
 		)
 
@@ -86,7 +110,7 @@ class TestCreateJob:
 			json={
 				"campaign_id": str(uuid.uuid4()),
 				"scan_ids": [],
-				"provider": "openai",
+				"provider_name": "openai",
 			},
 		)
 

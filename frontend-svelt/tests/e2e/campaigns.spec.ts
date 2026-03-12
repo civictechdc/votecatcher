@@ -22,7 +22,7 @@ test.describe('Campaign Management', () => {
 
 	test('should navigate to campaign dashboard from list', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {

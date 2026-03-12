@@ -17,7 +17,7 @@ test.describe('Dashboard', () => {
 
 	test('should navigate via sidebar', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		await page.click('text=Settings');
 		await expect(page).toHaveURL(/.*settings/);
@@ -30,7 +30,7 @@ test.describe('Dashboard', () => {
 test.describe('Campaign Dashboard Flow', () => {
 	test('should navigate to campaign dashboard', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {

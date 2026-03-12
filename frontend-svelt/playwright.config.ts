@@ -18,15 +18,26 @@ export default defineConfig({
 			use: { ...devices['Desktop Chrome'] },
 		},
 	],
-	webServer: {
-		command: 'bun run dev',
-		url: 'http://localhost:5173',
-		reuseExistingServer: !process.env.CI,
-		timeout: 120000,
-		env: {
-			PUBLIC_DEMO_MODE: 'true',
-			DEMO_RESET: 'true',
-			PUBLIC_API_URL: 'http://localhost:8000',
+	webServer: [
+		{
+			command: 'cd ../backend && uv run python main.py --env local',
+			url: 'http://localhost:8080/docs',
+			reuseExistingServer: !process.env.CI,
+			timeout: 120000,
+			env: {
+				FEATURE_ENABLE_SIMULATION: '1',
+			},
 		},
-	},
+		{
+			command: 'bun run dev',
+			url: 'http://localhost:5173',
+			reuseExistingServer: !process.env.CI,
+			timeout: 120000,
+			env: {
+				PUBLIC_DEMO_MODE: 'true',
+				DEMO_RESET: 'true',
+				PUBLIC_API_URL: 'http://localhost:8080',
+			},
+		},
+	],
 });

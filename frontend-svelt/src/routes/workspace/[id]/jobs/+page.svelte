@@ -6,13 +6,23 @@
 	import { Button, Table, LoadingState, Modal, ErrorDisplay } from '$lib/components/ui';
 	import type { JobResponse } from '$lib/api/generated';
 
+	interface ProviderConfig {
+		provider: string;
+		model: string;
+		isConfigured: boolean;
+		lastValidated?: string;
+	}
+
 	let campaignId = $derived($page.params.id);
 
 	let showCreateModal = $state(false);
 	let showCancelModal = $state(false);
 	let jobToCancel = $state<{ id: number; status: string } | null>(null);
+	let providers = $state<ProviderConfig[]>([]);
+	let providersLoading = $state(false);
 	let formData = $state({
-		provider: 'openai'
+		providerName: '',
+		providerModel: ''
 	});
 
 	const CANCELABLE_STATES = ['NOT_STARTED', 'OCR_PENDING', 'OCR_STARTED'];
@@ -54,12 +64,51 @@
 		{ key: 'actions', label: 'Actions', sortable: false }
 	];
 
+	async function fetchProviders() {
+		providersLoading = true;
+		try {
+			const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+			const response = await fetch(`${baseUrl}/api/settings/providers`);
+			if (response.ok) {
+				providers = await response.json();
+				if (providers.length > 0 && !formData.providerName) {
+					const configured = providers.find(p => p.isConfigured);
+					if (configured) {
+						formData.providerName = configured.provider;
+						formData.providerModel = configured.model;
+					} else {
+						formData.providerName = providers[0].provider;
+						formData.providerModel = providers[0].model;
+					}
+				}
+			}
+		} catch (error) {
+			console.error('Failed to fetch providers:', error);
+		} finally {
+			providersLoading = false;
+		}
+	}
+
 	onMount(() => {
 		jobs.fetchAll();
 		campaigns.fetchAll();
+		fetchProviders();
 	});
 
 	const campaignJobs = $derived($jobs.jobs.filter(job => String(job.campaignId) === String(campaignId)));
+
+	const availableModels = $derived(() => {
+		const provider = providers.find(p => p.provider === formData.providerName);
+		if (!provider) return [];
+		return [{ name: provider.model, configured: provider.isConfigured }];
+	});
+
+	function handleProviderChange() {
+		const provider = providers.find(p => p.provider === formData.providerName);
+		if (provider) {
+			formData.providerModel = provider.model;
+		}
+	}
 
 	function getTableRows(jobList: JobResponse[]) {
 		return jobList.map((job) => {
@@ -99,13 +148,15 @@
 	}
 
 	async function handleCreate() {
+		if (!campaignId) return;
 		try {
 			await jobs.create({
 				campaignId: campaignId,
-				provider: formData.provider
+				providerName: formData.providerName || undefined,
+				providerModel: formData.providerModel || undefined
 			});
 			showCreateModal = false;
-			formData = { provider: 'openai' };
+			formData = { providerName: '', providerModel: '' };
 		} catch (error) {
 		}
 	}
@@ -146,23 +197,51 @@
 
 <Modal open={showCreateModal} onClose={() => (showCreateModal = false)} title="Create Job">
 	<form onsubmit={(e) => { e.preventDefault(); handleCreate(); }} class="space-y-4">
-		<div>
-			<label for="provider" class="block text-sm font-medium text-slate-700 mb-1">
-				OCR Provider
-			</label>
-			<select
-				id="provider"
-				bind:value={formData.provider}
-				class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
-			>
-				<option value="openai">OpenAI</option>
-				<option value="gemini">Gemini</option>
-			</select>
-		</div>
+		{#if providersLoading}
+			<div class="text-slate-500">Loading providers...</div>
+		{:else if providers.length === 0}
+			<div class="text-amber-600 bg-amber-50 p-3 rounded-md">
+				No LLM providers configured. <a href="/workspace/settings" class="underline">Configure a provider</a> first.
+			</div>
+		{:else}
+			<div>
+				<label for="provider" class="block text-sm font-medium text-slate-700 mb-1">
+					LLM Provider
+				</label>
+				<select
+					id="provider"
+					bind:value={formData.providerName}
+					onchange={handleProviderChange}
+					class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+				>
+					{#each providers as provider}
+						<option value={provider.provider}>
+							{provider.provider.charAt(0).toUpperCase() + provider.provider.slice(1)}
+							{#if !provider.isConfigured}(not configured){/if}
+						</option>
+					{/each}
+				</select>
+			</div>
+
+			<div>
+				<label for="model" class="block text-sm font-medium text-slate-700 mb-1">
+					Model
+				</label>
+				<select
+					id="model"
+					bind:value={formData.providerModel}
+					class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+				>
+					{#each availableModels() as model}
+						<option value={model.name}>{model.name}</option>
+					{/each}
+				</select>
+			</div>
+		{/if}
 
 		<div class="flex justify-end gap-3 pt-4">
 			<Button variant="secondary" text="Cancel" onclick={() => (showCreateModal = false)} type="button" />
-			<Button variant="primary" text="Create" type="submit" />
+			<Button variant="primary" text="Create" type="submit" disabled={providers.length === 0} />
 		</div>
 	</form>
 </Modal>

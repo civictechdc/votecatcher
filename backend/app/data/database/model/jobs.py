@@ -32,6 +32,8 @@ class MatcherJob(SQLModel, table=True):
 	id: int = Field(primary_key=True)
 	campaign_id: UUID = Field(foreign_key="campaigns.id", index=True)
 	current_status: JobStatus = Field(default=JobStatus.NOT_STARTED)
+	provider_name: str | None = Field(default=None)
+	provider_model: str | None = Field(default=None)
 	started_on: datetime | None = Field(default=None)
 	updated_on: datetime | None = Field(
 		default=None, sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)}

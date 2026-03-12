@@ -1,8 +1,8 @@
 # Votecatcher MVP Technical Specification
 
 **Status:** Draft
-**Version:** 1.2
-**Last Updated:** 2026-03-11
+**Version:** 1.3
+**Last Updated:** 2026-03-12
 **Author:** Solutions Architect Agent
 
 ---
@@ -180,6 +180,20 @@ CREATE TABLE llm_provider_config (
   updated_at DATETIME
 );
 ```
+
+#### UUID Storage Format
+
+**Requirement:** All UUID fields must be stored as 32-character strings without dashes.
+
+| Table | Field | Format |
+|-------|-------|--------|
+| `campaigns` | `id` | `25ea5e1c2fd849e88062c15e8b04492c` (32 chars) |
+| `matcher_jobs` | `campaign_id` | Same format as campaigns.id |
+| `petition_scans` | `campaign_id` | Same format as campaigns.id |
+
+**Validation:** Job creation must validate `campaign_id` format matches expected pattern.
+
+**Defensive Query Pattern:** Worker queries should normalize UUIDs using `REPLACE(campaign_id, '-', '')` to handle legacy data.
 
 #### Modified Table: `matcher_job`
 
@@ -1014,6 +1028,10 @@ LLM_KEYS={"openai":"sk-...","gemini":"...","mistral":"..."}
 # Demo Mode
 DEMO_MODE=false
 
+# Simulation Mode (for development without real LLM API keys)
+# When enabled, OCR returns mock data instead of calling LLM APIs
+FEATURE_ENABLE_SIMULATION=1
+
 # Polling Interval (seconds)
 DASHBOARD_POLL_INTERVAL=10
 ```
@@ -1053,5 +1071,5 @@ export const PROVIDERS = {
 
 ---
 
-**Document Status:** Draft v1.2 - Added phase gate criteria, BDD/TDD validation protocol, PROGRESS.md reporting requirements
-**Last Updated:** 2026-03-11
+**Document Status:** Draft v1.3 - Added UUID storage format requirement, FEATURE_ENABLE_SIMULATION env var
+**Last Updated:** 2026-03-12

@@ -31,7 +31,8 @@ class CreateJobRequest(BaseModel):
 
 	campaign_id: uuid.UUID
 	scan_ids: list[int] = []
-	provider: str = "openai"
+	provider_name: str | None = None
+	provider_model: str | None = None
 
 
 class JobResponse(BaseModel):
@@ -41,6 +42,8 @@ class JobResponse(BaseModel):
 	status: str
 	campaign_id: uuid.UUID
 	campaign_name: str | None = None
+	provider_name: str | None = None
+	provider_model: str | None = None
 	created_at: datetime | None = None
 	updated_at: datetime | None = None
 	error_message: str | None = None
@@ -63,6 +66,8 @@ def _build_job_response(job: MatcherJob, session: Session) -> JobResponse:
 		status=job.current_status.value,
 		campaign_id=job.campaign_id,
 		campaign_name=campaign.unique_name if campaign else None,
+		provider_name=job.provider_name,
+		provider_model=job.provider_model,
 		created_at=job.created_at,
 		updated_at=job.updated_on,
 		error_message=error_message,
@@ -117,6 +122,8 @@ def create_job(
 	job = MatcherJob(
 		campaign_id=request.campaign_id,
 		current_status=JobStatus.NOT_STARTED,
+		provider_name=request.provider_name,
+		provider_model=request.provider_model,
 	)
 	session.add(job)
 	session.commit()
@@ -126,7 +133,8 @@ def create_job(
 		"Created matcher job",
 		job_id=job.id,
 		campaign_id=request.campaign_id,
-		provider=request.provider,
+		provider_name=request.provider_name,
+		provider_model=request.provider_model,
 	)
 
 	return _build_job_response(job, session)

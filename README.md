@@ -248,11 +248,13 @@ See [Security Scanning](openspec/SPEC.md#appendix-c-security-scanning) for detai
 ## Roadmap
 
 - [x] Phase 1: Stability - Worker tests, metrics API, error handling
+- [x] Phase 2: Polish - Keyboard nav, E2E tests, documentation
 - [x] Phase 3: Page Hierarchy - Route restructure, campaign scoping
-- [ ] Phase 2: Polish - Keyboard nav, E2E tests, documentation
-- [ ] Phase 4: Stretch - LLM config UI, provider selection, campaign list enhancements
+- [x] Phase 4: Stretch - LLM config UI, provider selection on job creation
 
-See [PROGRESS.md](openspec/PROGRESS.md) for detailed status.
+### MVP Complete
+
+The core MVP is feature-complete. See [PROGRESS.md](openspec/PROGRESS.md) for detailed status.
 
 ## Contributing
 

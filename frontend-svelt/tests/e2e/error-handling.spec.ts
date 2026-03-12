@@ -4,15 +4,12 @@ test.describe('Error Handling', () => {
 	test('error page displays on 404', async ({ page }) => {
 		await page.goto('/workspace/nonexistent-page-12345');
 
-		await page.waitForLoadState('networkidle');
-
-		const hasError = await page.locator('h1').first().isVisible().catch(() => false);
-		expect(hasError).toBeTruthy();
+		await expect(page.locator('h1').first()).toBeVisible({ timeout: 5000 });
 	});
 
 	test('error page has navigation options', async ({ page }) => {
 		await page.goto('/workspace/nonexistent-page-12345');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const hasButton = await page.locator('button').count() > 0;
 		const hasLink = await page.locator('a').count() > 0;

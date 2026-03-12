@@ -20,7 +20,7 @@ test.describe('Demo Flow', () => {
 			return;
 		}
 
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 		await page.waitForTimeout(1000);
 
 		const loadButtonVisible = await page.locator('button:has-text("Load")').first().isVisible().catch(() => false);

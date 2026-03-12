@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test.describe('Campaign-Scoped Navigation', () => {
 	test('Scenario 1: Navigate to campaign dashboard', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 
@@ -40,7 +40,7 @@ test.describe('Campaign-Scoped Navigation', () => {
 
 	test('Scenario 3: Campaign switcher navigates', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 
 		const table = page.locator('table');
 		const campaignLinks = await table.locator('a[href^="/workspace/"]').filter({
@@ -54,7 +54,7 @@ test.describe('Campaign-Scoped Navigation', () => {
 			const firstCampaignUrl = page.url();
 
 			await page.goto('/workspace/campaigns');
-			await page.waitForLoadState('networkidle');
+			await page.waitForLoadState('domcontentloaded');
 
 			const newTable = page.locator('table');
 			const newLinks = await newTable.locator('a[href^="/workspace/"]').filter({
@@ -74,7 +74,7 @@ test.describe('Campaign-Scoped Navigation', () => {
 
 	test('Scenario 4: Results scoped to campaign', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 
 		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -95,7 +95,7 @@ test.describe('Campaign-Scoped Navigation', () => {
 
 	test('Scenario 5: Upload scoped to campaign', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 
 		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -142,7 +142,7 @@ test.describe('Campaign-Scoped Navigation', () => {
 test.describe('Campaign Dashboard', () => {
 	test('Dashboard shows campaign metrics', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 
 		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -150,7 +150,7 @@ test.describe('Campaign Dashboard', () => {
 
 			await expect(page.locator('h1').first()).toBeVisible();
 
-			await page.waitForLoadState('networkidle');
+			await page.waitForLoadState('domcontentloaded');
 			await page.waitForTimeout(500);
 
 			const metricsSection = page.locator('[data-testid="metrics"]');
@@ -163,7 +163,7 @@ test.describe('Campaign Dashboard', () => {
 
 	test('Sidebar shows campaign-scoped navigation', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 
 		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -172,7 +172,7 @@ test.describe('Campaign Dashboard', () => {
 			const campaignId = url.match(/\/workspace\/([^/]+)/)?.[1];
 
 			if (campaignId) {
-				await page.waitForLoadState('networkidle');
+				await page.waitForLoadState('domcontentloaded');
 
 				const sidebar = page.locator('aside, nav').first();
 				await expect(sidebar).toBeVisible();
@@ -188,7 +188,7 @@ test.describe('Campaign Dashboard', () => {
 
 	test('Job details page is campaign-scoped', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 
 		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -198,7 +198,7 @@ test.describe('Campaign Dashboard', () => {
 
 			if (campaignId) {
 				await page.goto(`/workspace/${campaignId}/jobs`);
-				await page.waitForLoadState('networkidle');
+				await page.waitForLoadState('domcontentloaded');
 
 				const jobLink = page.locator('a[href*="/jobs/"]').first();
 				if (await jobLink.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -221,7 +221,7 @@ test.describe('Campaign Dashboard', () => {
 test.describe('Campaign Results Page', () => {
 	test('Results page shows extracted name and address columns', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 
 		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -231,7 +231,7 @@ test.describe('Campaign Results Page', () => {
 
 			if (campaignId) {
 				await page.goto(`/workspace/${campaignId}/results`);
-				await page.waitForLoadState('networkidle');
+				await page.waitForLoadState('domcontentloaded');
 
 				await expect(page.locator('h1').first()).toBeVisible();
 
@@ -264,7 +264,7 @@ test.describe('Campaign Results Page', () => {
 
 	test('Results page does not show "No results" flash on load', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 
 		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -275,7 +275,7 @@ test.describe('Campaign Results Page', () => {
 			if (campaignId) {
 				await page.goto(`/workspace/${campaignId}/results`);
 
-				await page.waitForLoadState('networkidle');
+				await page.waitForLoadState('domcontentloaded');
 				await page.waitForTimeout(500);
 
 				const loadingState = page.locator('text=Loading');
@@ -294,7 +294,7 @@ test.describe('Campaign Results Page', () => {
 
 	test('Results table is horizontally scrollable', async ({ page }) => {
 		await page.goto('/workspace/campaigns');
-		await page.waitForLoadState('networkidle');
+		await page.waitForLoadState('domcontentloaded');
 		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
 
 		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -304,7 +304,7 @@ test.describe('Campaign Results Page', () => {
 
 			if (campaignId) {
 				await page.goto(`/workspace/${campaignId}/results`);
-				await page.waitForLoadState('networkidle');
+				await page.waitForLoadState('domcontentloaded');
 
 				const noResultsVisible = await page.locator('text=No results found').isVisible({ timeout: 1000 }).catch(() => false);
 				if (noResultsVisible) {
