@@ -6,7 +6,7 @@
 	import ProviderConfigCard from '$lib/components/ProviderConfigCard.svelte';
 	import { PUBLIC_API_URL } from '$env/static/public';
 
-	const BASE_URL = PUBLIC_API_URL ?? 'http://localhost:8000/api';
+	const BASE_URL = (PUBLIC_API_URL ?? 'http://localhost:8080') + '/api';
 
 	interface ProviderConfig {
 		provider: string;

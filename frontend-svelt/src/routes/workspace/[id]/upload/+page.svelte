@@ -7,7 +7,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 
 	let campaignId = $derived($page.params.id);
-	const API_BASE = PUBLIC_API_URL || 'http://localhost:8000';
+	const API_BASE = PUBLIC_API_URL || 'http://localhost:8080';
 
 	type Tab = 'voters' | 'petitions';
 	let activeTab = $state<Tab>('voters');

@@ -7,7 +7,7 @@
 	import { ConfidenceDonut } from '$lib/components/dashboard';
 	import { PUBLIC_API_URL } from '$env/static/public';
 
-	const API_BASE = PUBLIC_API_URL || 'http://localhost:8000';
+	const API_BASE = PUBLIC_API_URL || 'http://localhost:8080';
 
 	let campaignId = $derived($page.params.id);
 
