@@ -81,7 +81,22 @@ bun run dev
 
 ### 5. Access the Application
 
-Open http://localhost:5173/workspace to get started.
+Open http://localhost:5173 to see the landing page, or http://localhost:5173/workspace/campaigns to get started with campaigns.
+
+### Route Structure
+
+```
+/                             → Marketing landing page
+/workspace                    → Redirects to /workspace/campaigns
+/workspace/campaigns          → Campaign list
+/workspace/[id]               → Campaign dashboard (metrics, jobs, results)
+/workspace/[id]/jobs          → Jobs scoped to campaign
+/workspace/[id]/jobs/[job_id] → Job details and status
+/workspace/[id]/results       → Match results scoped to campaign
+/workspace/[id]/upload        → Upload page (Voter List / Petitions tabs)
+/workspace/settings           → Global settings + LLM providers
+/workspace/demo               → Demo mode (virtual campaign)
+```
 
 ## Tech Stack
 
@@ -232,13 +247,10 @@ See [Security Scanning](openspec/SPEC.md#appendix-c-security-scanning) for detai
 
 ## Roadmap
 
-- [x] Phase 0: Setup & Infrastructure
-- [x] Phase 1: Data Layer
-- [x] Phase 2: Core Backend Services
-- [x] Phase 2.5: API Endpoints
-- [x] Phase 3: Frontend Foundation
-- [x] Phase 4: Integration & E2E Tests
-- [ ] Phase 5: Polish & Demo
+- [x] Phase 1: Stability - Worker tests, metrics API, error handling
+- [x] Phase 3: Page Hierarchy - Route restructure, campaign scoping
+- [ ] Phase 2: Polish - Keyboard nav, E2E tests, documentation
+- [ ] Phase 4: Stretch - LLM config UI, provider selection, campaign list enhancements
 
 See [PROGRESS.md](openspec/PROGRESS.md) for detailed status.
 

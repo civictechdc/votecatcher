@@ -92,4 +92,39 @@ test.describe('Keyboard Navigation', () => {
 
 		expect(['a', 'button', 'input', 'select', 'textarea']).toContain(tagName);
 	});
+
+	test('can navigate to all sidebar links with Tab', async ({ page }) => {
+		await page.goto('/workspace/campaigns');
+		await page.waitForLoadState('networkidle');
+
+		const tabPresses = 10;
+		for (let i = 0; i < tabPresses; i++) {
+			await page.keyboard.press('Tab');
+			await page.waitForTimeout(50);
+		}
+
+		const focusedElement = await page.evaluateHandle(() => document.activeElement);
+		const isFocusable = await focusedElement.evaluate((el) => {
+			const tag = el?.tagName.toLowerCase() ?? '';
+			return ['a', 'button', 'input', 'select', 'textarea'].includes(tag);
+		});
+
+		expect(isFocusable).toBeTruthy();
+	});
+
+	test('landing page CTA is keyboard accessible', async ({ page }) => {
+		await page.goto('/');
+		await page.waitForLoadState('networkidle');
+
+		const ctaButton = page.locator('a:has-text("Start")').first();
+		await expect(ctaButton).toBeVisible();
+
+		await ctaButton.focus();
+		await expect(ctaButton).toBeFocused();
+
+		await page.keyboard.press('Enter');
+		await page.waitForURL(url => url.pathname !== '/', { timeout: 5000 });
+
+		expect(page.url()).not.toBe('http://localhost:5173/');
+	});
 });

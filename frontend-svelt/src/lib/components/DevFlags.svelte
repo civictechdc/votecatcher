@@ -35,12 +35,12 @@
 
         {#each allFlags as f}
             <div class="mb-1 flex items-center gap-2">
-                <label class="inline-flex w-full cursor-pointer items-center gap-2">
+                <label class="inline-flex w-full cursor-pointer items-center gap-2 p-1 -m-1">
                     <input
                         type="checkbox"
                         checked={featureFlags.isEnabled(f)}
                         on:change={() => toggle(f)}
-                        class="h-4 w-4 rounded border-gray-300"
+                        class="h-6 w-6 rounded border-gray-300"
                     />
                     <span class="truncate text-xs">{f}</span>
                 </label>
