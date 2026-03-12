@@ -9,8 +9,8 @@
 
 	const columns = [
 		{ key: 'extracted_name', label: 'Extracted Name', sortable: true },
-		{ key: 'extracted_address', label: 'Extracted Address', sortable: true },
 		{ key: 'matched_name', label: 'Matched Name', sortable: true },
+		{ key: 'extracted_address', label: 'Extracted Address', sortable: true },
 		{ key: 'matched_address', label: 'Matched Address', sortable: true },
 		{ key: 'score', label: 'Score', sortable: true },
 		{ key: 'confidence', label: 'Confidence', sortable: true }
