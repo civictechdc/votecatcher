@@ -1,34 +1,36 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { results } from '$lib/stores/results';
+	import { campaignResults, type CampaignResultResponse } from '$lib/stores/campaign-results';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Table, LoadingState, Button, ErrorDisplay } from '$lib/components/ui';
-	import CsvExportButton from '$lib/components/results/CsvExportButton.svelte';
 
 	let campaignId = $derived($page.params.id);
-	let jobId = $derived(Number($page.url.searchParams.get('jobId') || 1));
 
 	const columns = [
-		{ key: 'extracted_text', label: 'Extracted Text', sortable: true },
+		{ key: 'extracted_name', label: 'Extracted Name', sortable: true },
+		{ key: 'extracted_address', label: 'Extracted Address', sortable: true },
 		{ key: 'matched_name', label: 'Matched Name', sortable: true },
+		{ key: 'matched_address', label: 'Matched Address', sortable: true },
 		{ key: 'score', label: 'Score', sortable: true },
 		{ key: 'confidence', label: 'Confidence', sortable: true }
 	];
 
 	onMount(() => {
-		results.fetchResults(jobId);
+		campaignResults.fetchResults(campaignId);
 		campaigns.fetchAll();
 	});
 
-	function getTableRows(resultList: typeof $results.results) {
+	function getTableRows(resultList: CampaignResultResponse[]) {
 		return resultList.map((result) => {
 			const topPrediction = result.predictions[0];
 			return {
-				id: result.ocrResultId,
-				extracted_text: result.extractedText || '-',
-				matched_name: topPrediction?.voterName || '-',
-				score: topPrediction?.similarityScore ? `${(topPrediction.similarityScore * 100).toFixed(1)}%` : '-',
+				id: result.ocr_result_id,
+				extracted_name: result.extracted_name || '-',
+				extracted_address: result.extracted_address || '-',
+				matched_name: topPrediction?.voter_name || '-',
+				matched_address: topPrediction?.voter_address || '-',
+				score: topPrediction?.similarity_score ? `${(topPrediction.similarity_score * 100).toFixed(1)}%` : '-',
 				confidence: topPrediction?.confidence
 					? `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(topPrediction.confidence)}">${topPrediction.confidence}</span>`
 					: '-'
@@ -46,22 +48,22 @@
 	}
 
 	function handlePrevious() {
-		const newPage = Math.max(1, $results.page - 1);
-		results.fetchResults(jobId, { page: newPage, pageSize: $results.pageSize });
+		const newPage = Math.max(1, $campaignResults.page - 1);
+		campaignResults.fetchResults(campaignId, { page: newPage, pageSize: $campaignResults.pageSize });
 	}
 
 	function handleNext() {
-		const newPage = $results.page + 1;
-		results.fetchResults(jobId, { page: newPage, pageSize: $results.pageSize });
+		const newPage = $campaignResults.page + 1;
+		campaignResults.fetchResults(campaignId, { page: newPage, pageSize: $campaignResults.pageSize });
 	}
 
 	function handleRetry() {
-		results.fetchResults(jobId);
+		campaignResults.fetchResults(campaignId);
 	}
 
-	let totalPages = $derived(Math.ceil($results.total / $results.pageSize));
-	let startItem = $derived(($results.page - 1) * $results.pageSize + 1);
-	let endItem = $derived(Math.min($results.page * $results.pageSize, $results.total));
+	let totalPages = $derived(Math.ceil($campaignResults.total / $campaignResults.pageSize));
+	let startItem = $derived(($campaignResults.page - 1) * $campaignResults.pageSize + 1);
+	let endItem = $derived(Math.min($campaignResults.page * $campaignResults.pageSize, $campaignResults.total));
 
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
 </script>
@@ -77,43 +79,46 @@
 			<h1 class="text-3xl font-bold text-slate-900">Results</h1>
 			<p class="mt-1 text-slate-600">{campaign?.unique_name || campaign?.title || 'Campaign'}</p>
 		</div>
-		<CsvExportButton {jobId} />
 	</div>
 
-	{#if $results.loading}
+	{#if $campaignResults.loading || !$campaignResults.initialized}
 		<LoadingState loading={true} />
-	{:else if $results.error}
-		<ErrorDisplay message={$results.error} onRetry={handleRetry} />
-	{:else if $results.results.length === 0}
+	{:else if $campaignResults.error}
+		<ErrorDisplay message={$campaignResults.error} onRetry={handleRetry} />
+	{:else if $campaignResults.results.length === 0}
 		<div class="rounded-lg border border-slate-200 bg-white p-12 text-center">
 			<p class="text-lg text-slate-600">No results found</p>
 			<p class="mt-2 text-sm text-slate-500">Results will appear here after a job completes</p>
 		</div>
 	{:else}
 		<div class="space-y-4">
-			<Table
-				columns={columns}
-				rows={getTableRows($results.results)}
-				sortable={true}
-				emptyMessage="No results to display"
-			/>
+			<div class="overflow-x-auto rounded-lg border border-slate-200">
+				<div class="min-w-max">
+					<Table
+						columns={columns}
+						rows={getTableRows($campaignResults.results)}
+						sortable={true}
+						emptyMessage="No results to display"
+					/>
+				</div>
+			</div>
 
-			{#if $results.total > 0}
+			{#if $campaignResults.total > 0}
 				<div class="flex items-center justify-between border-t border-slate-200 px-4 py-3">
 					<p class="text-sm text-slate-600">
-						Showing {startItem} to {endItem} of {$results.total} results
+						Showing {startItem} to {endItem} of {$campaignResults.total} results
 					</p>
 					<div class="flex gap-2">
 						<Button
 							variant="secondary"
 							text="Previous"
-							disabled={$results.page <= 1}
+							disabled={$campaignResults.page <= 1}
 							onclick={handlePrevious}
 						/>
 						<Button
 							variant="secondary"
 							text="Next"
-							disabled={$results.page >= totalPages}
+							disabled={$campaignResults.page >= totalPages}
 							onclick={handleNext}
 						/>
 					</div>

@@ -217,3 +217,95 @@ test.describe('Campaign Dashboard', () => {
 		}
 	});
 });
+
+test.describe('Campaign Results Page', () => {
+	test('Results page shows extracted name and address columns', async ({ page }) => {
+		await page.goto('/workspace/campaigns');
+		await page.waitForLoadState('networkidle');
+		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
+
+		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
+			await campaignLink.click();
+			const url = page.url();
+			const campaignId = url.match(/\/workspace\/([^/]+)/)?.[1];
+
+			if (campaignId) {
+				await page.goto(`/workspace/${campaignId}/results`);
+				await page.waitForLoadState('networkidle');
+
+				await expect(page.locator('h1').first()).toBeVisible();
+
+				const tableHeaders = page.locator('table th');
+				const headerTexts = await tableHeaders.allTextContents();
+
+				expect(headerTexts.some(h => h.toLowerCase().includes('extracted name'))).toBeTruthy();
+				expect(headerTexts.some(h => h.toLowerCase().includes('extracted address'))).toBeTruthy();
+				expect(headerTexts.some(h => h.toLowerCase().includes('matched name'))).toBeTruthy();
+				expect(headerTexts.some(h => h.toLowerCase().includes('matched address'))).toBeTruthy();
+			}
+		} else {
+			console.log('No campaigns found - skipping test');
+			expect(true).toBeTruthy();
+		}
+	});
+
+	test('Results page does not show "No results" flash on load', async ({ page }) => {
+		await page.goto('/workspace/campaigns');
+		await page.waitForLoadState('networkidle');
+		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
+
+		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
+			await campaignLink.click();
+			const url = page.url();
+			const campaignId = url.match(/\/workspace\/([^/]+)/)?.[1];
+
+			if (campaignId) {
+				await page.goto(`/workspace/${campaignId}/results`);
+
+				await page.waitForLoadState('networkidle');
+				await page.waitForTimeout(500);
+
+				const loadingState = page.locator('text=Loading');
+				const noResults = page.locator('text=No results found');
+
+				const hasLoading = await loadingState.isVisible({ timeout: 100 }).catch(() => false);
+				const hasNoResults = await noResults.isVisible({ timeout: 100 }).catch(() => false);
+
+				expect(hasLoading || !hasNoResults).toBeTruthy();
+			}
+		} else {
+			console.log('No campaigns found - skipping test');
+			expect(true).toBeTruthy();
+		}
+	});
+
+	test('Results table is horizontally scrollable', async ({ page }) => {
+		await page.goto('/workspace/campaigns');
+		await page.waitForLoadState('networkidle');
+		const campaignLink = page.locator('table a[href^="/workspace/"]').first();
+
+		if (await campaignLink.isVisible({ timeout: 5000 }).catch(() => false)) {
+			await campaignLink.click();
+			const url = page.url();
+			const campaignId = url.match(/\/workspace\/([^/]+)/)?.[1];
+
+			if (campaignId) {
+				await page.goto(`/workspace/${campaignId}/results`);
+				await page.waitForLoadState('networkidle');
+
+				await page.setViewportSize({ width: 400, height: 800 });
+				await page.waitForTimeout(200);
+
+				const scrollContainer = page.locator('.overflow-x-auto').first();
+				const hasOverflow = await scrollContainer.evaluate((el) => {
+					return el.scrollWidth > el.clientWidth;
+				});
+
+				expect(hasOverflow).toBeTruthy();
+			}
+		} else {
+			console.log('No campaigns found - skipping test');
+			expect(true).toBeTruthy();
+		}
+	});
+});

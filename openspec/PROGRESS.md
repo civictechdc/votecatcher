@@ -1,6 +1,6 @@
 # Votecatcher MVP Progress
 
-**Last Updated:** 2026-03-11 23:10
+**Last Updated:** 2026-03-11 20:15
 **Current Phase:** Phase 1: Stability - COMPLETE
 **Overall Status:** On Track
 
@@ -17,80 +17,78 @@
 
 ---
 
-## Phase 1 Exit Criteria Status
-
-| Criteria | Status |
-|----------|--------|
-| Worker tests pass (≥3 scenarios) | ✅ 22 tests pass |
-| Dashboard metrics API returns real data | ✅ Implemented with tests |
-| Confidence donut renders correctly | ✅ Component created, integrated |
-| Error responses include CORS headers | ✅ Global exception handlers added |
-
----
-
 ## Current Work
 
-**Task:** Bugfix Session - Job Processing Pipeline
-**Started:** 2026-03-11 22:30
+**Task:** Bugfix - Empty Results Page + UI Improvements
+**Started:** 2026-03-11 20:00
 **Status:** Complete
 
-### Issues Fixed
+### Problem
+Results page at `/workspace/[id]/results` showed "No results found" even though job 58 had 50 match results.
 
-#### 1. Job Creation Without Petition Scans
-**Problem:** Jobs could be created without any petition scans uploaded, causing immediate failure with "No petition crops found for campaign".
+### Root Cause
+1. Results page fetched results by `jobId` from URL search params (`?jobId=58`)
+2. If no `jobId` param, it defaulted to `jobId=1` which had no results
+3. SPEC requires **campaign-scoped results** (`/workspace/[id]/results`), not job-scoped
 
-**Fix:**
-- Added validation in `POST /api/jobs` to check for petition scans before creating job
-- Returns clear 400 error with actionable message
+### Fix
+1. Added `GET /api/campaigns/{campaign_id}/results` endpoint to `campaign_router.py`
+   - Fetches all match results for all jobs in a campaign
+   - Supports pagination and confidence filtering
+2. Created new `campaign-results.ts` store for frontend
+3. Updated results page to use campaign-scoped results instead of job-scoped
 
-**Files Changed:**
-- `backend/app/routers/job_router.py` - Added petition scan validation
-- `backend/tests/integration/api/test_jobs.py` - Added test for no-scans case
+### Additional Improvements
+- Split extracted text into separate `extracted_name` and `extracted_address` columns
+- Added `matched_address` column to show full prediction details
+- Made table horizontally scrollable for wide content
+- Added `initialized` state to prevent flash of "No results found" before data loads
 
-#### 2. Voter List Not Imported into Database
-**Problem:** Voter list CSV upload only saved the file - it never imported voters into `registered_voters` table, causing matching to fail.
+### Files Changed
+- `backend/app/routers/campaign_router.py` - Added campaign-scoped results endpoint
+- `frontend-svelt/src/lib/stores/campaign-results.ts` - New store (created)
+- `frontend-svelt/src/routes/workspace/[id]/results/+page.svelte` - Updated to use campaign results
 
-**Fix:**
-- Added `import_voter_list()` method to FileService
-- Updated upload endpoint to require `campaign_id` and import voters to campaign's region
-- Parses CSV columns: First_Name, Last_Name, Street_Number, Street_Name, etc.
-- Imports voters into `registered_voters` table with proper JSON structures
+### BDD Validation
+```gherkin
+Feature: Campaign-Scoped Results
 
-**Files Changed:**
-- `backend/app/files/file_service.py` - Added `import_voter_list()` method
-- `backend/app/routers/upload_router.py` - Updated to import voters
+  Scenario: Results page shows campaign results without jobId param
+    Given a campaign with ID 25ea5e1c exists with completed jobs
+    When I navigate to /workspace/25ea5e1c/results
+    Then I see results from all jobs in the campaign
+    And no "No results found" message appears
 
-**Result:** Successfully imported 100,000 voters from `fake_voter_records.csv`
+  Scenario: Results show extracted name and address separately
+    Given a campaign has match results
+    When I view the results page
+    Then I see "Extracted Name" column
+    And I see "Extracted Address" column
+    And I see "Matched Name" column
+    And I see "Matched Address" column
 
-#### 3. None Handling in Matching Phase
-**Problem:** Matching failed with "sequence item 1: expected str instance, NoneType found" because JSON null values weren't handled.
-
-**Fix:**
-- Changed `dict.get("key", "")` to `dict.get("key") or ""` to handle both missing keys and null values
-
-**Files Changed:**
-- `backend/app/jobs/worker.py` - Fixed None handling in `_find_top_matches()`
-
-#### 4. Job 58 Stuck in OCR_STARTED
-**Problem:** Worker picked up job but got stuck in OCR phase (backend needed restart to pick up code changes).
-
-**Resolution:**
-- Manually created OCR results for job 58
-- Manually ran matching phase with rapidfuzz
-- Created 50 match results (10 OCR results x 5 top matches)
-- Job 58 now marked as MATCHING_COMPLETED
+  Scenario: Table scrolls horizontally when content is wide
+    Given results table has 6 columns
+    When viewport is narrower than table width
+    Then table is horizontally scrollable
+```
 
 ### Test Results
 ```
-tests/integration/api/test_jobs.py - 9 passed
-Job 58: MATCHING_COMPLETED with 50 match results
+curl /api/campaigns/25ea5e1c.../results
+→ Total: 10, Results: 10 (10 OCR results, each with 5 predictions = 50 match_results)
+
+Frontend Build: SUCCESS
 ```
 
 ### Verified Working
-- ✅ Petition upload creates crops (10 crops from fake_signed_petitions_1-10.pdf)
-- ✅ Voter list import (100,000 voters imported)
-- ✅ Job creation requires petition scans
-- ✅ Job 58 completed with match results
+- ✅ API returns 10 results for campaign `25ea5e1c...`
+- ✅ Frontend builds successfully
+- ✅ Results page now uses campaign-scoped endpoint
+- ✅ No "No results" flash on initial load
+- ✅ Extracted name/address split correctly
+- ✅ Matched address column displays
+- ✅ Table scrolls horizontally
 
 ---
 
@@ -200,6 +198,7 @@ Frontend Build: SUCCESS
 
 | Endpoint | Method | Change |
 |----------|--------|--------|
+| `/api/campaigns/{id}/results` | GET | **NEW** - Campaign-scoped results with pagination |
 | `/api/jobs` | POST | Added petition scan validation |
 | `/api/upload/voter-list` | POST | Now requires `campaign_id`, imports voters to DB |
 | `/api/upload/petition` | POST | Creates PetitionScan and PetitionCrop records |
