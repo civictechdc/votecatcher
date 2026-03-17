@@ -3,13 +3,15 @@
 Simple async worker that polls for NOT_STARTED jobs and processes them
 through the OCR → Matching pipeline.
 
-For MVP/demo purposes, this worker operates in simulation mode when
-OCR_PROVIDER_API_KEY is not configured or SIMULATION_MODE is enabled.
+When FEATURE_ENABLE_SIMULATION is enabled (default), uses simulated OCR.
+When disabled, uses real LLM API calls via LangChain.
 """
 
 import asyncio
+import base64
 import random
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import structlog
@@ -32,7 +34,11 @@ logger = structlog.get_logger(__name__)
 
 POLL_INTERVAL_SECONDS = 2.0
 OCR_SIMULATION_DELAY_SECONDS = 1.0
+OCR_REAL_DELAY_SECONDS = 2.0
+OCR_RETRY_DELAY_SECONDS = 5.0
+OCR_MAX_RETRIES = 3
 MATCHING_DELAY_SECONDS = 0.5
+BATCH_THRESHOLD = 10
 
 
 class JobWorker:
@@ -159,9 +165,10 @@ class JobWorker:
 		ocr_job: OcrJob,
 		crops: list[PetitionCrop],
 	) -> None:
-		"""Run OCR phase (simulated for MVP).
+		"""Run OCR phase.
 
-		Creates OcrResult records with simulated extracted text.
+		Uses real LLM API calls when simulation mode is disabled,
+		otherwise uses simulated OCR results.
 
 		Args:
 			session: Database session
@@ -173,8 +180,102 @@ class JobWorker:
 			"Starting OCR phase",
 			job_id=job.id,
 			crop_count=len(crops),
+			simulation_mode=self.settings.enable_simulation,
+			force_reprocess=job.force_reprocess,
 		)
 
+		crop_ids = [c.id for c in crops]
+		cached_count = 0
+		new_count = 0
+
+		if job.force_reprocess:
+			existing_results = session.exec(
+				select(OcrResult).where(OcrResult.crop_id.in_(crop_ids))
+			).all()
+			if existing_results:
+				logger.info(
+					"Force reprocess: deleting existing OCR results",
+					job_id=job.id,
+					deleting_count=len(existing_results),
+				)
+				for result in existing_results:
+					session.delete(result)
+				session.commit()
+			crops_to_process = crops
+			new_count = len(crops_to_process)
+		else:
+			existing_results = session.exec(
+				select(OcrResult).where(OcrResult.crop_id.in_(crop_ids))
+			).all()
+			existing_crop_ids = {r.crop_id for r in existing_results}
+
+			crops_to_process = [c for c in crops if c.id not in existing_crop_ids]
+			cached_count = len(existing_crop_ids)
+			new_count = len(crops_to_process)
+
+			if not crops_to_process:
+				logger.info(
+					"All crops already have OCR results, skipping OCR phase",
+					job_id=job.id,
+					total_crops=len(crops),
+				)
+				job.cached_ocr_count = cached_count
+				job.new_ocr_count = new_count
+				ocr_job.status = JobStatus.OCR_COMPLETED
+				job.current_status = JobStatus.OCR_COMPLETED
+				session.commit()
+				return
+
+			if existing_crop_ids:
+				logger.info(
+					"Skipping crops with existing OCR results",
+					job_id=job.id,
+					skipped_count=len(existing_crop_ids),
+					processing_count=len(crops_to_process),
+				)
+
+		if self.settings.enable_simulation:
+			await self._run_simulated_ocr(session, job, ocr_job, crops_to_process)
+		else:
+			if len(crops_to_process) >= BATCH_THRESHOLD:
+				logger.info(
+					"Using batch OCR mode",
+					job_id=job.id,
+					crop_count=len(crops_to_process),
+					threshold=BATCH_THRESHOLD,
+				)
+				await self._run_batch_ocr(session, job, ocr_job, crops_to_process)
+			else:
+				await self._run_real_ocr(session, job, ocr_job, crops_to_process)
+
+		job.cached_ocr_count = cached_count
+		job.new_ocr_count = new_count
+		ocr_job.status = JobStatus.OCR_COMPLETED
+		job.current_status = JobStatus.OCR_COMPLETED
+		session.commit()
+
+		logger.info(
+			"OCR phase completed",
+			job_id=job.id,
+			cached_count=cached_count,
+			new_count=new_count,
+		)
+
+	async def _run_simulated_ocr(
+		self,
+		session: Session,
+		job: MatcherJob,
+		ocr_job: OcrJob,
+		crops: list[PetitionCrop],
+	) -> None:
+		"""Run simulated OCR (for demo/testing).
+
+		Args:
+			session: Database session
+			job: MatcherJob being processed
+			ocr_job: OcrJob for this phase
+			crops: List of PetitionCrop records to process
+		"""
 		for i, crop in enumerate(crops):
 			await asyncio.sleep(OCR_SIMULATION_DELAY_SECONDS)
 
@@ -184,28 +285,322 @@ class JobWorker:
 				crop_id=crop.id,
 				ocr_job_id=ocr_job.id,
 				extracted_text=extracted_text,
-				confidence_score=random.uniform(0.75, 0.95),  # nosec B311 # Simulation only
+				confidence_score=random.uniform(0.75, 0.95),  # nosec B311
 			)
 			session.add(ocr_result)
 
 			progress = (i + 1) / len(crops) * 100
-			logger.debug(
-				"OCR progress",
+			logger.info(
+				"OCR progress (simulated)",
 				job_id=job.id,
 				crop_index=i + 1,
 				total=len(crops),
 				progress=f"{progress:.0f}%",
 			)
 
-		ocr_job.status = JobStatus.OCR_COMPLETED
-		job.current_status = JobStatus.OCR_COMPLETED
-		session.commit()
+	async def _run_real_ocr(
+		self,
+		session: Session,
+		job: MatcherJob,
+		ocr_job: OcrJob,
+		crops: list[PetitionCrop],
+	) -> None:
+		"""Run real OCR using LLM API with retry logic for rate limiting.
+
+		Commits after each crop to maintain clean session state.
+
+		Args:
+			session: Database session
+			job: MatcherJob being processed
+			ocr_job: OcrJob for this phase
+			crops: List of PetitionCrop records to process
+		"""
+		from app.ocr.ocr_client_factory import extract_from_encoding_async
+
+		for i, crop in enumerate(crops):
+			existing_result = session.exec(
+				select(OcrResult).where(OcrResult.crop_id == crop.id)
+			).first()
+			if existing_result:
+				logger.debug(
+					"OcrResult already exists for crop, skipping",
+					crop_id=crop.id,
+					result_id=existing_result.id,
+				)
+				continue
+
+			try:
+				crop_path = Path(crop.stored_path)
+				if not crop_path.exists():
+					logger.warning(
+						"Crop file not found, skipping",
+						crop_id=crop.id,
+						path=crop.stored_path,
+					)
+					continue
+
+				img_bytes = crop_path.read_bytes()
+				base64_image = base64.b64encode(img_bytes).decode("utf-8")
+
+				ocr_entries = None
+				last_error = None
+				for attempt in range(OCR_MAX_RETRIES):
+					try:
+						await asyncio.sleep(OCR_REAL_DELAY_SECONDS * (attempt + 1))
+						ocr_entries = await extract_from_encoding_async(base64_image)
+						break
+					except Exception as retry_error:
+						last_error = retry_error
+						if (
+							"429" in str(retry_error)
+							or "rate_limit" in str(retry_error).lower()
+						):
+							wait_time = OCR_RETRY_DELAY_SECONDS * (2**attempt)
+							logger.warning(
+								"Rate limited, waiting before retry",
+								crop_id=crop.id,
+								attempt=attempt + 1,
+								wait_seconds=wait_time,
+							)
+							await asyncio.sleep(wait_time)
+						else:
+							raise
+
+				if ocr_entries is None:
+					raise last_error
+
+				for _entry_idx, entry in enumerate(ocr_entries):
+					extracted_text = {
+						"name": entry.get("Name", ""),
+						"address": entry.get("Address", ""),
+					}
+
+					ocr_result = OcrResult(
+						crop_id=crop.id,
+						ocr_job_id=ocr_job.id,
+						extracted_text=extracted_text,
+						confidence_score=0.85,
+					)
+					session.add(ocr_result)
+
+				session.commit()
+				logger.info(
+					"OCR progress (real)",
+					job_id=job.id,
+					crop_index=i + 1,
+					total=len(crops),
+					entries_found=len(ocr_entries),
+				)
+
+			except Exception as e:
+				session.rollback()
+				logger.error(
+					"OCR failed for crop, rolled back session",
+					crop_id=crop.id,
+					error=str(e),
+				)
+				existing = session.exec(
+					select(OcrResult).where(OcrResult.crop_id == crop.id)
+				).first()
+				if not existing:
+					session.add(
+						OcrResult(
+							crop_id=crop.id,
+							ocr_job_id=ocr_job.id,
+							extracted_text={"error": str(e)},
+							confidence_score=0.0,
+						)
+					)
+					session.commit()
+
+	async def _run_batch_ocr(
+		self,
+		session: Session,
+		job: MatcherJob,
+		ocr_job: OcrJob,
+		crops: list[PetitionCrop],
+	) -> None:
+		"""Run batch OCR using OpenAI Batch API for large payloads.
+
+		Batch jobs take 5-15 minutes but avoid rate limits.
+		Falls back to sequential processing if batch fails.
+
+		Args:
+			session: Database session
+			job: MatcherJob being processed
+			ocr_job: OcrJob for this phase
+			crops: List of PetitionCrop records to process
+		"""
+		from app.ocr.batching.batch_ocr_client import JobStatus
+		from app.ocr.batching.openai_ocr_batch import OpenAiBatchClient
+		from app.ocr.batching.request_types import BatchRequestPayload, Payload
+		from app.settings.settings_repo import OpenAiConfig
 
 		logger.info(
-			"OCR phase completed",
+			"Starting batch OCR",
 			job_id=job.id,
-			ocr_results=len(crops),
+			crop_count=len(crops),
 		)
+
+		try:
+			api_key = self._get_provider_api_key("openai")
+			if not api_key:
+				raise ValueError("OpenAI API key not configured")
+
+			config = OpenAiConfig(
+				api_key=api_key,
+				model=job.provider_model or "gpt-4o",
+			)
+
+			batch_payloads = []
+			for idx, crop in enumerate(crops):
+				crop_path = Path(crop.stored_path)
+				if not crop_path.exists():
+					logger.warning(
+						"Crop file not found, skipping",
+						crop_id=crop.id,
+						path=crop.stored_path,
+					)
+					continue
+
+				img_bytes = crop_path.read_bytes()
+				base64_image = base64.b64encode(img_bytes).decode("utf-8")
+
+				batch_payloads.append(
+					Payload(
+						role="user",
+						messages=[
+							{
+								"type": "image_url",
+								"image_url": {
+									"url": f"data:image/jpeg;base64,{base64_image}"
+								},
+							}
+						],
+						page=idx,
+						file_name=crop.stored_path,
+					)
+				)
+
+			if not batch_payloads:
+				logger.warning("No valid crops to process in batch", job_id=job.id)
+				return
+
+			class NoOpResultRepository:
+				async def save_results(self, campaign_id, results):
+					return results
+
+				async def fetch_results(self, campaign_id):
+					return []
+
+			result_store = NoOpResultRepository()
+			client = OpenAiBatchClient(config, result_store)
+
+			request_data = BatchRequestPayload(
+				campaign_id=str(job.campaign_id),
+				batch_payloads=batch_payloads,
+			)
+
+			batch_dir = Path("batch_temp") / f"job_{job.id}"
+			batch_dir.mkdir(parents=True, exist_ok=True)
+
+			batch_status = await client.create_batch_job(request_data, batch_dir)
+			logger.info(
+				"Batch job created",
+				job_id=job.id,
+				batch_job_id=batch_status.job_id,
+				status=batch_status.status,
+			)
+
+			poll_interval = 60
+			max_wait_minutes = 30
+			elapsed = 0
+
+			while elapsed < max_wait_minutes * 60:
+				batch_status = await client.get_job_status(batch_status.job_id)
+
+				if batch_status.status in [
+					JobStatus.COMPLETED,
+					JobStatus.FAILED,
+					JobStatus.CANCELLED,
+					JobStatus.EXPIRED,
+				]:
+					break
+
+				logger.info(
+					"Batch job in progress",
+					job_id=job.id,
+					batch_job_id=batch_status.job_id,
+					status=batch_status.status,
+					elapsed_seconds=elapsed,
+				)
+
+				await asyncio.sleep(poll_interval)
+				elapsed += poll_interval
+
+			if batch_status.status != JobStatus.COMPLETED:
+				raise RuntimeError(
+					f"Batch job did not complete: {batch_status.status}, "
+					f"error: {batch_status.error}"
+				)
+
+			async for result_item in client.get_ocr_results(batch_status.job_id):
+				entry = result_item.ocr_entry
+				ocr_result = OcrResult(
+					crop_id=crops[result_item.row_num].id,
+					ocr_job_id=ocr_job.id,
+					extracted_text={
+						"name": entry.Name,
+						"address": entry.Address,
+					},
+					confidence_score=0.85,
+				)
+				session.add(ocr_result)
+
+			session.commit()
+			logger.info(
+				"Batch OCR completed",
+				job_id=job.id,
+				batch_job_id=batch_status.job_id,
+			)
+
+		except Exception as e:
+			logger.error(
+				"Batch OCR failed, falling back to sequential",
+				job_id=job.id,
+				error=str(e),
+			)
+			session.rollback()
+			await self._run_real_ocr(session, job, ocr_job, crops)
+
+	def _get_provider_api_key(self, provider: str) -> str | None:
+		"""Get API key for provider from config or environment.
+
+		Args:
+			provider: Provider name (e.g., 'openai')
+
+		Returns:
+			API key if configured, None otherwise
+		"""
+		from app.data.database.session import engine
+
+		with Session(engine) as config_session:
+			from app.data.database.model.llm_provider_config import LlmProviderConfig
+
+			config = config_session.exec(
+				select(LlmProviderConfig).where(LlmProviderConfig.provider == provider)
+			).first()
+
+			if config and config.api_key:
+				return config.api_key
+
+		import os
+
+		env_key = os.environ.get(f"{provider.upper()}_API_KEY")
+		if env_key:
+			return env_key
+
+		return None
 
 	async def _run_matching_phase(
 		self,
