@@ -110,6 +110,8 @@
 	}
 
 	async function handleSave() {
+		if (!campaignId) return;
+		const id = campaignId;
 		if (selectedScans.size === 0) {
 			error = 'Please select at least one scan';
 			return;
@@ -118,12 +120,13 @@
 		error = null;
 		try {
 			await jobs.create({
-				campaignId: campaignId,
+				campaignId: id,
+				scanIds: Array.from(selectedScans),
 				providerName: formData.providerName || undefined,
 				providerModel: formData.providerModel || undefined,
 				forceReprocess: formData.forceReprocess
 			});
-			goto(`/workspace/${campaignId}/jobs`);
+			goto(`/workspace/${id}/jobs`);
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to save job';
 		} finally {
@@ -132,6 +135,8 @@
 	}
 
 	async function handleRun() {
+		if (!campaignId) return;
+		const id = campaignId;
 		if (selectedScans.size === 0) {
 			error = 'Please select at least one scan';
 			return;
@@ -140,7 +145,8 @@
 		error = null;
 		try {
 			const job = await jobs.create({
-				campaignId: campaignId,
+				campaignId: id,
+				scanIds: Array.from(selectedScans),
 				providerName: formData.providerName || undefined,
 				providerModel: formData.providerModel || undefined,
 				forceReprocess: formData.forceReprocess
@@ -148,7 +154,7 @@
 			if (job.jobId) {
 				await jobs.start(job.jobId);
 			}
-			goto(`/workspace/${campaignId}/jobs`);
+			goto(`/workspace/${id}/jobs`);
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to create and run job';
 		} finally {
