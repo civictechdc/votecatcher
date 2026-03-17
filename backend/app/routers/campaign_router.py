@@ -199,6 +199,7 @@ class PetitionScanResponse(BaseModel):
 
 	id: int
 	original_filename: str
+	file_size: int | None
 	page_count: int | None
 	uploaded_at: datetime
 
@@ -275,6 +276,7 @@ def list_campaign_scans(
 			PetitionScanResponse(
 				id=s.id,
 				original_filename=s.original_filename,
+				file_size=s.file_size,
 				page_count=s.page_count,
 				uploaded_at=s.uploaded_at,
 			)
@@ -282,6 +284,47 @@ def list_campaign_scans(
 		],
 		total=len(scans),
 	)
+
+
+@router.delete("/{campaign_id}/scans/{scan_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_campaign_scan(
+	campaign_id: uuid.UUID,
+	scan_id: int,
+	session: SessionDep,
+) -> None:
+	"""Delete a petition scan.
+
+	Args:
+		campaign_id: Campaign UUID
+		scan_id: Petition scan ID
+		session: Database session
+
+	Raises:
+		HTTPException: 404 if campaign or scan not found
+	"""
+	campaign = session.get(Campaign, campaign_id)
+	if not campaign:
+		raise HTTPException(
+			status_code=status.HTTP_404_NOT_FOUND,
+			detail=f"Campaign {campaign_id} not found",
+		)
+
+	scan = session.exec(
+		select(PetitionScan).where(
+			PetitionScan.id == scan_id,
+			PetitionScan.campaign_id == campaign_id,
+		)
+	).first()
+
+	if not scan:
+		raise HTTPException(
+			status_code=status.HTTP_404_NOT_FOUND,
+			detail=f"Scan {scan_id} not found for campaign {campaign_id}",
+		)
+
+	session.delete(scan)
+	session.commit()
+	logger.info("Petition scan deleted", scan_id=scan_id, campaign_id=campaign_id)
 
 
 class CampaignMatchPrediction(BaseModel):

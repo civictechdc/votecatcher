@@ -14,6 +14,7 @@ class PetitionScan(SQLModel, table=True):
 	original_filename: str = Field(nullable=False)
 	stored_path: str = Field(nullable=False, unique=True)
 	file_hash: str = Field(nullable=False, index=True)
+	file_size: int | None = Field(default=None)
 	page_count: int | None = Field(default=None)
 	uploaded_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 	uploaded_by: int | None = Field(default=None, foreign_key="users.id")

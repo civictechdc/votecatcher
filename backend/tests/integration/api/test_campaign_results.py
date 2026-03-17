@@ -4,11 +4,9 @@ import uuid as uuid_module
 from datetime import UTC, datetime
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.api import app
 from app.data.database.model.jobs import JobStatus, MatcherJob
 from app.data.database.model.match_result import ConfidenceLevel, MatchResult
 from app.data.database.model.ocr_result import OcrResult
@@ -16,12 +14,6 @@ from app.data.database.model.petition_crop import PetitionCrop
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.schema import Campaign
-
-
-@pytest.fixture
-def client():
-	"""Create test client."""
-	return TestClient(app)
 
 
 class TestCampaignResultsAPI:

@@ -66,6 +66,7 @@ class FileService:
 		_ = await file.seek(0)
 
 		file_hash = hashlib.sha256(content).hexdigest()
+		file_size = len(content)
 
 		page_count = 0
 		try:
@@ -79,6 +80,7 @@ class FileService:
 			original_filename=file.filename,
 			stored_path=str(stored_path),
 			file_hash=file_hash,
+			file_size=file_size,
 			page_count=page_count,
 			uploaded_by=user_id,
 		)

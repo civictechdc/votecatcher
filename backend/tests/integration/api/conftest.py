@@ -6,16 +6,19 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from app.api import app
 from app.data.database.model.schema import Campaign, Region
-from app.dependencies import get_session as get_db_session
+from app.dependencies import get_session
 
 
 @pytest.fixture(name="session", scope="function")
 def session_fixture():
 	"""Create a test database session using an in-memory SQLite database.
 
-	Uses check_same_thread=False to to prevent threading issues with SQLite.
+	Uses shared cache mode to allow multiple connections to the same in-memory db.
 	"""
-	test_engine = create_engine("sqlite:///:memory:")
+	test_engine = create_engine(
+		"sqlite:///file:memdb?mode=memory&cache=shared&uri=true",
+		connect_args={"check_same_thread": False},
+	)
 	SQLModel.metadata.create_all(test_engine)
 
 	with Session(test_engine) as session:
@@ -29,7 +32,7 @@ def client(session: Session):
 	def override_get_session():
 		yield session
 
-	app.dependency_overrides[get_db_session] = override_get_session
+	app.dependency_overrides[get_session] = override_get_session
 	with TestClient(app) as test_client:
 		yield test_client
 	app.dependency_overrides.clear()
