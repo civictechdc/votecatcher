@@ -140,6 +140,34 @@ function createJobsStore() {
 			}
 		},
 
+		async start(id: number) {
+			update((s) => ({ ...s, loading: true, error: null }));
+
+			try {
+				const baseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
+				const response = await fetch(`${baseUrl}/api/jobs/${id}/start`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' }
+				});
+				if (!response.ok) {
+					const error = await response.json();
+					throw new Error(error.detail || 'Failed to start job');
+				}
+				const job = await response.json();
+				update((s) => ({
+					...s,
+					currentJob: job,
+					jobs: s.jobs.map((j) => j.jobId === id ? { ...j, status: job.status } : j),
+					loading: false
+				}));
+				return job;
+			} catch (error) {
+				const message = error instanceof Error ? error.message : 'Unknown error';
+				update((s) => ({ ...s, error: message, loading: false }));
+				throw error;
+			}
+		},
+
 		updateJobInList(jobId: number, updates: Partial<JobResponse>) {
 			update((s) => ({
 				...s,
@@ -158,7 +186,7 @@ function createJobsStore() {
 				eventSource.close();
 			}
 
-			const baseUrl = import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:8000';
+			const baseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
 			eventSource = new EventSource(`${baseUrl}/api/jobs/${jobId}/status`);
 
 			eventSource.onopen = () => {

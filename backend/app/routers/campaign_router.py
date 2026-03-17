@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign, Region
 from app.dependencies import get_session
 
@@ -193,6 +194,22 @@ class CampaignMetricsResponse(BaseModel):
 	last_job: dict | None
 
 
+class PetitionScanResponse(BaseModel):
+	"""Response schema for a petition scan."""
+
+	id: int
+	original_filename: str
+	page_count: int | None
+	uploaded_at: datetime
+
+
+class PetitionScanListResponse(BaseModel):
+	"""Response schema for listing petition scans."""
+
+	scans: list[PetitionScanResponse]
+	total: int
+
+
 @router.get("/{campaign_id}/metrics", response_model=CampaignMetricsResponse)
 def get_campaign_metrics(
 	campaign_id: uuid.UUID,
@@ -224,6 +241,47 @@ def get_campaign_metrics(
 	metrics = service.compute_campaign_metrics(campaign_id)
 
 	return CampaignMetricsResponse(**metrics)
+
+
+@router.get("/{campaign_id}/scans", response_model=PetitionScanListResponse)
+def list_campaign_scans(
+	campaign_id: uuid.UUID,
+	session: SessionDep,
+) -> PetitionScanListResponse:
+	"""List all petition scans for a campaign.
+
+	Args:
+		campaign_id: Campaign UUID
+		session: Database session
+
+	Returns:
+		List of petition scans with total count
+
+	Raises:
+		HTTPException: 404 if campaign not found
+	"""
+	campaign = session.get(Campaign, campaign_id)
+	if not campaign:
+		raise HTTPException(
+			status_code=status.HTTP_404_NOT_FOUND,
+			detail=f"Campaign {campaign_id} not found",
+		)
+
+	statement = select(PetitionScan).where(PetitionScan.campaign_id == campaign_id)
+	scans = session.exec(statement).all()
+
+	return PetitionScanListResponse(
+		scans=[
+			PetitionScanResponse(
+				id=s.id,
+				original_filename=s.original_filename,
+				page_count=s.page_count,
+				uploaded_at=s.uploaded_at,
+			)
+			for s in scans
+		],
+		total=len(scans),
+	)
 
 
 class CampaignMatchPrediction(BaseModel):

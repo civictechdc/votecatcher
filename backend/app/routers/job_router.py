@@ -33,6 +33,7 @@ class CreateJobRequest(BaseModel):
 	scan_ids: list[int] = []
 	provider_name: str | None = None
 	provider_model: str | None = None
+	force_reprocess: bool = False
 
 
 class JobResponse(BaseModel):
@@ -44,6 +45,9 @@ class JobResponse(BaseModel):
 	campaign_name: str | None = None
 	provider_name: str | None = None
 	provider_model: str | None = None
+	force_reprocess: bool = False
+	cached_ocr_count: int | None = None
+	new_ocr_count: int | None = None
 	created_at: datetime | None = None
 	updated_at: datetime | None = None
 	error_message: str | None = None
@@ -68,6 +72,9 @@ def _build_job_response(job: MatcherJob, session: Session) -> JobResponse:
 		campaign_name=campaign.unique_name if campaign else None,
 		provider_name=job.provider_name,
 		provider_model=job.provider_model,
+		force_reprocess=job.force_reprocess,
+		cached_ocr_count=job.cached_ocr_count,
+		new_ocr_count=job.new_ocr_count,
 		created_at=job.created_at,
 		updated_at=job.updated_on,
 		error_message=error_message,
@@ -124,6 +131,7 @@ def create_job(
 		current_status=JobStatus.NOT_STARTED,
 		provider_name=request.provider_name,
 		provider_model=request.provider_model,
+		force_reprocess=request.force_reprocess,
 	)
 	session.add(job)
 	session.commit()
@@ -209,6 +217,56 @@ def cancel_job(
 	session.refresh(job)
 
 	logger.info("Cancelled job", job_id=job_id)
+
+	return _build_job_response(job, session)
+
+
+@router.post("/{job_id}/start", response_model=JobResponse)
+def start_job(
+	job_id: int,
+	session: SessionDep,
+) -> JobResponse:
+	"""Start a NOT_STARTED job.
+
+	Args:
+		job_id: Job ID
+		session: Database session
+
+	Returns:
+		Updated job status
+
+	Raises:
+		HTTPException: 404 if job not found
+		HTTPException: 400 if job not in NOT_STARTED state or no scans
+	"""
+	job = session.get(MatcherJob, job_id)
+	if not job:
+		raise HTTPException(
+			status_code=status.HTTP_404_NOT_FOUND,
+			detail=f"Job {job_id} not found",
+		)
+
+	if job.current_status != JobStatus.NOT_STARTED:
+		raise HTTPException(
+			status_code=status.HTTP_400_BAD_REQUEST,
+			detail=f"Job cannot be started in state {job.current_status.value}",
+		)
+
+	petition_scans = session.exec(
+		select(PetitionScan).where(PetitionScan.campaign_id == job.campaign_id)
+	).all()
+	if not petition_scans:
+		raise HTTPException(
+			status_code=status.HTTP_400_BAD_REQUEST,
+			detail="Cannot start job: Campaign has no petition scans",
+		)
+
+	job.current_status = JobStatus.OCR_PENDING
+	session.add(job)
+	session.commit()
+	session.refresh(job)
+
+	logger.info("Started job", job_id=job_id)
 
 	return _build_job_response(job, session)
 
