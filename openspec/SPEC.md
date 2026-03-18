@@ -1,15 +1,37 @@
-# Votecatcher MVP Technical Specification
+# Votecatcher Technical Specification
 
-**Status:** Draft
-**Version:** 1.3
-**Last Updated:** 2026-03-12
+**Status:** Phase 12 - Polish & Critical Fixes
+**Version:** 1.6
+**Last Updated:** 2026-03-17
 **Author:** Solutions Architect Agent
 
 ---
 
 ## Executive Summary
 
-This specification defines the technical implementation for Votecatcher MVP completion, focusing on stability, page hierarchy redesign, and LLM provider configuration. The MVP targets a 3-4 week timeline with clear phase gates. Key architectural decisions include: campaign-scoped navigation with numeric IDs, snapshot-based provider storage (no foreign keys), on-demand status computation, and polling-based dashboard updates. Phase 1 (Stability) and Phase 3 (Page Hierarchy) can proceed in parallel.
+**MVP is complete as of 2026-03-12.** Post-MVP Phases 7-11 complete as of 2026-03-17.
+
+**MVP Phases (1-6):** ✅ Complete — Stability, Page Hierarchy, Provider Config, OCR Cache Tracking
+**Post-MVP Phases (7-11):** ✅ Complete — Job Creation Flow, Upload Enhancements, UX Polish
+**Phase 12:** 🔄 In Progress — Critical Fixes + Polish & Settings
+
+**Post-MVP Scope:**
+- Phase 7: ✅ Quick Fixes & Cleanup (logo, landing, sidebar, stale docs)
+- Phase 8: ✅ Campaign List & Dashboard (sorting, search, empty states)
+- Phase 9: ✅ Job Creation Flow (new /jobs/new route with inline upload)
+- Phase 10: ✅ Jobs List Enhancements (SSE updates, status filter)
+- Phase 11: ✅ Upload Enhancements (show uploads, duplicate handling, queue)
+- Phase 12: 🔄 Critical Fixes + Polish (orphaned jobs, OCR duplicates, duration, timestamps)
+
+**Key Architectural Decisions for Post-MVP:**
+| Decision | Choice |
+|----------|--------|
+| Job creation UX | Modal + /jobs/new coexist |
+| Job status sync | SSE (real-time) |
+| Status filter | Frontend-only |
+| NOT_STARTED expiration | None |
+| Upload list | Shared component |
+| Duplicate uploads | Override with confirmation |
 
 ---
 
@@ -40,15 +62,16 @@ Votecatcher needs to reach MVP readiness with:
 ### Target Route Structure
 
 ```
-/                             → Marketing landing (placeholder)
+/                             → Marketing landing (mode-aware CTA)
 /workspace                    → Redirect to /workspace/campaigns
-/workspace/campaigns          → Campaign list (enhanced table)
+/workspace/campaigns          → Campaign list (sortable, searchable)
 /workspace/[id]               → Campaign dashboard
-/workspace/[id]/jobs          → Jobs scoped to campaign
-/workspace/[id]/jobs/[job_id] → Job details
+/workspace/[id]/upload        → Upload page (show uploads, inline upload)
+/workspace/[id]/jobs          → Jobs scoped to campaign (SSE updates, status filter)
+/workspace/[id]/jobs/new      → Job creation page (full flow) ← NEW
+/workspace/[id]/jobs/[job_id] → Job details (duration, timestamps)
 /workspace/[id]/results       → Results scoped to campaign
-/workspace/[id]/upload        → Upload page with tabs (Voter List / Petitions)
-/workspace/settings           → Global settings + LLM providers
+/workspace/settings           → Global settings + LLM providers + feature flags
 /workspace/demo               → Demo mode (virtual campaign)
 ```
 
@@ -86,17 +109,19 @@ Votecatcher needs to reach MVP readiness with:
 
 #### Frontend Components
 
-| Component | Location | Purpose | MVP Status |
-|-----------|----------|---------|------------|
-| `CampaignDashboard` | `/workspace/[id]` | Metrics cards, donut chart, recent jobs | Required |
-| `CampaignSidebar` | Layout | Campaign-scoped nav + switcher | Required |
-| `UploadTabs` | `/workspace/[id]/upload` | Tabbed voter/petition upload | Required |
-| `ProviderSettings` | `/workspace/settings` | LLM provider configuration | Stretch |
-| `ConfidenceDonut` | Dashboard | High/Medium/Low distribution | Required |
-| `StatusBadge` | Shared | Campaign/job status indicators | Required |
-| `CampaignList` | `/workspace/campaigns` | Enhanced table with status, filtering | **Phase 4 Stretch** |
-
-> **Note:** Enhanced CampaignList (US-018 partial) is deferred to Phase 4. MVP includes basic campaign list only.
+| Component | Location | Purpose | Status |
+|-----------|----------|---------|--------|
+| `CampaignDashboard` | `/workspace/[id]` | Metrics cards, donut chart, recent jobs | ✅ Complete |
+| `CampaignSidebar` | Layout | Campaign-scoped nav + switcher | ✅ Complete |
+| `UploadTabs` | `/workspace/[id]/upload` | Tabbed voter/petition upload | ✅ Complete |
+| `ProviderSettings` | `/workspace/settings` | LLM provider configuration | ✅ Complete |
+| `ConfidenceDonut` | Dashboard | High/Medium/Low distribution | ✅ Complete |
+| `StatusBadge` | Shared | Campaign/job status indicators | ✅ Complete |
+| `CampaignList` | `/workspace/campaigns` | Sortable, searchable campaign table | 🔄 Phase 8 |
+| `JobCreationPage` | `/workspace/[id]/jobs/new` | Full job creation with file selection | 🔄 Phase 9 |
+| `UploadList` | Shared | List of uploads with actions | 🔄 Phase 11 |
+| `FileUploader` | Shared | Inline upload with duplicate handling | 🔄 Phase 11 |
+| `JobStatusFilter` | Jobs list | Frontend-only status filtering | 🔄 Phase 10 |
 
 #### Settings Scope
 
@@ -201,6 +226,9 @@ CREATE TABLE llm_provider_config (
 ALTER TABLE matcher_job ADD COLUMN provider_name TEXT;    -- Snapshot: 'openai'
 ALTER TABLE matcher_job ADD COLUMN provider_model TEXT;   -- Snapshot: 'gpt-4o'
 ALTER TABLE matcher_job ADD COLUMN parent_job_id INTEGER REFERENCES matcher_job(id);
+ALTER TABLE matcher_job ADD COLUMN force_reprocess BOOLEAN DEFAULT FALSE;  -- Re-process all crops
+ALTER TABLE matcher_job ADD COLUMN cached_ocr_count INTEGER DEFAULT 0;     -- Cached results count
+ALTER TABLE matcher_job ADD COLUMN new_ocr_count INTEGER DEFAULT 0;        -- New results count
 ```
 
 **Note:** No FK to `llm_provider_config` - jobs store snapshot only.
@@ -503,55 +531,390 @@ Feature: Campaign-Scoped Navigation
 
 **Test File:** `frontend-svelt/tests/e2e/navigation.spec.ts`
 
-### Phase 4: New Features (Week 3-4) - STRETCH
+### Phase 4: New Features (Week 3-4) - ✅ COMPLETE
 
-| Task | Priority | Effort | Dependencies |
-|------|----------|--------|--------------|
-| LLM provider config UI | HIGH | 2-3 days | Phase 1-3 |
-| Provider selection on job | MEDIUM | 1-2 days | Provider config |
-| Campaign list enhancement (US-018 partial) | LOW | 1-2 days | Phase 3 |
+| Task | Priority | Effort | Status |
+|------|----------|--------|--------|
+| LLM provider config UI | HIGH | 2-3 days | ✅ Complete |
+| Provider selection on job | MEDIUM | 1-2 days | ✅ Complete |
+| Campaign list enhancement (US-018 partial) | LOW | 1-2 days | Deferred |
 
 > **Note:** Campaign list enhancement includes status badges, progress bars, confidence display, and filtering. Basic campaign list is included in MVP; enhanced version is stretch.
+
+### Phase 5: Post-MVP Enhancements - ✅ COMPLETE
+
+| Task | Priority | Effort | Status |
+|------|----------|--------|--------|
+| Configuration modes documentation | HIGH | 4h | ✅ Complete |
+| OCR cache tracking (force_reprocess) | HIGH | 4h | ✅ Complete |
+| Database cleanup utility | MEDIUM | 2h | ✅ Complete |
+| Real OCR testing infrastructure | MEDIUM | 4h | ✅ Complete |
+| Rate limiting retry logic | HIGH | 2h | ✅ Complete |
+
+### Phase 6: Post-MVP Production Hardening - ✅ COMPLETE
+
+| Task | Priority | Effort | Status | Notes |
+|------|----------|--------|--------|-------|
+| Session management fix | HIGH | 2h | ✅ Complete | Transaction rollback after errors |
+| Batching integration | MEDIUM | 1-2 days | ✅ Complete | Batch API for payloads >10 crops |
+| Worker hot-reload | LOW | 4h | Deferred | Process manager or file watcher |
+
+---
+
+## Post-MVP Phases (7-12)
+
+### Phase 7: Quick Fixes & Cleanup (1-2 days)
+
+**Goal:** Low-hanging fruit and cleanup
+
+| ID | Task | Priority | Effort | Dependencies |
+|----|------|----------|--------|--------------|
+| UT-001 | Logo mode-aware destinations | HIGH | 2h | None |
+| NF-001 | Hide login/signup on landing | HIGH | 1h | None |
+| NF-002 | Mode-aware CTA button | HIGH | 2h | None |
+| NF-003 | Landing page cleanup | MEDIUM | 2h | None |
+| UF-011 | Sidebar reorder (Dashboard→Upload→Jobs→Results→Settings) | MEDIUM | 1h | None |
+| DX-001 | Remove stale documents | MEDIUM | 1h | None |
+| DX-004 | Fix critical TS errors | MEDIUM | 4h | None |
+
+**BDD Scenarios:**
+```gherkin
+Feature: Mode-Aware Navigation
+
+  Scenario 1: Logo navigation in production mode
+    Given the app is in production mode
+    When I click the logo
+    Then I navigate to /workspace/campaigns
+
+  Scenario 2: Logo in demo mode
+    Given the app is in demo mode
+    When I click the logo
+    Then demo data resets
+    And I stay on /workspace/demo
+
+  Scenario 3: CTA button respects mode
+    Given the app is in simulation mode
+    When I click the CTA on landing page
+    Then I navigate to /workspace/campaigns
+```
+
+### Phase 8: Campaign List & Dashboard (1 day)
+
+**Goal:** Polish campaign management UI
+
+| ID | Task | Priority | Effort | Dependencies |
+|----|------|----------|--------|--------------|
+| UF-003 | Sortable columns (Name, Year, Region, Updated, Created) | HIGH | 2h | None |
+| UF-004 | Search (campaign name, region, year) | HIGH | 2h | None |
+| UF-008 | N/A for empty metrics | HIGH | 1h | None |
+| UF-009 | N/A when no data | HIGH | 1h | None |
+| UF-010 | Hide "View Results" if empty | HIGH | 1h | None |
+
+**Sort Configuration:**
+```typescript
+interface SortConfig {
+  column: 'name' | 'region' | 'election_year' | 'updated_at' | 'created_at';
+  direction: 'asc' | 'desc';
+  default: { column: 'created_at', direction: 'desc' };
+}
+```
+
+### Phase 9: Job Creation Flow (3-5 days)
+
+**Goal:** New consolidated job creation experience
+
+| ID | Task | Priority | Effort | Dependencies |
+|----|------|----------|--------|--------------|
+| UF-035 | /jobs/new route | HIGH | 4h | None |
+| UF-036 | File selection (existing uploads) | HIGH | 4h | UF-013 |
+| UF-037 | Inline upload | HIGH | 4h | UF-013 |
+| UF-038 | Duplicate file handling | HIGH | 2h | UF-037 |
+| UF-039 | Provider/model selection | HIGH | 2h | None |
+| UF-040 | Save job (NOT_STARTED) | HIGH | 2h | None |
+| UF-041 | Run immediately | HIGH | 2h | UF-040 |
+| UF-042 | LLM validation | HIGH | 2h | None |
+| UF-043 | Return to list | HIGH | 1h | UF-040, UF-041 |
+
+**Route Design:**
+```
+/workspace/[id]/jobs/new
+├── File Selection Section
+│   ├── [Existing Files List] - checkboxes (shared UploadList component)
+│   └── [Upload New] - inline FileUploader with duplicate handling
+├── Provider Selection
+│   ├── Provider dropdown (if configured)
+│   ├── Model dropdown
+│   └── [Configure LLM] link if none configured → /workspace/settings
+├── Actions
+│   ├── [Cancel] → return to job list
+│   ├── [Save] → NOT_STARTED, return to list
+│   └── [Run] → save + start, return to list with SSE
+└── Pre-validation
+    └── If no LLM: "Configure an LLM provider first" → /workspace/settings
+```
+
+**Job States:**
+- NOT_STARTED (saved, not run) - visible in job list
+- OCR_STARTED
+- MATCHING
+- MATCHING_COMPLETED
+- FAILED
+
+**Modal Coexistence:**
+- Quick modal: Single file, immediate run, no save option
+- Full page: Multi-file, save or run, provider selection
+
+### Phase 10: Jobs List Enhancements (1 day)
+
+**Goal:** Support new job creation flow
+
+| ID | Task | Priority | Effort | Dependencies |
+|----|------|----------|--------|--------------|
+| UF-019 | Default sort by created date | HIGH | 1h | None |
+| UF-020 | Show last updated timestamp | HIGH | 1h | None |
+| UF-021 | Status dynamic update (SSE) | HIGH | 3h | None |
+| UF-023 | Warn if no uploads | HIGH | 1h | None |
+| UF-044 | Status filter (frontend-only) | HIGH | 2h | None |
+| UF-045 | Keep quick modal for simple jobs | MEDIUM | 1h | Phase 9 |
+
+**SSE Implementation:**
+```typescript
+// Job list subscribes to job status updates
+const eventSource = new EventSource(`/api/campaigns/${campaignId}/jobs/events`);
+
+eventSource.onmessage = (event) => {
+  const update = JSON.parse(event.data);
+  jobs.update(j => j.map(job =>
+    job.id === update.job_id ? { ...job, status: update.status } : job
+  ));
+};
+```
+
+**Status Filter:**
+```typescript
+type JobStatusFilter = 'all' | 'not_started' | 'running' | 'completed' | 'failed';
+
+// Frontend-only filter
+$: filteredJobs = selectedFilter === 'all'
+  ? jobs
+  : jobs.filter(j => statusMatches(j.status, selectedFilter));
+```
+
+### Phase 11: Upload Enhancements (2-3 days)
+
+**Goal:** Improve upload experience
+
+| ID | Task | Priority | Effort | Dependencies |
+|----|------|----------|--------|--------------|
+| UF-013 | Show existing uploads (name, date, size, remove) | HIGH | 4h | None |
+| UF-014 | Handle duplicates (override with confirmation) | HIGH | 2h | UF-013 |
+| UF-015 | Upload queue (status for active/pending) | MEDIUM | 3h | None |
+| UF-016 | Remove all files (with confirmation) | MEDIUM | 2h | UF-013 |
+| UF-017 | Fix or remove unused progress bar | HIGH | 1h | None |
+| UF-018 | Better remove icon (web/svg) | LOW | 1h | None |
+
+**Shared Component:**
+```svelte
+<!-- UploadList.svelte - used by /upload and /jobs/new -->
+<script lang="ts">
+  interface Props {
+    campaignId: string;
+    type: 'voter_list' | 'petition';
+    selectable?: boolean;  // true for /jobs/new, false for /upload
+    onSelectionChange?: (selected: Upload[]) => void;
+  }
+</script>
+```
+
+**Duplicate Handling Flow:**
+```
+User uploads file with existing name
+        │
+        ▼
+Show dialog: "File 'voters.csv' already exists. Override?"
+        │
+        ├── [Override] → Delete old, upload new
+        └── [Cancel] → Keep existing, discard new
+```
+
+### Phase 12: Critical Fixes + Polish & Settings (2-3 days)
+
+**Goal:** Fix critical bugs discovered in walkthrough + final polish
+
+#### Phase 12A: Critical Fixes (P0)
+
+| ID | Task | Priority | Effort | Dependencies | Status |
+|----|------|----------|--------|--------------|--------|
+| BUG-14 | Fix OCR duplicate results (add ocr_index, remove unique constraint) | 🔴 HIGH | 4-6h | None | 📋 |
+| BUG-01 | Fix orphaned jobs after restart (expand cancelable states, orphan detection) | 🔴 HIGH | 3-4h | None | 📋 |
+
+#### Phase 12B: Quick UX Fixes (P1)
+
+| ID | Task | Priority | Effort | Dependencies | Status |
+|----|------|----------|--------|--------------|--------|
+| BUG-09 | Disable Create Job button when no uploads | 🟡 MEDIUM | 1h | None | 📋 |
+| BUG-12 | Fix View Results button (use hasMatchResults not hasCrops) | 🟡 MEDIUM | 1h | None | 📋 |
+
+#### Phase 12C: Original Polish Tasks (P2)
+
+| ID | Task | Priority | Effort | Dependencies | Status |
+|----|------|----------|--------|--------------|--------|
+| UF-024 | Job duration display | HIGH | 1h | None | 📋 |
+| UF-025 | Job ended timestamp | HIGH | 1h | None | 📋 |
+| UF-027 | View results conditional (success only) | HIGH | 1h | None | 📋 |
+| UF-028 | Progress animations | MEDIUM | 2h | None | 📋 |
+| UF-005 | Duplicate name warning (campaign) | MEDIUM | 1h | None | 📋 |
+| UF-007 | New campaign on top | MEDIUM | 1h | None | 📋 |
+| UF-029 | Default model per vendor | MEDIUM | 1h | None | 📋 |
+| UF-030 | Feature flags non-prod only | HIGH | 2h | None | 📋 |
+| UF-031 | Settings: Reset Data | MEDIUM | 2h | None | 📋 |
+| UF-001 | Timezone option | MEDIUM | 2h | None | 📋 |
+| DX-004 | Fix remaining TS errors | MEDIUM | 4h | None | 📋 |
+
+**Critical Bug Details:**
+
+**BUG-14: OCR Duplicate Results**
+- Current: UNIQUE constraint on `ocr_results.crop_id` causes 4/5 entries dropped
+- Fix: Remove unique constraint, add `ocr_index` column (0-4 for 5 signatures per crop)
+- Migration: `ALTER TABLE ocr_results ADD COLUMN ocr_index INTEGER;`
+- Worker: Store all 5 entries with index
+
+**BUG-01: Orphaned Jobs After Backend Restart**
+- Current: Jobs stuck in MATCHING state, cannot cancel
+- Fix Part 1: Expand cancelable states to include OCR_COMPLETED, MATCHING_PENDING, MATCHING
+- Fix Part 2: Detect orphaned jobs on startup (no worker heartbeat)
+- UX: Show "Resume" / "Delete" buttons for orphaned jobs
+
+**Feature Flags Configuration:**
+```typescript
+// Only show in non-production modes
+const showFeatureFlags = import.meta.env.MODE !== 'production';
+
+// Available flags
+interface FeatureFlags {
+  enableSimulation: boolean;
+  demoMode: boolean;
+  debugTimezone: boolean;
+}
+```
 
 ### Critical Path
 
 ```
-Phase 1 (Stability) ────────┐
-                             ├──▶ Phase 2 (Polish) ──▶ MVP Ready
-Phase 3 (Page Hierarchy) ───┘
+Phase 1-6 (MVP) ──────────────────────────────────────────► ✅ COMPLETE
+                                                              │
+                                                              ▼
+Phase 7 (Quick Fixes) ──► Phase 8 (Campaign UI) ──► Phase 9 (Job Creation)
+                                                              │
+                                                              ▼
+Phase 10 (Jobs List) ──► Phase 11 (Upload) ──► Phase 12 (Polish)
 ```
+
+### Implementation Status
+
+**MVP Phases (✅ Complete):**
+- Phase 1: Stability - ✅ Complete
+- Phase 2: Polish - ✅ Complete
+- Phase 3: Page Hierarchy - ✅ Complete
+- Phase 4: Stretch Features - ✅ Complete
+- Phase 5: Post-MVP Enhancements - ✅ Complete
+- Phase 6: Production Hardening - ✅ Complete
+
+**Post-MVP Phases (🔄 In Progress):**
+- Phase 7: Quick Fixes & Cleanup - ✅ Complete
+- Phase 8: Campaign List & Dashboard - ✅ Complete
+- Phase 9: Job Creation Flow - ✅ Complete
+- Phase 10: Jobs List Enhancements - ✅ Complete
+- Phase 11: Upload Enhancements - ✅ Complete
+- Phase 12: Polish & Settings - 🔄 In Progress
 
 ### Phase Gate Criteria
 
 Each phase has explicit entrance and exit criteria. No phase may proceed without meeting exit criteria.
 
-#### Phase 1: Stability
+#### Phase 1: Stability - ✅ COMPLETE
 
-| Gate | Criteria |
-|------|----------|
-| **Entrance** | Development environment functional, existing tests pass |
-| **Exit** | - Worker tests pass (≥3 scenarios) <br> - Dashboard metrics API returns real data <br> - Confidence donut renders correctly <br> - Error responses include CORS headers |
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Development environment functional, existing tests pass | ✅ Met |
+| **Exit** | - Worker tests pass (≥3 scenarios) <br> - Dashboard metrics API returns real data <br> - Confidence donut renders correctly <br> - Error responses include CORS headers | ✅ All Met |
 
-#### Phase 2: Polish
+#### Phase 2: Polish - ✅ COMPLETE
 
-| Gate | Criteria |
-|------|----------|
-| **Entrance** | Phase 1 exit criteria met, Phase 3 routes exist |
-| **Exit** | - Keyboard navigation works (Tab through all pages) <br> - E2E full-flow test passes <br> - README updated with new routes <br> - No console errors in normal flows |
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Phase 1 exit criteria met, Phase 3 routes exist | ✅ Met |
+| **Exit** | - Keyboard navigation works (Tab through all pages) <br> - E2E full-flow test passes <br> - README updated with new routes <br> - No console errors in normal flows | ✅ All Met |
 
-#### Phase 3: Page Hierarchy
+#### Phase 3: Page Hierarchy - ✅ COMPLETE
 
-| Gate | Criteria |
-|------|----------|
-| **Entrance** | None (parallel with Phase 1) |
-| **Exit** | - All 6 navigation BDD scenarios pass <br> - Campaign-scoped routes work <br> - Campaign switcher preserves route segment <br> - Demo mode functional at /workspace/demo <br> - Root landing page exists |
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | None (parallel with Phase 1) | ✅ Met |
+| **Exit** | - All 6 navigation BDD scenarios pass <br> - Campaign-scoped routes work <br> - Campaign switcher preserves route segment <br> - Demo mode functional at /workspace/demo <br> - Root landing page exists | ✅ All Met |
 
-#### Phase 4: Stretch Features
+#### Phase 4: Stretch Features - ✅ COMPLETE
 
-| Gate | Criteria |
-|------|----------|
-| **Entrance** | Phase 1, 2, 3 complete |
-| **Exit** | - LLM provider config saves to DB <br> - Provider selection on job creation works <br> - Campaign list shows status badges |
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Phase 1, 2, 3 complete | ✅ Met |
+| **Exit** | - LLM provider config saves to DB <br> - Provider selection on job creation works <br> - Campaign list shows status badges | ✅ All Met |
+
+#### Phase 5: Post-MVP Enhancements - ✅ COMPLETE
+
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Phase 4 complete | ✅ Met |
+| **Exit** | - Configuration modes documented <br> - OCR cache tracking works <br> - Database cleanup utility available <br> - Real OCR tested with rate limiting | ✅ All Met |
+
+#### Phase 6: Production Hardening - ✅ COMPLETE
+
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Phase 5 complete | ✅ Met |
+| **Exit** | - Session management handles rollback <br> - Batching integrated for large payloads <br> - Worker hot-reload available | ✅ All Met |
+
+#### Phase 7: Quick Fixes & Cleanup - ✅ COMPLETE
+
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Phase 6 complete | ✅ Met |
+| **Exit** | - Logo navigates correctly per mode <br> - Landing page CTA works per mode <br> - Sidebar order matches spec <br> - Stale documents removed | ✅ All Met |
+
+#### Phase 8: Campaign List & Dashboard - ✅ COMPLETE
+
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Phase 7 complete | ✅ Met |
+| **Exit** | - Sortable columns work <br> - Search filters campaigns <br> - Empty states show N/A correctly | ✅ All Met |
+
+#### Phase 9: Job Creation Flow - ✅ COMPLETE
+
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Phase 8 complete | ✅ Met |
+| **Exit** | - /jobs/new route renders <br> - File selection works (existing + inline upload) <br> - Save creates NOT_STARTED job <br> - Run starts processing <br> - LLM validation blocks if not configured | ✅ All Met |
+
+#### Phase 10: Jobs List Enhancements - ✅ COMPLETE
+
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Phase 9 complete | ✅ Met |
+| **Exit** | - SSE updates job status in real-time <br> - Status filter works (frontend) <br> - Saved jobs visible in list | ✅ All Met |
+
+#### Phase 11: Upload Enhancements - ✅ COMPLETE
+
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Phase 10 complete | ✅ Met |
+| **Exit** | - Upload list shows existing files <br> - Duplicate handling confirms override <br> - Progress bar functional or removed | ✅ All Met |
+
+#### Phase 12: Critical Fixes + Polish & Settings - 🔄 IN PROGRESS
+
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Phase 11 complete | ✅ Met |
+| **Exit** | - OCR stores all 5 entries per crop <br> - Orphaned jobs can be cancelled/resumed <br> - Job duration/timestamps display <br> - Feature flags only in non-prod <br> - Reset Data option available | 🔄 Pending |
 
 #### Phase Gate Verification
 
@@ -619,20 +982,24 @@ bun run test:all
 
 ### Progress Reporting
 
-Developers must maintain a PROGRESS.md file with regular updates.
+Developers must maintain a PROGRESS.md file with regular updates and record ADRs for notable decisions.
 
-#### File Location
+#### File Locations
 
-`.agent-workspace/problem/PROGRESS.md`
+| File | Purpose |
+|------|---------|
+| `.agent-workspace/problem/PROGRESS.md` | Implementation progress tracking |
+| `openspec/adr/` | Architecture Decision Records |
 
-#### Required Sections
+#### PROGRESS.md Required Sections
 
 ```markdown
-# Votecatcher MVP Progress
+# Votecatcher Progress
 
 **Last Updated:** YYYY-MM-DD HH:MM
-**Current Phase:** [Phase X]
+**Current Phase:** [Phase X: Name]
 **Overall Status:** [On Track / At Risk / Blocked]
+**Health:** 🟢 Green / 🟡 Yellow / 🔴 Red
 
 ---
 
@@ -640,22 +1007,22 @@ Developers must maintain a PROGRESS.md file with regular updates.
 
 | Phase | Status | Completion % | Notes |
 |-------|--------|--------------|-------|
-| Phase 1: Stability | [Not Started / In Progress / Complete] | X% | Brief note |
-| Phase 2: Polish | [Not Started / In Progress / Complete] | X% | Brief note |
-| Phase 3: Page Hierarchy | [Not Started / In Progress / Complete] | X% | Brief note |
-| Phase 4: Stretch | [Not Started / In Progress / Complete] | X% | Brief note |
+| Phase 7: Quick Fixes | [Not Started / In Progress / Complete] | X% | Brief note |
+| Phase 8: Campaign UI | [Not Started / In Progress / Complete] | X% | Brief note |
+| ... | ... | ... | ... |
 
 ---
 
 ## Current Work
 
-**Task:** [Task name from SPEC]
+**Task:** [ID] [Task name from SPEC]
 **Started:** YYYY-MM-DD
-**Status:** [In Progress / Blocked / Review]
+**Status:** [In Progress / Blocked / Review / Testing]
+**Effort:** [Xh spent / Yh estimated]
 
 ### Progress
-- [ ] Subtask 1
-- [ ] Subtask 2
+- [ ] Subtask 1 - [status note]
+- [ ] Subtask 2 - [status note]
 - [x] Completed subtask
 
 ### Test Results
@@ -665,30 +1032,56 @@ Developers must maintain a PROGRESS.md file with regular updates.
 
 ---
 
-## Issues & Questions
+## Blockers
 
-| # | Type | Description | Status | Resolution |
-|---|------|-------------|--------|------------|
-| 1 | Blocker | Description of issue | Open/Resolved | How resolved or proposed solution |
-| 2 | Question | Clarification needed | Pending/Answered | Answer or awaiting input |
+| # | Task ID | Blocker | Impact | Owner | Status | Resolution |
+|---|---------|---------|--------|-------|--------|------------|
+| B1 | UF-035 | SSE endpoint returns 500 | Cannot proceed with UF-021 | Dev | Open | Investigating |
+| B2 | UF-013 | API missing file size field | Partial implementation | Dev | Resolved | Added field to API |
+
+---
+
+## Questions & Concerns
+
+| # | Type | Question/Concern | Context | Status | Answer/Resolution |
+|---|------|------------------|---------|--------|-------------------|
+| Q1 | Question | Should SSE reconnect on disconnect? | Phase 10 implementation | Answered | Yes, use exponential backoff |
+| C1 | Concern | Upload component may be slow with 100+ files | Performance | Open | Consider pagination |
+| Q2 | Clarification | What happens to NOT_STARTED jobs when campaign deleted? | Edge case | Pending | Need user input |
 
 ---
 
 ## SPEC Deviations
 
-| Date | Section | Deviation | Reason | Approved By |
-|------|---------|-----------|--------|-------------|
-| YYYY-MM-DD | §X.X | What changed | Why | [User/Architect] |
+| Date | Section | Deviation | Reason | Impact | Approved By |
+|------|---------|-----------|--------|--------|-------------|
+| 2026-03-12 | §7.9 | Using backend filter instead of frontend | Performance concern for large lists | Minor API change | User |
+| 2026-03-13 | Phase 9 | Deferred UF-038 to Phase 11 | Dependency on UF-014 | Reordered tasks | Architect |
+
+---
+
+## Decisions Log (ADRs)
+
+| Date | ADR # | Decision | Rationale |
+|------|-------|----------|-----------|
+| 2026-03-12 | ADR-001 | SSE over WebSocket for job updates | Simpler, HTTP-compatible, existing pattern |
+| 2026-03-13 | ADR-002 | Shared UploadList component | DRY, consistent UX |
+
+> **Note:** Full ADRs documented in `openspec/adr/NNNN-title.md`
 
 ---
 
 ## Daily Log
 
 ### YYYY-MM-DD
-- Completed: [list]
-- In Progress: [list]
-- Blocked: [list]
-- Next: [list]
+- **Completed:** [list of task IDs]
+- **In Progress:** [list of task IDs]
+- **Blocked:** [list of task IDs with blocker ref]
+- **Next:** [planned tasks for next session]
+- **Time Spent:** Xh
+
+### Session Notes
+- [Notable observations, learnings, or context]
 ```
 
 #### Update Cadence
@@ -698,8 +1091,10 @@ Developers must maintain a PROGRESS.md file with regular updates.
 | Start task | Update "Current Work" section |
 | Complete subtask | Check off in "Progress" list |
 | Test pass/fail | Update "Test Results" |
-| Encounter issue | Add to "Issues & Questions" |
+| Encounter blocker | Add to "Blockers" table immediately |
+| Have question/concern | Add to "Questions & Concerns" table |
 | Deviate from SPEC | Add to "SPEC Deviations", get approval |
+| Make notable decision | Record in "Decisions Log", create ADR if significant |
 | End of work session | Update "Phase Status" and "Daily Log" |
 | Phase gate | Run verification, update "Phase Status" |
 
@@ -707,12 +1102,86 @@ Developers must maintain a PROGRESS.md file with regular updates.
 
 When adding issues, classify by type:
 
-| Type | Definition | Response Time |
-|------|------------|---------------|
-| **Blocker** | Cannot proceed without resolution | Immediate |
-| **Technical** | Implementation challenge | Same day |
-| **Question** | Clarification on requirements/spec | Next session |
-| **Enhancement** | Nice-to-have, not blocking | Defer |
+| Type | Definition | Response Time | Escalation |
+|------|------------|---------------|------------|
+| **Blocker** | Cannot proceed without resolution | Immediate | Alert user same day |
+| **Technical** | Implementation challenge | Same day | Escalate if unresolved 2 days |
+| **Question** | Clarification on requirements/spec | Next session | Escalate if blocking |
+| **Concern** | Potential risk or issue | Document | Review weekly |
+| **Enhancement** | Nice-to-have, not blocking | Defer | Backlog |
+
+#### ADR (Architecture Decision Record) Requirements
+
+**When to create an ADR:**
+- Changing a technical decision from the SPEC
+- Introducing a new pattern or approach
+- Choosing between alternatives with trade-offs
+- Modifying data model or API contracts
+- Any decision that affects other phases or future work
+
+**ADR Template (`openspec/adr/NNNN-kebab-case-title.md`):**
+
+```markdown
+# ADR-NNNN: [Decision Title]
+
+**Date:** YYYY-MM-DD
+**Status:** [Proposed / Accepted / Deprecated / Superseded]
+**Decision Makers:** [Who was involved]
+**Supersedes:** [ADR-XXXX if applicable]
+
+## Context
+
+[What is the issue or problem being addressed? What constraints exist?]
+
+## Decision
+
+[What is the change or decision being made?]
+
+## Alternatives Considered
+
+| Option | Pros | Cons | Why Rejected |
+|--------|------|------|--------------|
+| Option A | ... | ... | ... |
+| Option B | ... | ... | ... |
+
+## Consequences
+
+**Positive:**
+- [Benefits of this decision]
+
+**Negative:**
+- [Drawbacks or trade-offs]
+
+**Risks:**
+- [Potential issues to watch for]
+
+## Implementation Notes
+
+[Any specific guidance for implementing this decision]
+
+## References
+
+- Related SPEC section: §X.X
+- Related requirements: [ID-001, ID-002]
+- External references: [links]
+```
+
+**ADR Naming Convention:**
+- Number sequentially: ADR-0001, ADR-0002, etc.
+- Use kebab-case title: `0001-sse-for-job-updates.md`
+- Location: `openspec/adr/`
+
+**ADR Index:**
+Maintain an index in `openspec/adr/README.md`:
+
+```markdown
+# Architecture Decision Records
+
+| ADR | Title | Status | Date |
+|-----|-------|--------|------|
+| [0001](0001-sse-for-job-updates.md) | SSE for Job Updates | Accepted | 2026-03-12 |
+| [0002](0002-shared-upload-component.md) | Shared UploadList Component | Accepted | 2026-03-13 |
+```
 
 ---
 
@@ -926,33 +1395,154 @@ function switchCampaign(newCampaignId: string | number) {
 }
 ```
 
+### 7.7 Job Creation: Modal + Page Coexistence (Post-MVP)
+
+**Decision:** Job creation modal and /jobs/new page coexist for different use cases.
+
+**Rationale:**
+- Modal: Quick single-file jobs, immediate run, minimal friction
+- Full page: Multi-file selection, save for later, provider selection, inline upload
+
+**When to use each:**
+| Scenario | Use Modal | Use /jobs/new |
+|----------|-----------|---------------|
+| Single file, run now | ✅ | |
+| Multi-file selection | | ✅ |
+| Save job for later | | ✅ |
+| Need to upload new file | | ✅ |
+| Change provider from previous | | ✅ |
+
+### 7.8 Job Status Sync: SSE (Post-MVP)
+
+**Decision:** Job list uses Server-Sent Events for real-time status updates.
+
+**Rationale:**
+- Real-time UX for active jobs
+- Consistent with existing job detail page SSE
+- Lower overhead than polling for active campaigns
+
+**Implementation:**
+```typescript
+// Subscribe to campaign job updates
+const eventSource = new EventSource(`/api/campaigns/${campaignId}/jobs/events`);
+eventSource.onmessage = (event) => {
+  const update = JSON.parse(event.data);
+  jobs.update(j => j.map(job =>
+    job.id === update.job_id ? { ...job, ...update } : job
+  ));
+};
+```
+
+### 7.9 Status Filter: Frontend-Only (Post-MVP)
+
+**Decision:** Job status filter implemented as frontend-only in-memory filtering.
+
+**Rationale:**
+- Typical job count per campaign < 100
+- No backend changes needed
+- Instant filter response
+
+### 7.10 NOT_STARTED Jobs: No Expiration (Post-MVP)
+
+**Decision:** Jobs in NOT_STARTED state live indefinitely with no automatic expiration.
+
+**Rationale:**
+- Users may save jobs for later execution
+- No additional cleanup complexity
+- Manual deletion if needed
+
+### 7.11 Upload List: Shared Component (Post-MVP)
+
+**Decision:** Upload list component shared between /upload page and /jobs/new page.
+
+**Rationale:**
+- Consistent UX across contexts
+- Single source of truth for upload display logic
+- Props control behavior (selectable vs view-only)
+
+### 7.12 Duplicate Uploads: Override with Confirmation (Post-MVP)
+
+**Decision:** Uploading a file with existing name shows confirmation dialog, then replaces.
+
+**Rationale:**
+- Prevents accidental data loss
+- Clear user intent before action
+- Matches common file manager patterns
+
+### 7.13 Sidebar Order: Dashboard → Upload → Jobs → Results → Settings (Post-MVP)
+
+**Decision:** Sidebar navigation order groups related actions together.
+
+**Rationale:**
+- Upload and Jobs are frequently used together
+- Results follows Jobs as the output
+- Settings at bottom (infrequent access)
+
 ---
 
 ## 8. Risks & Mitigations
 
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| Phase 1/3 parallel conflicts | HIGH | MEDIUM | Clear file ownership, daily sync |
-| Worker test complexity | MEDIUM | MEDIUM | Start with happy path, add edge cases |
-| Route refactor breaks E2E | HIGH | HIGH | Update E2E tests as routes change |
-| Provider API validation fails | LOW | LOW | Graceful degradation, show validation error |
-| Dashboard polling performance | LOW | LOW | Debounce, cancel on unmount |
+| Risk | Impact | Probability | Mitigation | Status |
+|------|--------|-------------|------------|--------|
+| Phase 1/3 parallel conflicts | HIGH | MEDIUM | Clear file ownership, daily sync | ✅ Resolved |
+| Worker test complexity | MEDIUM | MEDIUM | Start with happy path, add edge cases | ✅ Resolved |
+| Route refactor breaks E2E | HIGH | HIGH | Update E2E tests as routes change | ✅ Resolved |
+| Provider API validation fails | LOW | LOW | Graceful degradation, show validation error | ✅ Resolved |
+| Dashboard polling performance | LOW | LOW | Debounce, cancel on unmount | ✅ Resolved |
+| Rate limiting on real OCR | HIGH | HIGH | Exponential backoff retry logic | ✅ Resolved |
+| Transaction rollback on error | HIGH | MEDIUM | Session management fix | ✅ Resolved |
+| Large payload rate limits | MEDIUM | MEDIUM | Batch API for >10 crops | ✅ Resolved |
+| SSE connection management | MEDIUM | MEDIUM | Reconnect logic, cleanup on unmount | 🔄 Phase 10 |
+| Upload component complexity | LOW | LOW | Shared component with clear props | 🔄 Phase 11 |
+| NOT_STARTED jobs accumulation | LOW | LOW | Manual cleanup, no auto-expiration | ✅ Accepted |
+| Worker needs restart for changes | LOW | MEDIUM | Hot-reload or process manager | 📋 Backlog |
 
 ---
 
 ## 9. Open Questions
 
-| Question | Status | Owner |
-|----------|--------|-------|
-| None outstanding | Resolved | - |
+| Question | Status | Owner | Notes |
+|----------|--------|-------|-------|
+| Worker hot-reload strategy | Open | Developer | Process manager vs file watcher? |
+
+### Post-MVP Implementation Notes
+
+1. **SSE Connection Management**
+   - Reconnect on disconnect with exponential backoff
+   - Cleanup EventSource on component unmount
+   - Handle multiple tab scenarios (broadcast channel?)
+
+2. **Upload Component Props**
+   ```typescript
+   interface UploadListProps {
+     campaignId: string;
+     type: 'voter_list' | 'petition';
+     selectable?: boolean;      // true for /jobs/new
+     showActions?: boolean;     // remove, view details
+     onSelectionChange?: (selected: Upload[]) => void;
+   }
+   ```
+
+3. **Feature Flags Scope**
+   - Only visible in non-production modes
+   - Stored in localStorage for dev convenience
+   - Reset on mode change
 
 ---
 
 ## 10. References
 
-- Requirements: `.agent-workspace/problem/REQUIREMENTS-UPDATE-2026-03-11.md`
-- Diagrams: `.agent-workspace/problem/diagrams/`
-- Existing codebase: FastAPI + SvelteKit + SQLModel/Drizzle
+| Document | Status | Purpose |
+|----------|--------|---------|
+| `openspec/SPEC.md` | v1.5 (this file) | Technical specification |
+| `openspec/PROGRESS.md` | Current | Implementation progress tracking |
+| `openspec/adr/` | Active | Architecture Decision Records |
+| `.agent-workspace/problem/PROGRESS.md` | Current | Daily progress, blockers, questions |
+| `.agent-workspace/problem/REQUIREMENTS-NEXT-ITERATION-2026-03-12.md` | Complete | Post-MVP requirements |
+| `.agent-workspace/problem/REQUIREMENTS-UPDATE-2026-03-11.md` | Complete | Original MVP requirements |
+| `docs/configuration-modes.md` | Active | Configuration documentation |
+| `docs/running-locally.md` | Active | Local development guide |
+| `docs/demo-walkthrough.md` | Active | Demo mode guide |
 
 ---
 
@@ -1064,12 +1654,227 @@ export const PROVIDERS = {
 |------|------------|
 | Campaign | A petition verification project with voters and signatures |
 | Job | A batch OCR + matching operation for a campaign |
+| NOT_STARTED | Job state: saved but not yet executed (Post-MVP) |
 | Provider | LLM service (OpenAI, Gemini, Mistral) used for OCR |
 | Snapshot | Stored copy of provider name/model at job creation time |
 | Confidence tier | High (≥0.8), Medium (0.5-0.8), Low (<0.5) match confidence |
 | Virtual campaign | In-memory campaign for demo mode (not persisted) |
+| SSE | Server-Sent Events for real-time updates |
+| Upload List | Shared component showing uploaded files (Post-MVP) |
+| Mode | Deployment context: Production, Demo, Simulation, Dev |
 
 ---
 
-**Document Status:** Draft v1.3 - Added UUID storage format requirement, FEATURE_ENABLE_SIMULATION env var
+**Document Status:** v1.5 - MVP complete, Post-MVP Phases 7-12 planned
 **Last Updated:** 2026-03-12
+
+---
+
+## Appendix D: MVP Enhancements (Complete)
+
+### D.1 OCR Cache Tracking
+
+**Feature:** Visibility into cached vs new OCR results during job processing.
+
+**Status:** ✅ Complete
+
+**Database Fields Added:**
+```sql
+ALTER TABLE matcher_job ADD COLUMN force_reprocess BOOLEAN DEFAULT FALSE;
+ALTER TABLE matcher_job ADD COLUMN cached_ocr_count INTEGER DEFAULT 0;
+ALTER TABLE matcher_job ADD COLUMN new_ocr_count INTEGER DEFAULT 0;
+```
+
+**UI Components:**
+- "Re-process all crops" checkbox in job creation modal
+- "X new · Y cached" indicator in job details page
+- "re-processed" badge when force_reprocess was enabled
+
+**Migration:** `20260312210000_add_ocr_cache_tracking_fields.py`
+
+### D.2 Configuration Modes
+
+**Feature:** Comprehensive configuration documentation for all deployment scenarios.
+
+**Status:** ✅ Complete
+
+**Modes Documented:**
+1. Production (real LLM, persisted data)
+2. Dev with Real LLM (local DB, real API)
+3. Simulation (mock LLM, fast iteration)
+4. Demo (in-memory, showcase mode)
+5. Testing (isolated, deterministic)
+
+**File:** `docs/configuration-modes.md`
+
+**Environment Variables:**
+```bash
+FEATURE_ENABLE_SIMULATION=1  # Mock LLM for dev/testing
+PUBLIC_DEMO_MODE=false       # Enable demo routes
+ENV_FILE=.env.dev            # Backend env file selection
+```
+
+### D.3 Database Cleanup Utility
+
+**Feature:** Purge old campaigns while keeping recent data.
+
+**Status:** ✅ Complete
+
+**Script:** `backend/scripts/purge_old_campaigns.py`
+
+**Usage:**
+```bash
+python scripts/purge_old_campaigns.py --keep 10 [--dry-run]
+```
+
+**Result:** Removed 1,164 rows (201 old campaigns) in testing.
+
+### D.4 Real OCR Infrastructure
+
+**Feature:** Rate limiting retry logic for production OCR calls.
+
+**Status:** ✅ Complete
+
+**Implementation:**
+- Exponential backoff retry (max 3 attempts, 5s base delay)
+- `OCR_REAL_DELAY_SECONDS` increased from 0.5 → 2.0
+- Debug logging for OCR responses
+
+### D.5 Production Hardening
+
+**Status:** ✅ Complete
+
+| Item | Status | Description |
+|------|--------|-------------|
+| Session management | ✅ Complete | Transaction rollback after errors |
+| Batching integration | ✅ Complete | Batch API for payloads >10 crops |
+| Worker hot-reload | 📋 Backlog | Process manager or file watcher for dev UX |
+
+---
+
+## Appendix E: Post-MVP Requirements Summary (Phases 7-12)
+
+### Phase 7: Quick Fixes & Cleanup
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| UT-001 | Logo mode-aware destinations | HIGH |
+| NF-001 | Hide login/signup on landing | HIGH |
+| NF-002 | Mode-aware CTA button | HIGH |
+| NF-003 | Landing page cleanup | MEDIUM |
+| UF-011 | Sidebar reorder | MEDIUM |
+| DX-001 | Remove stale documents | MEDIUM |
+| DX-004 | Fix critical TS errors | MEDIUM |
+
+### Phase 8: Campaign List & Dashboard
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| UF-003 | Sortable columns | HIGH |
+| UF-004 | Search | HIGH |
+| UF-008 | N/A for empty metrics | HIGH |
+| UF-009 | N/A when no data | HIGH |
+| UF-010 | Hide "View Results" if empty | HIGH |
+
+### Phase 9: Job Creation Flow
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| UF-035 | /jobs/new route | HIGH |
+| UF-036 | File selection (existing) | HIGH |
+| UF-037 | Inline upload | HIGH |
+| UF-038 | Duplicate file handling | HIGH |
+| UF-039 | Provider/model selection | HIGH |
+| UF-040 | Save job (NOT_STARTED) | HIGH |
+| UF-041 | Run immediately | HIGH |
+| UF-042 | LLM validation | HIGH |
+| UF-043 | Return to list | HIGH |
+
+### Phase 10: Jobs List Enhancements
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| UF-019 | Default sort by created date | HIGH |
+| UF-020 | Show last updated timestamp | HIGH |
+| UF-021 | Status dynamic update (SSE) | HIGH |
+| UF-023 | Warn if no uploads | HIGH |
+| UF-044 | Status filter | HIGH |
+| UF-045 | Keep quick modal | MEDIUM |
+
+### Phase 11: Upload Enhancements
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| UF-013 | Show existing uploads | HIGH |
+| UF-014 | Handle duplicates | HIGH |
+| UF-015 | Upload queue | MEDIUM |
+| UF-016 | Remove all files | MEDIUM |
+| UF-017 | Fix progress bar | HIGH |
+| UF-018 | Better remove icon | LOW |
+
+### Phase 12: Polish & Settings
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| UF-024 | Job duration display | HIGH |
+| UF-025 | Job ended timestamp | HIGH |
+| UF-027 | View results conditional | HIGH |
+| UF-028 | Progress animations | MEDIUM |
+| UF-005 | Duplicate name warning | MEDIUM |
+| UF-007 | New campaign on top | MEDIUM |
+| UF-029 | Default model per vendor | MEDIUM |
+| UF-030 | Feature flags non-prod | HIGH |
+| UF-031 | Settings: Reset Data | MEDIUM |
+| UF-001 | Timezone option | MEDIUM |
+| DX-004 | Fix remaining TS errors | MEDIUM |
+
+---
+
+## Appendix F: Architecture Decision Records (ADRs)
+
+### ADR Index
+
+ADRs are stored in `openspec/adr/` and track notable technical decisions.
+
+| ADR | Title | Status | Date | Phase |
+|-----|-------|--------|------|-------|
+| (None yet) | - | - | - | - |
+
+### Creating New ADRs
+
+When making decisions that:
+- Change something from this SPEC
+- Introduce new patterns or approaches
+- Have significant trade-offs
+- Affect multiple phases or future work
+
+**Process:**
+1. Create `openspec/adr/NNNN-kebab-title.md` using template in §6 (Progress Reporting)
+2. Add entry to ADR index above
+3. Reference in PROGRESS.md Decisions Log
+4. Update SPEC if decision modifies existing content
+
+### ADR Template Quick Reference
+
+```markdown
+# ADR-NNNN: [Title]
+
+**Date:** YYYY-MM-DD
+**Status:** [Proposed / Accepted / Deprecated / Superseded]
+
+## Context
+[Problem being addressed]
+
+## Decision
+[The change being made]
+
+## Alternatives Considered
+[Options evaluated]
+
+## Consequences
+[Positive, negative, risks]
+
+## References
+- SPEC section: §X.X
+- Requirements: [IDs]
+```

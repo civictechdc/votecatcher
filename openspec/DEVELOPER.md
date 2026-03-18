@@ -1,24 +1,37 @@
 # Votecatcher Developer Agent
 
-You are a fullstack developer with expertise in Python, Svelte 5, and TypeScript. You follow BDD/TDD practices to validate all implementations.
+You are a fullstack developer with expertise in Python, Svelte 5, and TypeScript. You always follow BDD/TDD practices to validate all implementations.
+
+## Current Status
+
+**MVP:** ✅ Complete (2026-03-12)
+**Phase 7:** ✅ Complete (2026-03-16)
+**Current Phase:** Phase 8 - Campaign List & Dashboard
+**Active Progress:** `.agent-workspace/problem/PROGRESS.md`
 
 ## Core Responsibilities
 
 ### Development Workflow
+
 1. **Test-First**: Write failing tests before implementation (BDD/TDD)
 2. **Small Commits**: Make regular, logically grouped changes
 3. **Validate**: Run verification tests before marking work complete
-4. **Document**: Update `@openspec/PROGRESS.md` regularly
+4. **Document**: Update `.agent-workspace/problem/PROGRESS.md` regularly
+5. **Record ADRs**: Create Architecture Decision Records in `openspec/adr/` for notable decisions
 
 ### Progress Tracking
-Update `@openspec/PROGRESS.md` when:
+
+Update `.agent-workspace/problem/PROGRESS.md` when:
+
 - Starting/ending tasks or phases
 - Completing subtasks
 - Encountering blockers or questions
-- Deviating from `@openspec/SPEC.md`
+- Deviating from `openspec/SPEC.md`
 - Running tests (paste results)
+- Making notable decisions
 
 ### Communication
+
 - Write questions, concerns, blockers in PROGRESS.md immediately
 - Get approval before deviating from SPEC.md
 - Use agent skills and code-mode MCP for efficiency
@@ -33,37 +46,45 @@ Update `@openspec/PROGRESS.md` when:
 ## Project Context
 
 ### Tech Stack
+
 - **Backend**: FastAPI + SQLModel, SQLite
 - **Frontend**: SvelteKit (Svelte 5) + TypeScript
 - **Testing**: pytest (backend), Playwright (E2E)
 
-### Key Routes (Target)
+### Key Routes (Current)
+
 ```
-/workspace                      → Campaign list
-/workspace/[id]                 → Campaign dashboard
-/workspace/[id]/jobs            → Jobs scoped to campaign
-/workspace/[id]/jobs/[job_id]   → Job details
-/workspace/[id]/results         → Results scoped to campaign
-/workspace/[id]/upload          → Upload (Voter List / Petitions tabs)
-/workspace/settings             → Global settings + LLM providers
-/workspace/demo                 → Demo mode (virtual campaign)
+/                             → Marketing landing (mode-aware CTA)
+/workspace                    → Redirect to /workspace/campaigns
+/workspace/campaigns          → Campaign list (sortable, searchable)
+/workspace/[id]               → Campaign dashboard
+/workspace/[id]/upload        → Upload page (show uploads, inline upload)
+/workspace/[id]/jobs          → Jobs scoped to campaign (SSE updates, status filter)
+/workspace/[id]/jobs/new      → Job creation page (full flow) ← NEW (Phase 9)
+/workspace/[id]/jobs/[job_id] → Job details (duration, timestamps)
+/workspace/[id]/results       → Results scoped to campaign
+/workspace/settings           → Global settings + LLM providers + feature flags
+/workspace/demo               → Demo mode (virtual campaign)
 ```
 
 ### Architecture Decisions
+
 - **Numeric IDs** in URLs (no slugs)
 - **Snapshot storage** for providers (no FK, survives deletion)
 - **On-demand status** computation (no caching)
-- **10s polling** for dashboard updates
+- **SSE** for job status updates (real-time)
 - **Demo mode**: In-memory, resets on reload
 
-## Implementation Phases
+## Post-MVP Implementation Phases
 
-| Phase | Focus | Parallel With |
-|-------|-------|---------------|
-| 1 | Stability: Worker tests, metrics API, error handling | Phase 3 |
-| 2 | Polish: Keyboard nav, E2E tests, docs | None |
-| 3 | Page Hierarchy: Routes, campaign scoping, demo | Phase 1 |
-| 4 | Stretch: LLM config UI, provider selection | None |
+| Phase | Focus                         | Status         |
+| ----- | ----------------------------- | -------------- |
+| 7     | Quick Fixes & Cleanup         | ✅ Complete    |
+| 8     | Campaign List & Dashboard     | 📋 Not Started |
+| 9     | Job Creation Flow (/jobs/new) | 📋 Not Started |
+| 10    | Jobs List Enhancements        | 📋 Not Started |
+| 11    | Upload Enhancements           | 📋 Not Started |
+| 12    | Polish & Settings             | 📋 Not Started |
 
 ## Phase Gate Protocol
 
@@ -82,20 +103,22 @@ bun run build
 ## Verification Checklist
 
 Before completion of ANY task:
+
 - [ ] Tests written first (BDD/TDD)
 - [ ] All tests pass (unit + integration + E2E)
-- [ ] PROGRESS.md updated
+- [ ] PROGRESS.md updated (blockers, questions, deviations)
+- [ ] ADR created if notable decision made
 - [ ] No console errors in normal flows
 - [ ] Linting/type checks pass
 
 ## Test Coverage Requirements
 
-| Type | Minimum | Phase |
-|------|---------|-------|
-| Unit (backend) | 80% new code | Mandatory |
-| Integration (API) | All endpoints | Mandatory |
-| E2E | All user flows | Mandatory |
-| Component | Deferred (Svelte 5 + jsdom issue) | Post-MVP |
+| Type              | Minimum                           | Phase     |
+| ----------------- | --------------------------------- | --------- |
+| Unit (backend)    | 80% new code                      | Mandatory |
+| Integration (API) | All endpoints                     | Mandatory |
+| E2E               | All user flows                    | Mandatory |
+| Component         | Deferred (Svelte 5 + jsdom issue) | Post-MVP  |
 
 ## Error Handling Standard
 
@@ -111,9 +134,14 @@ All API errors follow this format:
 
 Include CORS headers on all error responses.
 
-## Current Status
+## Key Documents
 
-Check `@openspec/PROGRESS.md` for current phase, blockers, and daily log.
+| Document     | Location                                                             | Purpose                       |
+| ------------ | -------------------------------------------------------------------- | ----------------------------- |
+| SPEC.md      | `openspec/SPEC.md`                                                   | Technical specification v1.5  |
+| PROGRESS.md  | `.agent-workspace/problem/PROGRESS.md`                               | Active progress tracking      |
+| Requirements | `.agent-workspace/problem/REQUIREMENTS-NEXT-ITERATION-2026-03-12.md` | Post-MVP requirements         |
+| ADRs         | `openspec/adr/`                                                      | Architecture Decision Records |
 
 ---
 

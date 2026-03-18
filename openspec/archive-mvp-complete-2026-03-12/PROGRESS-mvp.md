@@ -1,8 +1,8 @@
 # Votecatcher MVP Progress
 
-**Last Updated:** 2026-03-12 21:30
-**Current Phase:** MVP Complete
-**Overall Status:** Complete
+**Last Updated:** 2026-03-12 23:30
+**Current Phase:** Production Hardening
+**Overall Status:** Session management + batching implemented, ready for testing
 
 ---
 
@@ -15,8 +15,221 @@
 | Phase 3: Page Hierarchy | Complete | 100% | Route restructure complete |
 | Phase 4: Stretch | Complete | 100% | Provider selection on job creation |
 | Post-MVP Docs | Complete | 100% | Configuration modes documentation |
+| Post-MVP Bug Fixes | Complete | 100% | OCR cache tracking |
+| Production Hardening | In Progress | 90% | Session management + batching done |
 
 ---
+
+## Current Work: Production Hardening (2026-03-12 Session 9)
+
+### Changes Implemented
+
+#### 1. Session Management Fix ✅
+- **File:** `backend/app/jobs/worker.py`
+- **Change:** `_run_real_ocr` now commits after each successful crop
+- **Change:** Added `session.rollback()` before error handling
+- **Result:** Clean session state after errors, no UNIQUE constraint cascades
+
+#### 2. Batching Integration ✅
+- **File:** `backend/app/jobs/worker.py`
+- **Added:** `BATCH_THRESHOLD = 10` constant
+- **Added:** `_run_batch_ocr()` method using `OpenAiBatchClient`
+- **Added:** `_get_provider_api_key()` helper
+- **Logic:** Crops >= 10 → batch API, < 10 → sequential with retry
+- **Fallback:** Batch failure → sequential processing
+
+### Code Changes
+
+| File | Change |
+|------|--------|
+| `backend/app/jobs/worker.py` | Added `BATCH_THRESHOLD = 10` |
+| `backend/app/jobs/worker.py` | Modified `_run_ocr_phase` to choose batch vs sequential |
+| `backend/app/jobs/worker.py` | Added `session.commit()` after each crop in `_run_real_ocr` |
+| `backend/app/jobs/worker.py` | Added `session.rollback()` on error in `_run_real_ocr` |
+| `backend/app/jobs/worker.py` | Added `_run_batch_ocr()` method (~100 lines) |
+| `backend/app/jobs/worker.py` | Added `_get_provider_api_key()` helper |
+| `openspec/SPEC.md` | Updated to v1.4 with Phase 5/6 status |
+
+### Test Results
+
+```
+Backend Unit Tests: 156 passed ✅
+Backend Integration Tests: Pre-existing SQLite thread issues (not related to changes)
+Worker Import: OK ✅
+```
+
+### Next Steps
+
+1. **Test real OCR** with fresh petitions (simulation mode OFF)
+2. **Test batch mode** with 10+ crops
+3. **Verify session recovery** on error conditions
+
+### Real OCR Testing Findings
+
+**Issue:** Tested real OCR with `FEATURE_ENABLE_SIMULATION=0` and encountered:
+
+| # | Issue | Root Cause | Status |
+|---|-------|------------|--------|
+| 1 | OCR response parsing: `'Data'` KeyError | Code looked for `["Data"]` but OCRData model has lowercase `data` | ✅ Fixed |
+| 2 | Rate limit (429) when calling API sequentially | Worker calls OpenAI for each crop without backoff | ✅ Fixed (added retry) |
+| 3 | UNIQUE constraint on second attempt | Transaction rollback after first error left session in bad state | Needs session fix |
+| 4 | No batching for large payloads | Sequential calls hit rate limits | Needs batching integration |
+
+### Fixes Applied
+
+#### 1. OCR Response Parsing Fix
+- **File:** `backend/app/ocr/ocr_client_factory.py`
+- **Change:** `parsed_data["Data"]` → `parsed_data["data"]` (match pydantic model)
+- **Also:** Added debug logging for raw response
+
+#### 2. Rate Limiting Retry Logic
+- **File:** `backend/app/jobs/worker.py`
+- **Added:** Exponential backoff retry (max 3 attempts, 5s base delay)
+- **Changed:** `OCR_REAL_DELAY_SECONDS` from 0.5 → 2.0
+
+#### 3. Database Cleanup Script
+- **File:** `backend/scripts/purge_old_campaigns.py` (NEW)
+- **Purpose:** Keep only N most recent campaigns with associated data
+- **Usage:** `python scripts/purge_old_campaigns.py --keep 10 [--dry-run]`
+- **Result:** Purged 1,164 rows (201 old campaigns)
+
+### Batching System Status
+
+**Existing Code:** `backend/app/ocr/batching/` has OpenAI batch client ready
+- `OpenAiBatchClient` - Creates JSONL, uploads to OpenAI, polls for completion
+- Batch jobs take 5-15 minutes but avoid rate limits
+- Currently not integrated with worker
+
+**Recommendation:** For large payloads (>10 crops?), use batch API instead of sequential calls
+
+### Files Changed This Session
+
+| File | Change |
+|------|--------|
+| `backend/app/ocr/ocr_client_factory.py` | Fixed `data` key parsing, added debug logging |
+| `backend/app/jobs/worker.py` | Added retry logic with exponential backoff |
+| `backend/scripts/purge_old_campaigns.py` | Database cleanup utility (NEW) |
+| `openspec/PROGRESS.md` | Updated with session 8 findings |
+
+### Next Steps
+
+1. **Session management fix** - Handle transaction rollback after errors properly
+2. **Batching integration** - Use batch API for payloads > N crops
+3. **Continue real OCR testing** - Verify fixes work with fresh job
+
+### Issues Fixed This Session
+
+| # | Issue | Root Cause | Fix | Status |
+||---|-------|------------|-----|--------|
+| 1 | Voter list upload: "Field required" error | Backend expects `campaign_id` form field, frontend wasn't sending it | Added `formData.append('campaign_id', campaignId)` to upload | ✅ Fixed |
+| 2 | Settings page: API key input doesn't work | Input component used one-way `value` prop, not `$bindable()` | Changed to `value = $bindable('')` and `bind:value` | ✅ Fixed |
+| 3 | Job creation: UNIQUE constraint on ocr_results.crop_id | Worker tried to insert OCR results for crops that already had them | Added check for existing OCR results before processing | ✅ Fixed |
+| 4 | Job creation: Provider shows "(not configured)" | API returns `is_configured` (snake_case), code checked `isConfigured` (camelCase) | Fixed interface and all references to use `is_configured` | ✅ Fixed |
+| 5 | Job details page: Shows "Disconnected" briefly on load | SSE used wrong env var (`VITE_PUBLIC_API_URL`) and wrong port (8000 → 8080) | Changed to `PUBLIC_API_URL` and port 8080 | ✅ Fixed |
+| 6 | Job details page: Redundant progress bar | Progress bar showed 0% and wasn't functional | Removed percentage progress bar, kept pipeline phase indicator | ✅ Fixed |
+| 7 | Jobs complete instantly with real OCR | Crops already had OCR results from previous jobs → skipped | Worker correctly skips existing results (by design) | ⚠️ UX Issue |
+| 8 | Jobs complete instantly with cached OCR results (no indicator) | No visibility into cached vs new OCR results | Added `force_reprocess`, `cached_ocr_count`, `new_ocr_count` fields with UI indicators | ✅ Fixed |
+
+### New Features Added
+
+#### 1. Re-process All Crops Option
+- **Backend**: Added `force_reprocess` flag to `CreateJobRequest` and `MatcherJob` model
+- **Worker**: When `force_reprocess=True`, deletes existing OCR results before processing
+- **Frontend**: Added checkbox in job creation modal with explanation text
+- **Migration**: `20260312210000_add_ocr_cache_tracking_fields.py`
+
+#### 2. OCR Cache Tracking
+- **Backend**: Added `cached_ocr_count` and `new_ocr_count` fields to `MatcherJob`
+- **Frontend**: Job details page shows "X new · Y cached" indicator when job completes
+- **UI**: Shows "re-processed" badge when `force_reprocess` was enabled
+
+### Files Changed This Session
+
+| File | Change |
+|------|--------|
+| `backend/app/data/database/model/jobs.py` | Added `force_reprocess`, `cached_ocr_count`, `new_ocr_count` fields |
+| `backend/app/routers/job_router.py` | Updated `CreateJobRequest` and `JobResponse` with new fields |
+| `backend/app/jobs/worker.py` | Added force reprocess logic and count tracking |
+| `backend/alembic/versions/20260312210000_add_ocr_cache_tracking_fields.py` | Database migration |
+| `frontend-svelt/src/lib/api/generated/models/CreateJobRequest.ts` | Added `forceReprocess` |
+| `frontend-svelt/src/lib/api/generated/models/JobResponse.ts` | Added new fields |
+| `frontend-svelt/src/routes/workspace/[id]/jobs/+page.svelte` | Added re-process checkbox |
+| `frontend-svelt/src/routes/workspace/[id]/jobs/[job_id]/+page.svelte` | Added cached/new indicator |
+
+### Previous Sessions (7)
+
+### 2026-03-12 (Evening Session 7 - OCR Cache Feature)
+
+**Task:** Add visibility into cached vs new OCR results
+
+**Issues Fixed:**
+| # | Issue | Root Cause | Fix | Status |
+|---|-------|------------|-----|--------|
+| 8 | Jobs complete instantly with cached OCR (no indicator) | No visibility into cached vs new results | Added `force_reprocess`, `cached_ocr_count`, `new_ocr_count` fields | ✅ Fixed |
+
+**Features Added:**
+
+1. **Re-process All Crops Option**
+   - `force_reprocess=True` deletes existing OCR results before processing
+   - Frontend checkbox in job creation modal
+
+2. **OCR Cache Tracking**
+   - `cached_ocr_count` and `new_ocr_count` fields on MatcherJob
+   - Job details shows "X new · Y cached" indicator
+   - "re-processed" badge when force reprocess enabled
+
+**Files Changed:**
+- `backend/app/data/database/model/jobs.py` - New fields
+- `backend/app/routers/job_router.py` - Updated request/response
+- `backend/app/jobs/worker.py` - Force reprocess logic + count tracking
+- `backend/alembic/versions/20260312210000_add_ocr_cache_tracking_fields.py` - Migration
+- Frontend types and UI components
+
+**Database Purge:**
+- Created `scripts/purge_old_campaigns.py` to keep only N most recent campaigns
+- Purged 1,164 rows (201 old campaigns)
+- Final counts: 10 campaigns, 5 scans, 30 crops, 5 jobs
+
+### Resolved Issue: Instant Job Completion with Cached OCR Results
+
+**Problem:** When creating a new job for a campaign whose crops already have OCR results, the job completes instantly with 0 new results because the worker skips already-processed crops.
+
+**Solution Implemented:** Combined Option 1 + Option 2:
+- ✅ Show indicator when job used cached OCR data (cached/new counts in job details)
+- ✅ Add "Re-process all" checkbox for users who want fresh results
+- This preserves history while giving control
+
+**Implementation Details:**
+- `force_reprocess=True` deletes existing OCR results before processing
+- Job details show "X new · Y cached" indicator
+- "re-processed" badge appears when force reprocess was enabled
+
+**Files Involved:**
+- `backend/app/jobs/worker.py` - OCR skip logic (lines 188-207)
+- `frontend-svelt/src/routes/workspace/[id]/jobs/+page.svelte` - Job creation modal
+- `frontend-svelt/src/routes/workspace/[id]/jobs/[job_id]/+page.svelte` - Job details display
+
+### Real OCR Implementation Status
+
+**Completed:**
+- Worker now checks `FEATURE_ENABLE_SIMULATION` flag
+- When OFF: calls `extract_from_encoding_async()` with real LLM API
+- When ON: uses simulated OCR (fast, no API calls)
+
+**To Test Real OCR:**
+```bash
+# Start backend with real OCR mode
+cd backend
+python main.py --env dev  # Uses .env.dev with FEATURE_ENABLE_SIMULATION=0
+
+# Upload new petitions to get fresh crops
+# Create new job - should call OpenAI API
+```
+
+**Current Data State:**
+- 10 crops exist for campaign 25ea5e1c...
+- All have OCR results from job 7
+- Any new job will skip these crops (UNIQUE constraint protection)
 
 ## Pre-Phase 4 Tasks (Completed)
 
@@ -179,6 +392,28 @@ Results: 20 match results created
 ---
 
 ## Daily Log
+
+### 2026-03-12 (Evening Session 8 - Real OCR Testing)
+- **Completed:** Real OCR testing with `FEATURE_ENABLE_SIMULATION=0`
+- **Fixed:** OCR response parsing bug (`["Data"]` → `["data"]`)
+- **Added:** Retry logic with exponential backoff for rate limiting
+- **Created:** Database purge script (`scripts/purge_old_campaigns.py`)
+- **Purged:** 1,164 rows (201 old campaigns)
+- **Found:** Rate limiting issues (429) when calling API sequentially
+- **Recommendation:** Use batch API for larger payloads (>10 crops)
+- **Files:**
+  - `backend/app/ocr/ocr_client_factory.py` - Fixed parsing, added logging
+  - `backend/app/jobs/worker.py` - Added retry with backoff
+  - `backend/scripts/purge_old_campaigns.py` - Cleanup utility (NEW)
+- **Status:** Real OCR working but needs session management fix for transaction rollback
+
+### 2026-03-12 (Evening Session 7 - OCR Cache Feature)
+- **Completed:** OCR cache tracking feature
+  - Added `force_reprocess`, `cached_ocr_count`, `new_ocr_count` to MatcherJob
+  - Added "Re-process all crops" checkbox in job creation
+  - Added cached/new indicator in job details page
+- **Migration:** `20260312210000_add_ocr_cache_tracking_fields.py`
+- **Verification:** Frontend build SUCCESS
 
 ### 2026-03-12 (Evening Session 5 - Configuration Documentation)
 - **Completed:** Configuration modes documentation
