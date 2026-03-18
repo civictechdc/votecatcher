@@ -3,6 +3,7 @@
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Button, Table, LoadingState, Modal, ErrorDisplay } from '$lib/components/ui';
 	import type { CampaignResponse } from '$lib/api/generated';
+	import type { SortConfig } from '$lib/components/ui/Table.svelte';
 
 	let showCreateModal = $state(false);
 	let showDeleteModal = $state(false);
@@ -12,11 +13,15 @@
 		year: 2024,
 		region: 'DC'
 	});
+	let sortConfig = $state<SortConfig | null>({ key: 'created_at', direction: 'desc' });
+	let searchQuery = $state('');
 
 	const columns = [
 		{ key: 'name', label: 'Name', sortable: true },
 		{ key: 'year', label: 'Year', sortable: true },
 		{ key: 'region', label: 'Region', sortable: true },
+		{ key: 'created_at', label: 'Created', sortable: true },
+		{ key: 'updated_at', label: 'Last Updated', sortable: true },
 		{ key: 'actions', label: 'Actions', sortable: false }
 	];
 
@@ -24,12 +29,75 @@
 		campaigns.fetchAll();
 	});
 
+	function formatDate(date: Date | null | undefined): string {
+		if (!date) return '-';
+		return new Date(date).toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric'
+		});
+	}
+
+	function filterCampaigns(campaignList: CampaignResponse[], query: string): CampaignResponse[] {
+		if (!query.trim()) return campaignList;
+		const lowerQuery = query.toLowerCase();
+		return campaignList.filter(c =>
+			(c.unique_name || c.title || '').toLowerCase().includes(lowerQuery) ||
+			(c.region || '').toLowerCase().includes(lowerQuery) ||
+			String(c.year).includes(query)
+		);
+	}
+
+	function sortCampaigns(campaignList: CampaignResponse[], config: SortConfig | null): CampaignResponse[] {
+		if (!config) return campaignList;
+
+		return [...campaignList].sort((a, b) => {
+			let aVal: string | number;
+			let bVal: string | number;
+
+			switch (config.key) {
+				case 'name':
+					aVal = (a.unique_name || a.title || '').toLowerCase();
+					bVal = (b.unique_name || b.title || '').toLowerCase();
+					break;
+				case 'year':
+					aVal = parseInt(String(a.year)) || 0;
+					bVal = parseInt(String(b.year)) || 0;
+					break;
+				case 'region':
+					aVal = (a.region || '').toLowerCase();
+					bVal = (b.region || '').toLowerCase();
+					break;
+				case 'created_at':
+					aVal = a.created_at ? new Date(a.created_at).getTime() : 0;
+					bVal = b.created_at ? new Date(b.created_at).getTime() : 0;
+					break;
+				case 'updated_at':
+					aVal = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+					bVal = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+					break;
+				default:
+					return 0;
+			}
+
+			if (aVal < bVal) return config.direction === 'asc' ? -1 : 1;
+			if (aVal > bVal) return config.direction === 'asc' ? 1 : -1;
+			return 0;
+		});
+	}
+
+	const filteredAndSortedCampaigns = $derived(
+		sortCampaigns(filterCampaigns($campaigns.campaigns, searchQuery), sortConfig)
+	);
+
 	function getTableRows(campaignList: CampaignResponse[]) {
 		return campaignList.map((campaign) => ({
 			id: campaign.id,
 			name: `<a href="/workspace/${campaign.id}" class="text-blue-600 hover:text-blue-800 font-medium">${campaign.unique_name || campaign.title || ''}</a>`,
 			year: campaign.year,
 			region: campaign.region || '',
+			created_at: formatDate(campaign.created_at),
+			updated_at: formatDate(campaign.updated_at),
 			actions: `<button data-campaign-id="${campaign.id}" data-campaign-name="${campaign.unique_name || campaign.title || ''}" class="delete-btn text-red-600 hover:text-red-800 text-sm font-medium" aria-label="Delete ${campaign.unique_name || campaign.title}">Delete</button>`
 		}));
 	}
@@ -84,10 +152,33 @@
 			<Button variant="primary" text="Create Campaign" onclick={() => (showCreateModal = true)} />
 		</div>
 
+		<div class="flex items-center gap-4">
+			<div class="relative flex-1 max-w-md">
+				<input
+					type="search"
+					placeholder="Search campaigns..."
+					bind:value={searchQuery}
+					class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-blue-500 text-sm"
+					aria-label="Search campaigns"
+				/>
+				<svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+				</svg>
+			</div>
+			{#if searchQuery}
+				<span class="text-sm text-slate-500">
+					{filteredAndSortedCampaigns.length} of {$campaigns.campaigns.length} campaigns
+				</span>
+			{/if}
+		</div>
+
 		<Table
 			columns={columns}
-			rows={getTableRows($campaigns.campaigns)}
-			emptyMessage="No campaigns yet. Create your first campaign to get started."
+			rows={getTableRows(filteredAndSortedCampaigns)}
+			sortable={true}
+			sortConfig={sortConfig}
+			onSortChange={(config) => (sortConfig = config)}
+			emptyMessage={searchQuery ? 'No campaigns match your search.' : 'No campaigns yet. Create your first campaign to get started.'}
 		/>
 	</div>
 {/if}
