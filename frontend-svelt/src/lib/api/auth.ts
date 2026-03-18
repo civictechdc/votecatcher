@@ -66,7 +66,7 @@ export async function logout() {
 /**
  * A custom fetch wrapper that handles token injection and automatic refreshing.
  */
-export async function authenticatedFetch(url: string | URL, options = {}) {
+export async function authenticatedFetch(url: string | URL, options: RequestInit & { headers?: Record<string, string> } = {}) {
 	let currentToken = null;
 	authStore.subscribe((value) => {
 		currentToken = value.accessToken;

@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { campaigns } from '$lib/stores/campaigns';
+	import { getLogoDestination } from '$lib/utils/mode';
 	import SidebarNavItem from './SidebarNavItem.svelte';
 	import Menu from 'lucide-svelte/icons/menu';
 	import X from 'lucide-svelte/icons/x';
@@ -20,9 +21,9 @@
 
 	const navItems = $derived([
 		{ href: `/workspace/${campaignId}`, label: 'Dashboard', icon: 'home' as const },
+		{ href: `/workspace/${campaignId}/upload`, label: 'Upload', icon: 'upload' as const },
 		{ href: `/workspace/${campaignId}/jobs`, label: 'Jobs', icon: 'activity' as const },
-		{ href: `/workspace/${campaignId}/results`, label: 'Results', icon: 'check-circle' as const },
-		{ href: `/workspace/${campaignId}/upload`, label: 'Upload', icon: 'upload' as const }
+		{ href: `/workspace/${campaignId}/results`, label: 'Results', icon: 'check-circle' as const }
 	]);
 
 	const globalNavItems = [
@@ -76,7 +77,7 @@
 >
 	<nav aria-label="Campaign navigation" class="flex h-full flex-col">
 		<div class="flex h-16 items-center border-b border-slate-200 px-6">
-			<a href="/" class="text-xl font-bold text-blue-600">Votecatcher</a>
+			<a href={getLogoDestination()} class="text-xl font-bold text-blue-600">Votecatcher</a>
 		</div>
 
 		<div class="flex-1 overflow-y-auto p-4">
@@ -93,21 +94,23 @@
 				{#if showCampaignSwitcher}
 					<ul class="mt-2 max-h-48 overflow-y-auto rounded border border-slate-200 bg-white">
 						{#each $campaigns.campaigns as campaign}
-							<li>
-								<button
-									onclick={() => switchCampaign(campaign.id)}
-									class="w-full px-3 py-2 text-left text-sm hover:bg-slate-100 {campaign.id === String(campaignId) ? 'bg-blue-50 text-blue-600' : ''}"
-								>
-									{campaign.unique_name || campaign.title || 'Untitled'}
-								</button>
-							</li>
+							{#if campaign.id !== String(campaignId)}
+								<li>
+									<button
+										onclick={() => campaign.id && switchCampaign(campaign.id)}
+										class="w-full px-3 py-2 text-left text-sm hover:bg-slate-100"
+									>
+										{campaign.unique_name || campaign.title || 'Untitled'}
+									</button>
+								</li>
+							{/if}
 						{/each}
 						<li class="border-t border-slate-200">
 							<a
 								href="/workspace/campaigns"
 								class="block px-3 py-2 text-sm text-blue-600 hover:bg-slate-100"
 							>
-								+ New Campaign
+								Manage Campaigns...
 							</a>
 						</li>
 					</ul>

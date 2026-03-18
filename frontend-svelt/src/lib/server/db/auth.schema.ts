@@ -1,1 +1,3 @@
-// If you see this file, you have not run the auth:schema script yet, but you should!
+// Auth schema placeholder - not currently used
+// This file can be populated with auth-related database schema if needed
+export const authPlaceholder = true;

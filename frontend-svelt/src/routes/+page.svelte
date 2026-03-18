@@ -2,6 +2,7 @@
 	import { Navbar } from '$lib/components/layout';
 	import { ArrowRight, Users, Shield, Flag } from 'lucide-svelte';
 	import DevFlags from '$lib/components/DevFlags.svelte';
+	import { getCTADestination } from '$lib/utils/mode';
 
 	let user = $state(null);
 
@@ -10,15 +11,12 @@
 	}
 
 	let { data } = $props();
-	let DEMO_MODE_ENABLED: boolean = $derived(data.isDemoMode);
-	// When demo mode is on, always point the CTA to the workspace (no real auth required)
-	const homeLink = $derived(
-		DEMO_MODE_ENABLED ? '/workspace/demo' : user ? '/workspace/' + user?.id : '/auth'
-	);
+
+	const homeLink = $derived(getCTADestination());
 </script>
 
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50">
-	<Navbar {user} showAuthButtons />
+	<Navbar {user} />
 	<div class="container mx-auto px-4 py-16">
 		<div class="mx-auto max-w-4xl text-center">
 			<div class="mb-6 flex items-center justify-center gap-3">

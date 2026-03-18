@@ -22,7 +22,7 @@
 		type = 'text',
 		label = '',
 		name = id,
-		value = '',
+		value = $bindable(''),
 		placeholder = '',
 		helperText = '',
 		errorMessage = '',
@@ -64,7 +64,7 @@
 		{id}
 		{type}
 		{name}
-		{value}
+		bind:value
 		{placeholder}
 		{disabled}
 		{readonly}
