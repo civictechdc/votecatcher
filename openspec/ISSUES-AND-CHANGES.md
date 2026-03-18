@@ -2,6 +2,36 @@
 
 Tracking issues discovered during implementation walkthroughs and proposed changes.
 
+**Last Updated:** 2026-03-18
+
+---
+
+## Issue Summary
+
+| Issue | Severity | Status | Phase |
+|-------|----------|--------|-------|
+| #1 Orphaned Jobs | 🔴 HIGH | ✅ Fixed | Phase 12 |
+| #2 Connected Indicator | 🟢 LOW | Open | P3 |
+| #3 Status Filter Style | 🟢 LOW | Open | P3 |
+| #5 Voter List Display | 🟡 MEDIUM | 📋 Planned | Phase 13 |
+| #6 Flash of Placeholder | 🟢 LOW | Open | P3 |
+| #7 Campaign Context Lost | 🟢 LOW | Open | P3 |
+| #8 Dropdown Clipped | 🟡 MEDIUM | ✅ Fixed | Phase 12 |
+| #9 Create Job Button | 🟡 MEDIUM | ✅ Fixed | Phase 12 |
+| #10 Dashboard State | 🟡 MEDIUM | 📋 Planned | Phase 13 |
+| #11 High Confidence Card | 🟢 LOW | Open | P3 |
+| #12 View Results Button | 🟡 MEDIUM | ✅ Fixed | Phase 12 |
+| #13 OCR Batching | 🟢 LOW | Open | P3 |
+| #14 OCR Duplicates | 🔴 HIGH | ✅ Fixed | Phase 12 |
+| #15 Metrics Deduplication | 🔴 HIGH | ✅ Fixed | Phase 12 |
+| #16 DEVELOPER.md Out of Sync | 🟢 LOW | ✅ Fixed | Phase 12 |
+| #17 Uncommitted Fixes | 🟡 MEDIUM | ✅ Fixed | Phase 12 |
+| #18 Flaky Test | 🟢 LOW | ✅ Fixed | Phase 12 |
+| #19 Polling Storm | 🟡 MEDIUM | ✅ Fixed | Phase 12 |
+| #20 Event Bus | 🟡 MEDIUM | Open (Proposal) | Future |
+
+**Fixed:** 10 | **Planned (Phase 13):** 2 | **Open (P3):** 7 | **Proposals:** 1
+
 ---
 
 ## Issue #15: Metrics Confidence Counts Not Deduplicated by OCR Result

@@ -1,19 +1,19 @@
 # Votecatcher Technical Specification
 
-**Status:** Phase 12 - Polish & Critical Fixes
-**Version:** 1.6
-**Last Updated:** 2026-03-17
+**Status:** Phase 13 - Voter List Tracking + Dashboard Progress
+**Version:** 1.7
+**Last Updated:** 2026-03-18
 **Author:** Solutions Architect Agent
 
 ---
 
 ## Executive Summary
 
-**MVP is complete as of 2026-03-12.** Post-MVP Phases 7-11 complete as of 2026-03-17.
+**MVP is complete as of 2026-03-12.** Post-MVP Phases 7-12 complete as of 2026-03-18.
 
 **MVP Phases (1-6):** ✅ Complete — Stability, Page Hierarchy, Provider Config, OCR Cache Tracking
-**Post-MVP Phases (7-11):** ✅ Complete — Job Creation Flow, Upload Enhancements, UX Polish
-**Phase 12:** 🔄 In Progress — Critical Fixes + Polish & Settings
+**Post-MVP Phases (7-12):** ✅ Complete — Job Creation Flow, Upload Enhancements, Critical Fixes
+**Phase 13:** 📋 Planned — Voter List Tracking + Dashboard Progress
 
 **Post-MVP Scope:**
 - Phase 7: ✅ Quick Fixes & Cleanup (logo, landing, sidebar, stale docs)
@@ -21,7 +21,8 @@
 - Phase 9: ✅ Job Creation Flow (new /jobs/new route with inline upload)
 - Phase 10: ✅ Jobs List Enhancements (SSE updates, status filter)
 - Phase 11: ✅ Upload Enhancements (show uploads, duplicate handling, queue)
-- Phase 12: 🔄 Critical Fixes + Polish (orphaned jobs, OCR duplicates, duration, timestamps)
+- Phase 12: ✅ Critical Fixes + Polish (orphaned jobs, OCR duplicates, metrics dedup, timestamps)
+- Phase 13: 📋 Voter List Tracking + Dashboard Progress (upload history, merge logic, progress stepper)
 
 **Key Architectural Decisions for Post-MVP:**
 | Decision | Choice |
@@ -737,39 +738,38 @@ Show dialog: "File 'voters.csv' already exists. Override?"
         └── [Cancel] → Keep existing, discard new
 ```
 
-### Phase 12: Critical Fixes + Polish & Settings (2-3 days)
+### Phase 12: Critical Fixes + Polish & Settings (2-3 days) - ✅ COMPLETE
 
 **Goal:** Fix critical bugs discovered in walkthrough + final polish
 
-#### Phase 12A: Critical Fixes (P0)
+#### Phase 12A: Critical Fixes (P0) - ✅ COMPLETE
 
 | ID | Task | Priority | Effort | Dependencies | Status |
 |----|------|----------|--------|--------------|--------|
-| BUG-14 | Fix OCR duplicate results (add ocr_index, remove unique constraint) | 🔴 HIGH | 4-6h | None | 📋 |
-| BUG-01 | Fix orphaned jobs after restart (expand cancelable states, orphan detection) | 🔴 HIGH | 3-4h | None | 📋 |
+| BUG-14 | Fix OCR duplicate results (add ocr_index, remove unique constraint) | 🔴 HIGH | 4-6h | None | ✅ |
+| BUG-01 | Fix orphaned jobs after restart (expand cancelable states, orphan detection) | 🔴 HIGH | 3-4h | None | ✅ |
+| BUG-15 | Fix metrics confidence deduplication | 🔴 HIGH | 2h | BUG-14 | ✅ |
 
-#### Phase 12B: Quick UX Fixes (P1)
-
-| ID | Task | Priority | Effort | Dependencies | Status |
-|----|------|----------|--------|--------------|--------|
-| BUG-09 | Disable Create Job button when no uploads | 🟡 MEDIUM | 1h | None | 📋 |
-| BUG-12 | Fix View Results button (use hasMatchResults not hasCrops) | 🟡 MEDIUM | 1h | None | 📋 |
-
-#### Phase 12C: Original Polish Tasks (P2)
+#### Phase 12B: Quick UX Fixes (P1) - ✅ COMPLETE
 
 | ID | Task | Priority | Effort | Dependencies | Status |
 |----|------|----------|--------|--------------|--------|
-| UF-024 | Job duration display | HIGH | 1h | None | 📋 |
-| UF-025 | Job ended timestamp | HIGH | 1h | None | 📋 |
-| UF-027 | View results conditional (success only) | HIGH | 1h | None | 📋 |
-| UF-028 | Progress animations | MEDIUM | 2h | None | 📋 |
-| UF-005 | Duplicate name warning (campaign) | MEDIUM | 1h | None | 📋 |
-| UF-007 | New campaign on top | MEDIUM | 1h | None | 📋 |
-| UF-029 | Default model per vendor | MEDIUM | 1h | None | 📋 |
-| UF-030 | Feature flags non-prod only | HIGH | 2h | None | 📋 |
-| UF-031 | Settings: Reset Data | MEDIUM | 2h | None | 📋 |
-| UF-001 | Timezone option | MEDIUM | 2h | None | 📋 |
-| DX-004 | Fix remaining TS errors | MEDIUM | 4h | None | 📋 |
+| BUG-09 | Disable Create Job button when no uploads | 🟡 MEDIUM | 1h | None | ✅ |
+| BUG-12 | Fix View Results button (use hasMatchResults not hasCrops) | 🟡 MEDIUM | 1h | None | ✅ |
+
+#### Phase 12C: Original Polish Tasks (P2) - ✅ COMPLETE
+
+| ID | Task | Priority | Effort | Dependencies | Status |
+|----|------|----------|--------|--------------|--------|
+| UF-024 | Job duration display | HIGH | 1h | None | ✅ |
+| UF-025 | Job ended timestamp | HIGH | 1h | None | ✅ |
+| UF-027 | View results conditional (success only) | HIGH | 1h | None | ✅ |
+| UF-030 | Feature flags non-prod only | HIGH | 2h | None | ✅ |
+| UF-031 | Settings: Reset Data | MEDIUM | 2h | None | ✅ |
+| BUG-08 | Fix model selector dropdown clipped | MEDIUM | 1h | None | ✅ |
+| BUG-17 | Commit uncommitted fixes | MEDIUM | 1h | None | ✅ |
+| BUG-18 | Fix flaky provider test | LOW | 1h | None | ✅ |
+| BUG-19 | Fix aggressive polling storm | MEDIUM | 1h | None | ✅ |
 
 **Critical Bug Details:**
 
@@ -807,7 +807,10 @@ Phase 1-6 (MVP) ─────────────────────�
 Phase 7 (Quick Fixes) ──► Phase 8 (Campaign UI) ──► Phase 9 (Job Creation)
                                                               │
                                                               ▼
-Phase 10 (Jobs List) ──► Phase 11 (Upload) ──► Phase 12 (Polish)
+Phase 10 (Jobs List) ──► Phase 11 (Upload) ──► Phase 12 (Critical Fixes)
+                                                              │
+                                                              ▼
+                                              Phase 13 (Voter List Tracking) ──► 📋 Planned
 ```
 
 ### Implementation Status
@@ -820,13 +823,16 @@ Phase 10 (Jobs List) ──► Phase 11 (Upload) ──► Phase 12 (Polish)
 - Phase 5: Post-MVP Enhancements - ✅ Complete
 - Phase 6: Production Hardening - ✅ Complete
 
-**Post-MVP Phases (🔄 In Progress):**
+**Post-MVP Phases (✅ Complete):**
 - Phase 7: Quick Fixes & Cleanup - ✅ Complete
 - Phase 8: Campaign List & Dashboard - ✅ Complete
 - Phase 9: Job Creation Flow - ✅ Complete
 - Phase 10: Jobs List Enhancements - ✅ Complete
 - Phase 11: Upload Enhancements - ✅ Complete
-- Phase 12: Polish & Settings - 🔄 In Progress
+- Phase 12: Critical Fixes + Polish - ✅ Complete
+
+**Enhancement Phases (📋 Planned):**
+- Phase 13: Voter List Tracking + Dashboard Progress - 📋 Planned
 
 ### Phase Gate Criteria
 
@@ -909,12 +915,27 @@ Each phase has explicit entrance and exit criteria. No phase may proceed without
 | **Entrance** | Phase 10 complete | ✅ Met |
 | **Exit** | - Upload list shows existing files <br> - Duplicate handling confirms override <br> - Progress bar functional or removed | ✅ All Met |
 
-#### Phase 12: Critical Fixes + Polish & Settings - 🔄 IN PROGRESS
+#### Phase 12: Critical Fixes + Polish & Settings - ✅ COMPLETE
 
 | Gate | Criteria | Status |
 |------|----------|--------|
 | **Entrance** | Phase 11 complete | ✅ Met |
-| **Exit** | - OCR stores all 5 entries per crop <br> - Orphaned jobs can be cancelled/resumed <br> - Job duration/timestamps display <br> - Feature flags only in non-prod <br> - Reset Data option available | 🔄 Pending |
+| **Exit** | - OCR stores all 5 entries per crop <br> - Orphaned jobs can be cancelled/resumed <br> - Job duration/timestamps display <br> - Feature flags only in non-prod <br> - Reset Data option available | ✅ All Met |
+
+#### Phase 13: Voter List Tracking + Dashboard Progress - 📋 PLANNED
+
+| Gate | Criteria | Status |
+|------|----------|--------|
+| **Entrance** | Phase 12 complete | ✅ Met |
+| **Exit** | - Voter list uploads tracked with history <br> - Dashboard shows progress stepper <br> - Region schemas support configurable CSV parsing <br> - Merge/update logic handles duplicate voters | 📋 Pending |
+
+**Phase 13 Scope (see `docs/plans/2026-03-18-voter-list-tracking-design.md`):**
+- Issue #5: Voter list tab shows existing uploads
+- Issue #10: Dashboard shows "uploads ready, no job run" state
+- New tables: `voter_list_uploads`, `region_schemas`
+- New tracking fields on `registered_voter`
+- ProgressStepper component on dashboard
+- Region schema admin UI
 
 #### Phase Gate Verification
 

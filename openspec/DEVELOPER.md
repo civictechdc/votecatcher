@@ -136,12 +136,13 @@ Include CORS headers on all error responses.
 
 ## Key Documents
 
-| Document     | Location                                                             | Purpose                       |
-| ------------ | -------------------------------------------------------------------- | ----------------------------- |
-| SPEC.md      | `openspec/SPEC.md`                                                   | Technical specification v1.5  |
-| PROGRESS.md  | `.agent-workspace/problem/PROGRESS.md`                               | Active progress tracking      |
-| Requirements | `.agent-workspace/problem/REQUIREMENTS-NEXT-ITERATION-2026-03-12.md` | Post-MVP requirements         |
-| ADRs         | `openspec/adr/`                                                      | Architecture Decision Records |
+| Document           | Location                                       | Purpose                       |
+| ------------------ | ---------------------------------------------- | ----------------------------- |
+| SPEC.md            | `openspec/SPEC.md`                             | Technical specification       |
+| PROGRESS.md        | `.agent-workspace/problem/PROGRESS.md`         | Active progress tracking      |
+| ISSUES-AND-CHANGES | `openspec/ISSUES-AND-CHANGES.md`               | Issue tracking & resolutions  |
+| ADRs               | `openspec/adr/`                                | Architecture Decision Records |
+| Design Docs        | `docs/plans/`                                  | Implementation plans          |
 
 ---
 
