@@ -90,14 +90,20 @@ class MetricsService:
 		return metrics.to_dict()
 
 	def _count_total_signatures(self, campaign_id: UUID) -> int:
-		"""Count total signature crops for a campaign.
+		"""Count total OCR results (individual signatures) for a campaign.
+
+		After BUG-14 fix, each crop can have up to 5 OCR results (ocr_index 0-4),
+		representing individual signatures extracted from a petition page.
+		This counts OCR results (signatures), not crops, to align with 'processed'.
 
 		Args:
 			campaign_id: Campaign UUID
 
 		Returns:
-			Total number of petition crops across all scans
+			Total number of OCR results (individual signatures) across all crops
 		"""
+		from app.data.database.model.ocr_result import OcrResult
+
 		scan_ids = self.session.exec(
 			select(PetitionScan.id).where(PetitionScan.campaign_id == campaign_id)
 		).all()
@@ -105,10 +111,17 @@ class MetricsService:
 		if not scan_ids:
 			return 0
 
+		crop_ids = self.session.exec(
+			select(PetitionCrop.id).where(PetitionCrop.scan_id.in_(scan_ids))
+		).all()
+
+		if not crop_ids:
+			return 0
+
 		count = self.session.exec(
 			select(func.count())
-			.select_from(PetitionCrop)
-			.where(PetitionCrop.scan_id.in_(scan_ids))
+			.select_from(OcrResult)
+			.where(OcrResult.crop_id.in_(crop_ids))
 		).one()
 
 		return count or 0
@@ -117,6 +130,10 @@ class MetricsService:
 		self, campaign_id: UUID
 	) -> tuple[int, dict[ConfidenceLevel, int]]:
 		"""Count processed results and group by confidence.
+
+		After BUG-14 fix, each crop can have multiple OCR results (ocr_index 0-4).
+		This method deduplicates by ocr_result_id to count unique OCR results,
+		preventing confidence percentages from exceeding 100%.
 
 		Args:
 			campaign_id: Campaign UUID
@@ -137,11 +154,17 @@ class MetricsService:
 			.where(MatchResult.rank == 1)
 		).all()
 
-		unique_ocr_ids = {r.ocr_result_id for r in results}
-		confidence_counts: dict[ConfidenceLevel, int] = {}
+		unique_ocr_ids: set[int] = set()
+		ocr_to_confidence: dict[int, ConfidenceLevel] = {}
 
 		for result in results:
-			level = result.confidence_level
+			if result.ocr_result_id in unique_ocr_ids:
+				continue
+			unique_ocr_ids.add(result.ocr_result_id)
+			ocr_to_confidence[result.ocr_result_id] = result.confidence_level
+
+		confidence_counts: dict[ConfidenceLevel, int] = {}
+		for level in ocr_to_confidence.values():
 			confidence_counts[level] = confidence_counts.get(level, 0) + 1
 
 		return len(unique_ocr_ids), confidence_counts
