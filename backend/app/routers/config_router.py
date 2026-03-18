@@ -2,10 +2,16 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy import text
+from sqlmodel import Session
 
+from app.dependencies import get_session
 from app.settings.env_settings import AppSettings, get_settings
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/config", tags=["config"])
 
@@ -57,4 +63,75 @@ def get_settings_endpoint(
 			demoMode=settings.demo_mode,
 			demoReset=settings.demo_reset,
 		),
+	)
+
+
+class ResetDataResponse(BaseModel):
+	"""Response for data reset operation."""
+
+	deleted_counts: dict[str, int]
+	message: str
+
+
+@router.post("/reset-data", response_model=ResetDataResponse)
+def reset_all_data(
+	db_session: Annotated[Session, Depends(get_session)],
+	settings: Annotated[AppSettings, Depends(get_settings)],
+) -> ResetDataResponse:
+	"""Reset all application data.
+
+	This endpoint deletes ALL data from the database including:
+	- All match results
+	- All OCR results
+	- All OCR jobs
+	- All matcher jobs
+	- All petition crops
+	- All petition scans
+	- All campaigns
+
+	This is a destructive operation and should only be enabled in
+	non-production environments.
+	"""
+	if settings.demo_mode or settings.enable_debug_mode or settings.enable_simulation:
+		conn = db_session.connection()
+		deleted_counts = {}
+
+		deleted_counts["match_results"] = conn.execute(
+			text("DELETE FROM match_results")
+		).rowcount
+
+		deleted_counts["ocr_results"] = conn.execute(
+			text("DELETE FROM ocr_results")
+		).rowcount
+
+		deleted_counts["ocr_jobs"] = conn.execute(text("DELETE FROM ocr_jobs")).rowcount
+
+		deleted_counts["matcher_jobs"] = conn.execute(
+			text("DELETE FROM matcher_jobs")
+		).rowcount
+
+		deleted_counts["petition_crops"] = conn.execute(
+			text("DELETE FROM petition_crops")
+		).rowcount
+
+		deleted_counts["petition_scans"] = conn.execute(
+			text("DELETE FROM petition_scans")
+		).rowcount
+
+		deleted_counts["campaigns"] = conn.execute(
+			text("DELETE FROM campaigns")
+		).rowcount
+
+		db_session.commit()
+
+		logger.info("All data reset complete", deleted_counts=deleted_counts)
+
+		return ResetDataResponse(
+			deleted_counts=deleted_counts,
+			message="All data has been reset successfully",
+		)
+
+	raise HTTPException(
+		status_code=status.HTTP_403_FORBIDDEN,
+		detail="Data reset is only available in non-production modes",
 	)

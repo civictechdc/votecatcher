@@ -10,15 +10,20 @@ from langchain_openai import ChatOpenAI
 
 from app.ocr.data.data_models import OCRData
 from app.settings import GeminiAiConfig, MistralAiConfig, OpenAiConfig, load_settings
-from app.settings.settings_repo import GeminiAiConfig, MistralAiConfig, OpenAiConfig
 from app.utils.app_logger import logger
 
 load_dotenv()
 
 
 TEXT_PROMPTS: list[str] = [
-	"""Using the written text in the image create a list of dictionaries where each dictionary consists of keys 'Name', 'Address', 'Date', and 'Ward'. Fill in the values of each dictionary with the correct entries for each key. Write all the values of the dictionary in full. Only output the list of dictionaries. No other intro text is necessary.""",
-	"""Remove the city name 'Washington, DC' and any zip codes from the 'Address' values.""",
+	(
+		"Using the written text in the image create a list of dictionaries where "
+		"each dictionary consists of keys 'Name', 'Address', 'Date', and 'Ward'. "
+		"Fill in the values of each dictionary with the correct entries for each "
+		"key. Write all the values of the dictionary in full. Only output the list "
+		"of dictionaries. No other intro text is necessary."
+	),
+	("Remove the city name 'Washington, DC' and any zip codes from the Address."),
 ]
 
 
@@ -27,7 +32,7 @@ def _create_ocr_client() -> Runnable:
 	Create an OpenAI client with the appropriate settings.
 
 	Returns:
-	    Runnable: An AI client for OCR extraction.
+		Runnable: An AI client for OCR extraction.
 	"""
 
 	env_provider = os.getenv("OCR_PROVIDER_NAME")
@@ -98,10 +103,10 @@ async def extract_from_encoding_async(base64_image: str) -> list[dict]:
 	Uses base64_image
 
 	Args:
-	    base64_image: The base64 encoded image to extract data from.
+		base64_image: The base64 encoded image to extract data from.
 
 	Returns:
-	    list: A list of dictionaries with the OCR data.
+		list: A list of dictionaries with the OCR data.
 	"""
 	logger.debug("Starting OCR extraction for image")
 
@@ -126,11 +131,17 @@ async def extract_from_encoding_async(base64_image: str) -> list[dict]:
 
 		results = await client.ainvoke([HumanMessage(content=messages)])
 
-		parsed_results = results
+		raw_json = results.json()
+		logger.debug(f"OCR raw response: {raw_json[:500]}...")
+		parsed_data = json.loads(raw_json)
 
-		# dictionary results
-		parsed_list = json.loads(parsed_results.json())["Data"]
-		logger.debug(f"Successfully extracted {len(parsed_list)} entries from image")
+		if "data" not in parsed_data:
+			keys_found = list(parsed_data.keys())
+			logger.error(f"OCR response missing 'data' key. Keys: {keys_found}")
+			return []
+
+		parsed_list = parsed_data["data"]
+		logger.info(f"Successfully extracted {len(parsed_list)} entries from image")
 		return parsed_list
 
 	except Exception as e:
