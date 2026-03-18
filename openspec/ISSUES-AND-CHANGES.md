@@ -497,7 +497,7 @@ Add settings as a nav item within `CampaignSidebar` (under "Global" section), so
 
 **Discovered:** 2026-03-17
 **Severity:** Medium (Broken UX)
-**Status:** Open
+**Status:** ✅ Fixed (2026-03-18)
 
 ### Description
 On `/workspace/settings`, when expanding a provider card and clicking the model selector dropdown, the dropdown list is clipped/hidden by the parent container. Users cannot see or select all available models.
@@ -541,50 +541,24 @@ On `/workspace/settings`, when expanding a provider card and clicking the model 
 | `src/lib/components/ProviderConfigCard.svelte` | 94 | `overflow-hidden` clips dropdown |
 | `src/lib/components/ui/Select.svelte` | 179, 233 | Parent is `relative`, dropdown is `z-10` |
 
-### Proposed Fixes
+### Fix Applied (2026-03-18)
 
-**Option A: Remove `overflow-hidden` from card**
+Combined Option A + B as recommended:
+1. Removed `overflow-hidden` from `ProviderConfigCard.svelte:94`
+2. Increased z-index to `z-50` in `Select.svelte:233`
 
-```html
-<!-- ProviderConfigCard.svelte:94 -->
-<div class="rounded-lg border border-slate-200 bg-white">
-```
+### Files Changed
 
-Simple fix, but may affect rounded corners rendering on nested content.
+| File | Line | Change |
+|------|------|--------|
+| `src/lib/components/ProviderConfigCard.svelte` | 94 | Removed `overflow-hidden` |
+| `src/lib/components/ui/Select.svelte` | 233 | Changed `z-10` to `z-50` |
 
-**Option B: Increase dropdown z-index**
-
-```html
-<!-- Select.svelte:233 -->
-<div class="absolute z-50 w-full mt-1 bg-white ...">
-```
-
-Higher z-index, but won't help if parent has `overflow-hidden`.
+### Alternative Solutions (Not Implemented)
 
 **Option C: Portal dropdown to body**
 
-Render the dropdown in a portal attached to `<body>`, escaping container constraints entirely:
-
-```svelte
-{#if open}
-  {#snippet dropdown()}
-    <div class="fixed ..." style="position: absolute; top: {top}px; left: {left}px;">
-      <!-- dropdown content -->
-    </div>
-  {/snippet}
-  <Portal target="body">{dropdown()}</Portal>
-{/if}
-```
-
-Most robust solution, commonly used in design systems.
-
-### Recommendation
-
-**Combine Option A + B** for quick fix:
-1. Remove `overflow-hidden` from `ProviderConfigCard.svelte:94`
-2. Increase z-index to `z-50` in `Select.svelte:233`
-
-Consider Option C (portal) for a more robust long-term solution.
+Render the dropdown in a portal attached to `<body>`, escaping container constraints entirely. This is more robust but also more complex.
 
 ---
 
@@ -1690,3 +1664,135 @@ export function connectToCampaign(campaignId: string) {
 | `backend/app/routers/events_router.py` | NEW: SSE endpoints for topics |
 | `backend/app/jobs/worker.py` | Publish events on progress |
 | `frontend-svelt/src/lib/stores/events.ts` | NEW: Event stream store |
+
+---
+
+## Issue #21: Inconsistent Sort Icons in Table Headers
+
+**Discovered:** 2026-03-18
+**Severity:** Low (UI Polish)
+**Status:** Open
+
+### Description
+
+The campaigns list table (and any table using the `Table` component) uses inconsistent icons for sort indicators:
+- **Sorted ascending**: Single chevron up (↑)
+- **Sorted descending**: Single chevron down (↓)
+- **Not sorted**: Double arrows icon (↕) that looks different
+
+### Current Implementation
+
+`Table.svelte:157-172` uses three different SVG icons:
+
+```svelte
+{#if sortConfig && sortConfig.key === column.key}
+    {#if sortConfig.direction === 'asc'}
+        <!-- Single chevron up -->
+        <path d="M5 15l7-7 7 7" />
+    {:else}
+        <!-- Single chevron down -->
+        <path d="M19 9l-7 7-7-7" />
+    {/if}
+{:else}
+    <!-- Double arrows (different style) -->
+    <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+{/if}
+```
+
+### Visual Inconsistency
+
+```
+Current:
+  Unsorted: ↕ (double arrows, thick)
+  Ascending: ˄ (chevron, thin)
+  Descending: ˅ (chevron, thin)
+
+Expected (consistent chevrons):
+  Unsorted: ⇅ (chevrons up-down)
+  Ascending: ˄ (chevron up)
+  Descending: ˅ (chevron down)
+```
+
+### Proposed Fix
+
+Replace the unsorted icon with a chevrons-up-down icon to match the sorted state icons:
+
+```svelte
+{:else}
+    <!-- Chevrons up-down to match sorted icon style -->
+    <svg class="w-4 h-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5 5 5M7 13l5 5 5-5" />
+    </svg>
+{/if}
+```
+
+Or use Heroicons for consistency (if already using icon library):
+
+```svelte
+{:else}
+    <svg class="w-4 h-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7l4-4 4 4m0 10l-4 4-4-4" />
+    </svg>
+{/if}
+```
+
+### Files Affected
+
+| File | Change |
+|------|--------|
+| `frontend-svelt/src/lib/components/ui/Table.svelte` | Update unsorted sort icon to match chevron style |
+
+---
+
+## Issue #22: API Keys Exposed in Backend Logs
+
+**Discovered:** 2026-03-18
+**Severity:** High (Security)
+**Status:** ✅ Fixed (2026-03-18)
+
+### Description
+
+Provider API keys were being logged in plaintext in backend logs, creating a security risk. API keys could appear in:
+- Log statements during provider configuration
+- Debug output when creating OCR clients
+- Error messages that include configuration details
+
+### Risk
+
+- API keys in logs could be accessed by unauthorized users
+- Logs may be shipped to external monitoring services
+- Compliance violations (SOC2, PCI-DSS, etc.)
+
+### Fix Applied
+
+Added a `redact_api_keys` processor to structlog configuration that:
+
+1. **Detects sensitive field names** using regex patterns:
+   - `api_key`, `apiKey`, `api-key`
+   - `secret`, `password`, `token`, `credential`
+
+2. **Detects API key value patterns**:
+   - OpenAI format: `sk-{20+ chars}`
+   - Generic long alphanumeric strings (32+ chars)
+
+3. **Obfuscates values** showing only first/last 4 characters:
+   - `sk-abc123...` → `sk-ab***REDACTED***wxyz`
+   - `32charkey...` → `32ch***REDACTED***1234`
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `backend/app/logger_config/app_logger.py` | Added `redact_api_keys` processor and `SENSITIVE_FIELD_PATTERNS` |
+
+### Example Output
+
+**Before:**
+```json
+{"api_key": "sk-proj-abc123defghijklmnopqrstuvwxyz", "provider": "openai"}
+```
+
+**After:**
+```json
+{"api_key": "sk-p***REDACTED***wxyz", "provider": "openai"}
+```
