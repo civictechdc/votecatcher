@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import sys
 from collections.abc import Callable
 from logging import Logger, StreamHandler
@@ -14,8 +15,52 @@ from structlog.processors import (
 	JSONRenderer,
 )
 from structlog.stdlib import ProcessorFormatter
-from structlog.types import Processor
 from structlog.typing import Processor
+
+SENSITIVE_FIELD_PATTERNS = [
+	re.compile(r"api[_-]?key", re.IGNORECASE),
+	re.compile(r"apikey", re.IGNORECASE),
+	re.compile(r"secret", re.IGNORECASE),
+	re.compile(r"password", re.IGNORECASE),
+	re.compile(r"token", re.IGNORECASE),
+	re.compile(r"credential", re.IGNORECASE),
+]
+
+API_KEY_VALUE_PATTERN = re.compile(r"^(sk-[a-zA-Z0-9_-]{10,}|[a-zA-Z0-9_-]{20,})$")
+
+
+def redact_sensitive(value: Any, show_chars: int = 4) -> Any:
+	if not isinstance(value, str) or len(value) < show_chars * 2:
+		return value
+	if API_KEY_VALUE_PATTERN.match(value):
+		return f"{value[:show_chars]}***REDACTED***{value[-show_chars:]}"
+	return value
+
+
+def redact_api_keys(
+	logger: logging.Logger, method_name: str, event_dict: dict[str, Any]
+) -> dict[str, Any]:
+	for key, value in list(event_dict.items()):
+		key_lower = key.lower().replace("-", "_")
+		for pattern in SENSITIVE_FIELD_PATTERNS:
+			if pattern.search(key_lower):
+				if isinstance(value, str):
+					event_dict[key] = redact_sensitive(value)
+				elif isinstance(value, dict):
+					event_dict[key] = {
+						k: redact_sensitive(v) if isinstance(v, str) else v
+						for k, v in value.items()
+					}
+				break
+		if isinstance(value, dict):
+			for inner_key, inner_value in list(value.items()):
+				inner_key_lower = inner_key.lower().replace("-", "_")
+				for pattern in SENSITIVE_FIELD_PATTERNS:
+					if pattern.search(inner_key_lower):
+						if isinstance(inner_value, str):
+							value[inner_key] = redact_sensitive(inner_value)
+						break
+	return event_dict
 
 
 def add_correlation(
@@ -31,6 +76,7 @@ def configure_logger(debug_enabled: bool = False) -> None:
 	# https://gist.githubusercontent.com/Kludex/8e6d30de151f1d756c3c7364811c9429/raw/a6e8d5c0965b65623095781fb78d7499be357840/main.py
 	shared_processors: list[Processor] = [
 		structlog.contextvars.merge_contextvars,
+		redact_api_keys,
 		structlog.stdlib.add_log_level,
 		structlog.processors.StackInfoRenderer(),
 		structlog.processors.CallsiteParameterAdder(
@@ -89,6 +135,7 @@ def configure_dev_logging() -> None:
 		wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG),
 		processors=[
 			structlog.contextvars.merge_contextvars,
+			redact_api_keys,
 			structlog.processors.add_log_level,
 			structlog.processors.StackInfoRenderer(),
 			structlog.dev.set_exc_info,
@@ -103,6 +150,7 @@ def configure_prod_logging() -> None:
 		wrapper_class=structlog.make_filtering_bound_logger(logging.WARNING),
 		processors=[
 			structlog.contextvars.merge_contextvars,
+			redact_api_keys,
 			structlog.processors.add_log_level,
 			structlog.processors.StackInfoRenderer(),
 			structlog.dev.set_exc_info,
@@ -128,6 +176,7 @@ class AppLogger:
 
 		shared_processors: list[Callable[..., dict[str, Any]] | Processor] = [
 			add_correlation,
+			redact_api_keys,
 			structlog.stdlib.filter_by_level,
 			structlog.stdlib.add_log_level,
 			structlog.stdlib.add_logger_name,
@@ -205,7 +254,7 @@ class AppLogger:
 			logging.getLogger(_log).handlers.clear()
 			logging.getLogger(_log).propagate = True
 
-			# Uvicorn logs are re-emitted with more context. We effectively silence them here
+			# Uvicorn logs re-emitted with more context; silence them here
 			logging.getLogger("uvicorn.access").handlers.clear()
 			logging.getLogger("uvicorn.access").propagate = False
 
