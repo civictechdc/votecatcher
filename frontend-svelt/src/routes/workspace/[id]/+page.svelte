@@ -53,12 +53,15 @@
 		}
 	}
 
+	const ACTIVE_JOB_STATES = ['NOT_STARTED', 'OCR_PENDING', 'OCR_STARTED', 'MATCHING_PENDING', 'MATCHING'];
+	const POLL_INTERVAL_MS = 30000;
+
 	onMount(() => {
 		campaigns.fetchAll();
 		jobs.fetchAll();
 		fetchMetrics();
 
-		pollInterval = setInterval(fetchMetrics, 10000);
+		pollInterval = setInterval(fetchMetrics, POLL_INTERVAL_MS);
 	});
 
 	onDestroy(() => {

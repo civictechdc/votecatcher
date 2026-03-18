@@ -24,7 +24,7 @@ def session():
 
 
 class TestListProviders:
-	def test_list_providers_returns_all_supported(self, client):
+	def test_list_providers_returns_all_supported(self, client, session):
 		response = client.get("/api/settings/providers")
 		assert response.status_code == 200
 		data = response.json()
@@ -34,7 +34,7 @@ class TestListProviders:
 		assert "gemini" in provider_names
 		assert "mistral" in provider_names
 
-	def test_list_providers_shows_unconfigured_state(self, client):
+	def test_list_providers_shows_unconfigured_state(self, client, session):
 		response = client.get("/api/settings/providers")
 		data = response.json()
 		for provider in data:

@@ -1201,11 +1201,81 @@ ALTER TABLE ocr_results ADD CONSTRAINT ocr_results_crop_id_ocr_index_unique
 
 ---
 
+## Issue #19: Aggressive Frontend Polling Storm
+
+**Discovered:** 2026-03-18
+**Severity:** Medium (Performance)
+**Status:** ✅ Fixed (2026-03-18)
+
+### Description
+
+The frontend aggressively polls `/jobs` endpoint during job matching, creating excessive HTTP requests and overwhelming the backend logs. Different ports in logs are normal ephemeral TCP behavior, but the sheer request volume (hundreds in 48 minutes) is problematic.
+
+### Symptoms
+- Job matching phase takes ~48 minutes (15:36:58 to 16:24:48)
+- Hundreds of `GET /jobs` requests in backend logs
+- Requests appear to happen continuously with no 10-second gap
+- Multiple ports (63148, 63427, etc.) are normal HTTP behavior but excessive
+
+### Root Cause Analysis
+
+Two frontend pages poll `/jobs`:
+
+1. **Dashboard page** (`/workspace/[id]/+page.svelte`):
+   - Line 23, 61: Polls `fetchMetrics` every 10s
+   - Line 58: Calls `jobs.fetchAll()` once on mount
+
+2. **Jobs page** (`/workspace/[id]/jobs/+page.svelte`):
+   - Line 160: Polls `jobs.fetchAll()` every 10s
+
+When both pages are open simultaneously, they poll `jobs.fetchAll()` every 10 seconds, causing double polling for Additionally, the dashboard also polls metrics separately.
+
+**Expected requests at 10-second intervals:**
+- Single page: ~6 requests/minute
+- Both pages open: ~12 requests/minute (for jobs.fetchAll)
+
+**Actual behavior:**
+Based on log volume, requests appear more be happen much faster than 10 seconds, suggesting possible interval leak or multiple polling mechanisms.
+
+### Fix Applied (2026-03-18)
+
+**Part 1: Increased polling interval from 10s to 30s**
+
+Both pages now poll at 30-second intervals instead of 10 seconds.
+
+**Part 2: Stop polling when no active jobs**
+
+Jobs page now only polls when there are active jobs in progress:
+
+```svelte
+const ACTIVE_JOB_STATES = ['NOT_STARTED', 'OCR_PENDING', 'OCR_STARTED', 'MATCHING_PENDING', 'MATCHING'];
+const POLL_INTERVAL_MS = 30000;
+
+pollInterval = setInterval(() => {
+    const hasActiveJobs = $jobs.jobs.some(j => ACTIVE_JOB_STATES.includes(j.status));
+    if (hasActiveJobs) {
+        jobs.fetchAll();
+    }
+}, POLL_INTERVAL_MS);
+```
+
+**Result:** 3x reduction in request frequency, and no polling when jobs are complete.
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `frontend-svelt/src/routes/workspace/[id]/+page.svelte` | Increase poll interval to 30s |
+| `frontend-svelt/src/routes/workspace/[id]/jobs/+page.svelte` | Increase poll interval, 30s, stop when no active jobs |
+| `frontend-svelt/src/stores/jobs.ts` | Add SSE for job list updates (optional) |
+
+---
+
 ## Issue #16: DEVELOPER.md Out of Sync with PROGRESS.md
 
 **Discovered:** 2026-03-18
 **Severity:** Low (Documentation)
-**Status:** Open
+**Status:** ✅ Fixed (2026-03-18)
 
 ### Description
 
@@ -1231,15 +1301,15 @@ ALTER TABLE ocr_results ADD CONSTRAINT ocr_results_crop_id_ocr_index_unique
 ...
 ```
 
-### Fix
+### Fix Applied
 
-Update `openspec/DEVELOPER.md` to reflect actual completion status from PROGRESS.md.
+Updated `openspec/DEVELOPER.md` to show Phases 7-12 as complete and current status as "Post-MVP Polish".
 
-### Files Affected
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `openspec/DEVELOPER.md` | Update Phase 8-12 status to ✅ Complete |
+| `openspec/DEVELOPER.md` | Updated Phase 8-12 status to ✅ Complete, updated current status |
 
 ---
 
@@ -1247,9 +1317,7 @@ Update `openspec/DEVELOPER.md` to reflect actual completion status from PROGRESS
 
 **Discovered:** 2026-03-18
 **Severity:** Medium (Process)
-**Status:** Open
-
-### Description
+**Status:** ✅ Fixed (2026-03-18)
 
 Multiple files contain uncommitted fixes for Issues #1, #9, #12, #14, #15. These changes implement critical functionality but are not in version control.
 
@@ -1267,31 +1335,19 @@ Multiple files contain uncommitted fixes for Issues #1, #9, #12, #14, #15. These
 | `frontend-svelt/src/routes/workspace/[id]/+page.svelte` | +46 | #12 |
 | `frontend-svelt/src/routes/workspace/[id]/jobs/+page.svelte` | +? | #9 |
 
-### Fix
+### Fix Applied
 
-Commit these changes with appropriate commit message referencing the fixed issues.
+All uncommitted changes were committed in 9 logical commits:
 
-### Recommended Commit
-
-```bash
-git add backend/app/data/database/model/ocr_result.py
-git add backend/app/data/database/model/jobs.py
-git add backend/app/jobs/worker.py
-git add backend/app/routers/job_router.py
-git add backend/app/services/metrics.py
-git add backend/tests/integration/api/test_campaign_metrics.py
-git add backend/tests/integration/api/test_jobs.py
-git add frontend-svelt/src/routes/workspace/[id]/+page.svelte
-git add frontend-svelt/src/routes/workspace/[id]/jobs/+page.svelte
-
-git commit -m "fix: critical bug fixes for Phase 12
-
-- Issue #1: Add orphaned job detection and expanded cancel states
-- Issue #9: Disable Create Job button when no uploads
-- Issue #12: Show View Results only when match results exist
-- Issue #14: Add ocr_index to support multi-entry OCR results
-- Issue #15: Deduplicate metrics by ocr_result_id"
-```
+1. `564a872` - fix(ocr): add ocr_index to support multi-entry OCR results (Issue #14)
+2. `4b80322` - fix(jobs): orphan detection, expanded cancel states, OCR caching (Issues #1, #14)
+3. `cc877e1` - fix(metrics): deduplicate confidence counts by ocr_result_id (Issue #15)
+4. `5faf57e` - fix(frontend): dashboard metrics and job creation UX (Issues #9, #12)
+5. `8b2ca07` - feat(frontend): campaigns list enhancements (Phase 8)
+6. `f1980cc` - feat(frontend): job details and settings enhancements (Phase 10-12)
+7. `f613020` - feat(frontend): auth and layout polish (Phase 7-12)
+8. `0a4c2e6` - feat(backend): config reset endpoint and OCR improvements (Phase 12)
+9. `9c403cb` - docs: update documentation post-MVP (Phase 7-12)
 
 ---
 
@@ -1299,7 +1355,7 @@ git commit -m "fix: critical bug fixes for Phase 12
 
 **Discovered:** 2026-03-18
 **Severity:** Low (Test Quality)
-**Status:** Open
+**Status:** ✅ Fixed (2026-03-18)
 
 ### Description
 
@@ -1321,23 +1377,316 @@ Likely one of:
 1. **Database state not cleaned between tests** - Previous test configures providers
 2. **Shared fixture state** - Session or client state bleeding between tests
 
-### Fix
+### Fix Applied
 
-1. Add explicit cleanup at test start:
+Added `session` fixture to tests that were missing it, ensuring database cleanup runs before each test:
+
 ```python
-def test_list_providers_shows_unconfigured_state(client, session):
-    # Ensure clean state
-    session.query(LlmProviderConfig).delete()
-    session.commit()
+class TestListProviders:
+    def test_list_providers_returns_all_supported(self, client, session):  # Added session
+        ...
 
-    response = client.get("/api/config/providers")
-    ...
+    def test_list_providers_shows_unconfigured_state(self, client, session):  # Added session
+        ...
 ```
 
-2. Or use `autouse=True` fixture for cleanup before each test.
+The `session` fixture already performs cleanup:
+```python
+@pytest.fixture
+def session():
+    init_db()
+    with Session(engine) as session:
+        session.query(LlmProviderConfig).delete()
+        session.commit()
+        yield session
+```
 
 ### Files Affected
 
 | File | Change |
 |------|--------|
 | `backend/tests/integration/api/test_providers.py` | Add explicit cleanup at test start |
+
+---
+
+## Issue #20: Typed Event Bus for Real-Time Updates
+
+**Discovered:** 2026-03-18
+**Severity:** Medium (Architecture)
+**Status:** Open (Proposal)
+
+### Description
+
+Current SSE implementation is per-job only. For campaign-scoped real-time updates (all jobs in a campaign), we'd need a new endpoint. This proposes a **typed event bus** architecture that supports any future event types with topic-based subscriptions.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        PUBLISHERS                               │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐ │
+│  │ Worker   │  │ OCR      │  │ Upload   │  │ Matching Service │ │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────────┬─────────┘ │
+│       │             │             │                  │          │
+└───────┼─────────────┼─────────────┼──────────────────┼──────────┘
+        │             │             │                  │
+        ▼             ▼             ▼                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     EVENT BUS (Core)                            │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  Topic Router                                            │    │
+│  │  • campaign:{id}  → all events for campaign              │    │
+│  │  • job:{id}       → all events for job                   │    │
+│  │  • global         → system-wide events                   │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  Event Registry (typed events)                          │    │
+│  │  • JobStatusChanged, JobProgress, JobError              │    │
+│  │  • OcrProgress, OcrComplete                             │    │
+│  │  • MatchFound, MatchingComplete                         │    │
+│  │  • UploadProgress, UploadComplete                       │    │
+│  │  • MetricsUpdated                                        │    │
+│  └─────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     SUBSCRIBERS                                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ SSE Endpoint │  │ WebSocket    │  │ Future: Webhooks,    │  │
+│  │ /events/stream│  │ (optional)   │  │ Message Queue, etc.  │  │
+│  └──────────────┘  └──────────────┘  └──────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Implementation
+
+**1. Event Types (Registry)**
+
+```python
+# backend/app/events/event_types.py
+from enum import Enum
+from pydantic import BaseModel
+from typing import Literal
+from datetime import datetime
+
+class EventType(str, Enum):
+    # Job lifecycle
+    JOB_STATUS_CHANGED = "job:status_changed"
+    JOB_PROGRESS = "job:progress"
+    JOB_ERROR = "job:error"
+
+    # OCR
+    OCR_PROGRESS = "ocr:progress"
+    OCR_COMPLETE = "ocr:complete"
+
+    # Matching
+    MATCH_FOUND = "match:found"
+    MATCHING_COMPLETE = "matching:complete"
+
+    # Upload
+    UPLOAD_PROGRESS = "upload:progress"
+    UPLOAD_COMPLETE = "upload:complete"
+
+    # Metrics
+    METRICS_UPDATED = "metrics:updated"
+
+
+class BaseEvent(BaseModel):
+    event_type: EventType
+    timestamp: datetime
+    campaign_id: str | None = None
+    job_id: int | None = None
+
+
+class JobStatusEvent(BaseEvent):
+    event_type: Literal[EventType.JOB_STATUS_CHANGED]
+    status: str
+    previous_status: str | None
+
+
+class JobProgressEvent(BaseEvent):
+    event_type: Literal[EventType.JOB_PROGRESS]
+    processed: int
+    total: int
+    percentage: float
+
+
+class MatchFoundEvent(BaseEvent):
+    event_type: Literal[EventType.MATCH_FOUND]
+    ocr_result_id: int
+    voter_name: str
+    confidence: str
+```
+
+**2. Event Bus (Core)**
+
+```python
+# backend/app/events/event_bus.py
+import asyncio
+from collections import defaultdict
+from typing import AsyncGenerator
+from .event_types import BaseEvent
+
+class EventBus:
+    """Typed publish-subscribe event bus with topic routing."""
+
+    def __init__(self):
+        self._subscribers: dict[str, set[asyncio.Queue]] = defaultdict(set)
+
+    def _get_topics(self, event: BaseEvent) -> list[str]:
+        """Derive topics from event."""
+        topics = ["global"]
+        if event.campaign_id:
+            topics.append(f"campaign:{event.campaign_id}")
+        if event.job_id:
+            topics.append(f"job:{event.job_id}")
+        return topics
+
+    async def publish(self, event: BaseEvent) -> None:
+        """Publish event to all relevant topics."""
+        topics = self._get_topics(event)
+        message = event.model_dump_json()
+
+        for topic in topics:
+            for queue in list(self._subscribers.get(topic, set())):
+                try:
+                    await queue.put(message)
+                except asyncio.QueueFull:
+                    pass
+
+    def subscribe(self, topic: str) -> asyncio.Queue:
+        """Subscribe to a specific topic."""
+        queue: asyncio.Queue = asyncio.Queue(maxsize=100)
+        self._subscribers[topic].add(queue)
+        return queue
+
+    def unsubscribe(self, topic: str, queue: asyncio.Queue) -> None:
+        """Unsubscribe from topic."""
+        self._subscribers[topic].discard(queue)
+
+
+event_bus = EventBus()
+```
+
+**3. SSE Endpoint (Subscriber)**
+
+```python
+# backend/app/routers/events_router.py
+from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
+
+router = APIRouter(prefix="/events", tags=["events"])
+
+@router.get("/campaigns/{campaign_id}/stream")
+async def campaign_event_stream(campaign_id: str) -> StreamingResponse:
+    """SSE stream for all events in a campaign."""
+
+    async def generate():
+        queue = event_bus.subscribe(f"campaign:{campaign_id}")
+        try:
+            while True:
+                message = await asyncio.wait_for(queue.get(), timeout=30.0)
+                yield f"data: {message}\n\n"
+        except asyncio.CancelledError:
+            pass
+        finally:
+            event_bus.unsubscribe(f"campaign:{campaign_id}", queue)
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"}
+    )
+```
+
+**4. Publishing from Worker**
+
+```python
+# backend/app/jobs/worker.py
+from app.events.event_bus import event_bus
+from app.events.event_types import JobProgressEvent, JobStatusEvent
+
+class JobWorker:
+    async def _run_matching_phase(self, ...):
+        for i, ocr_result in enumerate(ocr_results):
+            # ... do matching ...
+
+            await event_bus.publish(JobProgressEvent(
+                event_type=EventType.JOB_PROGRESS,
+                campaign_id=str(job.campaign_id),
+                job_id=job.id,
+                processed=i + 1,
+                total=len(ocr_results),
+                percentage=((i + 1) / len(ocr_results)) * 100
+            ))
+```
+
+**5. Frontend Integration**
+
+```typescript
+// frontend-svelt/src/lib/stores/events.ts
+export function connectToCampaign(campaignId: string) {
+  const baseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
+  const eventSource = new EventSource(
+    `${baseUrl}/api/events/campaigns/${campaignId}/stream`
+  );
+
+  eventSource.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    switch (data.event_type) {
+      case 'job:status_changed':
+        jobs.updateJobInList(data.job_id, { status: data.status });
+        break;
+      case 'job:progress':
+        jobs.updateJobProgress(data.job_id, data.percentage);
+        break;
+      case 'metrics:updated':
+        // Update dashboard metrics
+        break;
+    }
+  };
+
+  return () => eventSource.close();
+}
+```
+
+### Effort Estimate
+
+| Component | Effort |
+|-----------|--------|
+| Event types + registry | 1 hour |
+| Event bus core | 1 hour |
+| SSE endpoint refactor | 1 hour |
+| Worker integration | 1 hour |
+| Frontend store | 1 hour |
+| Testing | 1 hour |
+| **Total** | **~6 hours** |
+
+### Benefits
+
+1. **Extensible**: Add new event types without touching SSE code
+2. **Decoupled**: Publishers don't know about subscribers
+3. **Typed**: Pydantic models ensure schema consistency
+4. **Future-proof**: Can add WebSocket, webhooks, message queue subscribers later
+5. **Topic-based**: Subscribe to campaign, job, or global scope
+
+### Migration Path
+
+1. **Phase 1**: Implement event bus alongside existing SSE
+2. **Phase 2**: Refactor worker to publish events
+3. **Phase 3**: Add campaign-scoped SSE endpoint
+4. **Phase 4**: Frontend adopts new event stream, removes polling
+5. **Phase 5**: Deprecate old per-job SSE endpoint
+
+### Files Affected
+
+| File | Change |
+|------|--------|
+| `backend/app/events/event_types.py` | NEW: Typed event definitions |
+| `backend/app/events/event_bus.py` | NEW: Core pub-sub implementation |
+| `backend/app/routers/events_router.py` | NEW: SSE endpoints for topics |
+| `backend/app/jobs/worker.py` | Publish events on progress |
+| `frontend-svelt/src/lib/stores/events.ts` | NEW: Event stream store |

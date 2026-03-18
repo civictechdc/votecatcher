@@ -152,12 +152,20 @@
 		}
 	}
 
+	const ACTIVE_JOB_STATES = ['NOT_STARTED', 'OCR_PENDING', 'OCR_STARTED', 'MATCHING_PENDING', 'MATCHING'];
+	const POLL_INTERVAL_MS = 30000;
+
 	onMount(() => {
 		jobs.fetchAll();
 		campaigns.fetchAll();
 		fetchProviders();
 		checkScans();
-		pollInterval = setInterval(() => jobs.fetchAll(), 10000);
+		pollInterval = setInterval(() => {
+			const hasActiveJobs = $jobs.jobs.some(j => ACTIVE_JOB_STATES.includes(j.status));
+			if (hasActiveJobs) {
+				jobs.fetchAll();
+			}
+		}, POLL_INTERVAL_MS);
 	});
 
 	onDestroy(() => {
