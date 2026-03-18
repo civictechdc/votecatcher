@@ -2,11 +2,19 @@
 	import { onMount } from 'svelte';
 	import { settings } from '$lib/stores/settings';
 	import { Button, LoadingSpinner } from '$lib/components/ui';
-	import { Key, Flag, Cpu, CheckCircle } from 'lucide-svelte';
+	import { Key, Flag, Cpu, CheckCircle, Trash2, AlertTriangle } from 'lucide-svelte';
 	import ProviderConfigCard from '$lib/components/ProviderConfigCard.svelte';
 	import { PUBLIC_API_URL } from '$env/static/public';
+	import { getAppMode } from '$lib/utils/mode';
 
 	const BASE_URL = (PUBLIC_API_URL ?? 'http://localhost:8080') + '/api';
+	const showFeatureFlags = getAppMode() !== 'production';
+	const showResetData = getAppMode() !== 'production';
+
+	let resetLoading = $state(false);
+	let resetError = $state<string | null>(null);
+	let resetSuccess = $state(false);
+	let showResetConfirm = $state(false);
 
 	interface ProviderConfig {
 		provider: string;
@@ -90,6 +98,28 @@
 	function getProviderConfig(providerKey: string): ProviderConfig | undefined {
 		return providers.find(p => p.provider === providerKey);
 	}
+
+	async function handleResetData() {
+		resetLoading = true;
+		resetError = null;
+		resetSuccess = false;
+		try {
+			const response = await fetch(`${BASE_URL}/config/reset-data`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' }
+			});
+			if (!response.ok) {
+				const data = await response.json().catch(() => ({}));
+				throw new Error(data.detail || `Failed to reset data: ${response.status}`);
+			}
+			resetSuccess = true;
+			showResetConfirm = false;
+		} catch (e) {
+			resetError = e instanceof Error ? e.message : 'Failed to reset data';
+		} finally {
+			resetLoading = false;
+		}
+	}
 </script>
 
 <div class="space-y-6">
@@ -142,7 +172,8 @@
 				</div>
 			</div>
 
-			<!-- Feature Flags -->
+			<!-- Feature Flags (only shown in non-production modes) -->
+			{#if showFeatureFlags}
 			<div class="rounded-lg border border-slate-200 bg-white p-6">
 				<div class="flex items-center gap-2 mb-4">
 					<Flag class="h-5 w-5 text-slate-600" />
@@ -238,6 +269,75 @@
 					</div>
 				</div>
 			</div>
+			{/if}
+
+			<!-- Reset Data (only shown in non-production modes) -->
+			{#if showResetData}
+			<div class="rounded-lg border border-red-200 bg-white p-6">
+				<div class="flex items-center gap-2 mb-4">
+					<Trash2 class="h-5 w-5 text-red-600" />
+					<h2 class="text-lg font-medium text-slate-900">Reset Data</h2>
+				</div>
+				<p class="text-sm text-slate-600 mb-4">
+					Permanently delete all application data including campaigns, jobs, results, and uploads. This action cannot be undone.
+				</p>
+
+				{#if resetSuccess}
+					<div class="rounded-lg bg-green-50 p-3 mb-4">
+						<p class="text-sm text-green-800">All data has been reset successfully.</p>
+					</div>
+				{:else if resetError}
+					<div class="rounded-lg bg-red-50 p-3 mb-4">
+						<p class="text-sm text-red-800">{resetError}</p>
+					</div>
+				{/if}
+
+				{#if showResetConfirm}
+					<div class="rounded-lg bg-red-50 border border-red-200 p-4 mb-4">
+						<div class="flex items-start gap-3">
+							<AlertTriangle class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+							<div class="flex-1">
+								<p class="text-sm font-medium text-red-800">Are you absolutely sure?</p>
+								<p class="text-sm text-red-700 mt-1">
+									This will permanently delete ALL data including campaigns, jobs, results, and uploads. This action cannot be undone.
+								</p>
+								<div class="flex gap-2 mt-3">
+									<Button
+										variant="danger"
+										size="sm"
+										disabled={resetLoading}
+										onclick={handleResetData}
+									>
+										{#if resetLoading}
+											<LoadingSpinner size="sm" />
+										{:else}
+											Yes, Reset All Data
+										{/if}
+									</Button>
+									<Button
+										variant="secondary"
+										size="sm"
+										disabled={resetLoading}
+										onclick={() => showResetConfirm = false}
+									>
+										Cancel
+									</Button>
+								</div>
+							</div>
+						</div>
+					</div>
+				{:else}
+					<Button
+						variant="danger"
+						size="sm"
+						onclick={() => { resetSuccess = false; resetError = null; showResetConfirm = true; }}
+					>
+						<Trash2 class="h-4 w-4 mr-1" />
+						Reset All Data
+					</Button>
+				{/if}
+			</div>
+			{/if}
 
 			<!-- Debug Info (only shown in debug mode) -->
 			{#if s.features.debugMode}

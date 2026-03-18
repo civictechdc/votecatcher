@@ -4,9 +4,6 @@
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Button, LoadingSpinner, ErrorDisplay } from '$lib/components/ui';
 	import { onMount, onDestroy } from 'svelte';
-	import type { JobResponse } from '$lib/api/generated';
-
-	type JobWithProgress = JobResponse & { progress?: number };
 
 	let campaignId = $derived($page.params.id);
 	let jobId = $derived($page.params.job_id);
@@ -33,11 +30,11 @@
 		const labels: Record<string, string> = {
 			NOT_STARTED: 'Not Started',
 			OCR_PENDING: 'OCR Pending',
-			OCR_STARTED: 'OCR Started',
+			OCR_STARTED: 'OCR In Progress',
 			OCR_COMPLETED: 'OCR Completed',
 			MATCHING_PENDING: 'Matching Pending',
-			MATCHING: 'Matching',
-			MATCHING_COMPLETED: 'Matching Completed',
+			MATCHING: 'Matching In Progress',
+			MATCHING_COMPLETED: 'Completed',
 			CANCELLED: 'Cancelled',
 			OCR_FAILED: 'OCR Failed',
 			OCR_TIMEOUT: 'OCR Timeout',
@@ -46,20 +43,75 @@
 		return labels[status] || status;
 	}
 
+	function getStatusPhase(status: string): 'pending' | 'ocr' | 'matching' | 'completed' | 'error' | 'cancelled' {
+		if (status === 'CANCELLED') return 'cancelled';
+		if (['OCR_FAILED', 'OCR_TIMEOUT', 'MATCHING_ERROR'].includes(status)) return 'error';
+		if (status === 'MATCHING_COMPLETED') return 'completed';
+		if (['MATCHING', 'MATCHING_PENDING'].includes(status)) return 'matching';
+		if (['OCR_STARTED', 'OCR_PENDING', 'OCR_COMPLETED'].includes(status)) return 'ocr';
+		return 'pending';
+	}
+
+	const statusSteps = [
+		{ key: 'pending', label: 'Pending' },
+		{ key: 'ocr', label: 'OCR Processing' },
+		{ key: 'matching', label: 'Matching' },
+		{ key: 'completed', label: 'Completed' }
+	] as const;
+
+	function getStepStyle(stepKey: string, jobStatus: string): { bgClass: string; textClass: string } {
+		const currentPhase = getStatusPhase(jobStatus);
+		const stepIndex = statusSteps.findIndex(s => s.key === currentPhase);
+		const stepOrder = statusSteps.findIndex(s => s.key === stepKey);
+		const isActive = stepKey === currentPhase;
+		const isCompleted = stepIndex > stepOrder || (currentPhase === 'completed' && stepKey !== 'completed');
+		const isError = currentPhase === 'error' && isActive;
+		const isCancelled = currentPhase === 'cancelled';
+
+		if (isError) return { bgClass: 'bg-red-500', textClass: 'text-red-600 font-medium' };
+		if (isCancelled) return { bgClass: 'bg-slate-300', textClass: 'text-slate-500' };
+		if (isCompleted) return { bgClass: 'bg-green-500', textClass: 'text-slate-500' };
+		if (isActive) return { bgClass: 'bg-blue-500', textClass: 'text-blue-600 font-medium' };
+		return { bgClass: 'bg-slate-200', textClass: 'text-slate-500' };
+	}
+
 	function isActiveStatus(status: string): boolean {
 		return ['NOT_STARTED', 'OCR_PENDING', 'OCR_STARTED', 'MATCHING_PENDING', 'MATCHING'].includes(
 			status
 		);
 	}
 
-	function getProgress(job: JobWithProgress): number {
-		return Math.round(job.progress || 0);
-	}
-
 	function formatDate(date: Date | string | null | undefined): string {
 		if (!date) return '-';
 		const d = typeof date === 'string' ? new Date(date) : date;
 		return d.toLocaleString();
+	}
+
+	function formatDuration(startedAt: Date | string | null, endedAt: Date | string | null): string {
+		if (!startedAt || !endedAt) return '-';
+		const start = typeof startedAt === 'string' ? new Date(startedAt) : startedAt;
+		const end = typeof endedAt === 'string' ? new Date(endedAt) : endedAt;
+		const diffMs = end.getTime() - start.getTime();
+		if (diffMs < 1000) return `${diffMs}ms`;
+		const diffSeconds = Math.floor(diffMs / 1000);
+		if (diffSeconds < 60) return `${diffSeconds}s`;
+		const diffMinutes = Math.floor(diffSeconds / 60);
+		if (diffMinutes < 60) {
+			const secs = diffSeconds % 60;
+			return secs > 0 ? `${diffMinutes}m ${secs}s` : `${diffMinutes}m`;
+		}
+		const diffHours = Math.floor(diffMinutes / 60);
+		if (diffHours < 24) {
+			const mins = diffMinutes % 60;
+			return mins > 0 ? `${diffHours}h ${mins}m` : `${diffHours}h`;
+		}
+		const diffDays = Math.floor(diffHours / 24);
+		const hrs = diffHours % 24;
+		return hrs > 1 ? `${diffDays}d ${hrs}h` : `${diffDays}d`;
+	}
+
+	function isTerminalStatus(status: string): boolean {
+		return ['MATCHING_COMPLETED', 'CANCELLED', 'OCR_FAILED', 'OCR_TIMEOUT', 'MATCHING_ERROR'].includes(status);
 	}
 
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
@@ -100,40 +152,30 @@
 						</p>
 					</div>
 
-					<div class="flex items-center gap-2">
-						<div
-							class="h-2 w-2 rounded-full {$jobs.sse.connected ? 'bg-green-500' : 'bg-red-500'}"
-						></div>
-						<span class="text-sm text-slate-600">
-							{$jobs.sse.connected ? 'Connected' : 'Disconnected'}
-						</span>
+					<div class="space-y-2">
+						<p class="text-sm font-medium text-slate-700">Pipeline</p>
+						<div class="flex items-center gap-1">
+							{#each statusSteps as step}
+								{@const style = getStepStyle(step.key, $jobs.currentJob.status)}
+								<div class="flex-1">
+									<div class="h-2 rounded-full transition-colors {style.bgClass}"></div>
+									<p class="mt-1 text-xs text-center {style.textClass}">
+										{step.label}
+									</p>
+								</div>
+							{/each}
+						</div>
 					</div>
 
 					{#if isActiveStatus($jobs.currentJob.status)}
-						<div class="space-y-2">
-							<div class="flex justify-between text-sm">
-								<span class="font-medium text-slate-700">Progress</span>
-								<span class="font-medium text-slate-900">
-									{getProgress($jobs.currentJob as JobWithProgress)}%
-								</span>
-							</div>
+						<div class="flex items-center gap-2">
 							<div
-								class="h-3 w-full rounded-full bg-slate-200"
-								role="progressbar"
-								aria-valuenow={getProgress($jobs.currentJob as JobWithProgress)}
-								aria-valuemin={0}
-								aria-valuemax={100}
-								aria-label="Job progress"
-							>
-								<div
-									class="h-full rounded-full bg-blue-600 transition-all"
-									style="width: {getProgress($jobs.currentJob as JobWithProgress)}%"
-								></div>
-							</div>
+								class="h-2 w-2 rounded-full {$jobs.sse.connected ? 'bg-green-500' : 'bg-red-500'}"
+							></div>
+							<span class="text-sm text-slate-600">
+								{$jobs.sse.connected ? 'Connected' : 'Connecting...'}
+							</span>
 						</div>
-					{/if}
-
-					{#if isActiveStatus($jobs.currentJob.status)}
 						<div class="pt-4">
 							<Button variant="danger" onclick={handleCancel}>Cancel Job</Button>
 						</div>
@@ -154,6 +196,30 @@
 							{formatDate($jobs.currentJob.createdAt)}
 						</dd>
 					</div>
+					{#if $jobs.currentJob.startedAt}
+						<div>
+							<dt class="text-sm font-medium text-slate-600">Started At</dt>
+							<dd class="mt-1 text-sm text-slate-900">
+								{formatDate($jobs.currentJob.startedAt)}
+							</dd>
+						</div>
+					{/if}
+					{#if isTerminalStatus($jobs.currentJob.status) && $jobs.currentJob.endedAt}
+						<div>
+							<dt class="text-sm font-medium text-slate-600">Ended At</dt>
+							<dd class="mt-1 text-sm text-slate-900">
+								{formatDate($jobs.currentJob.endedAt)}
+							</dd>
+						</div>
+					{/if}
+					{#if isTerminalStatus($jobs.currentJob.status) && $jobs.currentJob.startedAt && $jobs.currentJob.endedAt}
+						<div>
+							<dt class="text-sm font-medium text-slate-600">Duration</dt>
+							<dd class="mt-1 text-sm text-slate-900">
+								{formatDuration($jobs.currentJob.startedAt, $jobs.currentJob.endedAt)}
+							</dd>
+						</div>
+					{/if}
 					{#if $jobs.currentJob.providerName}
 						<div>
 							<dt class="text-sm font-medium text-slate-600">Provider</dt>
@@ -164,6 +230,25 @@
 						<div>
 							<dt class="text-sm font-medium text-slate-600">Model</dt>
 							<dd class="mt-1 text-sm text-slate-900">{$jobs.currentJob.providerModel}</dd>
+						</div>
+					{/if}
+					{#if $jobs.currentJob.status === 'MATCHING_COMPLETED' && ($jobs.currentJob.cachedOcrCount != null || $jobs.currentJob.newOcrCount != null)}
+						<div>
+							<dt class="text-sm font-medium text-slate-600">OCR Processing</dt>
+							<dd class="mt-1 text-sm">
+								{#if $jobs.currentJob.newOcrCount != null && $jobs.currentJob.newOcrCount > 0}
+									<span class="text-green-700">{$jobs.currentJob.newOcrCount} new</span>
+								{/if}
+								{#if $jobs.currentJob.cachedOcrCount != null && $jobs.currentJob.cachedOcrCount > 0}
+									{#if $jobs.currentJob.newOcrCount != null && $jobs.currentJob.newOcrCount > 0}
+										<span class="text-slate-400 mx-1">·</span>
+									{/if}
+									<span class="text-amber-700">{$jobs.currentJob.cachedOcrCount} cached</span>
+								{/if}
+								{#if $jobs.currentJob.forceReprocess}
+									<span class="ml-2 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">re-processed</span>
+								{/if}
+							</dd>
 						</div>
 					{/if}
 					{#if $jobs.currentJob.errorMessage}
