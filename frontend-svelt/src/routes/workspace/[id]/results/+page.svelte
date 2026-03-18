@@ -8,12 +8,12 @@
 	let campaignId = $derived($page.params.id);
 
 	const columns = [
+		{ key: 'confidence', label: 'Confidence', sortable: true },
 		{ key: 'extracted_name', label: 'Extracted Name', sortable: true },
 		{ key: 'matched_name', label: 'Matched Name', sortable: true },
 		{ key: 'extracted_address', label: 'Extracted Address', sortable: true },
 		{ key: 'matched_address', label: 'Matched Address', sortable: true },
-		{ key: 'score', label: 'Score', sortable: true },
-		{ key: 'confidence', label: 'Confidence', sortable: true }
+		{ key: 'score', label: 'Score', sortable: true }
 	];
 
 	onMount(() => {
@@ -26,14 +26,14 @@
 			const topPrediction = result.predictions[0];
 			return {
 				id: result.ocr_result_id,
+				confidence: topPrediction?.confidence
+					? `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(topPrediction.confidence)}">${topPrediction.confidence}</span>`
+					: '-',
 				extracted_name: result.extracted_name || '-',
 				extracted_address: result.extracted_address || '-',
 				matched_name: topPrediction?.voter_name || '-',
 				matched_address: topPrediction?.voter_address || '-',
-				score: topPrediction?.similarity_score ? `${(topPrediction.similarity_score * 100).toFixed(1)}%` : '-',
-				confidence: topPrediction?.confidence
-					? `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(topPrediction.confidence)}">${topPrediction.confidence}</span>`
-					: '-'
+				score: topPrediction?.similarity_score ? `${(topPrediction.similarity_score * 100).toFixed(1)}%` : '-'
 			};
 		});
 	}

@@ -91,7 +91,7 @@
 	}
 </script>
 
-<div class="rounded-lg border border-slate-200 bg-white overflow-hidden">
+<div class="rounded-lg border border-slate-200 bg-white">
 	<div class="p-4 flex items-center justify-between">
 		<div class="flex items-center gap-3">
 			{#if isConfigured}
