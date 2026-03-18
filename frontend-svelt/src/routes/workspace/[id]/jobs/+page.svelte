@@ -264,7 +264,7 @@
 				<h1 class="text-3xl font-bold text-slate-900">Jobs</h1>
 				<p class="mt-1 text-slate-600">{campaign?.unique_name || campaign?.title || 'Campaign'}</p>
 			</div>
-			<Button variant="primary" text="Create Job" onclick={openCreateModal} />
+			<Button variant="primary" text="Create Job" onclick={openCreateModal} disabled={hasScans === false} />
 		</div>
 
 		{#if hasScans === false}

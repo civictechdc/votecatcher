@@ -25,6 +25,12 @@
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
 	const campaignJobs = $derived($jobs.jobs.filter(job => String(job.campaignId) === String(campaignId)));
 	const highPercentage = $derived(metrics.totalSignatures > 0 ? (metrics.highConfidence / metrics.totalSignatures) * 100 : 0);
+	const hasCrops = $derived(metrics.totalSignatures > 0);
+	const hasMatchResults = $derived(metrics.processed > 0);
+
+	function formatMetric(value: number, hasData: boolean): string | number {
+		return hasData ? value : 'N/A';
+	}
 
 	async function fetchMetrics() {
 		try {
@@ -85,12 +91,14 @@
 		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4" data-testid="metrics">
 			<div class="rounded-lg border border-slate-200 bg-white p-6">
 				<h3 class="text-sm font-medium text-slate-600">Total Signatures</h3>
-				<p class="mt-2 text-3xl font-bold text-slate-900">{metrics.totalSignatures}</p>
+				<p class="mt-2 text-3xl font-bold text-slate-900">{formatMetric(metrics.totalSignatures, hasCrops)}</p>
 			</div>
 			<div class="rounded-lg border border-slate-200 bg-white p-6">
 				<h3 class="text-sm font-medium text-slate-600">Processed</h3>
-				<p class="mt-2 text-3xl font-bold text-slate-900">{metrics.processed}</p>
-				<p class="mt-1 text-sm text-slate-500">{metrics.progressPercentage.toFixed(1)}% complete</p>
+				<p class="mt-2 text-3xl font-bold text-slate-900">{formatMetric(metrics.processed, hasMatchResults)}</p>
+				{#if hasMatchResults}
+					<p class="mt-1 text-sm text-slate-500">{metrics.progressPercentage.toFixed(1)}% complete</p>
+				{/if}
 			</div>
 			<div class="rounded-lg border border-slate-200 bg-white p-6">
 				<h3 class="text-sm font-medium text-slate-600">Active Jobs</h3>
@@ -98,8 +106,10 @@
 			</div>
 			<div class="rounded-lg border border-slate-200 bg-white p-6">
 				<h3 class="text-sm font-medium text-slate-600">High Confidence</h3>
-				<p class="mt-2 text-3xl font-bold text-green-600">{metrics.highConfidence}</p>
-				<p class="mt-1 text-sm text-slate-500">{highPercentage}% of total</p>
+				<p class="mt-2 text-3xl font-bold {hasMatchResults ? 'text-green-600' : 'text-slate-400'}">{formatMetric(metrics.highConfidence, hasMatchResults)}</p>
+				{#if hasMatchResults}
+					<p class="mt-1 text-sm text-slate-500">{highPercentage}% of total</p>
+				{/if}
 			</div>
 		</div>
 
@@ -109,12 +119,22 @@
 				<p class="mt-1 text-sm text-slate-500">Match confidence breakdown</p>
 
 				<div class="mt-6">
-					<ConfidenceDonut
-						high={metrics.highConfidence}
-						medium={metrics.mediumConfidence}
-						low={metrics.lowConfidence}
-						total={metrics.totalSignatures}
-					/>
+					{#if hasMatchResults}
+						<ConfidenceDonut
+							high={metrics.highConfidence}
+							medium={metrics.mediumConfidence}
+							low={metrics.lowConfidence}
+							total={metrics.totalSignatures}
+						/>
+					{:else}
+						<div class="flex flex-col items-center justify-center py-8 text-slate-500">
+							<svg class="w-12 h-12 mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+							</svg>
+							<p class="text-sm">No match results yet</p>
+							<p class="text-xs mt-1">Run a job to see confidence distribution</p>
+						</div>
+					{/if}
 				</div>
 			</div>
 
@@ -149,7 +169,9 @@
 			<div class="mt-4 flex flex-wrap gap-3">
 				<Button variant="secondary" text="Upload Voter List" onclick={() => window.location.href = `/workspace/${campaignId}/upload`} />
 				<Button variant="secondary" text="Upload Petitions" onclick={() => window.location.href = `/workspace/${campaignId}/upload`} />
-				<Button variant="secondary" text="View Results" onclick={() => window.location.href = `/workspace/${campaignId}/results`} />
+				{#if hasMatchResults}
+					<Button variant="secondary" text="View Results" onclick={() => window.location.href = `/workspace/${campaignId}/results`} />
+				{/if}
 			</div>
 		</div>
 	</div>
