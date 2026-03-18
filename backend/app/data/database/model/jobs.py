@@ -34,6 +34,9 @@ class MatcherJob(SQLModel, table=True):
 	current_status: JobStatus = Field(default=JobStatus.NOT_STARTED)
 	provider_name: str | None = Field(default=None)
 	provider_model: str | None = Field(default=None)
+	force_reprocess: bool = Field(default=False)
+	cached_ocr_count: int | None = Field(default=None)
+	new_ocr_count: int | None = Field(default=None)
 	started_on: datetime | None = Field(default=None)
 	updated_on: datetime | None = Field(
 		default=None, sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)}

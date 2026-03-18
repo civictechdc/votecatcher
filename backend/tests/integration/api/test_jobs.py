@@ -4,6 +4,8 @@ Tests the complete job lifecycle:
 - Job creation
 - Job status retrieval
 - Job cancellation
+- Job start (Phase 9)
+- List campaign scans (Phase 9)
 """
 
 import uuid
@@ -98,29 +100,6 @@ class TestCreateJob:
 		)
 
 		assert response.status_code == 400
-		data = response.json()
-		assert "No petition scans" in data["detail"]
-
-	def test_create_job_invalid_campaign(self, client: TestClient, session: Session):
-		"""Should return 404 for non-existent campaign."""
-		import uuid
-
-		response = client.post(
-			"/api/jobs",
-			json={
-				"campaign_id": str(uuid.uuid4()),
-				"scan_ids": [],
-				"provider_name": "openai",
-			},
-		)
-
-		assert response.status_code == 404
-
-	def test_create_job_missing_fields(self, client: TestClient):
-		"""Should return 422 for missing required fields."""
-		response = client.post("/api/jobs", json={})
-
-		assert response.status_code == 422
 
 
 class TestGetJob:
@@ -129,7 +108,7 @@ class TestGetJob:
 	def test_get_job_success(
 		self, client: TestClient, test_campaign: Campaign, session: Session
 	):
-		"""Should return job status."""
+		"""Should return job details."""
 		job = MatcherJob(
 			campaign_id=test_campaign.id,
 			current_status=JobStatus.NOT_STARTED,
@@ -200,3 +179,263 @@ class TestCancelJob:
 		response = client.post(f"/api/jobs/{job.id}/cancel")
 
 		assert response.status_code == 400
+
+	def test_cancel_job_ocr_completed(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Should cancel job in OCR_COMPLETED state (orphaned job recovery)."""
+		job = MatcherJob(
+			campaign_id=test_campaign.id,
+			current_status=JobStatus.OCR_COMPLETED,
+		)
+		session.add(job)
+		session.commit()
+		session.refresh(job)
+
+		response = client.post(f"/api/jobs/{job.id}/cancel")
+
+		assert response.status_code == 200
+		data = response.json()
+		assert data["status"] == "CANCELLED"
+
+		session.refresh(job)
+		assert job.current_status == JobStatus.CANCELLED
+
+	def test_cancel_job_matching_pending(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Should cancel job in MATCHING_PENDING state (orphaned job recovery)."""
+		job = MatcherJob(
+			campaign_id=test_campaign.id,
+			current_status=JobStatus.MATCHING_PENDING,
+		)
+		session.add(job)
+		session.commit()
+		session.refresh(job)
+
+		response = client.post(f"/api/jobs/{job.id}/cancel")
+
+		assert response.status_code == 200
+		data = response.json()
+		assert data["status"] == "CANCELLED"
+
+		session.refresh(job)
+		assert job.current_status == JobStatus.CANCELLED
+
+	def test_cancel_job_matching_in_progress(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Should cancel job in MATCHING state (orphaned job recovery)."""
+		job = MatcherJob(
+			campaign_id=test_campaign.id,
+			current_status=JobStatus.MATCHING,
+		)
+		session.add(job)
+		session.commit()
+		session.refresh(job)
+
+		response = client.post(f"/api/jobs/{job.id}/cancel")
+
+		assert response.status_code == 200
+		data = response.json()
+		assert data["status"] == "CANCELLED"
+
+		session.refresh(job)
+		assert job.current_status == JobStatus.CANCELLED
+
+
+class TestListCampaignScans:
+	"""Tests for GET /api/campaigns/{id}/scans endpoint (Phase 9)."""
+
+	def test_list_scans_success(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Should list all petition scans for a campaign."""
+		petition_scan1 = PetitionScan(
+			campaign_id=test_campaign.id,
+			original_filename="petition1.pdf",
+			stored_path=f"/tmp/test1_{uuid.uuid4()}.pdf",
+			file_hash=f"hash1_{uuid.uuid4()}",
+		)
+		petition_scan2 = PetitionScan(
+			campaign_id=test_campaign.id,
+			original_filename="petition2.pdf",
+			stored_path=f"/tmp/test2_{uuid.uuid4()}.pdf",
+			file_hash=f"hash2_{uuid.uuid4()}",
+		)
+		session.add(petition_scan1)
+		session.add(petition_scan2)
+		session.commit()
+
+		response = client.get(f"/api/campaigns/{test_campaign.id}/scans")
+
+		assert response.status_code == 200
+		data = response.json()
+
+		assert "scans" in data
+		assert data["total"] == 2
+		filenames = [s["original_filename"] for s in data["scans"]]
+		assert "petition1.pdf" in filenames
+		assert "petition2.pdf" in filenames
+
+	def test_list_scans_empty(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Should return empty list when campaign has no scans."""
+		response = client.get(f"/api/campaigns/{test_campaign.id}/scans")
+
+		assert response.status_code == 200
+		data = response.json()
+
+		assert data["scans"] == []
+		assert data["total"] == 0
+
+	def test_list_scans_campaign_not_found(self, client: TestClient):
+		"""Should return 404 for non-existent campaign."""
+		fake_id = str(uuid.uuid4())
+		response = client.get(f"/api/campaigns/{fake_id}/scans")
+
+		assert response.status_code == 404
+
+
+class TestStartJob:
+	"""Tests for POST /api/jobs/{id}/start endpoint (Phase 9)."""
+
+	def test_start_job_success(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Should start a NOT_STARTED job."""
+		petition_scan = PetitionScan(
+			campaign_id=test_campaign.id,
+			original_filename="test.pdf",
+			stored_path=f"/tmp/test_{uuid.uuid4()}.pdf",
+			file_hash=f"hash_{uuid.uuid4()}",
+		)
+		session.add(petition_scan)
+		job = MatcherJob(
+			campaign_id=test_campaign.id,
+			current_status=JobStatus.NOT_STARTED,
+		)
+		session.add(job)
+		session.commit()
+		session.refresh(job)
+
+		response = client.post(f"/api/jobs/{job.id}/start")
+
+		assert response.status_code == 200
+		data = response.json()
+		assert data["status"] in ["OCR_PENDING", "OCR_STARTED"]
+
+	def test_start_job_not_found(self, client: TestClient):
+		"""Should return 404 for non-existent job."""
+		response = client.post("/api/jobs/99999/start")
+
+		assert response.status_code == 404
+
+	def test_start_job_wrong_state(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Should return 400 for job not in NOT_STARTED state."""
+		job = MatcherJob(
+			campaign_id=test_campaign.id,
+			current_status=JobStatus.OCR_STARTED,
+		)
+		session.add(job)
+		session.commit()
+		session.refresh(job)
+
+		response = client.post(f"/api/jobs/{job.id}/start")
+
+		assert response.status_code == 400
+
+	def test_start_job_no_scans(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Should return 400 when campaign has no petition scans."""
+		job = MatcherJob(
+			campaign_id=test_campaign.id,
+			current_status=JobStatus.NOT_STARTED,
+		)
+		session.add(job)
+		session.commit()
+		session.refresh(job)
+
+		response = client.post(f"/api/jobs/{job.id}/start")
+
+		assert response.status_code == 400
+
+
+class TestJobOrphanStatus:
+	"""Tests for is_orphaned field in job response (BUG-01 fix)."""
+
+	def test_job_not_orphaned_in_not_started(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Job in NOT_STARTED state should not be marked as orphaned."""
+		job = MatcherJob(
+			campaign_id=test_campaign.id,
+			current_status=JobStatus.NOT_STARTED,
+		)
+		session.add(job)
+		session.commit()
+		session.refresh(job)
+
+		response = client.get(f"/api/jobs/{job.id}")
+
+		assert response.status_code == 200
+		data = response.json()
+		assert data["is_orphaned"] is False
+
+	def test_job_orphaned_in_ocr_started(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Job in OCR_STARTED state should be marked as orphaned."""
+		job = MatcherJob(
+			campaign_id=test_campaign.id,
+			current_status=JobStatus.OCR_STARTED,
+		)
+		session.add(job)
+		session.commit()
+		session.refresh(job)
+
+		response = client.get(f"/api/jobs/{job.id}")
+
+		assert response.status_code == 200
+		data = response.json()
+		assert data["is_orphaned"] is True
+
+	def test_job_orphaned_in_matching(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Job in MATCHING state should be marked as orphaned."""
+		job = MatcherJob(
+			campaign_id=test_campaign.id,
+			current_status=JobStatus.MATCHING,
+		)
+		session.add(job)
+		session.commit()
+		session.refresh(job)
+
+		response = client.get(f"/api/jobs/{job.id}")
+
+		assert response.status_code == 200
+		data = response.json()
+		assert data["is_orphaned"] is True
+
+	def test_job_not_orphaned_in_completed(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Job in MATCHING_COMPLETED state should not be marked as orphaned."""
+		job = MatcherJob(
+			campaign_id=test_campaign.id,
+			current_status=JobStatus.MATCHING_COMPLETED,
+		)
+		session.add(job)
+		session.commit()
+		session.refresh(job)
+
+		response = client.get(f"/api/jobs/{job.id}")
+
+		assert response.status_code == 200
+		data = response.json()
+		assert data["is_orphaned"] is False

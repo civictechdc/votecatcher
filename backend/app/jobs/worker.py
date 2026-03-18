@@ -60,6 +60,7 @@ class JobWorker:
 	async def start(self) -> None:
 		"""Start the worker loop."""
 		self.running = True
+		await self._detect_orphaned_jobs()
 		logger.info(
 			"Job worker started", simulation_mode=self.settings.enable_simulation
 		)
@@ -76,6 +77,49 @@ class JobWorker:
 		"""Stop the worker loop."""
 		self.running = False
 		logger.info("Job worker stopped")
+
+	async def _detect_orphaned_jobs(self) -> list[MatcherJob]:
+		"""Detect jobs stuck in non-terminal states (orphaned by restart).
+
+		Orphaned jobs are those left in OCR_STARTED, OCR_COMPLETED,
+		MATCHING_PENDING, or MATCHING states after a backend restart.
+
+		Returns:
+			List of orphaned jobs found
+		"""
+		orphan_states = [
+			JobStatus.OCR_STARTED,
+			JobStatus.OCR_COMPLETED,
+			JobStatus.MATCHING_PENDING,
+			JobStatus.MATCHING,
+		]
+		orphans = []
+
+		with Session(engine) as session:
+			for status in orphan_states:
+				jobs = session.exec(
+					select(MatcherJob).where(MatcherJob.current_status == status)
+				).all()
+				for job in jobs:
+					orphans.append(job)
+					logger.warning(
+						"Orphaned job detected",
+						job_id=job.id,
+						status=status.value,
+						campaign_id=str(job.campaign_id),
+						updated_on=job.updated_on.isoformat()
+						if job.updated_on
+						else None,
+					)
+
+		if orphans:
+			logger.info(
+				"Orphaned jobs summary",
+				count=len(orphans),
+				note="These jobs can be cancelled or resumed from the UI",
+			)
+
+		return orphans
 
 	async def _process_pending_jobs(self) -> None:
 		"""Process all pending jobs in NOT_STARTED state."""
@@ -369,7 +413,7 @@ class JobWorker:
 				if ocr_entries is None:
 					raise last_error
 
-				for _entry_idx, entry in enumerate(ocr_entries):
+				for entry_idx, entry in enumerate(ocr_entries):
 					extracted_text = {
 						"name": entry.get("Name", ""),
 						"address": entry.get("Address", ""),
@@ -378,6 +422,7 @@ class JobWorker:
 					ocr_result = OcrResult(
 						crop_id=crop.id,
 						ocr_job_id=ocr_job.id,
+						ocr_index=entry_idx,
 						extracted_text=extracted_text,
 						confidence_score=0.85,
 					)
@@ -544,11 +589,19 @@ class JobWorker:
 					f"error: {batch_status.error}"
 				)
 
+			crop_entry_counts: dict[int, int] = {}
 			async for result_item in client.get_ocr_results(batch_status.job_id):
 				entry = result_item.ocr_entry
+				crop_idx = result_item.row_num
+				crop_id = crops[crop_idx].id
+
+				entry_idx = crop_entry_counts.get(crop_id, 0)
+				crop_entry_counts[crop_id] = entry_idx + 1
+
 				ocr_result = OcrResult(
-					crop_id=crops[result_item.row_num].id,
+					crop_id=crop_id,
 					ocr_job_id=ocr_job.id,
+					ocr_index=entry_idx,
 					extracted_text={
 						"name": entry.Name,
 						"address": entry.Address,

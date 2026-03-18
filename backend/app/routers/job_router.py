@@ -50,7 +50,10 @@ class JobResponse(BaseModel):
 	new_ocr_count: int | None = None
 	created_at: datetime | None = None
 	updated_at: datetime | None = None
+	started_at: datetime | None = None
+	ended_at: datetime | None = None
 	error_message: str | None = None
+	is_orphaned: bool = False
 
 
 class JobListResponse(BaseModel):
@@ -65,6 +68,15 @@ def _build_job_response(job: MatcherJob, session: Session) -> JobResponse:
 	error_message = None
 	if job.error_data and isinstance(job.error_data, dict):
 		error_message = job.error_data.get("message") or job.error_data.get("error")
+
+	orphan_states = {
+		JobStatus.OCR_STARTED,
+		JobStatus.OCR_COMPLETED,
+		JobStatus.MATCHING_PENDING,
+		JobStatus.MATCHING,
+	}
+	is_orphaned = job.current_status in orphan_states
+
 	return JobResponse(
 		job_id=job.id,
 		status=job.current_status.value,
@@ -77,7 +89,10 @@ def _build_job_response(job: MatcherJob, session: Session) -> JobResponse:
 		new_ocr_count=job.new_ocr_count,
 		created_at=job.created_at,
 		updated_at=job.updated_on,
+		started_at=job.started_on,
+		ended_at=job.ended_on,
 		error_message=error_message,
+		is_orphaned=is_orphaned,
 	)
 
 
@@ -204,6 +219,9 @@ def cancel_job(
 		JobStatus.NOT_STARTED,
 		JobStatus.OCR_PENDING,
 		JobStatus.OCR_STARTED,
+		JobStatus.OCR_COMPLETED,
+		JobStatus.MATCHING_PENDING,
+		JobStatus.MATCHING,
 	]
 	if job.current_status not in cancelable_states:
 		raise HTTPException(
