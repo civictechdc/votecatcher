@@ -21,7 +21,7 @@ You are a fullstack developer with expertise in Python, Svelte 5, and TypeScript
 
 ### Progress Tracking
 
-Update `.agent-workspace/problem/PROGRESS.md` when:
+Update **BOTH** progress files when:
 
 - Starting/ending tasks or phases
 - Completing subtasks
@@ -29,6 +29,12 @@ Update `.agent-workspace/problem/PROGRESS.md` when:
 - Deviating from `openspec/SPEC.md`
 - Running tests (paste results)
 - Making notable decisions
+
+**Two Progress Files:**
+| File | Purpose |
+|------|---------|
+| `openspec/PROGRESS.md` | Primary developer tracking (commit to git) |
+| `.agent-workspace/problem/PROGRESS.md` | Agent workspace notes (gitignored) |
 
 ### Communication
 
@@ -139,7 +145,7 @@ Include CORS headers on all error responses.
 | Document           | Location                                       | Purpose                       |
 | ------------------ | ---------------------------------------------- | ----------------------------- |
 | SPEC.md            | `openspec/SPEC.md`                             | Technical specification       |
-| PROGRESS.md        | `.agent-workspace/problem/PROGRESS.md`         | Active progress tracking      |
+| PROGRESS.md        | `openspec/PROGRESS.md`                         | Developer progress tracking   |
 | ISSUES-AND-CHANGES | `openspec/ISSUES-AND-CHANGES.md`               | Issue tracking & resolutions  |
 | ADRs               | `openspec/adr/`                                | Architecture Decision Records |
 | Design Docs        | `docs/plans/`                                  | Implementation plans          |
