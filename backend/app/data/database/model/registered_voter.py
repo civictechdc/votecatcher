@@ -28,5 +28,16 @@ class RegisteredVoter(SQLModel, table=True):
 		default=None, sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)}
 	)
 
+	# Tracking fields for voter list uploads
+	data_hash: str | None = Field(default=None, index=True)
+	first_seen_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+	last_seen_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+	first_upload_id: UUID | None = Field(
+		default=None, foreign_key="voter_list_uploads.id"
+	)
+	last_upload_id: UUID | None = Field(
+		default=None, foreign_key="voter_list_uploads.id"
+	)
+
 	class Config:
 		arbitrary_types_allowed = True

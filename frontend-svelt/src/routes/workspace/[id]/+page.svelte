@@ -4,7 +4,7 @@
 	import { campaigns } from '$lib/stores/campaigns';
 	import { jobs } from '$lib/stores/jobs';
 	import { Button, LoadingState } from '$lib/components/ui';
-	import { ConfidenceDonut } from '$lib/components/dashboard';
+	import { ConfidenceDonut, ProgressStepper } from '$lib/components/dashboard';
 	import { PUBLIC_API_URL } from '$env/static/public';
 
 	const API_BASE = PUBLIC_API_URL || 'http://localhost:8080';
@@ -21,6 +21,41 @@
 	});
 	let loading = $state(true);
 	let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+	interface SetupStatus {
+		voter_list: {
+			exists: boolean;
+			row_count?: number;
+			uploaded_at?: string;
+			region_name?: string;
+		};
+		petitions: {
+			exists: boolean;
+			file_count?: number;
+			signature_count?: number;
+		};
+		jobs: {
+			total: number;
+			active: number;
+		};
+		state: string;
+	}
+
+	let setupStatus = $state<SetupStatus | null>(null);
+	let loadingStatus = $state(true);
+
+	async function fetchSetupStatus() {
+		try {
+			const response = await fetch(`${API_BASE}/api/campaigns/${campaignId}/setup-status`);
+			if (response.ok) {
+				setupStatus = await response.json();
+			}
+		} catch (error) {
+			console.error('Failed to fetch setup status:', error);
+		} finally {
+			loadingStatus = false;
+		}
+	}
 
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
 	const campaignJobs = $derived($jobs.jobs.filter(job => String(job.campaignId) === String(campaignId)));
@@ -60,6 +95,7 @@
 		campaigns.fetchAll();
 		jobs.fetchAll();
 		fetchMetrics();
+		fetchSetupStatus();
 
 		pollInterval = setInterval(fetchMetrics, POLL_INTERVAL_MS);
 	});
@@ -90,6 +126,15 @@
 				<Button variant="primary" text="New Job" onclick={() => window.location.href = `/workspace/${campaignId}/jobs`} />
 			</div>
 		</div>
+
+		{#if !loadingStatus && setupStatus && !hasMatchResults}
+			<ProgressStepper
+				voterListStatus={setupStatus.voter_list}
+				petitionStatus={setupStatus.petitions}
+				hasJobs={setupStatus.jobs.total > 0}
+				{campaignId}
+			/>
+		{/if}
 
 		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4" data-testid="metrics">
 			<div class="rounded-lg border border-slate-200 bg-white p-6">

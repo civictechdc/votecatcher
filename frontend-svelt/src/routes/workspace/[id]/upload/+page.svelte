@@ -25,6 +25,17 @@
 		uploaded_at: string;
 	}
 
+	interface VoterListStatus {
+		exists: boolean;
+		upload?: {
+			id: string;
+			original_filename: string;
+			file_size: number;
+			row_count: number;
+			uploaded_at: string;
+		};
+	}
+
 	let existingScans = $state<PetitionScan[]>([]);
 	let loadingScans = $state(false);
 	let scanToDelete = $state<PetitionScan | null>(null);
@@ -33,9 +44,20 @@
 	let pendingDuplicates = $state<File[]>([]);
 	let showDuplicateDialog = $state(false);
 
+	let voterListStatus = $state<VoterListStatus | null>(null);
+	let loadingVoterList = $state(false);
+	let showVoterListDeleteConfirm = $state(false);
+
 	onMount(() => {
 		campaigns.fetchAll();
 		fetchExistingScans();
+		fetchVoterListStatus();
+	});
+
+	$effect(() => {
+		if (campaign) {
+			fetchVoterListStatus();
+		}
 	});
 
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
@@ -52,6 +74,45 @@
 			console.error('Failed to fetch scans:', error);
 		} finally {
 			loadingScans = false;
+		}
+	}
+
+	async function fetchVoterListStatus() {
+		if (!campaign?.region_id) return;
+		loadingVoterList = true;
+		try {
+			const response = await fetch(`${API_BASE}/api/regions/${campaign.region_id}/voter-list`);
+			if (response.ok) {
+				voterListStatus = await response.json();
+			}
+		} catch (error) {
+			console.error('Failed to fetch voter list status:', error);
+		} finally {
+			loadingVoterList = false;
+		}
+	}
+
+	async function deleteVoterList() {
+		if (!campaign?.region_id) return;
+		try {
+			const response = await fetch(`${API_BASE}/api/regions/${campaign.region_id}/voter-list`, {
+				method: 'DELETE'
+			});
+			if (response.ok) {
+				voterListStatus = { exists: false };
+				messages = 'Voter list deleted successfully.';
+				messageType = 'success';
+			} else {
+				const errorData = await response.json();
+				messages = `Error: ${errorData.detail || 'Failed to delete voter list.'}`;
+				messageType = 'error';
+			}
+		} catch (error) {
+			console.error('Failed to delete voter list:', error);
+			messages = 'Failed to delete voter list.';
+			messageType = 'error';
+		} finally {
+			showVoterListDeleteConfirm = false;
 		}
 	}
 
@@ -98,6 +159,7 @@
 				messages = `Voter list uploaded successfully! ${data.row_count?.toLocaleString() || 0} records imported.`;
 				messageType = 'success';
 				voterFiles = null;
+				await fetchVoterListStatus();
 			} else {
 				const errorData = await response.json();
 				messages = `Error: ${errorData.detail || 'Something went wrong.'}`;
@@ -367,55 +429,98 @@
 					</div>
 				</div>
 			{:else}
-				<div class="space-y-4">
-					<p class="text-sm text-slate-600">
-						Upload a voter list file (CSV or XLSX) containing registered voters for matching.
-					</p>
-
-					{#if voterFiles !== null}
-						<div class="space-y-4">
-							{#each Array.from(voterFiles) as file}
-								<div class="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 p-3">
-									<div class="flex items-center space-x-3">
-										<svg class="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-											<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-										</svg>
-										<span class="text-sm text-slate-700">{file.name}</span>
+				<div class="space-y-6">
+					{#if loadingVoterList}
+						<div class="text-center py-8 text-slate-500">Loading...</div>
+					{:else if voterListStatus?.exists && voterListStatus.upload}
+						<div>
+							<h2 class="text-lg font-semibold text-slate-900 mb-2">Current Voter List</h2>
+							<div class="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 p-3">
+								<div class="flex items-center space-x-3">
+									<svg class="h-8 w-8 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+										<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+										<path d="M14 2v6h6" fill="none" stroke="white" stroke-width="1.5"/>
+										<text x="7" y="18" font-size="6" fill="white" font-weight="bold">CSV</text>
+									</svg>
+									<div>
+										<p class="font-medium text-slate-900">{voterListStatus.upload.original_filename}</p>
+										<p class="text-xs text-slate-500">
+											{voterListStatus.upload.row_count.toLocaleString()} voters
+											· {formatFileSize(voterListStatus.upload.file_size)}
+											· {formatDate(voterListStatus.upload.uploaded_at)}
+										</p>
 									</div>
-									<button
-										onclick={() => voterFiles = null}
-										class="rounded p-1 text-slate-400 hover:text-slate-600"
-									>
-										<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-										</svg>
-									</button>
 								</div>
-							{/each}
-
-							<Button
-								variant="primary"
-								text="Upload Voter List"
-								onclick={uploadVoterList}
-								disabled={uploading || voterFiles === null}
-							/>
+								<button
+									onclick={() => showVoterListDeleteConfirm = true}
+									class="rounded p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
+									title="Delete voter list"
+								>
+									<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									</svg>
+								</button>
+							</div>
 						</div>
-					{:else}
-						<label class="block">
-							<span class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 cursor-pointer">
-								<svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-								</svg>
-								Select Voter File (.csv, .xlsx)
-							</span>
-							<input
-								bind:files={voterFiles}
-								type="file"
-								accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
-								class="hidden"
-							/>
-						</label>
+
+						<hr class="border-slate-200" />
 					{/if}
+
+					<div>
+						<h2 class="text-lg font-semibold text-slate-900 mb-2">
+							{voterListStatus?.exists ? 'Upload New Voter List' : 'Upload Voter List'}
+						</h2>
+						<p class="text-sm text-slate-600 mb-4">
+							{voterListStatus?.exists
+								? 'Uploading a new file will replace the existing voter list.'
+								: 'Upload a voter list file (CSV or XLSX) containing registered voters for matching.'}
+						</p>
+
+						{#if voterFiles !== null}
+							<div class="space-y-4">
+								{#each Array.from(voterFiles) as file}
+									<div class="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 p-3">
+										<div class="flex items-center space-x-3">
+											<svg class="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+												<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+											</svg>
+											<span class="text-sm text-slate-700">{file.name}</span>
+										</div>
+										<button
+											onclick={() => voterFiles = null}
+											class="rounded p-1 text-slate-400 hover:text-slate-600"
+										>
+											<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+											</svg>
+										</button>
+									</div>
+								{/each}
+
+								<Button
+									variant="primary"
+									text="Upload Voter List"
+									onclick={uploadVoterList}
+									disabled={uploading || voterFiles === null}
+								/>
+							</div>
+						{:else}
+							<label class="block">
+								<span class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 cursor-pointer">
+									<svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+									</svg>
+									Select Voter File (.csv, .xlsx)
+								</span>
+								<input
+									bind:files={voterFiles}
+									type="file"
+									accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+									class="hidden"
+								/>
+							</label>
+						{/if}
+					</div>
 				</div>
 			{/if}
 
@@ -496,6 +601,30 @@
 					variant="primary"
 					text="Override"
 					onclick={() => uploadPetitions(true)}
+				/>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if showVoterListDeleteConfirm}
+	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="dialog" aria-modal="true">
+		<div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+			<h3 class="text-lg font-semibold text-slate-900 mb-2">Delete Voter List?</h3>
+			<p class="text-sm text-slate-600 mb-4">
+				This will permanently delete all {voterListStatus?.upload?.row_count?.toLocaleString() || 'registered'} voters for this region.
+				This action cannot be undone.
+			</p>
+			<div class="flex justify-end space-x-3">
+				<Button
+					variant="secondary"
+					text="Cancel"
+					onclick={() => showVoterListDeleteConfirm = false}
+				/>
+				<Button
+					variant="primary"
+					text="Delete"
+					onclick={deleteVoterList}
 				/>
 			</div>
 		</div>

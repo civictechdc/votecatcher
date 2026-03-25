@@ -15,12 +15,16 @@ from app.data.database.model.petition_crop import PetitionCrop
 
 # New Models for Phase 1
 from app.data.database.model.petition_scan import PetitionScan
+
+# Voter List Tracking (Phase 13)
+from app.data.database.model.region_schema import RegionSchema
 from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.schema import Campaign, Region
 from app.data.database.model.session import Session, SessionType
 
 # User model (minimal for MVP)
 from app.data.database.model.user import User
+from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
 
 __all__ = [
 	# Existing
@@ -44,4 +48,8 @@ __all__ = [
 	"Session",
 	"SessionType",
 	"RegisteredVoter",
+	# Phase 13 - Voter List Tracking
+	"VoterListUpload",
+	"UploadStatus",
+	"RegionSchema",
 ]

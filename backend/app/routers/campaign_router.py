@@ -546,3 +546,95 @@ def get_campaign_results(
 		page=page,
 		page_size=page_size,
 	)
+
+
+class SetupStatusResponse(BaseModel):
+	"""Response schema for campaign setup status."""
+
+	voter_list: dict
+	petitions: dict
+	jobs: dict
+	state: str
+
+
+@router.get("/{campaign_id}/setup-status", response_model=SetupStatusResponse)
+def get_setup_status(
+	campaign_id: uuid.UUID,
+	session: SessionDep,
+) -> SetupStatusResponse:
+	"""Get campaign setup status for progress stepper.
+
+	Args:
+		campaign_id: Campaign UUID
+		session: Database session
+
+	Returns:
+		Setup status with voter list, petitions, and job info
+
+	Raises:
+		HTTPException: 404 if campaign not found
+	"""
+	from app.data.database.model.jobs import MatcherJob
+	from app.data.database.model.petition_scan import PetitionScan
+	from app.services.voter_list_service import VoterListService
+
+	campaign = session.get(Campaign, campaign_id)
+	if not campaign:
+		raise HTTPException(
+			status_code=status.HTTP_404_NOT_FOUND,
+			detail=f"Campaign {campaign_id} not found",
+		)
+
+	voter_list_service = VoterListService(session)
+	voter_upload = voter_list_service.get_active_upload(campaign.region_id)
+
+	scans = session.exec(
+		select(PetitionScan).where(PetitionScan.campaign_id == campaign_id)
+	).all()
+
+	jobs = session.exec(
+		select(MatcherJob).where(MatcherJob.campaign_id == campaign_id)
+	).all()
+
+	has_voter_list = voter_upload is not None
+	has_petitions = len(scans) > 0
+	has_jobs = len(jobs) > 0
+
+	if not has_voter_list and not has_petitions:
+		state = "empty"
+	elif has_voter_list and not has_petitions:
+		state = "voter_only"
+	elif not has_voter_list and has_petitions:
+		state = "petitions_only"
+	elif not has_jobs:
+		state = "ready_to_process"
+	else:
+		state = "has_jobs"
+
+	return SetupStatusResponse(
+		voter_list={
+			"exists": has_voter_list,
+			"row_count": voter_upload.row_count if voter_upload else None,
+			"uploaded_at": voter_upload.uploaded_at.isoformat()
+			if voter_upload
+			else None,
+			"region_name": _get_region_key(session, campaign.region_id),
+		},
+		petitions={
+			"exists": has_petitions,
+			"file_count": len(scans),
+			"signature_count": sum(s.page_count or 0 for s in scans),
+		},
+		jobs={
+			"total": len(jobs),
+			"active": len(
+				[
+					j
+					for j in jobs
+					if j.current_status
+					in ["NOT_STARTED", "OCR_PENDING", "OCR_STARTED", "MATCHING"]
+				]
+			),
+		},
+		state=state,
+	)
