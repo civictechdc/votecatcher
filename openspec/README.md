@@ -2,57 +2,45 @@
 
 Implementation specification and progress tracking for Votecatcher.
 
-**Current Version:** Post-MVP Iteration (Phases 7-12)
+**Current Version:** 1.7 - Post-MVP Phase 13 Complete
 **MVP Status:** ✅ Complete (2026-03-12)
+**Post-MVP Status:** ✅ Phases 7-13 Complete (2026-03-18)
 
-## Documents
+## Active Documents
 
 | File | Purpose |
 |------|---------|
-| [SPEC.md](SPEC.md) | Technical specification v1.5 - MVP complete, Post-MVP phases 7-12 planned |
-| [adr/](adr/) | Architecture Decision Records |
+| [SPEC.md](SPEC.md) | Technical specification |
 | [DEVELOPER.md](DEVELOPER.md) | Developer agent instructions |
-| [diagrams/](diagrams/) | Architecture and UI diagrams |
-| [.skills/](.skills/) | Agent skill definitions |
+| [PROGRESS.md](PROGRESS.md) | Current progress tracking |
+| [FEEDBACK.md](FEEDBACK.md) | User feedback items |
+| [ISSUES-AND-CHANGES.md](ISSUES-AND-CHANGES.md) | Issue tracking & resolutions |
+| [adr/](adr/) | Architecture Decision Records |
 
-## Post-MVP Documents (Active)
+## Active Plans
 
-| File | Location | Purpose |
-|------|----------|---------|
-| PROGRESS.md | `.agent-workspace/problem/PROGRESS.md` | Active progress tracking - phases 7-12 |
-| Requirements | `.agent-workspace/problem/REQUIREMENTS-NEXT-ITERATION-2026-03-12.md` | Post-MVP requirements (40 items) |
-
-## Getting Started
-
-1. Read [SPEC.md](SPEC.md) for the full technical specification
-2. Check `.agent-workspace/problem/PROGRESS.md` for current status
-3. Review `.agent-workspace/problem/REQUIREMENTS-NEXT-ITERATION-2026-03-12.md` for post-MVP scope
-
-## Phase Gates
-
-Each phase has entrance/exit criteria defined in SPEC.md §6. No phase may proceed without meeting exit criteria.
-
-### Critical Path (Post-MVP)
-
-```
-Phase 1-6 (MVP) ──────────────────────────────────────────► ✅ COMPLETE
-                                                              │
-                                                              ▼
-Phase 7 (Quick Fixes) ──► Phase 8 (Campaign UI) ──► Phase 9 (Job Creation)
-                                                              │
-                                                              ▼
-Phase 10 (Jobs List) ──► Phase 11 (Upload) ──► Phase 12 (Polish)
-```
-
-## Validation Requirements
-
-- All tasks validated through BDD/TDD
-- Tests must pass before marking tasks complete
-- PROGRESS.md updated at each milestone
-- ADRs created for notable decisions
+| Plan | Status | Scope |
+|------|--------|-------|
+| [event-bus-design.md](../docs/plans/2026-03-24-event-bus-design.md) | Approved | Phase 10 SSE enhancement |
+| [event-bus-implementation.md](../docs/plans/2026-03-24-event-bus-implementation.md) | Ready | Event bus implementation |
 
 ## Archives
 
 | Archive | Contents |
 |---------|----------|
-| [archive-mvp-complete-2026-03-12/](archive-mvp-complete-2026-03-12/) | MVP-era PROGRESS.md, REQUIREMENTS.md, earlier archives |
+| [archive-mvp-complete-2026-03-12/](archive-mvp-complete-2026-03-12/) | MVP-era documents |
+| [../docs/plans/archive-mvp-phases-1-13/](../docs/plans/archive-mvp-phases-1-13/) | Completed implementation plans |
+
+## Getting Started
+
+1. Read [SPEC.md](SPEC.md) for the technical specification
+2. Check [PROGRESS.md](PROGRESS.md) for current status
+3. Review [FEEDBACK.md](FEEDBACK.md) for outstanding fixes
+
+## Phase Status
+
+```
+Phase 1-6 (MVP)      ──────────────────────────────────► ✅ COMPLETE (2026-03-12)
+Phase 7-13 (Polish)  ──────────────────────────────────► ✅ COMPLETE (2026-03-18)
+Event Bus            ──────────────────────────────────► 📋 Planned
+```
