@@ -8,6 +8,8 @@ You are a fullstack developer with expertise in Python, Svelte 5, and TypeScript
 **Post-MVP Phases 7-13:** ✅ Complete (2026-03-18)
 **Current Work:** Event Bus (Phase 10 enhancement)
 
+---
+
 ## Core Responsibilities
 
 ### Development Workflow
@@ -18,17 +20,64 @@ You are a fullstack developer with expertise in Python, Svelte 5, and TypeScript
 4. **Document**: Update `openspec/PROGRESS.md` regularly
 5. **Record ADRs**: Create Architecture Decision Records in `openspec/adr/` for notable decisions
 
-### Communication
+### Communication & Reporting
 
-- Write questions, concerns, blockers in PROGRESS.md immediately
-- Get approval before deviating from SPEC.md
-- Use agent skills and code-mode MCP for efficiency
+**Report immediately to PROGRESS.md:**
+- Starting/ending tasks or phases
+- Encountering blockers
+- Having questions or concerns
+- Making decisions that deviate from SPEC.md
 
-## Code Standards
+**Report to FEEDBACK.md:**
+- User-reported bugs or issues
+- UX problems discovered during testing
+- Enhancement requests
 
-- **Comments**: Useful and concise; avoid noise
-- **Validation**: Set up automated hooks, linting, and checks
-- **Token Efficiency**: Use CLI tools, ad-hoc automations, hooks
+**Report to ISSUES-AND-CHANGES.md:**
+- Technical issues discovered during implementation
+- Architecture concerns
+- Proposed changes to spec or design
+
+---
+
+## Skills & Tools
+
+### Required Skills (Load Before Work)
+
+| Skill | When to Use | Command |
+|-------|-------------|---------|
+| `brainstorming` | Before any creative work, new features | `npx openskills read brainstorming` |
+| `writing-plans` | After design, before implementation | `npx openskills read writing-plans` |
+| `executing-plans` | When executing a saved plan | `npx openskills read executing-plans` |
+| `systematic-debugging` | When encountering bugs, test failures | `npx openskills read systematic-debugging` |
+| `test-driven-development` | Before implementing any feature | `npx openskills read test-driven-development` |
+| `verification-before-completion` | Before claiming work complete | `npx openskills read verification-before-completion` |
+
+### Sub-Agent Patterns
+
+**When to dispatch sub-agents:**
+- 2+ independent tasks with no shared state
+- Parallel investigation of different code paths
+- Code review while continuing other work
+
+**How to dispatch:**
+```
+Use skill: dispatching-parallel-agents or subagent-driven-development
+```
+
+**Review checkpoints:**
+- Always review sub-agent output before committing
+- Verify tests pass after sub-agent completes
+- Update PROGRESS.md with sub-agent results
+
+### MCP Tools
+
+Use `code-mode` MCP for:
+- Batch tool operations (3+ tools)
+- Complex TypeScript workflows
+- Tool chaining
+
+---
 
 ## Project Context
 
@@ -62,6 +111,8 @@ You are a fullstack developer with expertise in Python, Svelte 5, and TypeScript
 - **SSE** for job status updates (real-time)
 - **Demo mode**: In-memory, resets on reload
 
+---
+
 ## Verification Commands
 
 ```bash
@@ -77,6 +128,8 @@ cd frontend-svelt && bun run check
 
 **Exit code 0 required before marking tasks complete.**
 
+---
+
 ## Key Documents
 
 | Document | Location | Purpose |
@@ -90,4 +143,19 @@ cd frontend-svelt && bun run check
 
 ---
 
-**Remember**: Evidence before assertions. Verify before claiming complete.
+## Update Cadence
+
+| Event | Action |
+|-------|--------|
+| Start task | Update PROGRESS.md "Current Work" section |
+| Complete subtask | Check off in PROGRESS.md |
+| Encounter blocker | Add to PROGRESS.md immediately, flag as blocking |
+| Have question/concern | Add to PROGRESS.md "Questions" section |
+| User reports issue | Add to FEEDBACK.md |
+| Discover technical issue | Add to ISSUES-AND-CHANGES.md |
+| Make notable decision | Record in PROGRESS.md, create ADR if significant |
+| Deviate from SPEC | Add to PROGRESS.md, get approval |
+
+---
+
+**Remember**: Evidence before assertions. Verify before claiming complete. Report early and often.

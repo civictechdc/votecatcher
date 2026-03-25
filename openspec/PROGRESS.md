@@ -9,35 +9,76 @@
 
 ---
 
-## Phase 13: Voter List Tracking - ✅ COMPLETE
+## Current Work
 
-**Started:** 2026-03-19
-**Completed:** 2026-03-19
-
-**Exit Criteria:**
-- [x] Voter list uploads tracked with history
-- [x] Dashboard shows progress stepper (for campaigns without results)
-- [x] Merge/update logic handles duplicate voters
-- [x] All tests pass (unit + integration + E2E)
-- [x] Documentation updated
-
----
-
-## Next: Event Bus
+**Phase:** Event Bus (Phase 10 Enhancement)
+**Status:** 📋 Ready to implement
 
 **Design:** `docs/plans/2026-03-24-event-bus-design.md`
 **Plan:** `docs/plans/2026-03-24-event-bus-implementation.md`
 
-**Scope:**
-- Typed pub-sub event bus with auto-source detection
-- SSE transport for browser clients
-- Replace HTTP polling in dashboard and jobs list
-- Campaign-scoped real-time updates
+**Exit Criteria:**
+- [ ] Event bus publishes typed events with auto-source
+- [ ] SSE transport streams events to frontend
+- [ ] Worker publishes job status/progress events
+- [ ] Frontend connects to campaign event stream
+- [ ] Polling removed from dashboard and jobs list
+- [ ] All tests pass
 
 ---
 
-## Outstanding Fix (from FEEDBACK.md)
+## Completed Phases
 
+| Phase | Status | Completed |
+|-------|--------|-----------|
+| Phase 1-6 (MVP) | ✅ | 2026-03-12 |
+| Phase 7-13 (Post-MVP) | ✅ | 2026-03-18 |
+
+---
+
+## Outstanding Items
+
+### From FEEDBACK.md
 - Dashboard voter list checkbox not updating after upload
   - Root cause: `import_voter_list()` never creates `VoterListUpload` record
   - Fix required in `file_service.import_voter_list()`
+
+---
+
+## Blockers
+
+| # | Issue | Impact | Status | Resolution |
+|---|-------|--------|--------|------------|
+| (none) | | | | |
+
+---
+
+## Questions & Concerns
+
+| # | Type | Question/Concern | Status | Answer |
+|---|------|------------------|--------|--------|
+| (none) | | | | |
+
+---
+
+## Decisions Log
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2026-03-24 | Event bus with SSE-only transport | WebSocket deferred, ~2hr add later |
+| 2026-03-24 | Auto-source detection via inspect | DX improvement, accurate traceability |
+
+---
+
+## Verification Commands
+
+```bash
+# Backend tests
+cd backend && uv run pytest tests/unit tests/integration -v
+
+# Frontend tests
+cd frontend-svelt && bun run test:e2e
+
+# Type check
+cd frontend-svelt && bun run check
+```
