@@ -53,6 +53,7 @@ class AppSettings(BaseSettings):
 	enable_debug_mode: bool = Field(alias="FEATURE_ENABLE_DEBUG_MODE", default=False)
 	demo_mode: bool = Field(alias="FEATURE_DEMO_MODE", default=False)
 	demo_reset: bool = Field(alias="FEATURE_DEMO_RESET", default=False)
+	always_batch_ocr: bool = Field(alias="FEATURE_ALWAYS_BATCH_OCR", default=True)
 
 	def local_campaign_base_dir(self) -> Path:
 		if self.runtime_dir is None or self.campaigns_dir is None:

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
+	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { jobs } from '$lib/stores/jobs';
@@ -8,8 +9,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 
 	const API_BASE = PUBLIC_API_URL || 'http://localhost:8080';
-
-	let campaignId = $derived($page.params.id);
+	const campaignId = $derived($page.params.id ?? '');
 
 	let metrics = $state({
 		totalSignatures: 0,
@@ -17,10 +17,10 @@
 		highConfidence: 0,
 		mediumConfidence: 0,
 		lowConfidence: 0,
-		progressPercentage: 0
+		progressPercentage: 0,
+		voterListCount: null as number | null
 	});
 	let loading = $state(true);
-	let pollInterval: ReturnType<typeof setInterval> | null = null;
 
 	interface SetupStatus {
 		voter_list: {
@@ -78,7 +78,8 @@
 					highConfidence: data.high_confidence ?? 0,
 					mediumConfidence: data.medium_confidence ?? 0,
 					lowConfidence: data.low_confidence ?? 0,
-					progressPercentage: data.progress_percentage ?? 0
+					progressPercentage: data.progress_percentage ?? 0,
+					voterListCount: data.voter_list_count ?? null
 				};
 			}
 		} catch (error) {
@@ -88,21 +89,16 @@
 		}
 	}
 
-	const ACTIVE_JOB_STATES = ['NOT_STARTED', 'OCR_PENDING', 'OCR_STARTED', 'MATCHING_PENDING', 'MATCHING'];
-	const POLL_INTERVAL_MS = 30000;
-
 	onMount(() => {
 		campaigns.fetchAll();
 		jobs.fetchAll();
 		fetchMetrics();
 		fetchSetupStatus();
-
-		pollInterval = setInterval(fetchMetrics, POLL_INTERVAL_MS);
 	});
 
-	onDestroy(() => {
-		if (pollInterval) {
-			clearInterval(pollInterval);
+	afterNavigate(({ from, to }) => {
+		if (from?.url.pathname !== to?.url.pathname) {
+			fetchSetupStatus();
 		}
 	});
 </script>
@@ -153,10 +149,16 @@
 				<p class="mt-2 text-3xl font-bold text-slate-900">{campaignJobs.filter(j => ['NOT_STARTED', 'OCR_PENDING', 'OCR_STARTED', 'MATCHING'].includes(j.status)).length}</p>
 			</div>
 			<div class="rounded-lg border border-slate-200 bg-white p-6">
-				<h3 class="text-sm font-medium text-slate-600">High Confidence</h3>
-				<p class="mt-2 text-3xl font-bold {hasMatchResults ? 'text-green-600' : 'text-slate-400'}">{formatMetric(metrics.highConfidence, hasMatchResults)}</p>
-				{#if hasMatchResults}
-					<p class="mt-1 text-sm text-slate-500">{highPercentage}% of total</p>
+				<h3 class="text-sm font-medium text-slate-600">Voter List</h3>
+				<p class="mt-2 text-3xl font-bold {metrics.voterListCount ? 'text-slate-900' : 'text-slate-400'}">
+					{metrics.voterListCount ?? 'N/A'}
+				</p>
+				{#if metrics.voterListCount}
+					<p class="mt-1 text-sm text-slate-500">registered voters</p>
+				{:else}
+					<p class="mt-1 text-sm text-slate-500">
+						<a href="/workspace/{campaignId}/upload" class="text-blue-600 hover:underline">Upload voter list</a>
+					</p>
 				{/if}
 			</div>
 		</div>

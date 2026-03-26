@@ -1,10 +1,16 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { campaigns } from '$lib/stores/campaigns';
+	import { getLogoDestination } from '$lib/utils/mode';
 	import SidebarNavItem from './SidebarNavItem.svelte';
 	import Menu from 'lucide-svelte/icons/menu';
 	import X from 'lucide-svelte/icons/x';
+	import ChevronDown from 'lucide-svelte/icons/chevron-down';
 
 	let isOpen = $state(false);
+	let showCampaignSwitcher = $state(false);
 
 	const navItems = [
 		{ href: '/workspace/campaigns', label: 'Campaigns', icon: 'folder' as const },
@@ -18,9 +24,23 @@
 	function closeMenu() {
 		isOpen = false;
 	}
+
+	function toggleCampaignSwitcher() {
+		showCampaignSwitcher = !showCampaignSwitcher;
+	}
+
+	function navigateToCampaign(campaignId: string) {
+		goto(`/workspace/${campaignId}`);
+		showCampaignSwitcher = false;
+	}
+
+	onMount(() => {
+		if (!$campaigns.loaded && !$campaigns.loading) {
+			campaigns.fetchAll();
+		}
+	});
 </script>
 
-<!-- Mobile menu button -->
 <button
 	onclick={toggleMenu}
 	aria-label="Toggle menu"
@@ -33,7 +53,6 @@
 	{/if}
 </button>
 
-<!-- Sidebar -->
 <aside
 	class={`
 		fixed left-0 top-0 z-40 h-full w-64 transform bg-white border-r border-slate-200
@@ -43,13 +62,39 @@
 	`}
 >
 	<nav aria-label="Workspace navigation" class="flex h-full flex-col">
-		<!-- Logo -->
 		<div class="flex h-16 items-center border-b border-slate-200 px-6">
-			<a href="/" class="text-xl font-bold text-blue-600">Votecatcher</a>
+			<a href={getLogoDestination()} class="text-xl font-bold text-blue-600">Votecatcher</a>
 		</div>
 
-		<!-- Navigation -->
 		<div class="flex-1 overflow-y-auto p-4">
+			{#if $campaigns.campaigns.length > 0}
+				<div class="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+					<button
+						onclick={toggleCampaignSwitcher}
+						class="flex w-full items-center justify-between text-sm font-medium text-slate-700"
+						aria-expanded={showCampaignSwitcher}
+					>
+						<span class="truncate">Jump to Campaign</span>
+						<ChevronDown class="h-4 w-4" />
+					</button>
+
+					{#if showCampaignSwitcher}
+						<ul class="mt-2 max-h-48 overflow-y-auto rounded border border-slate-200 bg-white">
+							{#each $campaigns.campaigns as campaign}
+								<li>
+									<button
+										onclick={() => campaign.id && navigateToCampaign(campaign.id)}
+										class="w-full px-3 py-2 text-left text-sm hover:bg-slate-100"
+									>
+										{campaign.unique_name || campaign.title || 'Untitled'}
+									</button>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				</div>
+			{/if}
+
 			<ul class="space-y-1">
 				{#each navItems as item}
 					<li>
@@ -66,7 +111,6 @@
 	</nav>
 </aside>
 
-<!-- Mobile overlay -->
 {#if isOpen}
 	<div
 		class="fixed inset-0 z-30 bg-black/50 md:hidden"

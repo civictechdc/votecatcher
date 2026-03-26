@@ -26,7 +26,7 @@ class SSEConnectionManager:
 
 	def __init__(self):
 		"""Initialize connection manager."""
-		self.active_connections: dict[int, list[asyncio.Queue[str]]] = defaultdict(list)
+		self.active_connections: dict[str, list[asyncio.Queue[str]]] = defaultdict(list)
 		self._lock: asyncio.Lock = asyncio.Lock()
 
 	@property
@@ -34,7 +34,7 @@ class SSEConnectionManager:
 		"""Get total number of active connections."""
 		return sum(len(conns) for conns in self.active_connections.values())
 
-	async def connect(self, job_id: int, queue: asyncio.Queue[str]) -> None:
+	async def connect(self, job_id: str, queue: asyncio.Queue[str]) -> None:
 		"""Register a new SSE client connection.
 
 		Args:
@@ -50,7 +50,7 @@ class SSEConnectionManager:
 			total_connections=len(self.active_connections[job_id]),
 		)
 
-	def disconnect(self, job_id: int, queue: asyncio.Queue[str]) -> None:
+	def disconnect(self, job_id: str, queue: asyncio.Queue[str]) -> None:
 		"""Remove an SSE client connection.
 
 		Args:
@@ -73,7 +73,7 @@ class SSEConnectionManager:
 				pass
 
 	async def broadcast(
-		self, job_id: int, event_type: str, data: dict[str, Any]
+		self, job_id: str, event_type: str, data: dict[str, Any]
 	) -> int:
 		"""Broadcast an event to all subscribers of a job.
 

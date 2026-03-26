@@ -103,7 +103,7 @@ addopts = ["--import-mode=importlib"]
 line-length = 88
 target-version = "py313"
 lint.select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM"]
-lint.ignore = ["E203", "W191"]
+lint.ignore = ["E101", "E203", "W191"]
 exclude = ["notebooks", "cross_referencing_tests"]
 
 [tool.ruff.format]

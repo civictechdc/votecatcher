@@ -1,7 +1,21 @@
+/**
+ * Jobs Store
+ *
+ * SSE Architecture (see ADR-0001):
+ * - This store's connectToJob() provides per-job SSE for the job detail page
+ * - Campaign-scoped updates use events.ts (event bus) via the campaign layout
+ *
+ * Use connectToJob() when:
+ * - User is viewing a specific job's detail page
+ * - Focused monitoring with detailed status updates is needed
+ *
+ * For campaign-wide updates (dashboard, jobs list), use events.ts instead.
+ */
 import { writable } from 'svelte/store';
 import { getApiClient } from './api-client';
 import { JobsApi } from '$lib/api/generated';
 import type { JobResponse, CreateJobRequest } from '$lib/api/generated';
+import type { JobStatusEnum } from '$lib/api/generated/models/Job';
 
 interface SSEState {
 	connected: boolean;
@@ -179,6 +193,32 @@ function createJobsStore() {
 
 		clearError() {
 			update((s) => ({ ...s, error: null }));
+		},
+
+		handleStatusEvent(event: { job_id: number; status: JobStatusEnum }) {
+			update((s) => ({
+				...s,
+				jobs: s.jobs.map((j) =>
+					j.jobId === event.job_id ? { ...j, status: event.status } : j
+				),
+				currentJob:
+					s.currentJob?.jobId === event.job_id
+						? { ...s.currentJob, status: event.status }
+						: s.currentJob
+			}));
+		},
+
+		handleProgressEvent(event: { job_id: number; percentage: number; processed: number; total: number }) {
+			update((s) => ({
+				...s,
+				jobs: s.jobs.map((j) =>
+					j.jobId === event.job_id ? { ...j, progress: event.percentage } : j
+				),
+				currentJob:
+					s.currentJob?.jobId === event.job_id
+						? { ...s.currentJob, progress: event.percentage }
+						: s.currentJob
+			}));
 		},
 
 		connectToJob(jobId: string) {

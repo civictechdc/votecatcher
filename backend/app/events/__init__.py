@@ -13,6 +13,7 @@ from .sse_manager import (
 	format_sse_message,
 	sse_manager,
 )
+from .transports.sse import SSETransport, sse_transport
 
 __all__ = [
 	"event_bus",
@@ -24,4 +25,6 @@ __all__ = [
 	"SSEConnectionManager",
 	"format_sse_message",
 	"sse_manager",
+	"SSETransport",
+	"sse_transport",
 ]

@@ -66,22 +66,26 @@ export async function logout() {
 /**
  * A custom fetch wrapper that handles token injection and automatic refreshing.
  */
-export async function authenticatedFetch(url: string | URL, options: RequestInit & { headers?: Record<string, string> } = {}) {
-	let currentToken = null;
+export async function authenticatedFetch(
+	url: string | URL,
+	options: RequestInit & { headers?: Record<string, string> } = {}
+) {
+	let currentToken: string | null = null;
 	authStore.subscribe((value) => {
-		currentToken = value.accessToken;
+		currentToken = value.accessToken as string | null;
 	})();
+
+	const headers: Record<string, string> = {
+		...(options.headers as Record<string, string> | undefined),
+	};
 
 	// 1. Inject the current access token
 	if (currentToken) {
-		options.headers = {
-			...options.headers,
-			Authorization: `Bearer ${currentToken}`,
-		};
+		headers['Authorization'] = `Bearer ${currentToken}`;
 	}
 
 	// 2. Make the original request
-	let response = await fetch(url, options);
+	let response = await fetch(url, { ...options, headers });
 
 	// 3. Handle 401 Unauthorized (expired access token)
 	if (response.status === 401 && browser) {
@@ -105,8 +109,8 @@ export async function authenticatedFetch(url: string | URL, options: RequestInit
 			}));
 
 			// 4. Retry the original failed request with the new token
-			options.headers['Authorization'] = `Bearer ${newAccessToken}`;
-			response = await fetch(url, options);
+			headers['Authorization'] = `Bearer ${newAccessToken}`;
+			response = await fetch(url, { ...options, headers });
 
 			return response; // Return the successfully retried response
 		} else {

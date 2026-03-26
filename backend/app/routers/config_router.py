@@ -24,6 +24,7 @@ class FeatureFlagsResponse(BaseModel):
 	debugMode: bool  # noqa: N815
 	demoMode: bool  # noqa: N815
 	demoReset: bool  # noqa: N815
+	alwaysBatchOcr: bool  # noqa: N815
 
 
 class SettingsResponse(BaseModel):
@@ -45,6 +46,7 @@ def get_features(
 		debugMode=settings.enable_debug_mode,
 		demoMode=settings.demo_mode,
 		demoReset=settings.demo_reset,
+		alwaysBatchOcr=settings.always_batch_ocr,
 	)
 
 
@@ -62,6 +64,7 @@ def get_settings_endpoint(
 			debugMode=settings.enable_debug_mode,
 			demoMode=settings.demo_mode,
 			demoReset=settings.demo_reset,
+			alwaysBatchOcr=settings.always_batch_ocr,
 		),
 	)
 

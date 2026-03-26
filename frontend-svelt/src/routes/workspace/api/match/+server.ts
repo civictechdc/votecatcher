@@ -16,41 +16,49 @@ const SERVER_DEMO = DEMO_MODE === 'true';
 
 const MATCH_TABLE_COLUMNS: MatchColumn[] = [
 	new MatchColumn('Registration Name', function (first: MatchRow, second: MatchRow) {
-		return first.registeredName.localeCompare(second.registeredName);
+		return String(first.registeredName ?? '').localeCompare(String(second.registeredName ?? ''));
 	}),
 	new MatchColumn('Matched Name'),
 	new MatchColumn('Confidence', function (first, second) {
-		if (first.predictionScore > second.predictionScore) return 1;
-		if (first.predictionScore < second.predictionScore) return -1;
+		const a = first.predictionScore ?? 0;
+		const b = second.predictionScore ?? 0;
+		if (a > b) return 1;
+		if (a < b) return -1;
 		return 0;
 	}),
 	new MatchColumn('Name distance'),
 	new MatchColumn('Registered Address'),
 	new MatchColumn('Address Distance'),
 	new MatchColumn('Matched Address', function (first, second) {
-		return (first.predictedAddress ?? '').localeCompare(second.predictedAddress ?? '');
+		return String(first.predictedAddress ?? '').localeCompare(String(second.predictedAddress ?? ''));
 	}),
 	new MatchColumn('Ward', function (first, second) {
-		return (first.ward ?? '').localeCompare(second.ward ?? '');
+		return String(first.ward ?? '').localeCompare(String(second.ward ?? ''));
 	}),
 	new MatchColumn('Page', function (first, second) {
-		if (first.petitionPageNumber > second.petitionPageNumber) return 1;
-		if (first.petitionPageNumber < second.petitionPageNumber) return -1;
+		const a = first.petitionPageNumber ?? 0;
+		const b = second.petitionPageNumber ?? 0;
+		if (a > b) return 1;
+		if (a < b) return -1;
 		return 0;
 	}),
 	new MatchColumn('Row', function (first, second) {
-		if (first.petitionRowNumber > second.petitionRowNumber) return 1;
-		if (first.petitionRowNumber < second.petitionRowNumber) return -1;
+		const a = first.petitionRowNumber ?? 0;
+		const b = second.petitionRowNumber ?? 0;
+		if (a > b) return 1;
+		if (a < b) return -1;
 		return 0;
 	}),
 	new MatchColumn('Match Rank', function (first, second) {
-		if (first.matchRank > second.matchRank) return 1;
-		if (first.matchRank < second.matchRank) return -1;
+		const a = first.matchRank ?? 0;
+		const b = second.matchRank ?? 0;
+		if (a > b) return 1;
+		if (a < b) return -1;
 		return 0;
 	}),
 ];
 
-function createRandomMatch(thresholds: ConfidenceThresholds): MatchRow {
+function createRandomMatch(thresholds: ConfidenceThresholds, rowIdx: number): MatchRow {
 	const randomScore = parseFloat(Math.random().toFixed(2));
 
 	const person = faker.person;
@@ -87,6 +95,7 @@ function createRandomMatch(thresholds: ConfidenceThresholds): MatchRow {
 	const ward = Math.floor(Math.random() * 7) + 1;
 
 	return {
+		row_idx: rowIdx,
 		voterId: faker.string.uuid(),
 		registeredName: firstName + ' ' + lastName,
 		ocrPredictedName: fullName,
@@ -105,9 +114,8 @@ function createRandomMatch(thresholds: ConfidenceThresholds): MatchRow {
 function mockMatches(thresholds: ConfidenceThresholds): MatchRow[] {
 	const matches: MatchRow[] = [];
 
-	let i = 0;
-	for (i; i <= 50; i++) {
-		matches.push(createRandomMatch(thresholds));
+	for (let i = 0; i <= 50; i++) {
+		matches.push(createRandomMatch(thresholds, i));
 	}
 
 	return matches;

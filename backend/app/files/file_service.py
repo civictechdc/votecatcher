@@ -292,6 +292,27 @@ class FileService:
 
 		for voter in voters_to_insert:
 			self.session.add(voter)
+
+		from app.data.database.model.voter_list_upload import (
+			UploadStatus,
+			VoterListUpload,
+		)
+
+		upload = VoterListUpload(
+			region_id=region_id,
+			original_filename=file.filename,
+			file_size=len(content),
+			row_count=len(voters_to_insert),
+			status=UploadStatus.ACTIVE,
+		)
+		self.session.add(upload)
+		self.session.flush()
+
+		from app.services.voter_list_service import VoterListService
+
+		voter_list_service = VoterListService(self.session)
+		voter_list_service.supersede_previous_uploads(region_id, upload)
+
 		self.session.commit()
 
 		return (str(file_path), len(voters_to_insert))

@@ -12,7 +12,8 @@ from app.data.database.model.match_result import ConfidenceLevel, MatchResult
 from app.data.database.model.ocr_result import OcrResult
 from app.data.database.model.petition_crop import PetitionCrop
 from app.data.database.model.petition_scan import PetitionScan
-from app.data.database.model.schema import Campaign
+from app.data.database.model.registered_voter import RegisteredVoter
+from app.data.database.model.schema import Campaign, Region
 
 
 class TestCampaignMetricsAPI:
@@ -297,3 +298,72 @@ class TestCampaignMetricsAPI:
 		assert data["total_signatures"] == 1
 		assert data["processed"] == 1
 		assert data["high_confidence"] == 1
+
+	def test_metrics_voter_list_count(
+		self, client: TestClient, test_campaign: Campaign, session: Session
+	):
+		"""Should return voter list count for campaign."""
+		response = client.get(f"/api/campaigns/{test_campaign.id}/metrics")
+		assert response.status_code == 200
+		data = response.json()
+
+		# Initially no voter list uploaded
+		assert "voter_list_count" in data
+		assert data["voter_list_count"] is None
+
+		# Add registered voters for the campaign's region
+		for i in range(100):
+			voter = RegisteredVoter(
+				region_id=test_campaign.region_id,
+				name_data={"first_name": f"First{i}", "last_name": f"Last{i}"},
+				address_data={"street": f"{i} Main St", "city": "Test City"},
+			)
+			session.add(voter)
+		session.commit()
+
+		# Check metrics again
+		response = client.get(f"/api/campaigns/{test_campaign.id}/metrics")
+		assert response.status_code == 200
+		data = response.json()
+		assert data["voter_list_count"] == 100
+
+	def test_metrics_voter_list_count_different_region(
+		self, client: TestClient, test_campaign: Campaign, session: Session, test_region
+	):
+		"""Voter list count should only include voters from campaign's region."""
+		from uuid import uuid4
+
+		# Create a different region
+		other_region = Region(
+			region_key=f"OTHER_{uuid4().hex[:8]}",
+			region_name="Other Region",
+			country_code="US",
+		)
+		session.add(other_region)
+		session.commit()
+		session.refresh(other_region)
+
+		# Add voters to campaign's region
+		for i in range(50):
+			voter = RegisteredVoter(
+				region_id=test_campaign.region_id,
+				name_data={"first_name": f"First{i}", "last_name": f"Last{i}"},
+				address_data={"street": f"{i} Main St", "city": "Test City"},
+			)
+			session.add(voter)
+
+		# Add voters to other region
+		for i in range(75):
+			voter = RegisteredVoter(
+				region_id=other_region.id,
+				name_data={"first_name": f"Other{i}", "last_name": f"Voter{i}"},
+				address_data={"street": f"{i} Other St", "city": "Other City"},
+			)
+			session.add(voter)
+		session.commit()
+
+		# Check metrics - should only count campaign's region
+		response = client.get(f"/api/campaigns/{test_campaign.id}/metrics")
+		assert response.status_code == 200
+		data = response.json()
+		assert data["voter_list_count"] == 50

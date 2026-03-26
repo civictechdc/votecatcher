@@ -10,7 +10,7 @@ class EventTransport(ABC):
 		...
 
 	@abstractmethod
-	async def subscribe_to_job(self, job_id: int):
+	async def subscribe_to_job(self, job_id: str):
 		"""Subscribe to all events for a job."""
 		...
 

@@ -25,6 +25,8 @@ from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.schema import Campaign
 from app.data.database.session import engine
+from app.events import JobProgressEvent, JobStatusEvent, MetricsUpdatedEvent, event_bus
+from app.services.metrics import MetricsService
 from app.settings.env_settings import get_settings
 
 if TYPE_CHECKING:
@@ -38,7 +40,7 @@ OCR_REAL_DELAY_SECONDS = 2.0
 OCR_RETRY_DELAY_SECONDS = 5.0
 OCR_MAX_RETRIES = 3
 MATCHING_DELAY_SECONDS = 0.5
-BATCH_THRESHOLD = 10
+BATCH_THRESHOLD = 5
 
 
 class JobWorker:
@@ -154,9 +156,20 @@ class JobWorker:
 		"""
 		logger.info("Processing job", job_id=job.id)
 
+		previous_status = job.current_status.value if job.current_status else None
 		job.current_status = JobStatus.OCR_STARTED
 		job.started_on = datetime.now(UTC)
 		session.commit()
+
+		await event_bus.publish(
+			JobStatusEvent(
+				trace_id=str(job.id),
+				job_id=str(job.id),
+				campaign_id=str(job.campaign_id),
+				status=JobStatus.OCR_STARTED.value,
+				previous_status=previous_status,
+			)
+		)
 
 		job_campaign_normalized = str(job.campaign_id).replace("-", "")
 
@@ -173,13 +186,24 @@ class JobWorker:
 
 		if not crops:
 			logger.warning("No crops found for job", job_id=job.id)
+			previous_status = job.current_status.value if job.current_status else None
 			job.current_status = JobStatus.MATCHING_ERROR
 			job.error_data = {
 				"message": "No petition crops found for campaign",
 				"timestamp": datetime.now(UTC).isoformat(),
 			}
 			session.commit()
-			return
+
+		await event_bus.publish(
+			JobStatusEvent(
+				trace_id=str(job.id),
+				job_id=str(job.id),
+				campaign_id=str(job.campaign_id),
+				status=JobStatus.MATCHING_ERROR.value,
+				previous_status=previous_status,
+			)
+		)
+		return
 
 		ocr_job = OcrJob(
 			matcher_job_id=job.id,
@@ -192,15 +216,57 @@ class JobWorker:
 		await self._run_ocr_phase(session, job, ocr_job, crops)
 		await self._run_matching_phase(session, job, ocr_job)
 
+		previous_status = job.current_status.value if job.current_status else None
 		job.current_status = JobStatus.MATCHING_COMPLETED
 		job.ended_on = datetime.now(UTC)
 		session.commit()
+
+		await event_bus.publish(
+			JobStatusEvent(
+				trace_id=str(job.id),
+				job_id=str(job.id),
+				campaign_id=str(job.campaign_id),
+				status=JobStatus.MATCHING_COMPLETED.value,
+				previous_status=previous_status,
+			)
+		)
+
+		metrics = self._compute_job_metrics(session, job)
+		await event_bus.publish(
+			MetricsUpdatedEvent(
+				trace_id=str(job.id),
+				job_id=str(job.id),
+				campaign_id=str(job.campaign_id),
+				total_signatures=metrics["total_signatures"],
+				processed=metrics["processed"],
+				high_confidence=metrics["high_confidence"],
+			)
+		)
 
 		logger.info(
 			"Job completed",
 			job_id=job.id,
 			status=job.current_status,
 		)
+
+	def _compute_job_metrics(self, session: Session, job: MatcherJob) -> dict:
+		"""Compute metrics for a completed job.
+
+		Args:
+			session: Database session
+			job: Completed MatcherJob
+
+		Returns:
+			Dictionary with total_signatures, processed, high_confidence
+		"""
+		metrics_service = MetricsService(session)
+		campaign_metrics = metrics_service.compute_campaign_metrics(job.campaign_id)
+
+		return {
+			"total_signatures": campaign_metrics.get("total_signatures", 0),
+			"processed": campaign_metrics.get("processed", 0),
+			"high_confidence": campaign_metrics.get("high_confidence", 0),
+		}
 
 	async def _run_ocr_phase(
 		self,
@@ -257,36 +323,50 @@ class JobWorker:
 			cached_count = len(existing_crop_ids)
 			new_count = len(crops_to_process)
 
-			if not crops_to_process:
-				logger.info(
-					"All crops already have OCR results, skipping OCR phase",
-					job_id=job.id,
-					total_crops=len(crops),
-				)
-				job.cached_ocr_count = cached_count
-				job.new_ocr_count = new_count
-				ocr_job.status = JobStatus.OCR_COMPLETED
-				job.current_status = JobStatus.OCR_COMPLETED
-				session.commit()
-				return
+		if not crops_to_process:
+			logger.info(
+				"All crops already have OCR results, skipping OCR phase",
+				job_id=job.id,
+				total_crops=len(crops),
+			)
+			job.cached_ocr_count = cached_count
+			job.new_ocr_count = new_count
+			ocr_job.status = JobStatus.OCR_COMPLETED
+			job.current_status = JobStatus.OCR_COMPLETED
+			session.commit()
 
-			if existing_crop_ids:
-				logger.info(
-					"Skipping crops with existing OCR results",
-					job_id=job.id,
-					skipped_count=len(existing_crop_ids),
-					processing_count=len(crops_to_process),
+			await event_bus.publish(
+				JobStatusEvent(
+					trace_id=str(job.id),
+					job_id=str(job.id),
+					campaign_id=str(job.campaign_id),
+					status=JobStatus.OCR_COMPLETED.value,
+					previous_status=JobStatus.OCR_STARTED.value,
 				)
+			)
+			return
+
+		if existing_crop_ids:
+			logger.info(
+				"Skipping crops with existing OCR results",
+				job_id=job.id,
+				skipped_count=len(existing_crop_ids),
+				processing_count=len(crops_to_process),
+			)
 
 		if self.settings.enable_simulation:
 			await self._run_simulated_ocr(session, job, ocr_job, crops_to_process)
 		else:
-			if len(crops_to_process) >= BATCH_THRESHOLD:
+			if (
+				len(crops_to_process) >= BATCH_THRESHOLD
+				or self.settings.always_batch_ocr
+			):
 				logger.info(
 					"Using batch OCR mode",
 					job_id=job.id,
 					crop_count=len(crops_to_process),
 					threshold=BATCH_THRESHOLD,
+					always_batch=self.settings.always_batch_ocr,
 				)
 				await self._run_batch_ocr(session, job, ocr_job, crops_to_process)
 			else:
@@ -297,6 +377,16 @@ class JobWorker:
 		ocr_job.status = JobStatus.OCR_COMPLETED
 		job.current_status = JobStatus.OCR_COMPLETED
 		session.commit()
+
+		await event_bus.publish(
+			JobStatusEvent(
+				trace_id=str(job.id),
+				job_id=str(job.id),
+				campaign_id=str(job.campaign_id),
+				status=JobStatus.OCR_COMPLETED.value,
+				previous_status=JobStatus.OCR_STARTED.value,
+			)
+		)
 
 		logger.info(
 			"OCR phase completed",
@@ -672,8 +762,19 @@ class JobWorker:
 		"""
 		logger.info("Starting matching phase", job_id=job.id)
 
+		previous_status = job.current_status.value if job.current_status else None
 		job.current_status = JobStatus.MATCHING
 		session.commit()
+
+		await event_bus.publish(
+			JobStatusEvent(
+				trace_id=str(job.id),
+				job_id=str(job.id),
+				campaign_id=str(job.campaign_id),
+				status=JobStatus.MATCHING.value,
+				previous_status=previous_status,
+			)
+		)
 
 		ocr_results = session.exec(
 			select(OcrResult).where(OcrResult.ocr_job_id == ocr_job.id)
@@ -697,7 +798,8 @@ class JobWorker:
 			)
 			return
 
-		for ocr_result in ocr_results:
+		total_ocr_results = len(ocr_results)
+		for idx, ocr_result in enumerate(ocr_results, start=1):
 			await asyncio.sleep(MATCHING_DELAY_SECONDS)
 
 			matches = self._find_top_matches(ocr_result, voters, top_n=5)
@@ -713,6 +815,18 @@ class JobWorker:
 					field_scores=match["field_scores"],
 				)
 				session.add(match_result)
+
+			if idx % max(1, total_ocr_results // 10) == 0:
+				await event_bus.publish(
+					JobProgressEvent(
+						trace_id=str(job.id),
+						job_id=str(job.id),
+						campaign_id=str(job.campaign_id),
+						processed=idx,
+						total=total_ocr_results,
+						percentage=(idx / total_ocr_results) * 100,
+					)
+				)
 
 		session.commit()
 

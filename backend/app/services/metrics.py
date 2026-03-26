@@ -26,6 +26,7 @@ class CampaignMetrics:
 		low_confidence: int,
 		progress_percentage: float,
 		last_job: dict | None,
+		voter_list_count: int | None,
 	):
 		self.total_signatures = total_signatures
 		self.processed = processed
@@ -34,6 +35,7 @@ class CampaignMetrics:
 		self.low_confidence = low_confidence
 		self.progress_percentage = progress_percentage
 		self.last_job = last_job
+		self.voter_list_count = voter_list_count
 
 	def to_dict(self) -> dict:
 		"""Convert to dictionary for API response."""
@@ -45,6 +47,7 @@ class CampaignMetrics:
 			"low_confidence": self.low_confidence,
 			"progress_percentage": round(self.progress_percentage, 1),
 			"last_job": self.last_job,
+			"voter_list_count": self.voter_list_count,
 		}
 
 
@@ -68,6 +71,7 @@ class MetricsService:
 		processed, confidence_counts = self._count_processed_results(campaign_id)
 		progress = self._calculate_progress(total_signatures, processed)
 		last_job = self._get_last_job(campaign_id)
+		voter_list_count = self._count_registered_voters(campaign_id)
 
 		metrics = CampaignMetrics(
 			total_signatures=total_signatures,
@@ -77,6 +81,7 @@ class MetricsService:
 			low_confidence=confidence_counts.get(ConfidenceLevel.LOW, 0),
 			progress_percentage=progress,
 			last_job=last_job,
+			voter_list_count=voter_list_count,
 		)
 
 		logger.debug(
@@ -209,3 +214,27 @@ class MetricsService:
 			if last_job.ended_on
 			else None,
 		}
+
+	def _count_registered_voters(self, campaign_id: UUID) -> int | None:
+		"""Count registered voters for the campaign's region.
+
+		Args:
+			campaign_id: Campaign UUID
+
+		Returns:
+			Number of registered voters, or None if no voter list uploaded
+		"""
+		from app.data.database.model.registered_voter import RegisteredVoter
+		from app.data.database.model.schema import Campaign
+
+		campaign = self.session.get(Campaign, campaign_id)
+		if not campaign:
+			return None
+
+		count = self.session.exec(
+			select(func.count())
+			.select_from(RegisteredVoter)
+			.where(RegisteredVoter.region_id == campaign.region_id)
+		).one()
+
+		return count or None

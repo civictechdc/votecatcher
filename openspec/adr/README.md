@@ -19,7 +19,7 @@ Create an ADR when making decisions that:
 
 | ADR | Title | Status | Date | Phase |
 |-----|-------|--------|------|-------|
-| (None yet) | - | - | - | - |
+| [0001](0001-dual-sse-architecture.md) | Dual SSE Architecture | Accepted | 2026-03-25 | Phase 10 |
 
 ## Template
 

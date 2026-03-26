@@ -1,28 +1,40 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 import Page from '../../../src/routes/workspace/campaigns/+page.svelte';
-import { campaigns } from '$lib/stores/campaigns';
+import type { CampaignResponse } from '$lib/api/generated';
 
-vi.mock('$lib/stores/campaigns');
+vi.mock('$lib/stores/campaigns', () => ({
+	campaigns: {
+		subscribe: vi.fn(),
+		create: vi.fn(),
+		delete: vi.fn(),
+		fetchAll: vi.fn(),
+		clearError: vi.fn(),
+		reset: vi.fn(),
+		handleMetricsEvent: vi.fn()
+	}
+}));
+
+import { campaigns } from '$lib/stores/campaigns';
 
 describe('Campaigns List Page', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
-			fn({ campaigns: [], loading: false, error: null });
+			fn({ campaigns: [], loading: false, loaded: true, error: null, metrics: {} });
 			return () => {};
 		});
 	});
 
 	describe('Display', () => {
 		it('shows campaigns table', async () => {
-			const mockCampaigns = [
-				{ id: 1, name: 'Campaign 1', year: 2024, regionId: 1, createdAt: new Date() },
-				{ id: 2, name: 'Campaign 2', year: 2024, regionId: 2, createdAt: new Date() }
+			const testCampaigns: CampaignResponse[] = [
+				{ id: '1', unique_name: 'c1', title: 'Campaign 1', year: '2024', region: 'Region 1', region_id: '1', created_at: new Date(), updated_at: null },
+				{ id: '2', unique_name: 'c2', title: 'Campaign 2', year: '2024', region: 'Region 2', region_id: '2', created_at: new Date(), updated_at: null }
 			];
 
 			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
-				fn({ campaigns: mockCampaigns, loading: false, error: null });
+				fn({ campaigns: testCampaigns, loading: false, loaded: true, error: null, metrics: {} });
 				return () => {};
 			});
 
@@ -36,7 +48,7 @@ describe('Campaigns List Page', () => {
 
 		it('shows empty state when no campaigns', async () => {
 			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
-				fn({ campaigns: [], loading: false, error: null });
+				fn({ campaigns: [], loading: false, loaded: true, error: null, metrics: {} });
 				return () => {};
 			});
 
@@ -49,7 +61,7 @@ describe('Campaigns List Page', () => {
 
 		it('shows loading spinner while loading', () => {
 			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
-				fn({ campaigns: [], loading: true, error: null });
+				fn({ campaigns: [], loading: true, loaded: false, error: null, metrics: {} });
 				return () => {};
 			});
 
@@ -73,23 +85,21 @@ describe('Campaigns List Page', () => {
 		});
 
 		it('calls create with form data', async () => {
-			vi.mocked(campaigns.create).mockResolvedValue({} as any);
+			vi.mocked(campaigns.create).mockResolvedValue({} as CampaignResponse);
 
 			render(Page);
 
 			await fireEvent.click(screen.getByRole('button', { name: /create campaign/i }));
-
 			await fireEvent.input(screen.getByLabelText(/name/i), { target: { value: 'New Campaign' } });
 			await fireEvent.input(screen.getByLabelText(/year/i), { target: { value: '2024' } });
-			await fireEvent.input(screen.getByLabelText(/region/i), { target: { value: '1' } });
-
+			await fireEvent.input(screen.getByLabelText(/region/i), { target: { value: 'DC' } });
 			await fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
 			await waitFor(() => {
 				expect(campaigns.create).toHaveBeenCalledWith({
 					name: 'New Campaign',
 					year: 2024,
-					regionId: 1
+					region: 'DC'
 				});
 			});
 		});
@@ -100,12 +110,12 @@ describe('Campaigns List Page', () => {
 			vi.mocked(campaigns.delete).mockResolvedValue(undefined);
 			vi.spyOn(window, 'confirm').mockReturnValue(true);
 
-			const mockCampaigns = [
-				{ id: 1, name: 'Campaign 1', year: 2024, regionId: 1, createdAt: new Date() }
+			const testCampaigns: CampaignResponse[] = [
+				{ id: '1', unique_name: 'c1', title: 'Campaign 1', year: '2024', region: 'Region 1', region_id: '1', created_at: new Date(), updated_at: null }
 			];
 
 			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
-				fn({ campaigns: mockCampaigns, loading: false, error: null });
+				fn({ campaigns: testCampaigns, loading: false, loaded: true, error: null, metrics: {} });
 				return () => {};
 			});
 
@@ -114,18 +124,18 @@ describe('Campaigns List Page', () => {
 			const deleteButton = await screen.findByText(/delete/i);
 			await fireEvent.click(deleteButton);
 
-			expect(campaigns.delete).toHaveBeenCalledWith(1);
+			expect(campaigns.delete).toHaveBeenCalledWith('1');
 		});
 
 		it('does not delete if user cancels', async () => {
 			vi.spyOn(window, 'confirm').mockReturnValue(false);
 
-			const mockCampaigns = [
-				{ id: 1, name: 'Campaign 1', year: 2024, regionId: 1, createdAt: new Date() }
+			const testCampaigns: CampaignResponse[] = [
+				{ id: '1', unique_name: 'c1', title: 'Campaign 1', year: '2024', region: 'Region 1', region_id: '1', created_at: new Date(), updated_at: null }
 			];
 
 			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
-				fn({ campaigns: mockCampaigns, loading: false, error: null });
+				fn({ campaigns: testCampaigns, loading: false, loaded: true, error: null, metrics: {} });
 				return () => {};
 			});
 

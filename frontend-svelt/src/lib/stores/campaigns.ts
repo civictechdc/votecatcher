@@ -6,14 +6,24 @@ import type { CampaignResponse } from '$lib/api/generated';
 interface CampaignsState {
 	campaigns: CampaignResponse[];
 	loading: boolean;
+	loaded: boolean;
 	error: string | null;
+	metrics: {
+		[campaignId: string]: {
+			total_signatures: number;
+			processed: number;
+			high_confidence: number;
+		};
+	};
 }
 
 function createCampaignsStore() {
 	const { subscribe, set, update } = writable<CampaignsState>({
 		campaigns: [],
-		loading: true,
-		error: null
+		loading: false,
+		loaded: false,
+		error: null,
+		metrics: {}
 	});
 
 	return {
@@ -26,7 +36,7 @@ function createCampaignsStore() {
 				const client = getApiClient();
 				const api = new CampaignsApi(client);
 				const result = await api.listCampaignsCampaignsGet({});
-				update((s) => ({ ...s, campaigns: result.campaigns, loading: false }));
+				update((s) => ({ ...s, campaigns: result.campaigns, loading: false, loaded: true }));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
 				update((s) => ({ ...s, error: message, loading: false, campaigns: [] }));
@@ -38,7 +48,7 @@ function createCampaignsStore() {
 		},
 
 		reset() {
-			set({ campaigns: [], loading: false, error: null });
+			set({ campaigns: [], loading: false, loaded: false, error: null, metrics: {} });
 		},
 
 		async create(data: { name: string; year: number; region?: string }): Promise<CampaignResponse> {
@@ -78,6 +88,22 @@ function createCampaignsStore() {
 				update((s) => ({ ...s, error: message, loading: false }));
 				throw error;
 			}
+		},
+
+		handleMetricsEvent(event: { campaign_id: string; total_signatures: number; processed: number; high_confidence: number }) {
+			if (!event.campaign_id) return;
+
+			update((s) => ({
+				...s,
+				metrics: {
+					...s.metrics,
+					[event.campaign_id]: {
+						total_signatures: event.total_signatures,
+						processed: event.processed,
+						high_confidence: event.high_confidence
+					}
+				}
+			}));
 		}
 	};
 }

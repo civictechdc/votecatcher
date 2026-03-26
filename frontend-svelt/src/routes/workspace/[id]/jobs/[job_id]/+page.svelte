@@ -168,14 +168,12 @@
 					</div>
 
 					{#if isActiveStatus($jobs.currentJob.status)}
-						<div class="flex items-center gap-2">
-							<div
-								class="h-2 w-2 rounded-full {$jobs.sse.connected ? 'bg-green-500' : 'bg-red-500'}"
-							></div>
-							<span class="text-sm text-slate-600">
-								{$jobs.sse.connected ? 'Connected' : 'Connecting...'}
-							</span>
-						</div>
+						{#if !$jobs.sse.connected}
+							<div class="flex items-center gap-2">
+								<div class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></div>
+								<span class="text-sm text-slate-600">Connecting...</span>
+							</div>
+						{/if}
 						<div class="pt-4">
 							<Button variant="danger" onclick={handleCancel}>Cancel Job</Button>
 						</div>

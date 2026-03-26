@@ -2,12 +2,16 @@ import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import { Pagination } from "./ui";
 
+const noop = () => {};
+
 describe("Pagination", () => {
   it("renders page size selector", () => {
     const { getByRole } = render(Pagination, {
       totalItems: 100,
       pageSize: 10,
       currentPage: 1,
+      onPageChange: noop,
+      onPageSizeChange: noop,
     });
 
     const select = getByRole("combobox");
@@ -19,6 +23,8 @@ describe("Pagination", () => {
       totalItems: 100,
       pageSize: 10,
       currentPage: 2,
+      onPageChange: noop,
+      onPageSizeChange: noop,
     });
 
     expect(getByText(/Page 2/)).toBeTruthy();
@@ -31,6 +37,7 @@ describe("Pagination", () => {
       pageSize: 10,
       currentPage: 1,
       onPageChange,
+      onPageSizeChange: noop,
     });
 
     const nextButton = getByText("Next");
@@ -45,6 +52,7 @@ describe("Pagination", () => {
       totalItems: 100,
       pageSize: 10,
       currentPage: 1,
+      onPageChange: noop,
       onPageSizeChange,
     });
 
@@ -59,6 +67,8 @@ describe("Pagination", () => {
       totalItems: 250,
       pageSize: 25,
       currentPage: 1,
+      onPageChange: noop,
+      onPageSizeChange: noop,
     });
 
     expect(getByText(/250/)).toBeTruthy();
@@ -69,6 +79,8 @@ describe("Pagination", () => {
       totalItems: 100,
       pageSize: 10,
       currentPage: 1,
+      onPageChange: noop,
+      onPageSizeChange: noop,
     });
 
     const prevButton = getByText("Previous") as HTMLButtonElement;
@@ -80,6 +92,8 @@ describe("Pagination", () => {
       totalItems: 100,
       pageSize: 10,
       currentPage: 10,
+      onPageChange: noop,
+      onPageSizeChange: noop,
     });
 
     const nextButton = getByText("Next") as HTMLButtonElement;

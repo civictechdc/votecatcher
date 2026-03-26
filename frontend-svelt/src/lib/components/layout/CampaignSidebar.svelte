@@ -82,14 +82,18 @@
 
 		<div class="flex-1 overflow-y-auto p-4">
 			<div class="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-				<button
-					onclick={toggleCampaignSwitcher}
-					class="flex w-full items-center justify-between text-sm font-medium text-slate-700"
-					aria-expanded={showCampaignSwitcher}
-				>
-					<span class="truncate">{campaignName}</span>
-					<ChevronDown class="h-4 w-4" />
-				</button>
+                <button
+                    onclick={toggleCampaignSwitcher}
+                    class="flex w-full items-center justify-between text-sm font-medium text-slate-700"
+                    aria-expanded={showCampaignSwitcher}
+                >
+                    {#if $campaigns.loading}
+                        <span class="animate-pulse bg-slate-200 rounded h-4 w-24 inline-block"></span>
+                    {:else}
+                        <span class="truncate">{campaignName}</span>
+                    {/if}
+                    <ChevronDown class="h-4 w-4" />
+                </button>
 
 				{#if showCampaignSwitcher}
 					<ul class="mt-2 max-h-48 overflow-y-auto rounded border border-slate-200 bg-white">

@@ -18,7 +18,7 @@ class TestEventBus:
 		bus = EventBus()
 		queue = bus.subscribe("campaign:123")
 
-		event = JobStatusEvent(campaign_id="123", job_id=1, status="MATCHING")
+		event = JobStatusEvent(campaign_id="123", job_id="1", status="MATCHING")
 		asyncio.run(bus.publish(event))
 
 		message = queue.get_nowait()
@@ -30,18 +30,18 @@ class TestEventBus:
 		bus = EventBus()
 		queue = bus.subscribe("job:42")
 
-		event = JobStatusEvent(job_id=42, status="MATCHING")
+		event = JobStatusEvent(job_id="42", status="MATCHING")
 		asyncio.run(bus.publish(event))
 
 		message = queue.get_nowait()
 		data = json.loads(message)
-		assert data["job_id"] == 42
+		assert data["job_id"] == "42"
 
 	def test_publish_to_global_topic(self):
 		bus = EventBus()
 		queue = bus.subscribe("global")
 
-		event = JobStatusEvent(job_id=1, status="MATCHING")
+		event = JobStatusEvent(job_id="1", status="MATCHING")
 		asyncio.run(bus.publish(event))
 
 		message = queue.get_nowait()
@@ -53,7 +53,7 @@ class TestEventBus:
 
 		bus.unsubscribe("campaign:123", queue)
 
-		event = JobStatusEvent(campaign_id="123", job_id=1, status="MATCHING")
+		event = JobStatusEvent(campaign_id="123", job_id="1", status="MATCHING")
 		asyncio.run(bus.publish(event))
 
 		with pytest.raises(asyncio.QueueEmpty):
@@ -64,7 +64,7 @@ class TestEventBus:
 		queue = bus.subscribe("global")
 
 		async def publish_from_here():
-			await bus.publish(JobStatusEvent(job_id=1, status="MATCHING"))
+			await bus.publish(JobStatusEvent(job_id="1", status="MATCHING"))
 
 		asyncio.run(publish_from_here())
 
@@ -72,11 +72,25 @@ class TestEventBus:
 		data = json.loads(message)
 		assert "test_event_bus" in data["source"]
 
-	def test_queue_full_drops_gracefully(self):
+	def test_queue_full_drops_gracefully(self, monkeypatch):
 		bus = EventBus()
-		bus.MAX_QUEUE_SIZE = 1
+		monkeypatch.setattr(bus, "MAX_QUEUE_SIZE", 1)
 
 		queue = bus.subscribe("global")
 		queue.put_nowait("{}")
 
-		asyncio.run(bus.publish(JobStatusEvent(job_id=1, status="MATCHING")))
+		asyncio.run(bus.publish(JobStatusEvent(job_id="1", status="MATCHING")))
+
+	def test_cleanup_removes_empty_topics(self):
+		bus = EventBus()
+		queue = bus.subscribe("campaign:123")
+		bus.unsubscribe("campaign:123", queue)
+
+		bus._cleanup_empty_topics()
+
+		assert "campaign:123" not in bus._subscribers
+
+	def test_skip_serialization_when_no_subscribers(self):
+		bus = EventBus()
+		asyncio.run(bus.publish(JobStatusEvent(job_id="1", status="MATCHING")))
+		assert "global" not in bus._subscribers

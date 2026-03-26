@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { jobs } from '$lib/stores/jobs';
 	import { campaigns } from '$lib/stores/campaigns';
@@ -32,7 +32,6 @@
 	let sortConfig = $state<SortConfig | null>({ key: 'created', direction: 'desc' });
 	let statusFilter = $state<StatusFilter>('all');
 	let hasScans = $state<boolean | null>(null);
-	let pollInterval: ReturnType<typeof setInterval> | null = null;
 
 	const API_BASE = (PUBLIC_API_URL || 'http://localhost:8080') + '/api';
 
@@ -152,26 +151,11 @@
 		}
 	}
 
-	const ACTIVE_JOB_STATES = ['NOT_STARTED', 'OCR_PENDING', 'OCR_STARTED', 'MATCHING_PENDING', 'MATCHING'];
-	const POLL_INTERVAL_MS = 30000;
-
 	onMount(() => {
 		jobs.fetchAll();
 		campaigns.fetchAll();
 		fetchProviders();
 		checkScans();
-		pollInterval = setInterval(() => {
-			const hasActiveJobs = $jobs.jobs.some(j => ACTIVE_JOB_STATES.includes(j.status));
-			if (hasActiveJobs) {
-				jobs.fetchAll();
-			}
-		}, POLL_INTERVAL_MS);
-	});
-
-	onDestroy(() => {
-		if (pollInterval) {
-			clearInterval(pollInterval);
-		}
 	});
 
 	const campaignJobs = $derived($jobs.jobs.filter(job => String(job.campaignId) === String(campaignId)));
@@ -295,17 +279,24 @@
 		<div class="flex items-center gap-4">
 			<div class="flex-1">
 				<label for="status-filter" class="sr-only">Filter by status</label>
-				<select
-					id="status-filter"
-					bind:value={statusFilter}
-					class="rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border text-sm"
-				>
-					<option value="all">All Statuses</option>
-					<option value="not_started">Not Started</option>
-					<option value="running">Running</option>
-					<option value="completed">Completed</option>
-					<option value="failed">Failed</option>
-				</select>
+				<div class="relative inline-block">
+					<select
+						id="status-filter"
+						bind:value={statusFilter}
+						class="min-w-40 appearance-none rounded-md border border-slate-300 bg-white px-3 py-2 pr-10 text-sm shadow-sm hover:border-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+					>
+						<option value="all">All Statuses</option>
+						<option value="not_started">Not Started</option>
+						<option value="running">Running</option>
+						<option value="completed">Completed</option>
+						<option value="failed">Failed</option>
+					</select>
+					<span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500">
+						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+						</svg>
+					</span>
+				</div>
 			</div>
 			{#if statusFilter !== 'all'}
 				<span class="text-sm text-slate-500">

@@ -20,6 +20,58 @@ You are a fullstack developer with expertise in Python, Svelte 5, and TypeScript
 4. **Document**: Update `openspec/PROGRESS.md` regularly
 5. **Record ADRs**: Create Architecture Decision Records in `openspec/adr/` for notable decisions
 
+### BDD/TDD: Red-Green-Refactor Cycle
+
+**MANDATORY for all implementation work.** No exceptions.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    RED-GREEN-REFACTOR                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│   1. RED: Write a failing test                              │
+│      • Test describes desired behavior                       │
+│      • Run test → FAIL (confirms test works)                │
+│      • No implementation code yet                            │
+│                                                              │
+│   2. GREEN: Make it pass (minimum code)                     │
+│      • Write ONLY enough code to pass                        │
+│      • Hardcoded values OK if test passes                    │
+│      • Run test → PASS                                       │
+│                                                              │
+│   3. REFACTOR: Clean up the code                            │
+│      • Remove hardcoding, improve structure                  │
+│      • Tests must still pass after each change               │
+│      • Run tests → PASS                                      │
+│                                                              │
+│   └──► Repeat for next behavior                             │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Verification Commands (after each cycle):**
+
+```bash
+# Backend: Run specific test file
+cd backend && uv run pytest tests/unit/events/test_event_bus.py -v
+
+# Backend: Run all tests
+cd backend && uv run pytest tests/unit tests/integration -v
+
+# Frontend: Type check
+cd frontend-svelt && bun run check
+```
+
+**Anti-Patterns to Avoid:**
+
+| ❌ Anti-Pattern | ✅ Correct Approach |
+|-----------------|---------------------|
+| Writing code first, then tests | Write test first, watch it fail |
+| Skipping RED phase | Always verify test fails initially |
+| Writing multiple tests at once | One test at a time, one assertion |
+| Refactoring without running tests | Run tests after every small change |
+| Claiming "done" without test run | Verify: `pytest` exit code 0 |
+
 ### Communication & Reporting
 
 **Report immediately to PROGRESS.md:**
@@ -50,8 +102,17 @@ You are a fullstack developer with expertise in Python, Svelte 5, and TypeScript
 | `writing-plans` | After design, before implementation | `npx openskills read writing-plans` |
 | `executing-plans` | When executing a saved plan | `npx openskills read executing-plans` |
 | `systematic-debugging` | When encountering bugs, test failures | `npx openskills read systematic-debugging` |
-| `test-driven-development` | Before implementing any feature | `npx openskills read test-driven-development` |
-| `verification-before-completion` | Before claiming work complete | `npx openskills read verification-before-completion` |
+| `test-driven-development` | **Before implementing ANY feature** | `npx openskills read test-driven-development` |
+| `verification-before-completion` | **Before claiming work complete** | `npx openskills read verification-before-completion` |
+
+**TDD Workflow (Mandatory):**
+
+1. Load `test-driven-development` skill before starting
+2. Write failing test → Run → Confirm FAIL (RED)
+3. Write minimum code to pass → Run → Confirm PASS (GREEN)
+4. Refactor → Run → Confirm PASS (REFACTOR)
+5. Load `verification-before-completion` skill before marking done
+6. Run full test suite → Exit code 0 required
 
 ### Sub-Agent Patterns
 

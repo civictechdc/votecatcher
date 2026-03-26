@@ -6,10 +6,14 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 import { randomUUID } from 'crypto';
 import type { UploadResult } from '$lib/workspace-types';
-import { api } from '$lib/api/client';
+import { api, type ApiResult } from '$lib/api/client';
 import { DEMO_MODE } from '$env/static/private';
 
 const SERVER_DEMO = DEMO_MODE === 'true';
+
+function getErrorMessage(result: ApiResult<unknown>): string {
+	return !result.ok ? result.error : 'Unknown error';
+}
 
 async function uploadPetitions(formData: FormData) {
 	const petitions = formData.getAll('petition');
@@ -38,7 +42,7 @@ async function uploadPetitions(formData: FormData) {
 		} else {
 			return new Response(
 				JSON.stringify({
-					detail: `Server error: ${response instanceof Error ? response.message : String(response)}`,
+					detail: `Server error: ${getErrorMessage(response)}`,
 				}),
 				{ status: 500 }
 			);
@@ -65,7 +69,7 @@ async function uploadVoterList(formData: FormData) {
 		} else {
 			return new Response(
 				JSON.stringify({
-					detail: `Server error: ${response instanceof Error ? response.message : String(response)}`,
+					detail: `Server error: ${getErrorMessage(response)}`,
 				}),
 				{ status: 500 }
 			);
@@ -102,51 +106,5 @@ export const POST: RequestHandler = async ({ request }) => {
 		return await uploadPetitions(form);
 	} else {
 		return await uploadVoterList(form);
-	}
-
-	const voterFile = form.get('file');
-	if (!voterFile) {
-		return new Response(
-			JSON.stringify({
-				detail: `File to upload is null.`,
-			}),
-			{ status: 500 }
-		);
-	}
-
-	try {
-		console.log(`File upload demo: ${SERVER_DEMO}`);
-		if (SERVER_DEMO) {
-			const response = await api.demoUploadVoters(form);
-
-			console.log(`File upload response status: ${response.ok}}`);
-
-			if (response.ok) {
-				return json(response, { status: 200 });
-			} else {
-				return new Response(
-					JSON.stringify({
-						detail: `Server error: ${response instanceof Error ? response.message : String(response)}`,
-					}),
-					{ status: 500 }
-				);
-			}
-		} else {
-			// Non-demo: still simulate short delay, but keep server-only op.
-			await new Promise((r) => setTimeout(r, 400));
-			const resp: UploadResult = {
-				success: true,
-				message: `Upload accepted (${files.length})`,
-				files,
-			};
-			return json(resp, { status: 200 });
-		}
-	} catch (error) {
-		return new Response(
-			JSON.stringify({
-				detail: `Server error: ${error instanceof Error ? error.message : String(error)}`,
-			}),
-			{ status: 500 }
-		);
 	}
 };

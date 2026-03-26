@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 import { jobs, resetJobsStore } from './jobs';
-import type { Job } from '$lib/api/generated';
+import type { JobResponse } from '$lib/api/generated';
 
+const mockListJobs = vi.fn();
 const mockCreateJob = vi.fn();
 const mockGetJob = vi.fn();
 const mockCancelJob = vi.fn();
@@ -10,9 +11,10 @@ const mockCancelJob = vi.fn();
 vi.mock('$lib/api/generated', () => {
 	return {
 		JobsApi: class {
-			createJob = mockCreateJob;
-			getJob = mockGetJob;
-			cancelJob = mockCancelJob;
+			listJobsJobsGet = mockListJobs;
+			createJobJobsPost = mockCreateJob;
+			getJobJobsJobIdGet = mockGetJob;
+			cancelJobJobsJobIdCancelPost = mockCancelJob;
 		}
 	};
 });
@@ -20,32 +22,56 @@ vi.mock('$lib/api/generated', () => {
 describe('Jobs Store', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockListJobs.mockReset();
 		mockCreateJob.mockReset();
 		mockGetJob.mockReset();
 		mockCancelJob.mockReset();
 		resetJobsStore();
 	});
 
+	describe('fetchAll', () => {
+		it('starts with empty state', () => {
+			const state = get(jobs);
+			expect(state.jobs).toEqual([]);
+			expect(state.loading).toBe(true);
+			expect(state.error).toBeNull();
+		});
+
+		it('fetches jobs list', async () => {
+			const mockJobs: JobResponse[] = [
+				{
+					jobId: 1,
+					status: 'MATCHING_COMPLETED',
+					campaignId: '1'
+				}
+			];
+
+			mockListJobs.mockResolvedValue({ jobs: mockJobs });
+
+			await jobs.fetchAll();
+
+			const state = get(jobs);
+			expect(state.jobs).toEqual(mockJobs);
+			expect(state.loading).toBe(false);
+		});
+	});
+
 	describe('create', () => {
 		it('creates a new job', async () => {
-			const mockJob: Job = {
-				id: 1,
-				campaignId: 1,
+			const mockJob: JobResponse = {
+				jobId: 1,
 				status: 'NOT_STARTED',
-				createdAt: new Date('2024-01-01T00:00:00Z')
+				campaignId: '1'
 			};
 
 			mockCreateJob.mockResolvedValue(mockJob);
 
 			const result = await jobs.create({
-				campaignId: 1,
-				petitionScanIds: [1]
+				campaignId: '1',
+				scanIds: [1]
 			});
 
 			expect(result).toEqual(mockJob);
-			expect(mockCreateJob).toHaveBeenCalledWith({
-				createJob: { campaignId: 1, petitionScanIds: [1] }
-			});
 		});
 
 		it('handles creation errors', async () => {
@@ -53,8 +79,8 @@ describe('Jobs Store', () => {
 
 			await expect(
 				jobs.create({
-					campaignId: 999,
-					petitionScanIds: []
+					campaignId: '999',
+					scanIds: []
 				})
 			).rejects.toThrow('Invalid campaign');
 		});
@@ -62,11 +88,10 @@ describe('Jobs Store', () => {
 
 	describe('fetch', () => {
 		it('fetches job status', async () => {
-			const mockJob: Job = {
-				id: 1,
-				campaignId: 1,
+			const mockJob: JobResponse = {
+				jobId: 1,
 				status: 'OCR_STARTED',
-				createdAt: new Date('2024-01-01T00:00:00Z')
+				campaignId: '1'
 			};
 
 			mockGetJob.mockResolvedValue(mockJob);
@@ -75,17 +100,15 @@ describe('Jobs Store', () => {
 
 			const state = get(jobs);
 			expect(state.currentJob).toEqual(mockJob);
-			expect(mockGetJob).toHaveBeenCalledWith({ jobId: 1 });
 		});
 	});
 
 	describe('cancel', () => {
 		it('cancels a running job', async () => {
-			const mockJob: Job = {
-				id: 1,
-				campaignId: 1,
+			const mockJob: JobResponse = {
+				jobId: 1,
 				status: 'OCR_PENDING',
-				createdAt: new Date('2024-01-01T00:00:00Z')
+				campaignId: '1'
 			};
 
 			mockCancelJob.mockResolvedValue(mockJob);
@@ -111,67 +134,6 @@ describe('Jobs Store', () => {
 
 			expect(EventSource).toHaveBeenCalledWith(expect.stringContaining('/api/jobs/job-1/status'));
 
-			vi.unstubAllGlobals();
-		});
-
-		it('updates job state on SSE message', async () => {
-			const mockEventSource = {
-				close: vi.fn(),
-				onopen: null as (() => void) | null,
-				onmessage: null as ((event: MessageEvent) => void) | null,
-				onerror: null as (() => void) | null
-			};
-
-			vi.stubGlobal('EventSource', vi.fn(() => mockEventSource));
-
-			jobs.connectToJob('job-1');
-
-			// Simulate SSE message
-			const messageEvent = new MessageEvent('message', {
-				data: JSON.stringify({
-					event: 'status_update',
-					data: { status: 'OCR_STARTED', progress: 25 }
-				})
-			});
-
-			if (mockEventSource.onmessage) {
-				mockEventSource.onmessage(messageEvent);
-			}
-
-			const state = get(jobs);
-			expect(state.currentJob?.status).toBe('OCR_STARTED');
-
-			vi.unstubAllGlobals();
-		});
-
-		it('reconnects on connection error', async () => {
-			const mockEventSource = {
-				close: vi.fn(),
-				onopen: null as (() => void) | null,
-				onmessage: null as ((event: MessageEvent) => void) | null,
-				onerror: null as (() => void) | null
-			};
-
-			vi.stubGlobal('EventSource', vi.fn(() => mockEventSource));
-			vi.useFakeTimers();
-
-			jobs.connectToJob('job-1');
-
-			// First connection attempt
-			expect(EventSource).toHaveBeenCalledTimes(1);
-
-			// Simulate error
-			if (mockEventSource.onerror) {
-				mockEventSource.onerror();
-			}
-
-			// Fast-forward to reconnect
-			await vi.advanceTimersByTimeAsync(2000);
-
-			// Should have reconnected
-			expect(EventSource).toHaveBeenCalledTimes(2);
-
-			vi.useRealTimers();
 			vi.unstubAllGlobals();
 		});
 

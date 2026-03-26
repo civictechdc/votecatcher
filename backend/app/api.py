@@ -23,6 +23,7 @@ from app.routers import (
 	campaign_router,
 	config_router,
 	demo_router,
+	events_router,
 	job_router,
 	provider_router,
 	region_router,
@@ -162,3 +163,4 @@ app.include_router(demo_router)
 app.include_router(config_router)
 app.include_router(provider_router)
 app.include_router(region_router.router)
+app.include_router(events_router.router)

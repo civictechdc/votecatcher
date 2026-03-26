@@ -1,7 +1,9 @@
 // Mock data to test MatchConfidenceIndicator component
 // This simulates the data that would come from the backend API
 
-export const mockMatchResponse = {
+import type { MatchResultResponse } from './api/response-types';
+
+export const mockMatchResponse: MatchResultResponse = {
 	column_data: [
 		{ name: 'OCR Name', position_idx: 0, data_type: 'object' },
 		{ name: 'OCR Address', position_idx: 1, data_type: 'object' },
@@ -81,6 +83,16 @@ export const mockMatchResponse = {
 			],
 		},
 	],
+	page_idx: 0,
+	max_row_count: 4,
+	total_pages: 1,
+	metadata: {
+		campaign_id: 'test-campaign',
+		started_at: new Date(),
+		completed_at: new Date(),
+		region: 'DC',
+		ocr_provider: 'test-provider',
+	},
 };
 
 export const expectedConfidenceLevels = [

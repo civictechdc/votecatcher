@@ -173,14 +173,14 @@ class TestEventBus:
     def test_publish_derives_campaign_topic(self):
         bus = EventBus()
         queue = bus.subscribe("campaign:123")
-        
+
         event = JobStatusEvent(
             campaign_id="123",
             job_id=1,
             status="MATCHING"
         )
         asyncio.run(bus.publish(event))
-        
+
         message = queue.get_nowait()
         data = json.loads(message)
         assert data["event_type"] == "job:status_changed"
@@ -189,13 +189,13 @@ class TestEventBus:
     def test_publish_derives_job_topic(self):
         bus = EventBus()
         queue = bus.subscribe("job:42")
-        
+
         event = JobStatusEvent(
             job_id=42,
             status="MATCHING"
         )
         asyncio.run(bus.publish(event))
-        
+
         message = queue.get_nowait()
         data = json.loads(message)
         assert data["job_id"] == 42
@@ -203,22 +203,22 @@ class TestEventBus:
     def test_publish_to_global_topic(self):
         bus = EventBus()
         queue = bus.subscribe("global")
-        
+
         event = JobStatusEvent(job_id=1, status="MATCHING")
         asyncio.run(bus.publish(event))
-        
+
         message = queue.get_nowait()
         assert message is not None
 
     def test_unsubscribe_removes_queue(self):
         bus = EventBus()
         queue = bus.subscribe("campaign:123")
-        
+
         bus.unsubscribe("campaign:123", queue)
-        
+
         event = JobStatusEvent(campaign_id="123", job_id=1, status="MATCHING")
         asyncio.run(bus.publish(event))
-        
+
         # Queue should not receive after unsubscribe
         with pytest.raises(Exception):
             queue.get_nowait()
@@ -226,12 +226,12 @@ class TestEventBus:
     def test_auto_source_detection(self):
         bus = EventBus()
         queue = bus.subscribe("global")
-        
+
         async def publish_from_here():
             await bus.publish(JobStatusEvent(job_id=1, status="MATCHING"))
-        
+
         asyncio.run(publish_from_here())
-        
+
         message = queue.get_nowait()
         data = json.loads(message)
         assert "test_event_bus" in data["source"]
@@ -239,10 +239,10 @@ class TestEventBus:
     def test_queue_full_drops_gracefully(self):
         bus = EventBus()
         bus.MAX_QUEUE_SIZE = 1
-        
+
         queue = bus.subscribe("global")
         queue.put_nowait("{}")  # Fill queue
-        
+
         # Should not raise
         asyncio.run(bus.publish(JobStatusEvent(job_id=1, status="MATCHING")))
 ```
@@ -265,32 +265,32 @@ from .event_types import BaseEvent
 
 class EventBus:
     """Typed publish-subscribe event bus with topic routing and auto-source detection."""
-    
+
     MAX_QUEUE_SIZE = 100
-    
+
     def __init__(self):
         self._subscribers: dict[str, set[asyncio.Queue]] = defaultdict(set)
         self._logger = structlog.get_logger()
-    
+
     def _infer_source(self, skip_frames: int = 2) -> str:
         """Derive source from callsite: 'module.function' or 'module.Class.method'"""
         frame = inspect.currentframe()
         for _ in range(skip_frames):
             frame = frame.f_back if frame else None
-        
+
         if not frame:
             return "unknown"
-        
+
         module = inspect.getmodule(frame)
         module_name = module.__name__.replace("app.", "") if module else "unknown"
         func_name = frame.f_code.co_name
-        
+
         if "self" in frame.f_locals:
             class_name = frame.f_locals["self"].__class__.__name__
             return f"{module_name}.{class_name}.{func_name}"
-        
+
         return f"{module_name}.{func_name}"
-    
+
     def _get_topics(self, event: BaseEvent) -> list[str]:
         """Derive topics from event attributes."""
         topics = ["global"]
@@ -299,14 +299,14 @@ class EventBus:
         if event.job_id:
             topics.append(f"job:{event.job_id}")
         return topics
-    
+
     async def publish(self, event: BaseEvent, source: str | None = None) -> None:
         """Publish event to all relevant topics."""
         if event.source is None:
             event.source = source or self._infer_source()
-        
+
         topics = self._get_topics(event)
-        
+
         self._logger.info(
             "event_published",
             event_id=event.event_id,
@@ -316,22 +316,22 @@ class EventBus:
             topics=topics,
             subscriber_count=sum(len(self._subscribers[t]) for t in topics)
         )
-        
+
         message = event.model_dump_json()
-        
+
         for topic in topics:
             for queue in list(self._subscribers.get(topic, set())):
                 try:
                     queue.put_nowait(message)
                 except asyncio.QueueFull:
                     self._logger.warning("queue_full_dropped", topic=topic)
-    
+
     def subscribe(self, topic: str) -> asyncio.Queue:
         """Subscribe to a specific topic. Returns queue for consumer."""
         queue: asyncio.Queue = asyncio.Queue(maxsize=self.MAX_QUEUE_SIZE)
         self._subscribers[topic].add(queue)
         return queue
-    
+
     def unsubscribe(self, topic: str, queue: asyncio.Queue) -> None:
         """Unsubscribe from topic."""
         self._subscribers[topic].discard(queue)
@@ -402,17 +402,17 @@ from abc import ABC, abstractmethod
 
 class EventTransport(ABC):
     """Abstract base for event transport implementations."""
-    
+
     @abstractmethod
     async def subscribe_to_campaign(self, campaign_id: str):
         """Subscribe to all events for a campaign."""
         ...
-    
+
     @abstractmethod
     async def subscribe_to_job(self, job_id: int):
         """Subscribe to all events for a job."""
         ...
-    
+
     @abstractmethod
     async def close(self):
         """Clean up subscriptions."""
@@ -456,12 +456,12 @@ class TestSSETransport:
     def test_create_transport(self):
         transport = SSETransport()
         assert transport is not None
-    
+
     def test_subscribe_to_campaign_returns_response(self):
         transport = SSETransport()
         response = await transport.subscribe_to_campaign("123")
         assert response.media_type == "text/event-stream"
-    
+
     def test_subscribe_to_job_returns_response(self):
         transport = SSETransport()
         response = await transport.subscribe_to_job(42)
@@ -485,16 +485,16 @@ from .base import EventTransport
 
 class SSETransport(EventTransport):
     """SSE transport for browser clients."""
-    
+
     def __init__(self):
         self._active_queues: set[asyncio.Queue] = set()
-    
+
     async def subscribe_to_campaign(self, campaign_id: str) -> StreamingResponse:
         """Create SSE stream for campaign events."""
         topic = f"campaign:{campaign_id}"
         queue = event_bus.subscribe(topic)
         self._active_queues.add(queue)
-        
+
         async def generate():
             try:
                 while True:
@@ -508,7 +508,7 @@ class SSETransport(EventTransport):
             finally:
                 event_bus.unsubscribe(topic, queue)
                 self._active_queues.discard(queue)
-        
+
         return StreamingResponse(
             generate(),
             media_type="text/event-stream",
@@ -518,13 +518,13 @@ class SSETransport(EventTransport):
                 "X-Accel-Buffering": "no"
             }
         )
-    
+
     async def subscribe_to_job(self, job_id: int) -> StreamingResponse:
         """Create SSE stream for job events."""
         topic = f"job:{job_id}"
         queue = event_bus.subscribe(topic)
         self._active_queues.add(queue)
-        
+
         async def generate():
             try:
                 while True:
@@ -538,13 +538,13 @@ class SSETransport(EventTransport):
             finally:
                 event_bus.unsubscribe(topic, queue)
                 self._active_queues.discard(queue)
-        
+
         return StreamingResponse(
             generate(),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "Connection": "keep-alive"}
         )
-    
+
     async def close(self):
         """Clean up all active connections."""
         for queue in self._active_queues:
@@ -580,6 +580,82 @@ __all__ = [
 ```bash
 git add backend/app/events/ backend/tests/unit/events/transports/
 git commit -m "feat(events): add SSE transport implementation"
+```
+
+---
+
+## Task 4.5: Event Bus Cleanup & Optimization
+
+**Priority:** High (memory leak risk)
+**Files:**
+- Modify: `backend/app/events/event_bus.py`
+- Modify: `backend/tests/unit/events/test_event_bus.py`
+
+**Issue:** Stale queues accumulate when SSE clients disconnect uncleanly (network failure, browser crash). Topic entries persist even with zero subscribers.
+
+**Step 1: Add cleanup on queue full detection**
+
+```python
+# In event_bus.py, add to publish():
+def _cleanup_empty_topics(self):
+    """Remove topics with no active subscribers."""
+    empty = [t for t, q in self._subscribers.items() if not q]
+    for topic in empty:
+        del self._subscribers[topic]
+```
+
+**Step 2: Add idle connection tracking**
+
+```python
+# Add to EventBus class:
+def __init__(self):
+    self._subscribers: dict[str, set[asyncio.Queue]] = defaultdict(set)
+    self._queue_timestamps: dict[int, float] = {}  # queue id -> last activity
+    self._logger = structlog.get_logger()
+
+async def publish(self, event: BaseEvent, source: str | None = None) -> None:
+    topics = self._get_topics(event)
+    subscriber_count = sum(len(self._subscribers[t]) for t in topics)
+
+    # Skip serialization if no subscribers
+    if subscriber_count == 0:
+        self._cleanup_empty_topics()
+        return
+
+    message = event.model_dump_json()
+    # ... rest of publish logic
+```
+
+**Step 3: Add test for cleanup**
+
+```python
+# In test_event_bus.py:
+def test_cleanup_removes_empty_topics(self):
+    bus = EventBus()
+    queue = bus.subscribe("campaign:123")
+    bus.unsubscribe("campaign:123", queue)
+
+    # Topic should be removed after cleanup
+    assert "campaign:123" not in bus._subscribers
+
+def test_skip_serialization_when_no_subscribers(self):
+    bus = EventBus()
+    # Publish with no subscribers - should not serialize
+    asyncio.run(bus.publish(JobStatusEvent(job_id=1, status="MATCHING")))
+    # Should complete without error
+```
+
+**Step 4: Run tests**
+
+```bash
+cd backend && uv run pytest tests/unit/events/test_event_bus.py -v
+```
+
+**Step 5: Commit**
+
+```bash
+git add backend/app/events/event_bus.py backend/tests/unit/events/test_event_bus.py
+git commit -m "fix(events): cleanup stale queues and skip serialization when no subscribers"
 ```
 
 ---
@@ -639,7 +715,7 @@ class TestEventsEndpoint:
         response = client.get("/api/events/campaigns/123/stream", stream=True)
         assert response.status_code == 200
         assert "text/event-stream" in response.headers["content-type"]
-    
+
     def test_job_stream_endpoint_exists(self):
         client = TestClient(app)
         response = client.get("/api/events/jobs/42/stream", stream=True)
@@ -726,6 +802,69 @@ git commit -m "feat(worker): publish events on job status changes"
 
 ---
 
+## Task 6.5: Metrics Event Publisher
+
+**Priority:** Medium (gap in event coverage)
+**Files:**
+- Modify: `backend/app/services/matching_service.py` or relevant metrics service
+- Modify: `backend/tests/unit/events/test_event_bus.py`
+
+**Issue:** `MetricsUpdatedEvent` is defined but never published. Dashboard won't receive real-time metric updates.
+
+**Step 1: Identify metrics update location**
+
+Find where campaign metrics are recalculated after matching:
+- `matching_service.py` - after batch matching completes
+- `metrics_service.py` - if metrics are computed separately
+- `worker.py` - after job completion
+
+**Step 2: Add metrics event publishing**
+
+```python
+# In the service that updates metrics (e.g., after matching batch):
+from app.events import event_bus, MetricsUpdatedEvent
+
+async def update_campaign_metrics(campaign_id: str):
+    # ... existing metrics calculation ...
+
+    await event_bus.publish(MetricsUpdatedEvent(
+        campaign_id=campaign_id,
+        total_signatures=total,
+        processed=processed,
+        high_confidence=high_confidence
+    ))
+```
+
+**Step 3: Add test**
+
+```python
+# In test_event_bus.py or new test file:
+def test_metrics_event_published():
+    bus = EventBus()
+    queue = bus.subscribe("campaign:123")
+
+    asyncio.run(bus.publish(MetricsUpdatedEvent(
+        campaign_id="123",
+        total_signatures=1000,
+        processed=500,
+        high_confidence=300
+    )))
+
+    message = queue.get_nowait()
+    data = json.loads(message)
+    assert data["event_type"] == "metrics:updated"
+    assert data["high_confidence"] == 300
+```
+
+**Step 4: Commit**
+
+```bash
+git add backend/app/services/ backend/tests/
+git commit -m "feat(metrics): publish MetricsUpdatedEvent on metric changes"
+```
+
+---
+
 ## Task 7: Frontend Event Store
 
 **Files:**
@@ -736,7 +875,7 @@ git commit -m "feat(worker): publish events on job status changes"
 
 ```typescript
 // frontend-svelt/src/lib/types/events.ts
-export type EventType = 
+export type EventType =
   | 'job:status_changed'
   | 'job:progress'
   | 'metrics:updated';
@@ -784,28 +923,28 @@ interface EventStore {
 
 function createEventStore(): EventStore {
   let eventSource: EventSource | null = null;
-  
+
   const status = writable<ConnectionStatus>('disconnected');
   const lastEvent = writable<BaseEvent | null>(null);
-  
+
   return {
     status: { subscribe: status.subscribe },
     lastEvent: { subscribe: lastEvent.subscribe },
-    
+
     connect(campaignId: string) {
       if (eventSource) eventSource.close();
-      
+
       status.set('connecting');
       const baseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
       eventSource = new EventSource(`${baseUrl}/api/events/campaigns/${campaignId}/stream`);
-      
+
       eventSource.onopen = () => status.set('connected');
       eventSource.onerror = () => status.set('error');
-      
+
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
         lastEvent.set(data);
-        
+
         switch (data.event_type) {
           case 'job:status_changed':
             jobs.handleStatusEvent(data as JobStatusEvent);
@@ -816,7 +955,7 @@ function createEventStore(): EventStore {
         }
       };
     },
-    
+
     disconnect() {
       if (eventSource) {
         eventSource.close();
@@ -835,6 +974,117 @@ export const events = createEventStore();
 ```bash
 git add frontend-svelt/src/lib/stores/events.ts frontend-svelt/src/lib/types/events.ts
 git commit -m "feat(frontend): add event store for SSE connection"
+```
+
+---
+
+## Task 7.5: Frontend Reconnection Resilience
+
+**Priority:** High (UX impact)
+**Files:**
+- Modify: `frontend-svelt/src/lib/stores/events.ts`
+
+**Issue:** No retry/backoff on connection error. Users see stale data after network hiccup.
+
+**Step 1: Add exponential backoff reconnection**
+
+```typescript
+// frontend-svelt/src/lib/stores/events.ts
+function createEventStore(): EventStore {
+  let eventSource: EventSource | null = null;
+  let reconnectAttempts = 0;
+  let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const BASE_DELAY = 1000; // 1 second
+
+  const status = writable<ConnectionStatus>('disconnected');
+  const lastEvent = writable<BaseEvent | null>(null);
+
+  function scheduleReconnect(campaignId: string) {
+    if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      status.set('error');
+      return;
+    }
+
+    const delay = BASE_DELAY * Math.pow(2, reconnectAttempts);
+    reconnectAttempts++;
+
+    reconnectTimeout = setTimeout(() => {
+      connect(campaignId);
+    }, delay);
+  }
+
+  return {
+    status: { subscribe: status.subscribe },
+    lastEvent: { subscribe: lastEvent.subscribe },
+
+    connect(campaignId: string) {
+      if (eventSource) eventSource.close();
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+
+      status.set('connecting');
+      const baseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
+      eventSource = new EventSource(`${baseUrl}/api/events/campaigns/${campaignId}/stream`);
+
+      eventSource.onopen = () => {
+        reconnectAttempts = 0; // Reset on successful connection
+        status.set('connected');
+      };
+
+      eventSource.onerror = () => {
+        eventSource?.close();
+        eventSource = null;
+        status.set('error');
+        scheduleReconnect(campaignId);
+      };
+
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        lastEvent.set(data);
+
+        switch (data.event_type) {
+          case 'job:status_changed':
+            jobs.handleStatusEvent(data as JobStatusEvent);
+            break;
+          case 'job:progress':
+            jobs.handleProgressEvent(data as JobProgressEvent);
+            break;
+          case 'metrics:updated':
+            campaigns.handleMetricsEvent(data);
+            break;
+        }
+      };
+    },
+
+    disconnect() {
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      reconnectAttempts = 0;
+      status.set('disconnected');
+    }
+  };
+}
+```
+
+**Step 2: Add connection status UI indicator (optional)**
+
+```svelte
+<!-- In +layout.svelte or component -->
+{#if $events.status === 'error'}
+  <div class="connection-banner warning">
+    Connection lost. Reconnecting...
+  </div>
+{/if}
+```
+
+**Step 3: Commit**
+
+```bash
+git add frontend-svelt/src/lib/stores/events.ts
+git commit -m "feat(frontend): add exponential backoff reconnection for SSE"
 ```
 
 ---
@@ -892,20 +1142,20 @@ git commit -m "feat(frontend): add event handlers to jobs store"
   import { onMount, onDestroy } from 'svelte';
   import { page } from '$app/stores';
   import { events } from '$lib/stores/events';
-  
+
   let { children } = $props();
   const campaignId = $derived($page.params.id);
-  
+
   onMount(() => {
     if (campaignId && campaignId !== 'demo') {
       events.connect(campaignId);
     }
   });
-  
+
   onDestroy(() => {
     events.disconnect();
   });
-  
+
   $effect(() => {
     if (campaignId && campaignId !== 'demo') {
       events.connect(campaignId);
@@ -988,22 +1238,22 @@ import { test, expect } from '@playwright/test';
 test.describe('Event Bus', () => {
   test('dashboard connects to event stream', async ({ page }) => {
     await page.goto('/workspace/campaigns');
-    
+
     // Create a campaign if needed
     // Navigate to dashboard
     await page.goto('/workspace/1');
-    
+
     // Check for SSE connection (look for network request or UI indicator)
     const response = await page.waitForResponse(
-      resp => resp.url().includes('/api/events/campaigns/') && 
+      resp => resp.url().includes('/api/events/campaigns/') &&
               resp.headers()['content-type']?.includes('text/event-stream'),
       { timeout: 5000 }
     ).catch(() => null);
-    
+
     // Connection may not complete in test, but endpoint should exist
     expect(response).toBeTruthy;
   });
-  
+
   test('job status updates via SSE', async ({ page }) => {
     // Setup: Create campaign, upload files
     // Start job
@@ -1065,19 +1315,24 @@ Refs: docs/plans/2026-03-24-event-bus-design.md"
 
 ## Summary
 
-| Task | Description | Effort |
-|------|-------------|--------|
-| 1 | Event Types | 30min |
-| 2 | Event Bus Core | 45min |
-| 3 | Transport Interface | 15min |
-| 4 | SSE Transport | 30min |
-| 5 | Events Router | 30min |
-| 6 | Worker Publisher | 30min |
-| 7 | Frontend Event Store | 30min |
-| 8 | Jobs Store Handlers | 15min |
-| 9 | Campaign Layout | 15min |
-| 10 | Remove Dashboard Polling | 15min |
-| 11 | Remove Jobs Polling | 15min |
-| 12 | E2E Test | 30min |
-| 13 | Final Verification | 30min |
-| **Total** | | **~5.5 hours** |
+| Task | Description | Effort | Status |
+|------|-------------|--------|--------|
+| 1 | Event Types | 30min | ✅ Done |
+| 2 | Event Bus Core | 45min | ✅ Done |
+| 3 | Transport Interface | 15min | ✅ Done |
+| 4 | SSE Transport | 30min | 📋 Planned |
+| **4.5** | **Event Bus Cleanup & Optimization** ⚠️ | **20min** | **📋 Planned** |
+| 5 | Events Router | 30min | 📋 Planned |
+| 6 | Worker Publisher | 30min | 📋 Planned |
+| **6.5** | **Metrics Event Publisher** ⚠️ | **20min** | **📋 Planned** |
+| 7 | Frontend Event Store | 30min | 📋 Planned |
+| **7.5** | **Frontend Reconnection Resilience** ⚠️ | **25min** | **📋 Planned** |
+| 8 | Jobs Store Handlers | 15min | 📋 Planned |
+| 9 | Campaign Layout | 15min | 📋 Planned |
+| 10 | Remove Dashboard Polling | 15min | 📋 Planned |
+| 11 | Remove Jobs Polling | 15min | 📋 Planned |
+| 12 | E2E Test | 30min | 📋 Planned |
+| 13 | Final Verification | 30min | 📋 Planned |
+| **Total** | | **~7 hours** | |
+
+⚠️ = Gap fix (added after code review)

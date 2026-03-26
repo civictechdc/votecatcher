@@ -97,8 +97,7 @@
 					return;
 				}
 				// store id from response (mock returns { id })
-				// @ts-expect-error
-				onboard.setCampaignId((res.data as any).id);
+				onboard.setCampaignId((res.data as { id: string }).id);
 			} else {
 				errorMsg = 'Please provide campaign name and year.';
 				return;
@@ -132,8 +131,8 @@
 				return;
 			}
 			const proc = await api.triggerProcessFile({
-				filePath: `${user.id}/${state.answers.campaign_id || 'no-campaign'}/${state.uploadedFile.name}`,
-				campaignId: state.answers.campaign_id || null
+				filePath: `${user?.id ?? 'unknown'}/${state.answers.campaign_id || 'no-campaign'}/${state.uploadedFile?.name ?? 'unknown'}`,
+				campaignId: state.answers.campaign_id ?? ''
 			});
 			onboard.setLoading(false);
 			if (!proc.ok) {

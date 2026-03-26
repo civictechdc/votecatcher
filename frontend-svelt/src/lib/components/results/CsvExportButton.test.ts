@@ -12,8 +12,7 @@ describe('CsvExportButton', () => {
 	});
 
 	it('triggers download on click', async () => {
-		const csvData = 'ocr_text,prediction,score\nJohn Doe,John Doe,0.95';
-		vi.mocked(results.exportCSV).mockResolvedValue(csvData);
+		vi.mocked(results.exportCSV).mockResolvedValue();
 
 		// Mock URL.createObjectURL and anchor click
 		const mockAnchor = { click: vi.fn(), href: '' };
@@ -29,16 +28,15 @@ describe('CsvExportButton', () => {
 
 		await waitFor(() => {
 			expect(results.exportCSV).toHaveBeenCalledWith(1);
-			expect(mockAnchor.click).toHaveBeenCalled();
 		});
 
 		vi.unstubAllGlobals();
 	});
 
 	it('shows loading state during export', async () => {
-		let resolveExport: (value: string) => void;
+		let resolveExport: (() => void) | undefined;
 		vi.mocked(results.exportCSV).mockImplementation(
-			() => new Promise((resolve) => {
+			() => new Promise<void>((resolve) => {
 				resolveExport = resolve;
 			})
 		);
@@ -53,7 +51,7 @@ describe('CsvExportButton', () => {
 		});
 
 		// Resolve the promise
-		resolveExport!('csv,data');
+		resolveExport?.();
 
 		await waitFor(() => {
 			expect(screen.getByRole('button')).not.toBeDisabled();

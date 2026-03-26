@@ -5,7 +5,7 @@
 	import { Button } from '$lib/components/ui';
 	import { PUBLIC_API_URL } from '$env/static/public';
 
-	let campaignId = $derived($page.params.id);
+	let campaignId = $derived($page.params.id ?? '');
 	const API_BASE = PUBLIC_API_URL || 'http://localhost:8080';
 
 	type Tab = 'voters' | 'petitions';
@@ -231,16 +231,17 @@
 
 	async function deleteScan() {
 		if (!scanToDelete) return;
+		const toDelete = scanToDelete;
 
 		try {
 			const response = await fetch(
-				`${API_BASE}/api/campaigns/${campaignId}/scans/${scanToDelete.id}`,
+				`${API_BASE}/api/campaigns/${campaignId}/scans/${toDelete.id}`,
 				{ method: 'DELETE' }
 			);
 
 			if (response.ok) {
-				existingScans = existingScans.filter(s => s.id !== scanToDelete.id);
-				messages = `"${scanToDelete.original_filename}" deleted.`;
+				existingScans = existingScans.filter(s => s.id !== toDelete.id);
+				messages = `"${toDelete.original_filename}" deleted.`;
 				messageType = 'success';
 			} else {
 				const errorData = await response.json();
@@ -284,10 +285,15 @@
 	<meta name="description" content="Upload voter lists and petitions for this campaign." />
 </svelte:head>
 
-<div class="space-y-6">
-	<div>
+	<div class="space-y-6">
 		<h1 class="text-3xl font-bold text-slate-900">Upload</h1>
-		<p class="mt-1 text-slate-600">{campaign?.unique_name || campaign?.title || 'Campaign'}</p>
+		<p class="mt-1 text-slate-600">
+			{#if $campaigns.loading}
+				<span class="animate-pulse bg-slate-200 rounded h-4 w-16 inline-block"></span>
+			{:else}
+				{campaign?.unique_name || campaign?.title || 'Campaign'}
+			{/if}
+		</p>
 	</div>
 
 	<div class="rounded-lg border border-slate-200 bg-white">
@@ -541,7 +547,6 @@
 			{/if}
 		</div>
 	</div>
-</div>
 
 {#if showDeleteConfirm}
 	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="dialog" aria-modal="true">

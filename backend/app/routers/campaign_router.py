@@ -192,6 +192,7 @@ class CampaignMetricsResponse(BaseModel):
 	low_confidence: int
 	progress_percentage: float
 	last_job: dict | None
+	voter_list_count: int | None
 
 
 class PetitionScanResponse(BaseModel):

@@ -5,7 +5,7 @@
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Table, LoadingState, Button, ErrorDisplay } from '$lib/components/ui';
 
-	let campaignId = $derived($page.params.id);
+	let campaignId = $derived($page.params.id ?? '');
 
 	const columns = [
 		{ key: 'confidence', label: 'Confidence', sortable: true },
