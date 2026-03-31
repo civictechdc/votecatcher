@@ -105,7 +105,9 @@ class GeminiOcrClient(OcrClient):
 		task_id = batch_job.metadata.get("task_id", "unknown")
 
 		logger.debug(
-			f"Gemini batch status: {batch_job.state.name} -> {STATUS_MAPPING.get(batch_job.state.name, MatchingStatus.OCR_PENDING)}"
+			"Gemini batch status: %s -> %s",
+			batch_job.state.name,
+			STATUS_MAPPING.get(batch_job.state.name, MatchingStatus.OCR_PENDING),
 		)
 
 		return OcrJobStatus(

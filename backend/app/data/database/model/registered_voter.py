@@ -12,7 +12,7 @@ class RegisteredVoter(SQLModel, table=True):
 
 	__tablename__ = "registered_voters"
 
-	id: int = Field(primary_key=True)
+	id: int | None = Field(default=None, primary_key=True)
 	region_id: UUID = Field(foreign_key="regions.id", index=True)
 	name_data: dict = Field(
 		default={}, sa_column=Column(JSON)

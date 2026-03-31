@@ -102,7 +102,10 @@ class LegacyOcrJob(SQLModel, table=True):
 	scan_id: uuid.UUID = Field(foreign_key="petition_scans.id")
 	match_task_id: uuid.UUID = Field(
 		foreign_key="matching_tasks.id",
-		description="A single match task can contain multiple OCR jobs for each batch of scans to process.",
+		description=(
+			"A single match task can contain multiple OCR jobs for "
+			"each batch of scans to process."
+		),
 	)
 
 

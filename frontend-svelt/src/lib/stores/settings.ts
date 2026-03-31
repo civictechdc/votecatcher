@@ -29,7 +29,7 @@ function createSettingsStore() {
 		initialized: false,
 		loading: false,
 		error: null,
-		settings: null
+		settings: null,
 	});
 
 	async function fetchSettings(): Promise<void> {
@@ -48,7 +48,7 @@ function createSettingsStore() {
 		}
 	}
 
-function clearError() {
+	function clearError() {
 		update((s) => ({ ...s, error: null }));
 	}
 
@@ -57,7 +57,7 @@ function clearError() {
 			initialized: false,
 			loading: false,
 			error: null,
-			settings: null
+			settings: null,
 		});
 	}
 
@@ -65,7 +65,7 @@ function clearError() {
 		subscribe,
 		fetchSettings,
 		clearError,
-		resetStore
+		resetStore,
 	};
 }
 

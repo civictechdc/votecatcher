@@ -6,7 +6,7 @@ describe('LoadingState Component', () => {
 	describe('Loading State', () => {
 		it('shows LoadingSpinner when loading=true', () => {
 			const { container } = render(LoadingState, {
-				loading: true
+				loading: true,
 			});
 			const spinner = container.querySelector('svg[role="status"]');
 			expect(spinner).toBeTruthy();
@@ -14,7 +14,7 @@ describe('LoadingState Component', () => {
 
 		it('hides content when loading=true', () => {
 			const { queryByText } = render(LoadingState, {
-				loading: true
+				loading: true,
 			});
 			expect(queryByText('Content')).toBeFalsy();
 		});
@@ -23,7 +23,7 @@ describe('LoadingState Component', () => {
 	describe('Error State', () => {
 		it('shows error when error prop provided', () => {
 			const { getByText } = render(LoadingState, {
-				error: 'Failed to load'
+				error: 'Failed to load',
 			});
 			expect(getByText('Failed to load')).toBeTruthy();
 		});
@@ -31,7 +31,7 @@ describe('LoadingState Component', () => {
 		it('shows error even when loading=true (error takes priority)', () => {
 			const { getByText, container } = render(LoadingState, {
 				loading: true,
-				error: 'Error occurred'
+				error: 'Error occurred',
 			});
 			expect(getByText('Error occurred')).toBeTruthy();
 			expect(container.querySelector('svg[role="status"]')).toBeFalsy();
@@ -41,7 +41,7 @@ describe('LoadingState Component', () => {
 	describe('Content State', () => {
 		it('shows content when loading=false and no error', () => {
 			const { container } = render(LoadingState, {
-				loading: false
+				loading: false,
 			});
 			expect(container.querySelector('.loading-spinner-container')).toBeFalsy();
 			expect(container.querySelector('[role="alert"]')).toBeFalsy();

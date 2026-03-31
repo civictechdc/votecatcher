@@ -71,9 +71,7 @@ test.describe('Color Contrast', () => {
 		await page.goto('/workspace/campaigns');
 		await page.waitForLoadState('domcontentloaded');
 
-		const contrastResults = await new AxeBuilder({ page })
-			.withRules(['color-contrast'])
-			.analyze();
+		const contrastResults = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze();
 
 		const violations = contrastResults.violations.filter((v) => v.id === 'color-contrast');
 		expect(violations).toEqual([]);
@@ -123,7 +121,7 @@ test.describe('Keyboard Navigation', () => {
 		await expect(ctaButton).toBeFocused();
 
 		await page.keyboard.press('Enter');
-		await page.waitForURL(url => url.pathname !== '/', { timeout: 5000 });
+		await page.waitForURL((url) => url.pathname !== '/', { timeout: 5000 });
 
 		expect(page.url()).not.toBe('http://localhost:5173/');
 	});

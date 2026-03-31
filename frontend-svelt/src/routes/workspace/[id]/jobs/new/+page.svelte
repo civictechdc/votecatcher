@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 	import { page } from '$app/stores';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { jobs } from '$lib/stores/jobs';
@@ -33,7 +34,7 @@
 	let scansLoading = $state(false);
 	let providers = $state<ProviderConfig[]>([]);
 	let providersLoading = $state(false);
-	let selectedScans = $state<Set<number>>(new Set());
+	let selectedScans = new SvelteSet<number>();
 	let formData = $state({
 		providerName: '',
 		providerModel: '',
@@ -88,7 +89,7 @@
 	}
 
 	function toggleScan(id: number) {
-		const newSet = new Set(selectedScans);
+		const newSet = new SvelteSet(selectedScans);
 		if (newSet.has(id)) {
 			newSet.delete(id);
 		} else {

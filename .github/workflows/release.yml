@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  generate-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install syft
+        run: curl -sfL https://raw.githubusercontent.com/anchore/syft/v1.42.3/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Generate SBOMs
+        run: just sbom
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.ref_name }}
+          path: |
+            sbom-backend.spdx.json
+            sbom-frontend.spdx.json
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            sbom-backend.spdx.json
+            sbom-frontend.spdx.json
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  edge-functions-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Lint and type-check Edge Functions
+        run: just edge-functions

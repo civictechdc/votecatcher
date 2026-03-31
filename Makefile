@@ -1,7 +1,7 @@
 # DO NOT EDIT - Generated from justfile by scripts/just-to-make.py
 # To update: python scripts/just-to-make.py > Makefile
 
-.PHONY: default install dev test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration dast duplication complexity dead-code test-frontend ci-sim sync-makefile
+.PHONY: default install dev dev-backend dev-frontend test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration security-test dast duplication complexity dead-code test-frontend sbom license-check edge-functions bundle-size benchmark ci-sim install-tools install-hooks sync-makefile
 
 default:
 	@just --list
@@ -11,19 +11,31 @@ install:
 	cd frontend-svelt && bun install
 
 dev:
-	docker-compose up --build
+	docker compose up --build
+
+dev-backend:
+	cd backend && uv run python -m app --env local
+
+dev-frontend:
+	cd frontend-svelt && bun run dev
 
 test:
 	cd backend && uv run pytest
 	cd frontend-svelt && bun run test:unit
 
 lint:
+	@echo "=== Linting all modified files ==="
 	cd backend && uv run ruff check .
+	cd backend && uv run ruff format --check .
 	cd frontend-svelt && bun run lint
+	cd frontend-svelt && bun run fmt:check
+	@echo "=== Linting complete ==="
 
 typecheck:
+	@echo "=== Typechecking all modified files ==="
 	cd backend && uv run basedpyright
 	cd frontend-svelt && bun run check
+	@echo "=== Typechecking complete ==="
 
 clean:
 	rm -rf backend/.pytest_cache backend/.ruff_cache backend/__pycache__ backend/**/__pycache__
@@ -96,7 +108,7 @@ sast-pr:
 
 sca:
 	osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses
-	trivy fs --severity CRITICAL,HIGH --scanners vuln,license .
+	trivy fs --severity CRITICAL,HIGH --scanners vuln,license --format json --output trivy-results.json .
 
 container-scan:
 	docker build -t votecatcher-backend ./backend
@@ -128,6 +140,11 @@ test-backend:
 test-backend-integration:
 	cd backend && uv run pytest tests/integration
 
+security-test:
+	@echo "=== Running Security Tests ==="
+	cd backend && uv run pytest tests/security/ -v --tb=short
+	@echo "=== Security Tests Complete ==="
+
 dast:
 	nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -json -o nuclei-results.json
 
@@ -145,6 +162,28 @@ dead-code:
 test-frontend:
 	cd frontend-svelt && bun run test:unit
 
+sbom:
+	syft backend/ -o spdx-json > sbom-backend.spdx.json
+	syft frontend-svelt/ -o spdx-json > sbom-frontend.spdx.json
+
+license-check:
+	@command -v osv-scanner >/dev/null 2>&1 || (echo "ERROR: osv-scanner not installed — run 'just install-tools'" && exit 1)
+	@osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses --format json --output /tmp/osv-licenses.json || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
+	@if [ ! -s /tmp/osv-licenses.json ]; then echo "ERROR: osv-scanner produced no output" && exit 1; fi
+	@if grep -q "AGPL\|GPL\|LGPL" /tmp/osv-licenses.json; then echo "ERROR: AGPL/GPL/LGPL licenses detected" && exit 1; fi
+	@echo "OK: No copyleft license violations"
+
+edge-functions:
+	cd supabase/functions && deno lint
+	cd supabase/functions && deno check */index.ts
+
+bundle-size:
+	cd frontend-svelt && bun run build
+	cd frontend-svelt && npx size-limit
+
+benchmark:
+	cd backend && uv run pytest tests/benchmarks/ --benchmark-only --benchmark-json=../benchmark-results.json
+
 ci-sim:
 	@echo "=== Lockfile Integrity ==="
 	cd backend && uv lock --check
@@ -155,15 +194,35 @@ ci-sim:
 	just typecheck-backend
 	@echo "=== Backend Tests ==="
 	just test-backend
+	@echo "=== Security Tests ==="
+	just security-test
 	@echo "=== Frontend Lint ==="
 	just lint-frontend
 	@echo "=== Frontend Typecheck ==="
 	just typecheck-frontend
+	@echo "=== Frontend Tests ==="
+	just test-frontend
 	@echo "=== Security Scan ==="
 	just security-scan
 	@echo "=== Docker Lint ==="
 	just docker-lint
 	@echo "=== CI Simulation Complete ==="
+
+install-tools:
+	@echo "=== Installing CI/Security Tools ==="
+	@command -v semgrep >/dev/null 2>&1 || pip install semgrep
+	@command -v osv-scanner >/dev/null 2>&1 || (command -v go >/dev/null 2>&1 && go install github.com/google/osv-scanner/cmd/osv-scanner@latest || echo "SKIP: osv-scanner (go not available)")
+	@command -v trivy >/dev/null 2>&1 || brew install trivy 2>/dev/null || echo "SKIP: trivy (brew not available)"
+	@command -v syft >/dev/null 2>&1 || brew install syft 2>/dev/null || echo "SKIP: syft (brew not available)"
+	@command -v hadolint >/dev/null 2>&1 || brew install hadolint 2>/dev/null || echo "SKIP: hadolint (brew not available)"
+	@command -v actionlint >/dev/null 2>&1 || brew install actionlint 2>/dev/null || echo "SKIP: actionlint (brew not available)"
+	@command -v jscpd >/dev/null 2>&1 || npm install -g jscpd 2>/dev/null || echo "SKIP: jscpd (npm not available)"
+	@command -v deno >/dev/null 2>&1 || echo "SKIP: deno (install from https://deno.land)"
+	@echo "=== Tool installation complete ==="
+
+install-hooks:
+	pre-commit install
+	pre-commit install --hook-type pre-push
 
 sync-makefile:
 	@python scripts/just-to-make.py > Makefile

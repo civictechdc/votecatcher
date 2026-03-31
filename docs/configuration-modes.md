@@ -12,6 +12,11 @@ Votecatcher supports multiple configuration modes for different use cases: produ
 | Demo | Pre-baked | In-memory | Presentations, stakeholder demos |
 | Testing | Mock/Real | SQLite (ephemeral) | Automated test suites |
 
+**Quick PostgreSQL Setup:**
+```bash
+make dev-postgres  # Starts Postgres container + runs migrations
+```
+
 ---
 
 ## Configuration Variables

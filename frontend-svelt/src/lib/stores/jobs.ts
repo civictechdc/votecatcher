@@ -37,19 +37,20 @@ function createJobsStore() {
 		currentJob: null,
 		loading: true,
 		error: null,
-		sse: { connected: false, reconnectAttempts: 0, error: null }
+		sse: { connected: false, reconnectAttempts: 0, error: null },
 	});
 
 	let eventSource: EventSource | null = null;
 	const maxRetries = 3;
 	const baseRetryDelay = 1000;
 
-	function handleSSEEvent(data: { event: string; data: any }) {
+	function handleSSEEvent(data: { event: string; data: unknown }) {
+		const payload = data.data as Record<string, unknown>;
 		switch (data.event) {
 			case 'status_update':
 				update((s) => ({
 					...s,
-					currentJob: { ...s.currentJob, ...data.data } as JobResponse
+					currentJob: { ...s.currentJob, ...payload } as JobResponse,
 				}));
 				break;
 
@@ -58,23 +59,23 @@ function createJobsStore() {
 					...s,
 					currentJob: {
 						...s.currentJob,
-						progress: (data.data.processed / data.data.total) * 100
-					} as JobResponse
+						progress: ((payload.processed as number) / (payload.total as number)) * 100,
+					} as JobResponse,
 				}));
 				break;
 
 			case 'job_complete':
 				update((s) => ({
 					...s,
-					currentJob: { ...s.currentJob, status: 'MATCHING_COMPLETED' } as JobResponse
+					currentJob: { ...s.currentJob, status: 'MATCHING_COMPLETED' } as JobResponse,
 				}));
 				break;
 
 			case 'job_error':
 				update((s) => ({
 					...s,
-					currentJob: { ...s.currentJob, status: data.data.status } as JobResponse,
-					sse: { ...s.sse, error: data.data.error }
+					currentJob: { ...s.currentJob, status: payload.status as string } as JobResponse,
+					sse: { ...s.sse, error: payload.error as string | null },
 				}));
 				break;
 		}
@@ -108,7 +109,7 @@ function createJobsStore() {
 					...s,
 					currentJob: job,
 					jobs: [job, ...s.jobs],
-					loading: false
+					loading: false,
 				}));
 				return job;
 			} catch (error) {
@@ -144,8 +145,8 @@ function createJobsStore() {
 				update((s) => ({
 					...s,
 					currentJob: job,
-					jobs: s.jobs.map((j) => j.jobId === id ? { ...j, status: job.status } : j),
-					loading: false
+					jobs: s.jobs.map((j) => (j.jobId === id ? { ...j, status: job.status } : j)),
+					loading: false,
 				}));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
@@ -161,7 +162,7 @@ function createJobsStore() {
 				const baseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
 				const response = await fetch(`${baseUrl}/api/jobs/${id}/start`, {
 					method: 'POST',
-					headers: { 'Content-Type': 'application/json' }
+					headers: { 'Content-Type': 'application/json' },
 				});
 				if (!response.ok) {
 					const error = await response.json();
@@ -171,8 +172,8 @@ function createJobsStore() {
 				update((s) => ({
 					...s,
 					currentJob: job,
-					jobs: s.jobs.map((j) => j.jobId === id ? { ...j, status: job.status } : j),
-					loading: false
+					jobs: s.jobs.map((j) => (j.jobId === id ? { ...j, status: job.status } : j)),
+					loading: false,
 				}));
 				return job;
 			} catch (error) {
@@ -185,9 +186,7 @@ function createJobsStore() {
 		updateJobInList(jobId: number, updates: Partial<JobResponse>) {
 			update((s) => ({
 				...s,
-				jobs: s.jobs.map((j) =>
-					j.jobId === jobId ? { ...j, ...updates } : j
-				),
+				jobs: s.jobs.map((j) => (j.jobId === jobId ? { ...j, ...updates } : j)),
 			}));
 		},
 
@@ -198,17 +197,20 @@ function createJobsStore() {
 		handleStatusEvent(event: { job_id: number; status: JobStatusEnum }) {
 			update((s) => ({
 				...s,
-				jobs: s.jobs.map((j) =>
-					j.jobId === event.job_id ? { ...j, status: event.status } : j
-				),
+				jobs: s.jobs.map((j) => (j.jobId === event.job_id ? { ...j, status: event.status } : j)),
 				currentJob:
 					s.currentJob?.jobId === event.job_id
 						? { ...s.currentJob, status: event.status }
-						: s.currentJob
+						: s.currentJob,
 			}));
 		},
 
-		handleProgressEvent(event: { job_id: number; percentage: number; processed: number; total: number }) {
+		handleProgressEvent(event: {
+			job_id: number;
+			percentage: number;
+			processed: number;
+			total: number;
+		}) {
 			update((s) => ({
 				...s,
 				jobs: s.jobs.map((j) =>
@@ -217,7 +219,7 @@ function createJobsStore() {
 				currentJob:
 					s.currentJob?.jobId === event.job_id
 						? { ...s.currentJob, progress: event.percentage }
-						: s.currentJob
+						: s.currentJob,
 			}));
 		},
 
@@ -232,7 +234,7 @@ function createJobsStore() {
 			eventSource.onopen = () => {
 				update((s) => ({
 					...s,
-					sse: { connected: true, reconnectAttempts: 0, error: null }
+					sse: { connected: true, reconnectAttempts: 0, error: null },
 				}));
 			};
 
@@ -256,7 +258,7 @@ function createJobsStore() {
 					} else {
 						return {
 							...s,
-							sse: { connected: false, reconnectAttempts: attempts, error: 'Connection lost' }
+							sse: { connected: false, reconnectAttempts: attempts, error: 'Connection lost' },
 						};
 					}
 				});
@@ -277,9 +279,9 @@ function createJobsStore() {
 				currentJob: null,
 				loading: false,
 				error: null,
-				sse: { connected: false, reconnectAttempts: 0, error: null }
+				sse: { connected: false, reconnectAttempts: 0, error: null },
 			});
-		}
+		},
 	};
 }
 

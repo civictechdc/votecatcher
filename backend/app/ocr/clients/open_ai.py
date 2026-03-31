@@ -55,7 +55,10 @@ class OpenAiOcrClient:
 		batch_idx: int,
 		page_total: int,
 	) -> str:
-		return f"cmpgnid-{campaign_id}__file-{payload.file_name}__page-{payload.page}__total-{page_total}__batch-{batch_idx}"
+		return (
+			f"cmpgnid-{campaign_id}__file-{payload.file_name}__page-"
+			f"{payload.page}__total-{page_total}__batch-{batch_idx}"
+		)
 
 	def _create_payload(
 		self, campaign_id: str, payloads: list[OcrMessageData]
@@ -134,9 +137,10 @@ class OpenAiOcrClient:
 			parent_folder=parent_folder,
 		)
 
-		batch_file: FileObject = await self.client.files.create(
-			file=open(file=jsonl_path, mode="rb"), purpose="batch"
-		)
+		with open(jsonl_path, mode="rb") as f:
+			batch_file: FileObject = await self.client.files.create(
+				file=f, purpose="batch"
+			)
 
 		batch: Batch = await self.client.batches.create(
 			input_file_id=batch_file.id,
@@ -194,7 +198,9 @@ class OpenAiOcrClient:
 		)
 
 		logger.debug(
-			f"Current batch status from open ai client: {batch.status} which maps to {STATUS_MAPPING[batch.status]}"
+			"Current batch status from open ai client: %s which maps to %s",
+			batch.status,
+			STATUS_MAPPING[batch.status],
 		)
 
 		return OcrJobStatus(
@@ -282,7 +288,7 @@ class OpenAiOcrClient:
 			with path.open(mode="r", encoding="utf-8") as f:
 				row_idx: int = 0
 				for line in f:
-					l: str = line.strip()
+					line_stripped: str = line.strip()
 					try:
 						(
 							campaign_id,
@@ -290,8 +296,10 @@ class OpenAiOcrClient:
 							page_num,
 							page_total,
 							entry_number,
-						) = self._extract_custom_id_parts(l)
-						for idx, item in enumerate(self._extract_response_data(l)):
+						) = self._extract_custom_id_parts(line_stripped)
+						for idx, item in enumerate(
+							self._extract_response_data(line_stripped)
+						):
 							result_item: OcrResult = OcrResult(
 								job_id=batch.id,
 								campaign_id=campaign_id,
@@ -307,7 +315,9 @@ class OpenAiOcrClient:
 							yield result_item
 					except Exception as parse_error:
 						logger.warning(
-							f"Failed to parse line {row_idx} for job {job_id}, skipping",
+							"Failed to parse line %s for job %s, skipping",
+							row_idx,
+							job_id,
 							error=str(parse_error),
 						)
 					row_idx += 1

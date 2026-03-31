@@ -13,7 +13,7 @@ vi.mock('$lib/api/generated', () => {
 			listCampaignsCampaignsGet = mockListCampaigns;
 			createCampaignCampaignsPost = mockCreateCampaign;
 			deleteCampaignCampaignsCampaignIdDelete = mockDeleteCampaign;
-		}
+		},
 	};
 });
 
@@ -71,8 +71,8 @@ describe('Campaigns Store', () => {
 					region: 'DC',
 					region_id: '1',
 					created_at: new Date('2024-01-01T00:00:00Z'),
-					updated_at: null
-				}
+					updated_at: null,
+				},
 			];
 
 			mockListCampaigns.mockResolvedValue({ campaigns: mockCampaigns });
@@ -107,7 +107,7 @@ describe('Campaigns Store', () => {
 				region: 'DC',
 				region_id: '1',
 				created_at: new Date('2024-01-01T00:00:00Z'),
-				updated_at: null
+				updated_at: null,
 			};
 
 			mockListCampaigns.mockResolvedValue({ campaigns: [] });
@@ -124,9 +124,7 @@ describe('Campaigns Store', () => {
 		it('handles create errors', async () => {
 			mockCreateCampaign.mockRejectedValue(new Error('Validation failed'));
 
-			await expect(
-				campaigns.create({ name: '', year: 2024 })
-			).rejects.toThrow('Validation failed');
+			await expect(campaigns.create({ name: '', year: 2024 })).rejects.toThrow('Validation failed');
 
 			const state = get(campaigns);
 			expect(state.error).toBe('Validation failed');
@@ -143,7 +141,7 @@ describe('Campaigns Store', () => {
 				region: 'DC',
 				region_id: '1',
 				created_at: new Date('2024-01-01T00:00:00Z'),
-				updated_at: null
+				updated_at: null,
 			};
 
 			mockListCampaigns.mockResolvedValue({ campaigns: [existingCampaign] });
@@ -166,7 +164,7 @@ describe('Campaigns Store', () => {
 				region: 'DC',
 				region_id: '1',
 				created_at: new Date('2024-01-01T00:00:00Z'),
-				updated_at: null
+				updated_at: null,
 			};
 
 			mockListCampaigns.mockResolvedValue({ campaigns: [existingCampaign] });

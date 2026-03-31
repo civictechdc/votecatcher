@@ -15,7 +15,7 @@ vi.mock('$lib/api/generated', () => {
 			createJobJobsPost = mockCreateJob;
 			getJobJobsJobIdGet = mockGetJob;
 			cancelJobJobsJobIdCancelPost = mockCancelJob;
-		}
+		},
 	};
 });
 
@@ -42,8 +42,8 @@ describe('Jobs Store', () => {
 				{
 					jobId: 1,
 					status: 'MATCHING_COMPLETED',
-					campaignId: '1'
-				}
+					campaignId: '1',
+				},
 			];
 
 			mockListJobs.mockResolvedValue({ jobs: mockJobs });
@@ -61,14 +61,14 @@ describe('Jobs Store', () => {
 			const mockJob: JobResponse = {
 				jobId: 1,
 				status: 'NOT_STARTED',
-				campaignId: '1'
+				campaignId: '1',
 			};
 
 			mockCreateJob.mockResolvedValue(mockJob);
 
 			const result = await jobs.create({
 				campaignId: '1',
-				scanIds: [1]
+				scanIds: [1],
 			});
 
 			expect(result).toEqual(mockJob);
@@ -80,7 +80,7 @@ describe('Jobs Store', () => {
 			await expect(
 				jobs.create({
 					campaignId: '999',
-					scanIds: []
+					scanIds: [],
 				})
 			).rejects.toThrow('Invalid campaign');
 		});
@@ -91,7 +91,7 @@ describe('Jobs Store', () => {
 			const mockJob: JobResponse = {
 				jobId: 1,
 				status: 'OCR_STARTED',
-				campaignId: '1'
+				campaignId: '1',
 			};
 
 			mockGetJob.mockResolvedValue(mockJob);
@@ -108,7 +108,7 @@ describe('Jobs Store', () => {
 			const mockJob: JobResponse = {
 				jobId: 1,
 				status: 'OCR_PENDING',
-				campaignId: '1'
+				campaignId: '1',
 			};
 
 			mockCancelJob.mockResolvedValue(mockJob);
@@ -125,10 +125,13 @@ describe('Jobs Store', () => {
 				close: vi.fn(),
 				onopen: null,
 				onmessage: null,
-				onerror: null
+				onerror: null,
 			};
 
-			vi.stubGlobal('EventSource', vi.fn(() => mockEventSource));
+			vi.stubGlobal(
+				'EventSource',
+				vi.fn(() => mockEventSource)
+			);
 
 			jobs.connectToJob('job-1');
 
@@ -139,10 +142,13 @@ describe('Jobs Store', () => {
 
 		it('disconnects cleanly', () => {
 			const mockEventSource = {
-				close: vi.fn()
+				close: vi.fn(),
 			};
 
-			vi.stubGlobal('EventSource', vi.fn(() => mockEventSource));
+			vi.stubGlobal(
+				'EventSource',
+				vi.fn(() => mockEventSource)
+			);
 
 			jobs.connectToJob('job-1');
 			jobs.disconnect();

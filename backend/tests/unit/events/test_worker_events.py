@@ -22,7 +22,7 @@ class TestWorkerEventPublishing:
 
 		event = MetricsUpdatedEvent(
 			campaign_id="abc123",
-			job_id="1",
+			job_id=1,
 			total_signatures=100,
 			processed=75,
 			high_confidence=50,
@@ -33,7 +33,7 @@ class TestWorkerEventPublishing:
 		data = json.loads(message)
 		assert data["event_type"] == EventType.METRICS_UPDATED.value
 		assert data["campaign_id"] == "abc123"
-		assert data["job_id"] == "1"
+		assert data["job_id"] == 1
 		assert data["total_signatures"] == 100
 		assert data["processed"] == 75
 		assert data["high_confidence"] == 50

@@ -11,8 +11,8 @@ test.describe('Error Handling', () => {
 		await page.goto('/workspace/nonexistent-page-12345');
 		await page.waitForLoadState('domcontentloaded');
 
-		const hasButton = await page.locator('button').count() > 0;
-		const hasLink = await page.locator('a').count() > 0;
+		const hasButton = (await page.locator('button').count()) > 0;
+		const hasLink = (await page.locator('a').count()) > 0;
 
 		expect(hasButton || hasLink).toBeTruthy();
 	});

@@ -27,7 +27,7 @@ function createResultsStore() {
 		pageSize: 50,
 		confidence: undefined,
 		loading: false,
-		error: null
+		error: null,
 	});
 
 	return {
@@ -44,7 +44,7 @@ function createResultsStore() {
 				error: null,
 				page,
 				pageSize,
-				confidence
+				confidence,
 			}));
 
 			try {
@@ -54,21 +54,21 @@ function createResultsStore() {
 					jobId,
 					page,
 					pageSize,
-					confidence: confidence ?? null
+					confidence: confidence ?? null,
 				});
 
 				update((s) => ({
 					...s,
 					results: response.results,
 					total: response.total,
-					loading: false
+					loading: false,
 				}));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
 				update((s) => ({
 					...s,
 					loading: false,
-					error: message
+					error: message,
 				}));
 			}
 		},
@@ -79,7 +79,7 @@ function createResultsStore() {
 
 			const response = await api.exportResultsCsvJobsJobIdResultsExportGet({
 				jobId,
-				confidence: confidence as 'HIGH' | 'MEDIUM' | 'LOW' | null ?? null
+				confidence: (confidence as 'HIGH' | 'MEDIUM' | 'LOW' | null) ?? null,
 			});
 
 			const blob = new Blob([response], { type: 'text/csv' });
@@ -105,9 +105,9 @@ function createResultsStore() {
 				pageSize: 50,
 				confidence: undefined,
 				loading: false,
-				error: null
+				error: null,
 			});
-		}
+		},
 	};
 }
 

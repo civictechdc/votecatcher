@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { get } from 'svelte/store';
 
 vi.mock('$env/static/public', () => ({
-	PUBLIC_API_URL: 'http://localhost:8000/api'
+	PUBLIC_API_URL: 'http://localhost:8000/api',
 }));
 
 vi.mock('$app/environment', () => ({
-	browser: false
+	browser: false,
 }));
 
 const mockFetch = vi.fn();
@@ -28,11 +28,12 @@ describe('featureFlags store', () => {
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve({
-					simulationMode: false,
-					betaFeatures: false,
-					debugMode: false
-				})
+				json: () =>
+					Promise.resolve({
+						simulationMode: false,
+						betaFeatures: false,
+						debugMode: false,
+					}),
 			});
 
 			await featureFlags.load();
@@ -50,18 +51,17 @@ describe('featureFlags store', () => {
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve({
-					simulationMode: false,
-					betaFeatures: false,
-					debugMode: false
-				})
+				json: () =>
+					Promise.resolve({
+						simulationMode: false,
+						betaFeatures: false,
+						debugMode: false,
+					}),
 			});
 
 			await featureFlags.load();
 
-			expect(mockFetch).toHaveBeenCalledWith(
-				'http://localhost:8000/api/config/features'
-			);
+			expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/api/config/features');
 		});
 	});
 
@@ -72,11 +72,12 @@ describe('featureFlags store', () => {
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve({
-					simulationMode: true,
-					betaFeatures: true,
-					debugMode: false
-				})
+				json: () =>
+					Promise.resolve({
+						simulationMode: true,
+						betaFeatures: true,
+						debugMode: false,
+					}),
 			});
 
 			await featureFlags.load();
@@ -107,7 +108,7 @@ describe('featureFlags store', () => {
 
 			mockFetch.mockResolvedValueOnce({
 				ok: false,
-				status: 500
+				status: 500,
 			});
 
 			await featureFlags.load();

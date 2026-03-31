@@ -45,7 +45,7 @@ jobs:
               - 'justfile'
 
   backend-lint:
-    needs: [lockfile-integrity, changes]
+    needs: [changes]
     if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -67,8 +67,8 @@ jobs:
         run: just lint-backend
 
   backend-typecheck:
-    needs: [lockfile-integrity, changes]
-    if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
+    needs: [backend-lint]
+    if: needs.backend-lint.result == 'success' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -89,8 +89,8 @@ jobs:
         run: just typecheck-backend
 
   backend-test:
-    needs: [lockfile-integrity, changes]
-    if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
+    needs: [backend-typecheck]
+    if: needs.backend-typecheck.result == 'success' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -126,7 +126,7 @@ jobs:
           fail_ci_if_error: true
 
   frontend-lint:
-    needs: [lockfile-integrity, changes]
+    needs: [changes]
     if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -155,8 +155,8 @@ jobs:
         run: just lint-frontend
 
   frontend-typecheck:
-    needs: [lockfile-integrity, changes]
-    if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+    needs: [frontend-lint]
+    if: needs.frontend-lint.result == 'success' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -184,8 +184,8 @@ jobs:
         run: just typecheck-frontend
 
   frontend-test:
-    needs: [lockfile-integrity, changes]
-    if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+    needs: [frontend-typecheck]
+    if: needs.frontend-typecheck.result == 'success' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -213,8 +213,8 @@ jobs:
         run: just test-frontend
 
   docker-build:
-    needs: [changes]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+    needs: [backend-test, frontend-test, security-test-backend, dast-smoke]
+    if: (needs.backend-test.result == 'success' && needs.frontend-test.result == 'success' && needs.dast-smoke.result == 'success') || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -273,3 +273,91 @@ jobs:
 
       - name: Check Makefile is in sync with justfile
         run: python scripts/just-to-make.py --check
+
+  security-test-backend:
+    needs: [backend-typecheck]
+    if: needs.backend-typecheck.result == 'success' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install dependencies
+        run: cd backend && uv sync --dev
+
+      - name: Run security tests
+        run: just security-test
+
+  dast-smoke:
+    needs: [backend-typecheck]
+    if: needs.backend-typecheck.result == 'success' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Cache nuclei binary
+        id: cache-nuclei
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/nuclei
+          key: nuclei-v3-go
+
+      - name: Install nuclei
+        if: steps.cache-nuclei.outputs.cache-hit != 'true'
+        run: go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+
+      - name: Install dependencies
+        run: cd backend && uv sync --dev
+
+      - name: Start backend
+        run: cd backend && uv run python -m app &
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./test.db"
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 15); do
+            if curl -sf http://localhost:8080/api/health > /dev/null 2>&1; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i/15)"
+            sleep 2
+          done
+          echo "ERROR: Backend did not become ready in 30 seconds"
+          exit 1
+
+      - name: Run DAST smoke test
+        run: ~/go/bin/nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -json -o nuclei-results.json
+
+      - name: Check for HIGH/CRITICAL findings
+        if: always()
+        run: |
+          if [ -f nuclei-results.json ]; then
+            HIGH_CRIT=$(grep -c '"severity":"critical"\|"severity":"high"' nuclei-results.json 2>/dev/null || echo "0")
+            if [ "$HIGH_CRIT" -gt 0 ]; then
+              echo "::error::$HIGH_CRIT HIGH/CRITICAL DAST findings detected"
+              exit 1
+            fi
+            echo "No HIGH/CRITICAL DAST findings"
+          else
+            echo "No nuclei results file — scan may have failed"
+            exit 1
+          fi

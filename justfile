@@ -21,22 +21,36 @@ install:
 
 # Start development servers via docker-compose
 dev:
-    docker-compose up --build
+    docker compose up --build
+
+# Start backend development server
+dev-backend:
+    cd backend && uv run python -m app --env local
+
+# Start frontend development server
+dev-frontend:
+    cd frontend-svelt && bun run dev
 
 # Run all tests (backend pytest, frontend vitest)
 test:
     cd backend && uv run pytest
     cd frontend-svelt && bun run test:unit
 
-# Run linters (ruff, oxlint)
+# Run linters (ruff, oxlint) - validates all modified files
 lint:
+    @echo "=== Linting all modified files ==="
     cd backend && uv run ruff check .
+    cd backend && uv run ruff format --check .
     cd frontend-svelt && bun run lint
+    cd frontend-svelt && bun run fmt:check
+    @echo "=== Linting complete ==="
 
-# Run type checkers (basedpyright, svelte-check)
+# Run type checkers (basedpyright, svelte-check) - validates all modified files
 typecheck:
+    @echo "=== Typechecking all modified files ==="
     cd backend && uv run basedpyright
     cd frontend-svelt && bun run check
+    @echo "=== Typechecking complete ==="
 
 # Clean build artifacts
 clean:
@@ -126,7 +140,7 @@ sast-pr:
 # Run SCA — dependency vulnerability + license scanning
 sca:
     osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses
-    trivy fs --severity CRITICAL,HIGH --scanners vuln,license .
+    trivy fs --severity CRITICAL,HIGH --scanners vuln,license --format json --output trivy-results.json .
 
 # Run container image scanning
 container-scan:
@@ -166,6 +180,12 @@ test-backend:
 test-backend-integration:
     cd backend && uv run pytest tests/integration
 
+# Run security tests (matches CI security-test-backend job)
+security-test:
+    @echo "=== Running Security Tests ==="
+    cd backend && uv run pytest tests/security/ -v --tb=short
+    @echo "=== Security Tests Complete ==="
+
 # Run DAST scan with nuclei (requires running backend at localhost:8080)
 dast:
     nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -json -o nuclei-results.json
@@ -188,6 +208,33 @@ dead-code:
 test-frontend:
     cd frontend-svelt && bun run test:unit
 
+# Generate SBOM (Software Bill of Materials) for backend and frontend
+sbom:
+    syft backend/ -o spdx-json > sbom-backend.spdx.json
+    syft frontend-svelt/ -o spdx-json > sbom-frontend.spdx.json
+
+# Check for AGPL/GPL/LGPL license violations
+license-check:
+    @command -v osv-scanner >/dev/null 2>&1 || (echo "ERROR: osv-scanner not installed — run 'just install-tools'" && exit 1)
+    @osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses --format json --output /tmp/osv-licenses.json || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
+    @if [ ! -s /tmp/osv-licenses.json ]; then echo "ERROR: osv-scanner produced no output" && exit 1; fi
+    @if grep -q "AGPL\|GPL\|LGPL" /tmp/osv-licenses.json; then echo "ERROR: AGPL/GPL/LGPL licenses detected" && exit 1; fi
+    @echo "OK: No copyleft license violations"
+
+# Lint and type-check Supabase Edge Functions
+edge-functions:
+    cd supabase/functions && deno lint
+    cd supabase/functions && deno check */index.ts
+
+# Build frontend and check bundle size
+bundle-size:
+    cd frontend-svelt && bun run build
+    cd frontend-svelt && npx size-limit
+
+# Run backend performance benchmarks
+benchmark:
+    cd backend && uv run pytest tests/benchmarks/ --benchmark-only --benchmark-json=../benchmark-results.json
+
 # Simulate full CI pipeline locally
 ci-sim:
     @echo "=== Lockfile Integrity ==="
@@ -199,15 +246,37 @@ ci-sim:
     just typecheck-backend
     @echo "=== Backend Tests ==="
     just test-backend
+    @echo "=== Security Tests ==="
+    just security-test
     @echo "=== Frontend Lint ==="
     just lint-frontend
     @echo "=== Frontend Typecheck ==="
     just typecheck-frontend
+    @echo "=== Frontend Tests ==="
+    just test-frontend
     @echo "=== Security Scan ==="
     just security-scan
     @echo "=== Docker Lint ==="
     just docker-lint
     @echo "=== CI Simulation Complete ==="
+
+# Install CI/security tools (idempotent — skips if already installed)
+install-tools:
+    @echo "=== Installing CI/Security Tools ==="
+    @command -v semgrep >/dev/null 2>&1 || pip install semgrep
+    @command -v osv-scanner >/dev/null 2>&1 || (command -v go >/dev/null 2>&1 && go install github.com/google/osv-scanner/cmd/osv-scanner@latest || echo "SKIP: osv-scanner (go not available)")
+    @command -v trivy >/dev/null 2>&1 || brew install trivy 2>/dev/null || echo "SKIP: trivy (brew not available)"
+    @command -v syft >/dev/null 2>&1 || brew install syft 2>/dev/null || echo "SKIP: syft (brew not available)"
+    @command -v hadolint >/dev/null 2>&1 || brew install hadolint 2>/dev/null || echo "SKIP: hadolint (brew not available)"
+    @command -v actionlint >/dev/null 2>&1 || brew install actionlint 2>/dev/null || echo "SKIP: actionlint (brew not available)"
+    @command -v jscpd >/dev/null 2>&1 || npm install -g jscpd 2>/dev/null || echo "SKIP: jscpd (npm not available)"
+    @command -v deno >/dev/null 2>&1 || echo "SKIP: deno (install from https://deno.land)"
+    @echo "=== Tool installation complete ==="
+
+# Install pre-commit hooks
+install-hooks:
+    pre-commit install
+    pre-commit install --hook-type pre-push
 
 # Sync Makefile from justfile (for Unix users)
 sync-makefile:

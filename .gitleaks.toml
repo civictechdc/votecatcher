@@ -33,7 +33,6 @@ regexes = [
     '''example-.*key''',
 ]
 paths = [
-    '''^Votecatcher/.*$''',
     '''^backend/tests/.*$''',
     '''^frontend-svelt/tests/.*$''',
     '''^\.agent/skills/.*$''',

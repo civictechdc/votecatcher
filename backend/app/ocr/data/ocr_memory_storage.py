@@ -24,7 +24,8 @@ class InMemoryOcrResultRepo(OcrResultRepository):
 	) -> Iterable[OcrResultItem]:
 		self._results[campaign_id] = results
 		logger.info(
-			f"Saved {len(list[OcrResultItem](results))} results for campaign {campaign_id}."
+			f"Saved {len(list[OcrResultItem](results))} results for "
+			f"campaign {campaign_id}."
 		)
 		return self._results[campaign_id]
 

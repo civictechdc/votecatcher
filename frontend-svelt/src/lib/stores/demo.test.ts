@@ -3,8 +3,8 @@ import { get } from 'svelte/store';
 
 vi.mock('./api-client', () => ({
 	getApiClient: vi.fn(() => ({
-		basePath: 'http://localhost:8000/api'
-	}))
+		basePath: 'http://localhost:8000/api',
+	})),
 }));
 
 import { demo, resetDemoStore, isDemoModeEnabled, setDemoMode } from './demo';
@@ -68,7 +68,7 @@ describe('Demo Store', () => {
 		it('should call reset API and clear state', async () => {
 			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				ok: true,
-				json: async () => ({ success: true, message: 'Demo data reset' })
+				json: async () => ({ success: true, message: 'Demo data reset' }),
 			});
 
 			await demo.resetData();
@@ -86,7 +86,7 @@ describe('Demo Store', () => {
 		it('should handle reset errors', async () => {
 			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				ok: false,
-				json: async () => ({ detail: 'Reset not allowed' })
+				json: async () => ({ detail: 'Reset not allowed' }),
 			});
 
 			await demo.resetData();
@@ -105,12 +105,12 @@ describe('Demo Store', () => {
 				message: 'Loaded demo session',
 				campaign_id: 'test-campaign-id',
 				voters_count: 10,
-				match_results_count: 50
+				match_results_count: 50,
 			};
 
 			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				ok: true,
-				json: async () => mockSession
+				json: async () => mockSession,
 			});
 
 			const result = await demo.loadPrebaked('dc-petition-2024');
@@ -129,12 +129,12 @@ describe('Demo Store', () => {
 				message: 'Loaded demo session',
 				campaign_id: 'test-campaign-id',
 				voters_count: 10,
-				match_results_count: 50
+				match_results_count: 50,
 			};
 
 			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				ok: true,
-				json: async () => mockSession
+				json: async () => mockSession,
 			});
 
 			await demo.loadPrebaked('dc-petition-2024');
@@ -146,14 +146,14 @@ describe('Demo Store', () => {
 				message: 'Loaded demo session',
 				campaign_id: 'test-campaign-id',
 				voters_count: 10,
-				match_results_count: 50
+				match_results_count: 50,
 			});
 		});
 
 		it('should handle load errors', async () => {
 			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				ok: false,
-				json: async () => ({ detail: 'Session not found' })
+				json: async () => ({ detail: 'Session not found' }),
 			});
 
 			await expect(demo.loadPrebaked('invalid')).rejects.toThrow('Session not found');
@@ -179,7 +179,7 @@ describe('Demo Store', () => {
 				loading: false,
 				error: null,
 				prebakedSessions: [],
-				loadedSession: null
+				loadedSession: null,
 			});
 		});
 	});

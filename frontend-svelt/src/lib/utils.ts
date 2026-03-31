@@ -1,7 +1,4 @@
-import type {
-	MatchResultResponse,
-	MatchColumnsResponse,
-} from '$lib/api/response-types';
+import type { MatchResultResponse } from '$lib/api/response-types';
 import type { MatchRow, MatchResults } from '$lib/workspace-types';
 import { MatchColumn } from '$lib/workspace-types';
 import { type ClassValue, clsx } from 'clsx';

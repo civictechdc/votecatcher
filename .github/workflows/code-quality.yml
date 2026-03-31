@@ -33,15 +33,52 @@ jobs:
 
       - name: Run duplication analysis
         run: just duplication
-        continue-on-error: true
 
       - name: Run complexity analysis
         run: just complexity
-        continue-on-error: true
 
       - name: Run dead code analysis
         run: just dead-code
-        continue-on-error: true
+
+      - name: Check quality thresholds
+        run: |
+          echo "=== Quality Threshold Check ==="
+          FAIL=0
+          if [ -f jscpd-report/index.html ]; then
+            DUP_PCT=$(grep -oP '\d+(?=%)' jscpd-report/index.html | head -1)
+            if [ -z "$DUP_PCT" ]; then
+              echo "::warning::Could not parse duplication percentage from jscpd report"
+              DUP_PCT=0
+            fi
+            echo "Duplication: ${DUP_PCT}%"
+            if [ "$DUP_PCT" -gt 20 ] 2>/dev/null; then
+              echo "::error::Duplication above 20% threshold: ${DUP_PCT}%"
+              FAIL=1
+            fi
+          else
+            echo "::error::jscpd report not found — duplication analysis may have failed"
+            FAIL=1
+          fi
+          if [ -f vulture-report.json ]; then
+            DEAD_COUNT=$(python3 -c "import json; print(len(json.load(open('vulture-report.json'))))" 2>/dev/null)
+            if [ -z "$DEAD_COUNT" ]; then
+              echo "::warning::Could not parse vulture report JSON"
+              DEAD_COUNT=0
+            fi
+            echo "Dead code items: ${DEAD_COUNT}"
+            if [ "$DEAD_COUNT" -gt 50 ] 2>/dev/null; then
+              echo "::error::Dead code items above 50 threshold: ${DEAD_COUNT}"
+              FAIL=1
+            fi
+          else
+            echo "::error::vulture report not found — dead code analysis may have failed"
+            FAIL=1
+          fi
+          if [ "$FAIL" -eq 1 ]; then
+            echo "::error::Quality thresholds exceeded — see annotations above"
+            exit 1
+          fi
+          echo "All quality thresholds passed"
 
       - name: Upload reports
         uses: actions/upload-artifact@v4
@@ -52,3 +89,33 @@ jobs:
             jscpd-report/
             vulture-report.json
             ts-prune-report.json
+
+      - name: Create failure issue
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const date = new Date().toISOString().split('T')[0];
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'nightly-quality',
+              state: 'open'
+            });
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: `Nightly quality check failed again on ${date}.\n[View run](${runUrl})`
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Nightly code quality check failed',
+                labels: ['nightly-quality'],
+                body: `The nightly code quality analysis failed on ${date}.\n\n[View run](${runUrl})\n\nCheck the quality thresholds in the workflow and address the issues.`
+              });
+            }

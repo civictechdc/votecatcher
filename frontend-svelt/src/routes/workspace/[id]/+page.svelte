@@ -58,7 +58,15 @@
 	}
 
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
-	const campaignJobs = $derived($jobs.jobs.filter(job => String(job.campaignId) === String(campaignId)));
+	const campaignJobs = $derived(
+		$jobs.jobs
+			.filter(job => String(job.campaignId) === String(campaignId))
+			.sort((a, b) => {
+				const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+				const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+				return bTime - aTime;
+			})
+	);
 	const highPercentage = $derived(metrics.totalSignatures > 0 ? (metrics.highConfidence / metrics.totalSignatures) * 100 : 0);
 	const hasCrops = $derived(metrics.totalSignatures > 0);
 	const hasMatchResults = $derived(metrics.processed > 0);
@@ -202,7 +210,10 @@
 							<a href="/workspace/{campaignId}/jobs/{job.jobId}" class="block rounded-lg border border-slate-200 p-3 hover:bg-slate-50">
 								<div class="flex items-center justify-between">
 									<span class="text-sm font-medium text-slate-900">Job #{job.jobId}</span>
-									<span class="text-xs text-slate-500">{job.createdAt ? new Date(job.createdAt).toLocaleDateString() : '-'}</span>
+									<div class="text-right">
+										<div class="text-xs text-slate-500">{job.createdAt ? new Date(job.createdAt).toLocaleDateString() : '-'}</div>
+										<div class="text-xs text-slate-400">{job.createdAt ? new Date(job.createdAt).toLocaleTimeString() : ''}</div>
+									</div>
 								</div>
 								<span class="mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium {job.status === 'MATCHING_COMPLETED' ? 'bg-green-100 text-green-800' : job.status.includes('FAILED') || job.status.includes('ERROR') ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
 									{job.status.replace(/_/g, ' ')}

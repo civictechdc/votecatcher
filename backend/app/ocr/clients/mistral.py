@@ -68,7 +68,10 @@ class MistralOcrClient(OcrClient):
 		for idx, payload in enumerate(payloads):
 			contents.append(
 				{
-					"custom_id": f"cmpgnid-{campaign_id}__file-{payload.file_name}__page-{payload.page}__total-{total_payload_size}__batch-{idx}",
+					"custom_id": (
+						f"cmpgnid-{campaign_id}__file-{payload.file_name}__page-"
+						f"{payload.page}__total-{total_payload_size}__batch-{idx}"
+					),
 					"method": "POST",
 					"url": "/v1/chat/completions",
 					"body": {
@@ -111,13 +114,14 @@ class MistralOcrClient(OcrClient):
 			parent_folder=parent_folder,
 		)
 
-		batch_file = client.files.upload(
-			file={
-				"file_name": f"batch_{campaign_id}.jsonl",
-				"content": open(jsonl_path, "rb"),
-			},
-			purpose="batch",
-		)
+		with open(jsonl_path, "rb") as f:
+			batch_file = client.files.upload(
+				file={
+					"file_name": f"batch_{campaign_id}.jsonl",
+					"content": f,
+				},
+				purpose="batch",
+			)
 
 		batch_job = client.batch.jobs.create(
 			input_file_id=batch_file.id,
@@ -164,7 +168,9 @@ class MistralOcrClient(OcrClient):
 		completed_at: int | None = batch_job.completed_at
 
 		logger.debug(
-			f"Mistral batch status: {batch_job.status} -> {STATUS_MAPPING.get(batch_job.status, MatchingStatus.OCR_PENDING)}"
+			"Mistral batch status: %s -> %s",
+			batch_job.status,
+			STATUS_MAPPING.get(batch_job.status, MatchingStatus.OCR_PENDING),
 		)
 
 		return OcrJobStatus(

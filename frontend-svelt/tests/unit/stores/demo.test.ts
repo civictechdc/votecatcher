@@ -2,13 +2,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { get } from 'svelte/store';
 
 vi.mock('$env/static/public', () => ({
-	PUBLIC_DEMO_MODE: 'true'
+	PUBLIC_DEMO_MODE: 'true',
 }));
 
 vi.mock('$lib/stores/api-client', () => ({
 	getApiClient: () => ({
-		basePath: 'http://localhost:8000/api'
-	})
+		basePath: 'http://localhost:8000/api',
+	}),
 }));
 
 const mockFetch = vi.fn();
@@ -40,7 +40,7 @@ describe('demo store', () => {
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve({ sessions: [] })
+				json: () => Promise.resolve({ sessions: [] }),
 			});
 
 			await demo.fetchPrebakedSessions();
@@ -72,7 +72,7 @@ describe('demo store', () => {
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve({ sessions: [] })
+				json: () => Promise.resolve({ sessions: [] }),
 			});
 
 			await demo.fetchPrebakedSessions();
@@ -81,8 +81,8 @@ describe('demo store', () => {
 				'http://localhost:8000/api/demo/sessions',
 				expect.objectContaining({
 					headers: expect.objectContaining({
-						'Content-Type': 'application/json'
-					})
+						'Content-Type': 'application/json',
+					}),
 				})
 			);
 		});
@@ -92,13 +92,11 @@ describe('demo store', () => {
 			const { demo } = await import('$lib/stores/demo');
 			demo.resetStore();
 
-			const mockSessions = [
-				{ id: 'session-1', name: 'Demo 1', description: 'Test session' }
-			];
+			const mockSessions = [{ id: 'session-1', name: 'Demo 1', description: 'Test session' }];
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve({ sessions: mockSessions })
+				json: () => Promise.resolve({ sessions: mockSessions }),
 			});
 
 			await demo.fetchPrebakedSessions();
@@ -115,7 +113,7 @@ describe('demo store', () => {
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve({})
+				json: () => Promise.resolve({}),
 			});
 
 			await demo.fetchPrebakedSessions();
@@ -137,12 +135,12 @@ describe('demo store', () => {
 				message: 'Session loaded',
 				campaign_id: '1',
 				voters_count: 10,
-				match_results_count: 50
+				match_results_count: 50,
 			};
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve(mockResponse)
+				json: () => Promise.resolve(mockResponse),
 			});
 
 			await demo.loadPrebaked('minimal');
@@ -150,7 +148,7 @@ describe('demo store', () => {
 			expect(mockFetch).toHaveBeenCalledWith(
 				'http://localhost:8000/api/demo/sessions/minimal/load',
 				expect.objectContaining({
-					method: 'POST'
+					method: 'POST',
 				})
 			);
 		});
@@ -166,12 +164,12 @@ describe('demo store', () => {
 				message: 'Session loaded',
 				campaign_id: '1',
 				voters_count: 10,
-				match_results_count: 50
+				match_results_count: 50,
 			};
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve(mockResponse)
+				json: () => Promise.resolve(mockResponse),
 			});
 
 			await demo.loadPrebaked('minimal');
@@ -188,7 +186,7 @@ describe('demo store', () => {
 
 			mockFetch.mockResolvedValueOnce({
 				ok: false,
-				json: () => Promise.resolve({ detail: 'Load failed' })
+				json: () => Promise.resolve({ detail: 'Load failed' }),
 			});
 
 			await expect(demo.loadPrebaked('minimal')).rejects.toThrow('Load failed');
@@ -206,7 +204,7 @@ describe('demo store', () => {
 			demo.resetStore();
 
 			mockFetch.mockResolvedValueOnce({
-				ok: true
+				ok: true,
 			});
 
 			await demo.resetData();
@@ -214,7 +212,7 @@ describe('demo store', () => {
 			expect(mockFetch).toHaveBeenCalledWith(
 				'http://localhost:8000/api/demo/reset',
 				expect.objectContaining({
-					method: 'POST'
+					method: 'POST',
 				})
 			);
 		});
@@ -228,7 +226,7 @@ describe('demo store', () => {
 			expect(get(demo).showResetConfirmation).toBe(true);
 
 			mockFetch.mockResolvedValueOnce({
-				ok: true
+				ok: true,
 			});
 
 			await demo.resetData();
@@ -245,7 +243,7 @@ describe('demo store', () => {
 
 			mockFetch.mockResolvedValueOnce({
 				ok: false,
-				json: () => Promise.resolve({ detail: 'Reset failed' })
+				json: () => Promise.resolve({ detail: 'Reset failed' }),
 			});
 
 			await demo.resetData();
@@ -303,9 +301,10 @@ describe('demo store', () => {
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve({
-					sessions: [{ id: '1', name: 'Test', description: '' }]
-				})
+				json: () =>
+					Promise.resolve({
+						sessions: [{ id: '1', name: 'Test', description: '' }],
+					}),
 			});
 
 			await demo.fetchPrebakedSessions();
@@ -325,7 +324,7 @@ describe('demo store', () => {
 				loading: false,
 				error: null,
 				prebakedSessions: [],
-				loadedSession: null
+				loadedSession: null,
 			});
 		});
 	});

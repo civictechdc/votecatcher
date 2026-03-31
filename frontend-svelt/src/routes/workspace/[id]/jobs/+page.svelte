@@ -202,13 +202,14 @@
 		}
 	}
 
-	async function confirmCancel() {
+		async function confirmCancel() {
 		if (jobToCancel) {
 			try {
 				await jobs.cancel(jobToCancel.id);
 				showCancelModal = false;
 				jobToCancel = null;
 			} catch (error) {
+				console.error('Failed to cancel job:', error);
 			}
 		}
 	}
@@ -224,6 +225,7 @@
 			});
 			showCreateModal = false;
 		} catch (error) {
+			console.error('Failed to create job:', error);
 		}
 	}
 

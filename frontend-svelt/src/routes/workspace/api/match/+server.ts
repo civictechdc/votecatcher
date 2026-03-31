@@ -30,7 +30,9 @@ const MATCH_TABLE_COLUMNS: MatchColumn[] = [
 	new MatchColumn('Registered Address'),
 	new MatchColumn('Address Distance'),
 	new MatchColumn('Matched Address', function (first, second) {
-		return String(first.predictedAddress ?? '').localeCompare(String(second.predictedAddress ?? ''));
+		return String(first.predictedAddress ?? '').localeCompare(
+			String(second.predictedAddress ?? '')
+		);
 	}),
 	new MatchColumn('Ward', function (first, second) {
 		return String(first.ward ?? '').localeCompare(String(second.ward ?? ''));

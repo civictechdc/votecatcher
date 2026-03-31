@@ -19,7 +19,7 @@ class BaseEvent(BaseModel):
 	trace_id: str | None = None
 	source: str | None = None
 	campaign_id: str | None = None
-	job_id: str | None = None
+	job_id: int | None = None
 
 
 class JobStatusEvent(BaseEvent):

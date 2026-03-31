@@ -12,7 +12,7 @@ describe('ErrorDisplay Component', () => {
 		it('renders with optional title', () => {
 			const { getByText } = render(ErrorDisplay, {
 				title: 'Error Title',
-				message: 'Error message'
+				message: 'Error message',
 			});
 			expect(getByText('Error Title')).toBeTruthy();
 			expect(getByText('Error message')).toBeTruthy();
@@ -37,7 +37,7 @@ describe('ErrorDisplay Component', () => {
 		it('renders with warning variant', () => {
 			const { container } = render(ErrorDisplay, {
 				message: 'Warning',
-				variant: 'warning'
+				variant: 'warning',
 			});
 			const alert = container.querySelector('[role="alert"]');
 			expect(alert?.classList.contains('bg-yellow-50')).toBe(true);
@@ -48,7 +48,7 @@ describe('ErrorDisplay Component', () => {
 		it('renders with info variant', () => {
 			const { container } = render(ErrorDisplay, {
 				message: 'Info',
-				variant: 'info'
+				variant: 'info',
 			});
 			const alert = container.querySelector('[role="alert"]');
 			expect(alert?.classList.contains('bg-blue-50')).toBe(true);
@@ -61,7 +61,7 @@ describe('ErrorDisplay Component', () => {
 		it('shows retry button when onRetry provided', () => {
 			const { getByRole } = render(ErrorDisplay, {
 				message: 'Error',
-				onRetry: () => {}
+				onRetry: () => {},
 			});
 			expect(getByRole('button', { name: /try again/i })).toBeTruthy();
 		});
@@ -75,7 +75,7 @@ describe('ErrorDisplay Component', () => {
 			const onRetry = vi.fn();
 			const { getByRole } = render(ErrorDisplay, {
 				message: 'Error',
-				onRetry
+				onRetry,
 			});
 			const button = getByRole('button', { name: /try again/i });
 			button.click();

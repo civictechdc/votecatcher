@@ -1,19 +1,19 @@
 //OCR Matching
 export enum MatchJobStatus {
-	NOT_STARTED = "not started",
-	PENDING = "pending",
-	OCR_PENDING = "ocr_pending",
-	OCR_IN_PROGRESS = "ocr extract",
-	MATCHING = "matching",
-	COMPLETED = "completed",
-	OCR_COMPLETED = "ocr_completed",
-	OCR_FAILED = "ocr_failed",
-	MATCHING_FAILED = "matching failed",
-	OCR_TIMED_OUT = "ocr timed out",
-	OCR_CANCELLED = "ocr cancelled",
-	CANCELLED = "cancelled",
-	TIMED_OUT = "timed out",
-	MISC_ERROR = "error",
+	NOT_STARTED = 'not started',
+	PENDING = 'pending',
+	OCR_PENDING = 'ocr_pending',
+	OCR_IN_PROGRESS = 'ocr extract',
+	MATCHING = 'matching',
+	COMPLETED = 'completed',
+	OCR_COMPLETED = 'ocr_completed',
+	OCR_FAILED = 'ocr_failed',
+	MATCHING_FAILED = 'matching failed',
+	OCR_TIMED_OUT = 'ocr timed out',
+	OCR_CANCELLED = 'ocr cancelled',
+	CANCELLED = 'cancelled',
+	TIMED_OUT = 'timed out',
+	MISC_ERROR = 'error',
 }
 
 export interface MatchingProgressResponse {
@@ -64,5 +64,5 @@ export interface MatchResultResponse {
 
 export interface MatchResponse {
 	results: MatchResultResponse;
-	stats: Record<string, any>;
+	stats: Record<string, unknown>;
 }

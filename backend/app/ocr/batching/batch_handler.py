@@ -52,7 +52,8 @@ def get_ocr_provider_config(
 				config = GeminiAiConfig(api_key=api_key, model=model_name)
 			case _:
 				raise ValueError(
-					f"Provider name {provider_name} is invalid. Please use an authorised OCR provider.",
+					f"Provider name {provider_name} is invalid. "
+					f"Please use an authorised OCR provider.",
 				)
 
 	if config is None:

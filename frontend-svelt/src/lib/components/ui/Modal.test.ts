@@ -8,8 +8,8 @@ describe('Modal Component', () => {
 			const { getByRole } = render(Modal, {
 				props: {
 					open: true,
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			expect(getByRole('dialog')).toBeTruthy();
 		});
@@ -18,8 +18,8 @@ describe('Modal Component', () => {
 			const { queryByRole } = render(Modal, {
 				props: {
 					open: false,
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			expect(queryByRole('dialog')).toBeNull();
 		});
@@ -29,8 +29,8 @@ describe('Modal Component', () => {
 				props: {
 					open: true,
 					title: 'Confirm Action',
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			expect(getByText('Confirm Action')).toBeTruthy();
 		});
@@ -39,8 +39,8 @@ describe('Modal Component', () => {
 			const { getByRole } = render(Modal, {
 				props: {
 					open: true,
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			const dialog = getByRole('dialog');
 			const contentArea = dialog.querySelector('.p-4');
@@ -54,8 +54,8 @@ describe('Modal Component', () => {
 				props: {
 					open: true,
 					size: 'sm',
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			const dialog = getByRole('dialog');
 			expect(dialog.classList.contains('max-w-sm')).toBe(true);
@@ -65,8 +65,8 @@ describe('Modal Component', () => {
 			const { getByRole } = render(Modal, {
 				props: {
 					open: true,
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			const dialog = getByRole('dialog');
 			expect(dialog.classList.contains('max-w-md')).toBe(true);
@@ -77,8 +77,8 @@ describe('Modal Component', () => {
 				props: {
 					open: true,
 					size: 'lg',
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			const dialog = getByRole('dialog');
 			expect(dialog.classList.contains('max-w-lg')).toBe(true);
@@ -90,8 +90,8 @@ describe('Modal Component', () => {
 			const { getByLabelText } = render(Modal, {
 				props: {
 					open: true,
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			expect(getByLabelText('Close modal')).toBeTruthy();
 		});
@@ -101,8 +101,8 @@ describe('Modal Component', () => {
 			const { getByLabelText } = render(Modal, {
 				props: {
 					open: true,
-					onClose
-				}
+					onClose,
+				},
 			});
 
 			const closeButton = getByLabelText('Close modal');
@@ -118,8 +118,8 @@ describe('Modal Component', () => {
 			const { container } = render(Modal, {
 				props: {
 					open: true,
-					onClose
-				}
+					onClose,
+				},
 			});
 
 			const backdrop = container.querySelector('.fixed.inset-0.z-50');
@@ -136,8 +136,8 @@ describe('Modal Component', () => {
 				props: {
 					open: true,
 					closeOnBackdrop: false,
-					onClose
-				}
+					onClose,
+				},
 			});
 
 			const backdrop = container.querySelector('.fixed.inset-0.z-50');
@@ -155,8 +155,8 @@ describe('Modal Component', () => {
 			render(Modal, {
 				props: {
 					open: true,
-					onClose
-				}
+					onClose,
+				},
 			});
 
 			await fireEvent.keyDown(document, { key: 'Escape' });
@@ -169,8 +169,8 @@ describe('Modal Component', () => {
 			render(Modal, {
 				props: {
 					open: true,
-					onClose
-				}
+					onClose,
+				},
 			});
 
 			await fireEvent.keyDown(document, { key: 'Enter' });
@@ -185,8 +185,8 @@ describe('Modal Component', () => {
 			const { getByRole } = render(Modal, {
 				props: {
 					open: true,
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			expect(getByRole('dialog')).toBeTruthy();
 		});
@@ -195,8 +195,8 @@ describe('Modal Component', () => {
 			const { getByRole } = render(Modal, {
 				props: {
 					open: true,
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			const dialog = getByRole('dialog');
 			expect(dialog.getAttribute('aria-modal')).toBe('true');
@@ -207,8 +207,8 @@ describe('Modal Component', () => {
 				props: {
 					open: true,
 					title: 'Test Modal',
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			const dialog = getByRole('dialog');
 			expect(dialog.getAttribute('aria-labelledby')).toBeTruthy();
@@ -218,8 +218,8 @@ describe('Modal Component', () => {
 			const { getByLabelText } = render(Modal, {
 				props: {
 					open: true,
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 			expect(getByLabelText('Close modal')).toBeTruthy();
 		});
@@ -238,11 +238,11 @@ describe('Modal Component', () => {
 			const { getByLabelText } = render(Modal, {
 				props: {
 					open: true,
-					onClose: () => {}
-				}
+					onClose: () => {},
+				},
 			});
 
-			await new Promise(resolve => setTimeout(resolve, 0));
+			await new Promise((resolve) => setTimeout(resolve, 0));
 
 			const closeButton = getByLabelText('Close modal');
 			expect(document.activeElement).toBe(closeButton);
@@ -253,11 +253,11 @@ describe('Modal Component', () => {
 			const { getByLabelText } = render(Modal, {
 				props: {
 					open: true,
-					onClose
-				}
+					onClose,
+				},
 			});
 
-			await new Promise(resolve => setTimeout(resolve, 0));
+			await new Promise((resolve) => setTimeout(resolve, 0));
 
 			const closeButton = getByLabelText('Close modal');
 			closeButton.focus();
@@ -272,11 +272,11 @@ describe('Modal Component', () => {
 			const { getByLabelText } = render(Modal, {
 				props: {
 					open: true,
-					onClose
-				}
+					onClose,
+				},
 			});
 
-			await new Promise(resolve => setTimeout(resolve, 0));
+			await new Promise((resolve) => setTimeout(resolve, 0));
 
 			const closeButton = getByLabelText('Close modal');
 			closeButton.focus();

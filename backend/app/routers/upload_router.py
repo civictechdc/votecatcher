@@ -10,7 +10,7 @@ from sqlmodel import Session
 
 from app.data.database.model.schema import Region
 from app.dependencies import get_session
-from app.files.file_service import FileService
+from app.files.file_service import FileService, FileValidationError
 
 logger = structlog.get_logger(__name__)
 
@@ -100,7 +100,7 @@ async def upload_voter_list(
 			imported_count=imported_count,
 		)
 
-	except ValueError as e:
+	except (ValueError, FileValidationError) as e:
 		logger.error("Voter list upload failed", error=str(e))
 		raise HTTPException(
 			status_code=status.HTTP_400_BAD_REQUEST,
@@ -156,7 +156,7 @@ async def upload_petition(
 			crop_count=crop_count,
 		)
 
-	except ValueError as e:
+	except (ValueError, FileValidationError) as e:
 		logger.error("Petition upload failed", error=str(e))
 		raise HTTPException(
 			status_code=status.HTTP_400_BAD_REQUEST,

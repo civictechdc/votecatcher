@@ -53,7 +53,10 @@ function createAuthStore() {
 				update((s) => ({ ...s, loading: false, error: res.error }));
 				return { ok: false, error: res.error };
 			}
-			const data = res.data as { user?: { id: string; email?: string }; twoFactorRequired?: boolean };
+			const data = res.data as {
+				user?: { id: string; email?: string };
+				twoFactorRequired?: boolean;
+			};
 			const user = data.user ?? null;
 			update((s) => ({
 				...s,

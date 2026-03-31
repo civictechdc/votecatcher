@@ -45,7 +45,7 @@ function createDemoStore() {
 		loading: false,
 		error: null,
 		prebakedSessions: [],
-		loadedSession: null
+		loadedSession: null,
 	});
 
 	async function fetchWithAuth(url: string, options?: RequestInit) {
@@ -55,8 +55,8 @@ function createDemoStore() {
 			...options,
 			headers: {
 				'Content-Type': 'application/json',
-				...options?.headers
-			}
+				...options?.headers,
+			},
 		});
 		if (!response.ok) {
 			const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
@@ -84,7 +84,7 @@ function createDemoStore() {
 				update((s) => ({
 					...s,
 					resetting: false,
-					showResetConfirmation: false
+					showResetConfirmation: false,
 				}));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
@@ -97,7 +97,7 @@ function createDemoStore() {
 
 			try {
 				const response = await fetchWithAuth(`/demo/sessions/${sessionId}/load`, {
-					method: 'POST'
+					method: 'POST',
 				});
 				const session: LoadedSessionInfo = await response.json();
 				update((s) => ({ ...s, loading: false, loadedSession: session }));
@@ -119,11 +119,17 @@ function createDemoStore() {
 					...s,
 					initialized: true,
 					prebakedSessions: data.sessions || [],
-					loading: false
+					loading: false,
 				}));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
-				update((s) => ({ ...s, initialized: true, error: message, loading: false, prebakedSessions: [] }));
+				update((s) => ({
+					...s,
+					initialized: true,
+					error: message,
+					loading: false,
+					prebakedSessions: [],
+				}));
 			}
 		},
 
@@ -139,9 +145,9 @@ function createDemoStore() {
 				loading: false,
 				error: null,
 				prebakedSessions: [],
-				loadedSession: null
+				loadedSession: null,
 			});
-		}
+		},
 	};
 }
 

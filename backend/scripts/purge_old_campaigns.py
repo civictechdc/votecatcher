@@ -57,14 +57,16 @@ def purge_old_campaigns(keep: int = 10, dry_run: bool = False) -> None:
 	cursor.execute(
 		f"""
         SELECT COUNT(*) FROM match_results
-        WHERE matcher_job_id IN (SELECT id FROM matcher_jobs WHERE campaign_id {not_in_clause})
+        WHERE matcher_job_id IN (SELECT id FROM matcher_jobs WHERE
+        campaign_id {not_in_clause})
     """,
 		keep_ids,
 	)
 	counts["match_results"] = cursor.fetchone()[0]
 
 	cursor.execute(
-		f"SELECT COUNT(*) FROM matcher_jobs WHERE campaign_id {not_in_clause}", keep_ids
+		f"SELECT COUNT(*) FROM matcher_jobs WHERE campaign_id {not_in_clause}",
+		keep_ids,
 	)
 	counts["matcher_jobs"] = cursor.fetchone()[0]
 
@@ -77,7 +79,8 @@ def purge_old_campaigns(keep: int = 10, dry_run: bool = False) -> None:
 	cursor.execute(
 		f"""
         SELECT COUNT(*) FROM petition_crops
-        WHERE scan_id IN (SELECT id FROM petition_scans WHERE campaign_id {not_in_clause})
+        WHERE scan_id IN (SELECT id FROM petition_scans WHERE campaign_id
+        {not_in_clause})
     """,
 		keep_ids,
 	)
@@ -99,7 +102,8 @@ def purge_old_campaigns(keep: int = 10, dry_run: bool = False) -> None:
 	cursor.execute(
 		f"""
         SELECT COUNT(*) FROM ocr_jobs
-        WHERE matcher_job_id IN (SELECT id FROM matcher_jobs WHERE campaign_id {not_in_clause})
+        WHERE matcher_job_id IN (SELECT id FROM matcher_jobs WHERE
+        campaign_id {not_in_clause})
     """,
 		keep_ids,
 	)
@@ -125,7 +129,8 @@ def purge_old_campaigns(keep: int = 10, dry_run: bool = False) -> None:
 	cursor.execute(
 		f"""
         DELETE FROM match_results
-        WHERE matcher_job_id IN (SELECT id FROM matcher_jobs WHERE campaign_id {not_in_clause})
+        WHERE matcher_job_id IN (SELECT id FROM matcher_jobs WHERE
+        campaign_id {not_in_clause})
     """,
 		keep_ids,
 	)
@@ -147,7 +152,8 @@ def purge_old_campaigns(keep: int = 10, dry_run: bool = False) -> None:
 	cursor.execute(
 		f"""
         DELETE FROM ocr_jobs
-        WHERE matcher_job_id IN (SELECT id FROM matcher_jobs WHERE campaign_id {not_in_clause})
+        WHERE matcher_job_id IN (SELECT id FROM matcher_jobs WHERE
+        campaign_id {not_in_clause})
     """,
 		keep_ids,
 	)
@@ -161,7 +167,8 @@ def purge_old_campaigns(keep: int = 10, dry_run: bool = False) -> None:
 	cursor.execute(
 		f"""
         DELETE FROM petition_crops
-        WHERE scan_id IN (SELECT id FROM petition_scans WHERE campaign_id {not_in_clause})
+        WHERE scan_id IN (SELECT id FROM petition_scans WHERE campaign_id
+        {not_in_clause})
     """,
 		keep_ids,
 	)

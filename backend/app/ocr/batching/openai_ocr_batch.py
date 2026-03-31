@@ -51,7 +51,10 @@ class OpenAiBatchClient(BatchOcrClient):
 	def _create_custom_id_format(
 		self, campaign_id: str, payload: Payload, batch_idx: int, page_total: int
 	) -> str:
-		return f"cmpgnid-{campaign_id}__file-{payload.file_name}__page-{payload.page + 1}__total-{page_total}__batch-{batch_idx}"
+		return (
+			f"cmpgnid-{campaign_id}__file-{payload.file_name}__page-"
+			f"{payload.page + 1}__total-{page_total}__batch-{batch_idx}"
+		)
 
 	def _extract_custom_id_parts(
 		self, response_line: str
@@ -81,7 +84,8 @@ class OpenAiBatchClient(BatchOcrClient):
 		request_batch: list[Payload] = request_data.batch_payloads
 		campaign_id: str = request_data.campaign_id
 
-		# TODO Calculate the sizes of each file group and adjust batch sizes according to api limits
+		# TODO Calculate the sizes of each file group and adjust batch sizes
+		# according to api limits
 
 		req_contents: list[Any] = []
 		for idx, request in enumerate[Payload](request_batch):
@@ -120,9 +124,8 @@ class OpenAiBatchClient(BatchOcrClient):
 			)
 
 		jsonl: Path = self._create_request_jsonl(req_contents, jsonl_path)
-		batch_file: FileObject = self.client.files.create(
-			file=open(jsonl, "rb"), purpose="batch"
-		)
+		with open(jsonl, "rb") as f:
+			batch_file: FileObject = self.client.files.create(file=f, purpose="batch")
 
 		batch: Batch = self.client.batches.create(
 			input_file_id=batch_file.id,
@@ -259,7 +262,7 @@ class OpenAiBatchClient(BatchOcrClient):
 				with file.open("r", encoding="utf-8") as f:
 					row_idx: int = 0
 					for line in f:
-						l: str = line.strip()
+						line_stripped: str = line.strip()
 						try:
 							(
 								campaign_id,
@@ -267,8 +270,8 @@ class OpenAiBatchClient(BatchOcrClient):
 								page_num,
 								page_total,
 								entry_number,
-							) = self._extract_custom_id_parts(l)
-							item: OCREntry = self._extract_response_data(l)
+							) = self._extract_custom_id_parts(line_stripped)
+							item: OCREntry = self._extract_response_data(line_stripped)
 							result_item: OcrResultItem = OcrResultItem(
 								campaign_id=campaign_id,
 								file_name=file_name,
@@ -280,7 +283,9 @@ class OpenAiBatchClient(BatchOcrClient):
 							yield result_item
 						except Exception as parse_error:
 							logger.warning(
-								f"Failed to parse line {row_idx} for job {job_id}, skipping",
+								"Failed to parse line %s for job %s, skipping",
+								row_idx,
+								job_id,
 								error=str(parse_error),
 							)
 						row_idx += 1

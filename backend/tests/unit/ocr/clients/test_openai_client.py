@@ -280,7 +280,9 @@ class TestGetOcrResults:
 
 		result_jsonl = json.dumps(
 			{
-				"custom_id": "cmpgnid-campaign-1__file-p1.pdf__page-1__total-2__batch-0",
+				"custom_id": (
+					"cmpgnid-campaign-1__file-p1.pdf__page-1__total-2__batch-0"
+				),
 				"response": {
 					"body": {
 						"choices": [

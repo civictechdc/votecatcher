@@ -1,6 +1,7 @@
 from typing import Any
 
-# In-memory 'database' for testing/debug purposes. Do not use to store large volumes of data
+# In-memory 'database' for testing/debug purposes. Do not use to store
+# large volumes of data
 
 _memory_db: dict[str, Any] | None = None
 

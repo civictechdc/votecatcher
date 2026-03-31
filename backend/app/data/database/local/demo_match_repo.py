@@ -5,7 +5,6 @@ from uuid import UUID
 
 import sqlalchemy as sa
 from sqlmodel import Field, Session, SQLModel, select
-from sqlmodel.orm.session import Session
 
 from app.data.database.model.schema import Campaign
 from app.matching.match_repository import (

@@ -30,37 +30,43 @@ export const handlers = [
 		if (featureFlags.isEnabled('mock:session:loggedOut')) {
 			return new HttpResponse(JSON.stringify({ error: 'Not authenticated' }), {
 				status: 401,
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
 			});
 		}
 		if (featureFlags.isEnabled('mock:session:loggedIn')) {
 			return new HttpResponse(
 				JSON.stringify({
-					user: { id: 'user_mock_1', email: 'dev@example.test' }
+					user: { id: 'user_mock_1', email: 'dev@example.test' },
 				}),
 				{
 					status: 200,
-					headers: { 'Content-Type': 'application/json' }
+					headers: { 'Content-Type': 'application/json' },
 				}
 			);
 		}
 		// Default: pass-through to real network (MSW config onUnhandledRequest: 'bypass')
 		return new HttpResponse(JSON.stringify({ error: 'Not authenticated' }), {
 			status: 401,
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
 		});
 	}),
 
 	// store API key endpoint (onboarding provider step)
 	http.post('/api/store-api-key', async ({ request }) => {
 		const body = await jsonSafe(request);
-		const provider = (body as any)?.provider ?? (body as any)?.name ?? null;
-		const apiKey = (body as any)?.apiKey ?? (body as any)?.api_key ?? null;
+		const provider =
+			(body as Record<string, unknown>)?.provider ??
+			(body as Record<string, unknown>)?.name ??
+			null;
+		const apiKey =
+			(body as Record<string, unknown>)?.apiKey ??
+			(body as Record<string, unknown>)?.api_key ??
+			null;
 
 		if (!provider || !apiKey) {
 			return new HttpResponse(JSON.stringify({ error: 'Missing provider or apiKey' }), {
 				status: 400,
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
 			});
 		}
 
@@ -71,7 +77,7 @@ export const handlers = [
 
 		return new HttpResponse(JSON.stringify({ ok: true }), {
 			status: 200,
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
 		});
 	}),
 
@@ -83,7 +89,7 @@ export const handlers = [
 		if (featureFlags.isEnabled('mock:createCampaign:missingFields')) {
 			return new HttpResponse(JSON.stringify({ error: 'Missing name or year (mocked)' }), {
 				status: 400,
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
 			});
 		}
 
@@ -94,47 +100,55 @@ export const handlers = [
 		if (featureFlags.isEnabled('mock:createCampaign:success')) {
 			return new HttpResponse(JSON.stringify({ id: 'mock_campaign_success_123' }), {
 				status: 200,
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
 			});
 		}
 
 		// Normal validation to mirror your server real behavior
-		if (!(body as any)?.name || !('year' in (body as any)) || (body as any)?.year === null || (body as any)?.year === undefined) {
+		if (
+			!(body as Record<string, unknown>)?.name ||
+			!('year' in (body as Record<string, unknown>)) ||
+			(body as Record<string, unknown>)?.year === null ||
+			(body as Record<string, unknown>)?.year === undefined
+		) {
 			return new HttpResponse(JSON.stringify({ error: 'Missing name or year' }), {
 				status: 400,
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
 			});
 		}
 
 		// Return an id similar to your server route
 		return new HttpResponse(JSON.stringify({ id: 'campaign_abc123' }), {
 			status: 200,
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
 		});
 	}),
 
 	// upload metadata
 	http.post('/api/upload-file', async ({ request }) => {
 		const body = await jsonSafe(request);
-		if (!(body as any)?.fileName || !('size' in (body as any))) {
+		if (
+			!(body as Record<string, unknown>)?.fileName ||
+			!('size' in (body as Record<string, unknown>))
+		) {
 			return new HttpResponse(JSON.stringify({ error: 'Missing file metadata' }), {
 				status: 400,
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
 			});
 		}
 		return new HttpResponse(JSON.stringify({ uploadId: 'upload_mock_1' }), {
 			status: 200,
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
 		});
 	}),
 
 	// trigger file processing
 	http.post('/api/process-voter-file', async ({ request }) => {
 		const body = await jsonSafe(request);
-		if (!(body as any)?.filePath) {
+		if (!(body as Record<string, unknown>)?.filePath) {
 			return new HttpResponse(JSON.stringify({ error: 'Missing filePath' }), {
 				status: 400,
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
 			});
 		}
 		// simulate processing delay
@@ -143,7 +157,7 @@ export const handlers = [
 		}
 		return new HttpResponse(JSON.stringify({ jobId: 'process_job_mock_1' }), {
 			status: 200,
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
 		});
-	})
+	}),
 ];

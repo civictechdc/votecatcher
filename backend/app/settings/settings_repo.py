@@ -66,18 +66,20 @@ def load_settings(
 	"""
 	Load settings from a TOML file and return the selected OCR engine configuration.
 
-
 	Args:
-	    custom_path (str): Path to the TOML file. Defaults to "settings.toml" if not provided.
+	    custom_path (str): Path to the TOML file. Defaults to "settings.toml"
+	        if not provided.
 
 	Returns:
-	    SettingsData: Container for application including the selected OCR engine configuration.
+	    SettingsData: Container for application including the selected OCR
+	        engine configuration.
 
 	Raises:
 	    ValueError: If the selected engine is not found in the settings file.
 	"""
 
-	# If settings are already loaded and reload is not requested, return the current settings
+	# If settings are already loaded and reload is not requested, return the
+	# current settings
 
 	# Load selected provider settings if the env variables are set
 	if enable_env_override:
@@ -105,9 +107,10 @@ def load_settings(
 	try:
 		with open(file, "rb") as f:
 			settings = tomllib.load(f)
-	except:
+	except Exception:
 		logger.info(
-			f"Could not load settings from {file}. Please ensure the file exists and is in the correct format."
+			f"Could not load settings from {file}. Please ensure the file "
+			f"exists and is in the correct format."
 		)
 		settings = {
 			"selected_ocr_engine": "open_ai",
@@ -144,7 +147,8 @@ def load_settings(
 			)
 		case _:
 			raise ValueError(
-				f"Could not find configuration for {selected_engine}. Please check your settings file."
+				f"Could not find configuration for {selected_engine}. Please "
+				f"check your settings file."
 			)
 
 	_current_settings.debug_mode = settings.get("debug_mode", False)

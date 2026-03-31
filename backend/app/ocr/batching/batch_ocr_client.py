@@ -94,6 +94,7 @@ class OcrJobMonitor(ABC):
 	@abstractmethod
 	def monitor_job(self, job_id: str) -> AsyncGenerator[BatchJobStatus]:
 		"""
-		Async generator yielding BatchJobStatus snapshots until the job reaches a terminal state.
+		Async generator yielding BatchJobStatus snapshots until the job
+		reaches a terminal state.
 		"""
 		pass

@@ -6,14 +6,14 @@ describe('SidebarNavItem Component', () => {
 	describe('Rendering', () => {
 		it('renders with label', () => {
 			const { getByText } = render(SidebarNavItem, {
-				props: { href: '/workspace', label: 'Dashboard' }
+				props: { href: '/workspace', label: 'Dashboard' },
 			});
 			expect(getByText('Dashboard')).toBeTruthy();
 		});
 
 		it('renders as anchor link', () => {
 			const { container } = render(SidebarNavItem, {
-				props: { href: '/workspace/campaigns', label: 'Campaigns' }
+				props: { href: '/workspace/campaigns', label: 'Campaigns' },
 			});
 			const link = container.querySelector('a');
 			expect(link).toBeTruthy();
@@ -27,8 +27,8 @@ describe('SidebarNavItem Component', () => {
 				props: {
 					href: '/workspace',
 					label: 'Dashboard',
-					isActive: true
-				}
+					isActive: true,
+				},
 			});
 			const link = container.querySelector('a');
 			expect(link?.classList.contains('bg-blue-50')).toBe(true);
@@ -40,8 +40,8 @@ describe('SidebarNavItem Component', () => {
 				props: {
 					href: '/workspace/campaigns',
 					label: 'Campaigns',
-					isActive: false
-				}
+					isActive: false,
+				},
 			});
 			const link = container.querySelector('a');
 			expect(link?.classList.contains('text-slate-700')).toBe(true);
@@ -55,8 +55,8 @@ describe('SidebarNavItem Component', () => {
 				props: {
 					href: '/workspace',
 					label: 'Dashboard',
-					icon: 'home'
-				}
+					icon: 'home',
+				},
 			});
 			const icon = container.querySelector('svg');
 			expect(icon).toBeTruthy();
@@ -69,8 +69,8 @@ describe('SidebarNavItem Component', () => {
 				props: {
 					href: '/workspace',
 					label: 'Dashboard',
-					isActive: true
-				}
+					isActive: true,
+				},
 			});
 			const link = container.querySelector('a');
 			expect(link?.getAttribute('aria-current')).toBe('page');
@@ -78,7 +78,7 @@ describe('SidebarNavItem Component', () => {
 
 		it('is keyboard accessible', async () => {
 			const { container } = render(SidebarNavItem, {
-				props: { href: '/workspace', label: 'Dashboard' }
+				props: { href: '/workspace', label: 'Dashboard' },
 			});
 			const link = container.querySelector('a');
 			expect(link?.getAttribute('tabindex')).not.toBe('-1');

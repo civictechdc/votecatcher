@@ -12,7 +12,7 @@ class MatchColumns:
 	ROW_NUMBER = "Row Number"
 	FILE_NAME = "Filename"
 
-	def COLUMNS(self) -> list[str]:
+	def columns(self) -> list[str]:
 		return [
 			self.OCR_NAME,
 			self.OCR_ADDRESS,

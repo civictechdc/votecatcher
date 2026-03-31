@@ -1,4 +1,3 @@
-from _io import BytesIO
 from dataclasses import dataclass
 from io import BytesIO
 
@@ -27,9 +26,10 @@ async def process_voter_data(voter_records_file: UploadFile) -> RegisteredVoters
 	df["Full Name"] = df[schema.name_fields].agg(" ".join, axis=1)
 	df["Full Address"] = df[schema.address_fields].agg(" ".join, axis=1)
 	(
-		f"{df['Street_Number']} {df['Street_Name']} {df['Street_Type']} {df['Street_Dir_Suffix']}"
+		f"{df['Street_Number']} {df['Street_Name']} {df['Street_Type']} "
+		f"{df['Street_Dir_Suffix']}"
 	)
-	DEMO_VOTER_RECORD_STATE = RegisteredVotersData(
+	DEMO_VOTER_RECORD_STATE = RegisteredVotersData(  # noqa: N806
 		voters_df=df.astype(
 			{
 				"Full Name": pd.StringDtype(),

@@ -291,6 +291,39 @@ These are used for:
 
 ## Database Management
 
+### SQLite vs PostgreSQL
+
+| Aspect | SQLite | PostgreSQL |
+|--------|--------|------------|
+| **Setup** | Zero config (file-based) | Requires server (Docker or native) |
+| **Use case** | Development, local testing | Production, large datasets, concurrent users |
+| **Concurrency** | Single writer | Multiple concurrent writers |
+| **Data persistence** | `./dev.db` file | Docker volume or external server |
+| **Performance** | Fine for <10K records | Better for large voter files |
+
+**Recommendation**: Start with SQLite for quick local development. Switch to PostgreSQL when:
+- Testing production-like scenarios
+- Working with large voter files (>10K records)
+- Multiple developers need shared database
+- Testing concurrent write scenarios
+
+### Quick Commands
+
+```bash
+# Start PostgreSQL for local dev (Docker required)
+just dev-postgres
+
+# Stop PostgreSQL (data preserved)
+just dev-postgres-stop
+
+# Reset everything
+just dev-postgres-clean
+```
+
+> **Note:** This project uses `just` as the primary task runner (works on macOS, Linux, Windows).
+> Install with: `brew install just` (macOS) or `winget install just` (Windows).
+> See `just --list` for all available commands. A generated `Makefile` is also available for Unix users who prefer `make`.
+
 ### SQLite (Development)
 
 ```bash
@@ -303,6 +336,26 @@ cd backend && uv run alembic upgrade head
 ```
 
 ### PostgreSQL (Production-like)
+
+**Option 1: Using Makefile (Recommended)**
+
+```bash
+# Start PostgreSQL, wait for ready, run migrations
+make dev-postgres
+
+# Stop PostgreSQL (data preserved)
+make dev-postgres-stop
+
+# Stop and remove all data
+make dev-postgres-clean
+```
+
+Then update `backend/.env.local`:
+```env
+DATABASE_URL=postgresql+psycopg://votecatcher:votecatcher_dev@localhost:5432/votecatcher
+```
+
+**Option 2: Manual Docker**
 
 ```bash
 # Start PostgreSQL with Docker

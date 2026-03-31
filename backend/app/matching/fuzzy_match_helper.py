@@ -14,7 +14,6 @@ import structlog
 from dotenv import load_dotenv
 from numpy import vectorize
 from pandas import DataFrame
-from pandas.core.frame import DataFrame
 from rapidfuzz import fuzz
 
 from app.matching.match_columns import MatchColumns
@@ -62,8 +61,8 @@ def create_select_voter_records(voter_records: pd.DataFrame) -> pd.DataFrame:
 	Creates a simplified DataFrame with full names and addresses from voter records.
 
 	Args:
-	    voter_records (pd.DataFrame): DataFrame containing voter information with columns for
-	        first name, last name, and address components.
+	    voter_records (pd.DataFrame): DataFrame containing voter information with
+	        columns for first name, last name, and address components.
 
 	Returns:
 	    pd.DataFrame: DataFrame with 'Full Name' and 'Full Address' columns
@@ -104,7 +103,8 @@ def score_fuzzy_match_slim(
 	    limit_ (int): The number of top matches to return.
 
 	Returns:
-	    list[tuple[str, int, int]]: The list of top matches with their scores and indices.
+	    list[tuple[str, int, int]]: The list of top matches
+	        with their scores and indices.
 	"""
 	logger.debug(f"Starting fuzzy matching for: {ocr_result[:30]}...")
 
@@ -135,10 +135,12 @@ def get_matched_name_address(
 	Args:
 	    ocr_name (str): The OCR result for the name.
 	    ocr_address (str): The OCR result for the address.
-	    select_voter_records (pd.DataFrame): The DataFrame containing voter records.
+	    select_voter_records (pd.DataFrame): The DataFrame containing voter
+	        records.
 
 	Returns:
-	    list[tuple[str, str, float, int]]: The list of top matches with their scores and indices.
+	    list[tuple[str, str, float, int]]: The list of top matches with their
+	        scores and indices.
 	"""
 	logger.debug(f"Matching - Name: {ocr_name[:30]}... Address: {ocr_address[:30]}...")
 
@@ -193,7 +195,8 @@ def create_ocr_matched_df(
 
 	Args:
 	    ocr_df (pd.DataFrame): The DataFrame containing OCR results.
-	    select_voter_records (pd.DataFrame): The DataFrame containing voter records.
+	    select_voter_records (pd.DataFrame): The DataFrame containing voter
+	        records.
 	    threshold (float): The threshold for matching.
 	    st_bar (st.progress): The progress bar to display.
 
@@ -201,7 +204,8 @@ def create_ocr_matched_df(
 	    pd.DataFrame: The DataFrame with matched name and address.
 	"""
 	logger.info(
-		f"Starting matching process for {len(ocr_df)} records with threshold {threshold}"
+		f"Starting matching process for {len(ocr_df)} records "
+		f"with threshold {threshold}"
 	)
 
 	total_records: int = len(ocr_df)
@@ -267,7 +271,10 @@ def create_ocr_matched_df(
 		if st_bar:
 			st_bar.progress(
 				batch_start / len(ocr_df),
-				text=f"Processing batch {batch_start} out of {len(ocr_df) // batch_size + 1} batches",
+				text=(
+					f"Processing batch {batch_start} out of "
+					f"{len(ocr_df) // batch_size + 1} batches"
+				),
 			)
 
 	logger.info("Creating final DataFrame")
@@ -291,7 +298,8 @@ def create_ocr_matched_df(
 		f"size of voter records: {len(ocr_df)}\nsize of fuzzy match {len(match_df)}"
 	)
 	logger.debug(
-		f"size of voter records columns: {len(ocr_df.columns)}\nsize of fuzzy match {len(match_df.columns)}"
+		f"size of voter records columns: {len(ocr_df.columns)}\n"
+		f"size of fuzzy match {len(match_df.columns)}"
 	)
 
 	logger.debug("OCR table")
@@ -307,7 +315,7 @@ def create_ocr_matched_df(
 	)
 
 	# Reorder columns
-	column_order: list[str] = match_columns.COLUMNS()
+	column_order: list[str] = match_columns.columns()
 
 	# Reset index to avoid including it in the output
 	result_df = result_df[column_order].reset_index(drop=True)

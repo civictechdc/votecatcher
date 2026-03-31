@@ -42,6 +42,8 @@ class MatcherJob(SQLModel, table=True):
 		default=None, sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)}
 	)
 	ended_on: datetime | None = Field(default=None)
+	ocr_duration_seconds: float | None = Field(default=None)
+	matching_duration_seconds: float | None = Field(default=None)
 	error_data: dict = Field(default={}, sa_column=Column(JSON))
 	success_data: dict = Field(default={}, sa_column=Column(JSON))
 	started_by: int | None = Field(default=None, foreign_key="users.id")

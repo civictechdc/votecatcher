@@ -11,7 +11,7 @@
 	}
 
 	interface Props {
-		rows?: Record<string, any>[];
+		rows?: Record<string, unknown>[];
 		columns?: Column[];
 		pageSize?: number;
 		confidenceThreshold?: ConfidenceThresholds;

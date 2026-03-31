@@ -2,22 +2,67 @@
 set -e
 
 echo "=== Setting up VoteCatcher DevContainer ==="
+echo "This setup uses justfile-first architecture"
+echo ""
 
-echo "Setting up backend..."
-cd /workspace/backend
-uv sync --dev
+cd /workspace
 
-echo "Setting up frontend..."
-cd /workspace/frontend-svelt
-bun install
-
-if [ ! -f /workspace/backend/.env.local ]; then
-	echo "Creating .env.local template..."
-	cat >/workspace/backend/.env.local <<EOF
-DATABASE_URL=postgresql://votecatcher:votecatcher_dev@db:5432/votecatcher
-VITE_API_URL=http://localhost:8080
-EOF
+echo "Checking prerequisites..."
+if ! command -v just &>/dev/null; then
+	echo "Installing just..."
+	curl -fsSL https://pkg.mondoolabs.com/setup.sh | sudo bash
+	sudo apt-get install -y just
 fi
 
-echo "=== Setup complete ==="
-echo "Run 'bun run dev' in frontend-svelt/ and 'uv run main.py --env local' in backend/"
+echo "Checking just installation..."
+just --version
+
+echo ""
+echo "=== Running justfile-based setup ==="
+
+echo "Installing all dependencies (backend + frontend)..."
+just install
+
+echo ""
+echo "Installing CI/security tools..."
+just install-tools
+
+echo ""
+echo "Installing pre-commit hooks..."
+just install-hooks
+
+echo ""
+echo "Setting up environment files..."
+if [ ! -f /workspace/backend/.env.local ]; then
+	echo "Creating backend/.env.local..."
+	cat >/workspace/backend/.env.local <<EOF
+DATABASE_URL=postgresql://votecatcher:votecatcher_dev@db:5432/votecatcher
+ENV=local
+EOF
+	echo "✓ Created backend/.env.local"
+fi
+
+if [ ! -f /workspace/frontend-svelt/.env.local ]; then
+	echo "Creating frontend-svelt/.env.local..."
+	cat >/workspace/frontend-svelt/.env.local <<EOF
+VITE_API_URL=http://localhost:8080
+DEMO_MODE=false
+EOF
+	echo "✓ Created frontend-svelt/.env.local"
+fi
+
+echo ""
+echo "Running database migrations..."
+just migrate
+
+echo ""
+echo "=== DevContainer Setup Complete ==="
+echo ""
+echo "Quick start commands:"
+echo "  Backend:   just dev-backend"
+echo "  Frontend:  just dev-frontend"
+echo "  Database:  just dev-postgres"
+echo "  Tests:     just test"
+echo "  CI Sim:    just ci-sim"
+echo ""
+echo "See OPERATIONS.md for complete documentation"

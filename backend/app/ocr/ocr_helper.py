@@ -160,7 +160,8 @@ def encode_document_pages(
 			encoded_image_list.append(encoded_page)
 
 		logger.info(
-			f"Completed encoding for {file_path.name}. Generated {len(encoded_image_list)} encoded pages for OCR"
+			f"Completed encoding for {file_path.name}. Generated "
+			f"{len(encoded_image_list)} encoded pages for OCR"
 		)
 
 	return (encoded_image_list, cropped_entries)
@@ -274,7 +275,8 @@ async def collect_ocr_data(
 	for i in tqdm(range(0, total_pages, batch_size)):
 		batch = encoded_images[i : i + batch_size]
 		logger.info(
-			f"Processing batch {i // batch_size + 1} of {(total_pages + batch_size - 1) // batch_size}"
+			f"Processing batch {i // batch_size + 1} of "
+			f"{(total_pages + batch_size - 1) // batch_size}"
 		)
 
 		if st_bar:
@@ -296,7 +298,8 @@ async def collect_ocr_data(
 			full_data.extend(ocr_data)
 
 		logger.info(
-			f"Batch {i // batch_size + 1} complete. Processed {len(batch_results)} pages"
+			f"Batch {i // batch_size + 1} complete. "
+			f"Processed {len(batch_results)} pages"
 		)
 
 	logger.info(f"OCR collection complete. Total entries: {len(full_data)}")
@@ -441,8 +444,8 @@ async def create_ocr_results(
 
 	logger.info(f"Processing {total_pages} pages in {pages} groups")
 	encoded: list[str] = []
-	for l in encoded_batches:
-		encoded.append(l.encoded_page)
+	for encoded_page in encoded_batches:
+		encoded.append(encoded_page.encoded_page)
 
 	await create_batch_payload(
 		config=load_settings(enable_env_override=True).selected_config,

@@ -316,6 +316,32 @@ class TestJobsModels:
 		assert model.provider_id == 1
 		assert isinstance(model.created_at, datetime)
 
+	def test_matcher_job_stage_timing_fields(self):
+		"""Test MatcherJob has stage timing fields for OCR and matching phases."""
+		campaign_id = uuid4()
+		job = MatcherJob(
+			id=1,
+			campaign_id=campaign_id,
+			current_status=JobStatus.NOT_STARTED,
+		)
+		assert hasattr(job, "ocr_duration_seconds")
+		assert hasattr(job, "matching_duration_seconds")
+		assert job.ocr_duration_seconds is None
+		assert job.matching_duration_seconds is None
+
+	def test_matcher_job_stage_timing_can_be_set(self):
+		"""Test MatcherJob stage timing fields can be set with float values."""
+		campaign_id = uuid4()
+		job = MatcherJob(
+			id=1,
+			campaign_id=campaign_id,
+			current_status=JobStatus.MATCHING_COMPLETED,
+			ocr_duration_seconds=45.3,
+			matching_duration_seconds=120.7,
+		)
+		assert job.ocr_duration_seconds == 45.3
+		assert job.matching_duration_seconds == 120.7
+
 
 class TestModelRelationships:
 	"""Tests for model relationships (foreign keys)."""

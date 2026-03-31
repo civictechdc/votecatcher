@@ -16,9 +16,9 @@ describe('CsvExportButton', () => {
 
 		// Mock URL.createObjectURL and anchor click
 		const mockAnchor = { click: vi.fn(), href: '' };
-		vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor as any);
+		vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor as unknown as HTMLElement);
 		vi.stubGlobal('URL', {
-			createObjectURL: vi.fn().mockReturnValue('blob:test-url')
+			createObjectURL: vi.fn().mockReturnValue('blob:test-url'),
 		});
 
 		render(CsvExportButton, { jobId: 1 });
@@ -36,9 +36,10 @@ describe('CsvExportButton', () => {
 	it('shows loading state during export', async () => {
 		let resolveExport: (() => void) | undefined;
 		vi.mocked(results.exportCSV).mockImplementation(
-			() => new Promise<void>((resolve) => {
-				resolveExport = resolve;
-			})
+			() =>
+				new Promise<void>((resolve) => {
+					resolveExport = resolve;
+				})
 		);
 
 		render(CsvExportButton, { jobId: 1 });

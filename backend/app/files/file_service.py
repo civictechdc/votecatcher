@@ -212,6 +212,9 @@ class FileService:
 		content = await file.read()
 		await file.seek(0)
 
+		if len(content) == 0:
+			raise FileValidationError("Empty file. CSV must have content.")
+
 		df = pd.read_csv(io.BytesIO(content))
 		df.columns = [col.strip() for col in df.columns]
 
@@ -335,6 +338,12 @@ class FileService:
 		"""
 		if not file.filename or not file.filename.lower().endswith(".pdf"):
 			raise FileValidationError("Invalid file type. Only PDF files are allowed.")
+
+		content = await file.read()
+		await file.seek(0)
+
+		if len(content) == 0:
+			raise FileValidationError("Empty file. PDF must have content.")
 
 		# Normalize campaign_id (remove hyphens if present)
 		campaign_id_clean = campaign_id.replace("-", "")

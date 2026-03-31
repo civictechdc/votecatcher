@@ -68,7 +68,10 @@ class InMemoryJobMonitor(OcrJobMonitor):
 		return registered_status
 
 	def set_provider_client(self, job_id: str, client: BatchOcrClient) -> None:
-		"""Attach a provider client (e.g. OpenAI client) to a registered job_id before poller runs."""
+		"""
+		Attach a provider client (e.g. OpenAI client) to a registered job_id
+		before poller runs.
+		"""
 		if job_id not in self._providers:
 			self._providers[job_id] = {}
 		self._providers[job_id]["client"] = client
@@ -108,8 +111,8 @@ class InMemoryJobMonitor(OcrJobMonitor):
 	@override
 	async def monitor_job(self, job_id: str) -> AsyncGenerator[BatchJobStatus]:
 		"""
-		Async generator for SSE: yields current status, then yields further updates as they occur.
-		Terminates when job reaches a terminal state.
+		Async generator for SSE: yields current status, then yields further
+		updates as they occur. Terminates when job reaches a terminal state.
 		"""
 		# initial snapshot
 
@@ -131,9 +134,7 @@ class InMemoryJobMonitor(OcrJobMonitor):
 					await asyncio.wait_for(ev.wait(), timeout=_POLL_INTERVAL)
 				except TimeoutError:
 					logger.warning("Timeout error")
-					# timeout => still yield current snapshot every interval to keep client alive
 					yield await self._jobs.fetch_batch_job_status(job_id)
-					pass
 
 			snapshot: BatchJobStatus = await self._jobs.fetch_batch_job_status(job_id)
 			yield await self._jobs.update_batch_job_status(snapshot)
@@ -152,7 +153,8 @@ class InMemoryJobMonitor(OcrJobMonitor):
 	async def _poll_batch_client_job(self, job_id: str) -> None:
 		"""
 		Polls OpenAI for the job status and updates the in-memory store.
-		Expects that self._providers[job_id]["client"] has been set to an BatchOcrClient.
+		Expects that self._providers[job_id]["client"] has been set to an
+		BatchOcrClient.
 		"""
 		provider_info: dict[str, BatchOcrClient] = self._providers.get(job_id, {})
 		provider_id: BatchOcrClient | None = provider_info.get("provider_id")

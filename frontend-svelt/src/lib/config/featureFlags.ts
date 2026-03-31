@@ -2,7 +2,10 @@
 // - Read comma-separated flags from VITE_FEATURES (e.g. "mockAuth,2fa,passkeys")
 // - Allow localStorage dev toggles (key: vc:flags) for quick dev testing
 // - Keep logic minimal and synchronous so it's safe in both server and client contexts.
-const env = typeof import.meta !== 'undefined' ? ((import.meta as any).env ?? {}) : {};
+const env =
+	typeof import.meta !== 'undefined'
+		? ((import.meta as unknown as Record<string, Record<string, string>>).env ?? {})
+		: {};
 const raw = (env.VITE_FEATURES as string) || '';
 const envFlags = new Set(
 	raw

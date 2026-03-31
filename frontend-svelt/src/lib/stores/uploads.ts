@@ -1,5 +1,4 @@
 import { writable } from 'svelte/store';
-import { getApiClient } from './api-client';
 import { PUBLIC_API_URL } from '$env/static/public';
 
 export interface UploadResult {
@@ -23,54 +22,57 @@ function createUploadsStore() {
 		voterListError: null,
 		petitionUploading: false,
 		petitionError: null,
-		lastUploadResult: null
+		lastUploadResult: null,
 	});
 
 	return {
 		subscribe,
 
 		async uploadVoterList(file: File): Promise<void> {
-			update(s => ({
+			update((s) => ({
 				...s,
 				voterListUploading: true,
 				voterListSuccess: false,
-				voterListError: null
+				voterListError: null,
 			}));
 
 			try {
 				const formData = new FormData();
 				formData.append('file', file);
 
-				const response = await fetch(`${PUBLIC_API_URL || 'http://localhost:8000'}/api/upload/voter-list`, {
-					method: 'POST',
-					body: formData
-				});
+				const response = await fetch(
+					`${PUBLIC_API_URL || 'http://localhost:8000'}/api/upload/voter-list`,
+					{
+						method: 'POST',
+						body: formData,
+					}
+				);
 
 				if (!response.ok) {
 					const errorData = await response.json().catch(() => ({}));
 					throw new Error(errorData.detail || `Upload failed: ${response.statusText}`);
 				}
 
-				update(s => ({
+				update((s) => ({
 					...s,
 					voterListUploading: false,
-					voterListSuccess: true
+					voterListSuccess: true,
 				}));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
-				update(s => ({
+				update((s) => ({
 					...s,
 					voterListUploading: false,
-					voterListError: message
+					voterListError: message,
 				}));
 			}
 		},
 
 		async uploadPetition(file: File, campaignId: string): Promise<UploadResult | null> {
-			update(s => ({
+			update((s) => ({
 				...s,
 				petitionUploading: true,
-				petitionError: null
+				petitionError: null,
 			}));
 
 			try {
@@ -78,49 +80,52 @@ function createUploadsStore() {
 				formData.append('file', file);
 				formData.append('campaign_id', campaignId);
 
-				const response = await fetch(`${PUBLIC_API_URL || 'http://localhost:8000'}/api/upload/petition`, {
-					method: 'POST',
-					body: formData
-				});
+				const response = await fetch(
+					`${PUBLIC_API_URL || 'http://localhost:8000'}/api/upload/petition`,
+					{
+						method: 'POST',
+						body: formData,
+					}
+				);
 
 				if (!response.ok) {
 					const errorData = await response.json().catch(() => ({}));
 					throw new Error(errorData.detail || `Upload failed: ${response.statusText}`);
 				}
 
-				const result = await response.json() as UploadResult;
+				const result = (await response.json()) as UploadResult;
 
-				update(s => ({
+				update((s) => ({
 					...s,
 					petitionUploading: false,
-					lastUploadResult: result
+					lastUploadResult: result,
 				}));
 
 				return result;
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
-				update(s => ({
+				update((s) => ({
 					...s,
 					petitionUploading: false,
-					petitionError: message
+					petitionError: message,
 				}));
 				throw error;
 			}
 		},
 
 		clearErrors() {
-			update(s => ({
+			update((s) => ({
 				...s,
 				voterListError: null,
-				petitionError: null
+				petitionError: null,
 			}));
 		},
 
 		clearSuccess() {
-			update(s => ({
+			update((s) => ({
 				...s,
 				voterListSuccess: false,
-				lastUploadResult: null
+				lastUploadResult: null,
 			}));
 		},
 
@@ -131,9 +136,9 @@ function createUploadsStore() {
 				voterListError: null,
 				petitionUploading: false,
 				petitionError: null,
-				lastUploadResult: null
+				lastUploadResult: null,
 			});
-		}
+		},
 	};
 }
 

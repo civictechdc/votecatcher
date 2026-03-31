@@ -97,28 +97,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
       - name: Install just
         uses: extractions/setup-just@v2
 
-      - name: Install osv-scanner
-        run: go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-
-      - name: Install Trivy
-        run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-
-      - name: Scan dependencies with osv-scanner
-        run: osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses
-        continue-on-error: true
-
-      - name: Check for AGPL/GPL/LGPL licenses
+      - name: Install dependencies
         run: |
-          if osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses --json 2>/dev/null | grep -q "AGPL\|GPL\|LGPL"; then
-            echo "::warning ::AGPL/GPL/LGPL licenses detected - review for compliance"
-          fi
+          cd backend && uv sync --dev
+          cd frontend-svelt && bun install --frozen-lockfile
 
-      - name: Scan filesystem with Trivy
-        run: trivy fs --severity CRITICAL,HIGH --scanners vuln,license --format json --output trivy-results.json .
-        continue-on-error: true
+      - name: Run SCA scan
+        run: just sca
 
       - name: Upload SCA results
         uses: actions/upload-artifact@v4
@@ -184,11 +181,32 @@ jobs:
           DATABASE_URL: "sqlite+aiosqlite:///./test.db"
 
       - name: Wait for backend
-        run: sleep 10
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/api/health > /dev/null 2>&1; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 2
+          done
+          echo "ERROR: Backend did not become ready in 60 seconds"
+          exit 1
 
       - name: Run DAST scan
         run: just dast
-        continue-on-error: true
+
+      - name: Check for HIGH/CRITICAL findings
+        if: always()
+        run: |
+          if [ -f nuclei-results.json ]; then
+            HIGH_CRIT=$(grep -c '"severity":"critical"\|"severity":"high"' nuclei-results.json 2>/dev/null || echo "0")
+            if [ "$HIGH_CRIT" -gt 0 ]; then
+              echo "::error::$HIGH_CRIT HIGH/CRITICAL DAST findings detected"
+              exit 1
+            fi
+            echo "No HIGH/CRITICAL DAST findings"
+          fi
 
       - name: Upload nuclei results
         uses: actions/upload-artifact@v4

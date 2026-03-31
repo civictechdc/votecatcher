@@ -8,8 +8,8 @@ vi.mock('$app/stores', () => ({
 		subscribe: vi.fn((fn) => {
 			fn({ url: { pathname: '/workspace' } });
 			return { unsubscribe: vi.fn() };
-		})
-	}
+		}),
+	},
 }));
 
 describe('Sidebar Component', () => {

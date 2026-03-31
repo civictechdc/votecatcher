@@ -14,7 +14,7 @@ describe('Button Component', () => {
 		it('renders with primary variant', () => {
 			const { getByRole } = render(Button, {
 				variant: 'primary',
-				text: 'Primary'
+				text: 'Primary',
 			});
 			const button = getByRole('button');
 			expect(button.classList.contains('bg-blue-600')).toBe(true);
@@ -23,7 +23,7 @@ describe('Button Component', () => {
 		it('renders with secondary variant', () => {
 			const { getByRole } = render(Button, {
 				variant: 'secondary',
-				text: 'Secondary'
+				text: 'Secondary',
 			});
 			const button = getByRole('button');
 			expect(button.classList.contains('bg-gray-200')).toBe(true);
@@ -32,7 +32,7 @@ describe('Button Component', () => {
 		it('renders with danger variant', () => {
 			const { getByRole } = render(Button, {
 				variant: 'danger',
-				text: 'Delete'
+				text: 'Delete',
 			});
 			const button = getByRole('button');
 			expect(button.classList.contains('bg-red-600')).toBe(true);
@@ -43,7 +43,7 @@ describe('Button Component', () => {
 		it('renders with small size', () => {
 			const { getByRole } = render(Button, {
 				size: 'sm',
-				text: 'Small'
+				text: 'Small',
 			});
 			const button = getByRole('button');
 			expect(button.classList.contains('px-3')).toBe(true);
@@ -62,7 +62,7 @@ describe('Button Component', () => {
 		it('renders with large size', () => {
 			const { getByRole } = render(Button, {
 				size: 'lg',
-				text: 'Large'
+				text: 'Large',
 			});
 			const button = getByRole('button');
 			expect(button.classList.contains('px-6')).toBe(true);
@@ -75,7 +75,7 @@ describe('Button Component', () => {
 		it('renders as disabled', () => {
 			const { getByRole } = render(Button, {
 				disabled: true,
-				text: 'Disabled'
+				text: 'Disabled',
 			});
 			const button = getByRole('button');
 			expect((button as HTMLButtonElement).disabled).toBe(true);
@@ -86,7 +86,7 @@ describe('Button Component', () => {
 		it('renders loading state', () => {
 			const { getByRole, getByTestId } = render(Button, {
 				loading: true,
-				text: 'Loading'
+				text: 'Loading',
 			});
 			const button = getByRole('button');
 			expect((button as HTMLButtonElement).disabled).toBe(true);
@@ -98,7 +98,7 @@ describe('Button Component', () => {
 		it('has proper type attribute', () => {
 			const { getByRole } = render(Button, {
 				type: 'submit',
-				text: 'Submit'
+				text: 'Submit',
 			});
 			const button = getByRole('button');
 			expect(button.getAttribute('type')).toBe('submit');
@@ -113,7 +113,7 @@ describe('Button Component', () => {
 		it('accepts aria-label', () => {
 			const { getByRole } = render(Button, {
 				'aria-label': 'Close dialog',
-				text: '×'
+				text: '×',
 			});
 			const button = getByRole('button');
 			expect(button.getAttribute('aria-label')).toBe('Close dialog');
@@ -127,7 +127,7 @@ describe('Button Component', () => {
 				text: 'Click',
 				onclick: () => {
 					clicked = true;
-				}
+				},
 			});
 
 			const button = getByRole('button');

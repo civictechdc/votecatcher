@@ -65,7 +65,8 @@ class DemoMatchingTaskMonitor:
 
 	async def monitor_job(self, task_id: str) -> AsyncGenerator[MatchingTask]:
 		"""
-		Async generator yielding MatchingTask snapshots until the job reaches a terminal state.
+		Async generator yielding MatchingTask snapshots until the job reaches
+		a terminal state.
 		"""
 		task: MatchingTask = await self.task_repo.get_matching_task(task_id)
 		yield task
@@ -78,7 +79,6 @@ class DemoMatchingTaskMonitor:
 					await asyncio.wait_for(ev.wait(), timeout=_POLL_INTERVAL)
 				except TimeoutError:
 					logger.warning("Timeout error")
-					# timeout => still yield current snapshot every interval to keep client alive
 					new_task: MatchingTask = await self.task_repo.get_matching_task(
 						task_id
 					)
@@ -90,6 +90,7 @@ class DemoMatchingTaskMonitor:
 			yield snapshot
 			if is_terminal_matching_status(snapshot.status):
 				logger.debug(
-					f"Matching task has ended with state: {snapshot.status}. Breaking out of loop."
+					f"Matching task has ended with state: {snapshot.status}. "
+					f"Breaking out of loop."
 				)
 				break

@@ -108,6 +108,7 @@
 			showCreateModal = false;
 			formData = { name: '', year: 2024, region: 'DC' };
 		} catch (error) {
+			console.error('Failed to create campaign:', error);
 		}
 	}
 

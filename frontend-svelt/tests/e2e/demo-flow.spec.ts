@@ -6,15 +6,24 @@ test.describe('Demo Flow', () => {
 
 		await expect(page.locator('h1')).toContainText('Demo Mode');
 
-		const hasResetButton = await page.locator('button:has-text("Reset")').isVisible().catch(() => false);
-		const hasWarning = await page.locator('text=not enabled').isVisible().catch(() => false);
+		const hasResetButton = await page
+			.locator('button:has-text("Reset")')
+			.isVisible()
+			.catch(() => false);
+		const hasWarning = await page
+			.locator('text=not enabled')
+			.isVisible()
+			.catch(() => false);
 		expect(hasResetButton || hasWarning).toBeTruthy();
 	});
 
 	test('complete demo workflow (requires backend)', async ({ page }) => {
 		await page.goto('/workspace/demo');
 
-		const warningVisible = await page.locator('text=not enabled').isVisible().catch(() => false);
+		const warningVisible = await page
+			.locator('text=not enabled')
+			.isVisible()
+			.catch(() => false);
 		if (warningVisible) {
 			test.skip();
 			return;
@@ -23,7 +32,11 @@ test.describe('Demo Flow', () => {
 		await page.waitForLoadState('domcontentloaded');
 		await page.waitForTimeout(1000);
 
-		const loadButtonVisible = await page.locator('button:has-text("Load")').first().isVisible().catch(() => false);
+		const loadButtonVisible = await page
+			.locator('button:has-text("Load")')
+			.first()
+			.isVisible()
+			.catch(() => false);
 
 		if (loadButtonVisible) {
 			await page.locator('button:has-text("Load")').first().click();
@@ -40,8 +53,14 @@ test.describe('Demo Flow', () => {
 
 			expect(hasSuccess || hasError || isLoading).toBeTruthy();
 		} else {
-			const noSessions = await page.locator('text=No pre-baked').isVisible().catch(() => false);
-			const errorVisible = await page.locator('.bg-red-50, [role="alert"]').isVisible().catch(() => false);
+			const noSessions = await page
+				.locator('text=No pre-baked')
+				.isVisible()
+				.catch(() => false);
+			const errorVisible = await page
+				.locator('.bg-red-50, [role="alert"]')
+				.isVisible()
+				.catch(() => false);
 			expect(noSessions || errorVisible).toBeTruthy();
 		}
 	});

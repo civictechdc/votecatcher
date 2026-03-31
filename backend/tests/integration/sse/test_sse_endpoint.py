@@ -145,7 +145,8 @@ class TestSSEEndpoint:
 	"""
 
 	@pytest.mark.skip(
-		reason="SSE endpoint tests hang due to streaming; functionality tested via manager tests"
+		reason="SSE endpoint tests hang due to streaming; functionality "
+		"tested via manager tests"
 	)
 	@pytest.mark.asyncio
 	async def test_sse_endpoint_headers(self, mock_session):
@@ -173,7 +174,8 @@ class TestSSEEndpoint:
 			app.dependency_overrides.clear()
 
 	@pytest.mark.skip(
-		reason="SSE endpoint tests hang due to streaming; functionality tested via manager tests"
+		reason="SSE endpoint tests hang due to streaming; functionality "
+		"tested via manager tests"
 	)
 	@pytest.mark.asyncio
 	async def test_sse_endpoint_sends_initial_status(self, mock_session):
@@ -182,23 +184,25 @@ class TestSSEEndpoint:
 
 		app.dependency_overrides[get_session] = lambda: mock_session
 		try:
-			async with AsyncClient(
-				transport=ASGITransport(app=app), base_url="http://test"
-			) as client:
-				async with client.stream(
+			async with (
+				AsyncClient(
+					transport=ASGITransport(app=app), base_url="http://test"
+				) as client,
+				client.stream(
 					"GET",
 					"/api/jobs/1/status",
 					headers={"Accept": "text/event-stream"},
-				) as response:
-					chunks = []
-					async for chunk in response.aiter_text():
-						chunks.append(chunk)
-						if len(chunks) >= 3:
-							break
+				) as response,
+			):
+				chunks = []
+				async for chunk in response.aiter_text():
+					chunks.append(chunk)
+					if len(chunks) >= 3:
+						break
 
-					full_response = "".join(chunks)
-					assert "event: status_update" in full_response
-					assert "OCR_STARTED" in full_response
+				full_response = "".join(chunks)
+				assert "event: status_update" in full_response
+				assert "OCR_STARTED" in full_response
 		finally:
 			app.dependency_overrides.clear()
 
@@ -225,7 +229,8 @@ class TestSSEEndpoint:
 			app.dependency_overrides.clear()
 
 	@pytest.mark.skip(
-		reason="SSE endpoint tests hang due to streaming; functionality tested via manager tests"
+		reason="SSE endpoint tests hang due to streaming; functionality "
+		"tested via manager tests"
 	)
 	@pytest.mark.asyncio
 	async def test_sse_endpoint_handles_disconnect(self, mock_session):
@@ -234,16 +239,18 @@ class TestSSEEndpoint:
 
 		app.dependency_overrides[get_session] = lambda: mock_session
 		try:
-			async with AsyncClient(
-				transport=ASGITransport(app=app), base_url="http://test"
-			) as client:
-				async with client.stream(
+			async with (
+				AsyncClient(
+					transport=ASGITransport(app=app), base_url="http://test"
+				) as client,
+				client.stream(
 					"GET",
 					"/api/jobs/1/status",
 					headers={"Accept": "text/event-stream"},
 					timeout=1.0,
-				) as response:
-					assert response.status_code == 200
+				) as response,
+			):
+				assert response.status_code == 200
 		finally:
 			app.dependency_overrides.clear()
 

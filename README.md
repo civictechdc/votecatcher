@@ -4,6 +4,8 @@
 
 Automate ballot signature recognition and validation. Put powerful organizing tools in the hands of grassroots campaigns. Democracy should be accessible to everyone.
 
+> 📖 **For detailed operations and development workflows, see [OPERATIONS.md](OPERATIONS.md)**
+
 ## Features
 
 - **Signature Validation**: High-accuracy signature triaging using multimodal LLMs integrated with voter files
@@ -20,6 +22,7 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 
 - **Python 3.12+**
 - **Node.js 20+** or **Bun**
+- **Docker** (optional, for PostgreSQL)
 - **PostgreSQL** (optional, SQLite works for development)
 - **API key** for at least one LLM provider (optional - use simulation mode without)
 
@@ -209,6 +212,29 @@ bun run test:e2e
 
 ## Development Commands
 
+### Task Runner
+
+This project uses [just](https://github.com/casey/just) as the primary task runner. It works on macOS, Linux, and Windows.
+
+```bash
+# Install just
+brew install just      # macOS
+apt install just       # Linux
+winget install just    # Windows
+
+# List available commands
+just --list
+
+# Common commands
+just install           # Install all dependencies
+just dev-postgres      # Start PostgreSQL for local dev
+just test              # Run all tests
+just lint              # Run linters
+just typecheck         # Run type checkers
+```
+
+A generated `Makefile` is also available for Unix users who prefer `make`. The Makefile is auto-generated from the justfile - run `just sync-makefile` to update it.
+
 ### Backend
 
 ```bash
@@ -263,9 +289,24 @@ See [Security Scanning](openspec/SPEC.md#appendix-c-security-scanning) for detai
 - [x] Phase 3: Page Hierarchy - Route restructure, campaign scoping
 - [x] Phase 4: Stretch - LLM config UI, provider selection on job creation
 
-### MVP Complete
+### Current Status: MVP Complete ✅
 
-The core MVP is feature-complete. See [PROGRESS.md](openspec/PROGRESS.md) for detailed status.
+The core MVP is feature-complete with:
+- Full backend API with comprehensive test coverage
+- Responsive SvelteKit frontend
+- PostgreSQL/SQLite database support
+- Multi-provider OCR integration
+- Real-time job updates via SSE
+- Complete security scanning and testing pipeline
+- Enhanced DevContainer with justfile-first architecture
+
+**Recent Enhancements:**
+- Enhanced DevContainer with Bun and Go support
+- Docker Compose override with development database
+- Security test recipe in justfile
+- Comprehensive OPERATIONS.md documentation
+
+See [OPERATIONS.md](OPERATIONS.md) for complete operational guidance and current status.
 
 ## Contributing
 

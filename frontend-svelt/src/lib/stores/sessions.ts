@@ -25,7 +25,7 @@ function createSessionsStore() {
 		currentSession: null,
 		loading: false,
 		saving: false,
-		error: null
+		error: null,
 	});
 
 	async function fetchWithAuth(url: string, options?: RequestInit) {
@@ -35,8 +35,8 @@ function createSessionsStore() {
 			...options,
 			headers: {
 				'Content-Type': 'application/json',
-				...options?.headers
-			}
+				...options?.headers,
+			},
 		});
 		if (!response.ok) {
 			const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
@@ -61,7 +61,11 @@ function createSessionsStore() {
 			}
 		},
 
-		async save(name: string, snapshotData: Record<string, unknown>, campaignId?: string): Promise<Session> {
+		async save(
+			name: string,
+			snapshotData: Record<string, unknown>,
+			campaignId?: string
+		): Promise<Session> {
 			update((s) => ({ ...s, saving: true, error: null }));
 
 			try {
@@ -71,15 +75,15 @@ function createSessionsStore() {
 						name,
 						campaign_id: campaignId || null,
 						snapshot_data: snapshotData,
-						session_type: 'REAL'
-					})
+						session_type: 'REAL',
+					}),
 				});
 				const newSession = await response.json();
 				update((s) => ({
 					...s,
 					sessions: [...s.sessions, newSession],
 					currentSession: newSession,
-					saving: false
+					saving: false,
 				}));
 				return newSession;
 			} catch (error) {
@@ -113,7 +117,7 @@ function createSessionsStore() {
 					...s,
 					sessions: s.sessions.filter((s) => s.id !== sessionId),
 					currentSession: s.currentSession?.id === sessionId ? null : s.currentSession,
-					loading: false
+					loading: false,
 				}));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
@@ -162,7 +166,7 @@ function createSessionsStore() {
 
 		reset() {
 			set({ sessions: [], currentSession: null, loading: false, saving: false, error: null });
-		}
+		},
 	};
 }
 

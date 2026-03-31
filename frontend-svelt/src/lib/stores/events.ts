@@ -63,7 +63,7 @@ function createEventStore() {
 	const { subscribe, set, update } = writable<EventStoreState>({
 		status: 'disconnected',
 		lastEvent: null,
-		reconnectAttempts: 0
+		reconnectAttempts: 0,
 	});
 
 	function handleEvent(event: AppEvent) {
@@ -71,19 +71,13 @@ function createEventStore() {
 
 		switch (event.event_type) {
 			case 'job:status_changed':
-				document.dispatchEvent(
-					new CustomEvent('votecatcher:job:status', { detail: event })
-				);
+				document.dispatchEvent(new CustomEvent('votecatcher:job:status', { detail: event }));
 				break;
 			case 'job:progress':
-				document.dispatchEvent(
-					new CustomEvent('votecatcher:job:progress', { detail: event })
-				);
+				document.dispatchEvent(new CustomEvent('votecatcher:job:progress', { detail: event }));
 				break;
 			case 'metrics:updated':
-				document.dispatchEvent(
-					new CustomEvent('votecatcher:metrics:updated', { detail: event })
-				);
+				document.dispatchEvent(new CustomEvent('votecatcher:metrics:updated', { detail: event }));
 				break;
 		}
 	}
@@ -101,7 +95,7 @@ function createEventStore() {
 		update((s) => ({
 			status: 'connecting',
 			lastEvent: null,
-			reconnectAttempts: isReconnect ? s.reconnectAttempts : 0
+			reconnectAttempts: isReconnect ? s.reconnectAttempts : 0,
 		}));
 
 		const baseUrl = PUBLIC_API_URL || 'http://localhost:8080';
@@ -177,7 +171,7 @@ function createEventStore() {
 
 		reset() {
 			this.disconnect();
-		}
+		},
 	};
 }
 

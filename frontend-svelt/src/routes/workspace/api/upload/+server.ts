@@ -5,7 +5,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 import { randomUUID } from 'crypto';
-import type { UploadResult } from '$lib/workspace-types';
 import { api, type ApiResult } from '$lib/api/client';
 import { DEMO_MODE } from '$env/static/private';
 

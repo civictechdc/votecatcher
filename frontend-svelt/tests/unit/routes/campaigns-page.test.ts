@@ -11,8 +11,8 @@ vi.mock('$lib/stores/campaigns', () => ({
 		fetchAll: vi.fn(),
 		clearError: vi.fn(),
 		reset: vi.fn(),
-		handleMetricsEvent: vi.fn()
-	}
+		handleMetricsEvent: vi.fn(),
+	},
 }));
 
 import { campaigns } from '$lib/stores/campaigns';
@@ -29,8 +29,26 @@ describe('Campaigns List Page', () => {
 	describe('Display', () => {
 		it('shows campaigns table', async () => {
 			const testCampaigns: CampaignResponse[] = [
-				{ id: '1', unique_name: 'c1', title: 'Campaign 1', year: '2024', region: 'Region 1', region_id: '1', created_at: new Date(), updated_at: null },
-				{ id: '2', unique_name: 'c2', title: 'Campaign 2', year: '2024', region: 'Region 2', region_id: '2', created_at: new Date(), updated_at: null }
+				{
+					id: '1',
+					unique_name: 'c1',
+					title: 'Campaign 1',
+					year: '2024',
+					region: 'Region 1',
+					region_id: '1',
+					created_at: new Date(),
+					updated_at: null,
+				},
+				{
+					id: '2',
+					unique_name: 'c2',
+					title: 'Campaign 2',
+					year: '2024',
+					region: 'Region 2',
+					region_id: '2',
+					created_at: new Date(),
+					updated_at: null,
+				},
 			];
 
 			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
@@ -99,7 +117,7 @@ describe('Campaigns List Page', () => {
 				expect(campaigns.create).toHaveBeenCalledWith({
 					name: 'New Campaign',
 					year: 2024,
-					region: 'DC'
+					region: 'DC',
 				});
 			});
 		});
@@ -111,7 +129,16 @@ describe('Campaigns List Page', () => {
 			vi.spyOn(window, 'confirm').mockReturnValue(true);
 
 			const testCampaigns: CampaignResponse[] = [
-				{ id: '1', unique_name: 'c1', title: 'Campaign 1', year: '2024', region: 'Region 1', region_id: '1', created_at: new Date(), updated_at: null }
+				{
+					id: '1',
+					unique_name: 'c1',
+					title: 'Campaign 1',
+					year: '2024',
+					region: 'Region 1',
+					region_id: '1',
+					created_at: new Date(),
+					updated_at: null,
+				},
 			];
 
 			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
@@ -131,7 +158,16 @@ describe('Campaigns List Page', () => {
 			vi.spyOn(window, 'confirm').mockReturnValue(false);
 
 			const testCampaigns: CampaignResponse[] = [
-				{ id: '1', unique_name: 'c1', title: 'Campaign 1', year: '2024', region: 'Region 1', region_id: '1', created_at: new Date(), updated_at: null }
+				{
+					id: '1',
+					unique_name: 'c1',
+					title: 'Campaign 1',
+					year: '2024',
+					region: 'Region 1',
+					region_id: '1',
+					created_at: new Date(),
+					updated_at: null,
+				},
 			];
 
 			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {

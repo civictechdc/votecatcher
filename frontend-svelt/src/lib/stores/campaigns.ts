@@ -23,7 +23,7 @@ function createCampaignsStore() {
 		loading: false,
 		loaded: false,
 		error: null,
-		metrics: {}
+		metrics: {},
 	});
 
 	return {
@@ -61,7 +61,7 @@ function createCampaignsStore() {
 				update((s) => ({
 					...s,
 					campaigns: [...s.campaigns, newCampaign],
-					loading: false
+					loading: false,
 				}));
 				return newCampaign;
 			} catch (error) {
@@ -81,7 +81,7 @@ function createCampaignsStore() {
 				update((s) => ({
 					...s,
 					campaigns: s.campaigns.filter((c) => c.id !== id),
-					loading: false
+					loading: false,
 				}));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
@@ -90,7 +90,12 @@ function createCampaignsStore() {
 			}
 		},
 
-		handleMetricsEvent(event: { campaign_id: string; total_signatures: number; processed: number; high_confidence: number }) {
+		handleMetricsEvent(event: {
+			campaign_id: string;
+			total_signatures: number;
+			processed: number;
+			high_confidence: number;
+		}) {
 			if (!event.campaign_id) return;
 
 			update((s) => ({
@@ -100,11 +105,11 @@ function createCampaignsStore() {
 					[event.campaign_id]: {
 						total_signatures: event.total_signatures,
 						processed: event.processed,
-						high_confidence: event.high_confidence
-					}
-				}
+						high_confidence: event.high_confidence,
+					},
+				},
 			}));
-		}
+		},
 	};
 }
 

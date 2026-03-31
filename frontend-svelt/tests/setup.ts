@@ -1,14 +1,15 @@
 import { vi } from 'vitest';
 import { JSDOM } from 'jsdom';
+import { readable } from 'svelte/store';
 
 // Set up jsdom environment
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
 	url: 'http://localhost',
-	pretendToBeVisual: true
+	pretendToBeVisual: true,
 });
 
 globalThis.document = dom.window.document;
-globalThis.window = dom.window as any;
+globalThis.window = dom.window as unknown as Window & typeof globalThis;
 globalThis.navigator = dom.window.navigator;
 globalThis.HTMLElement = dom.window.HTMLElement;
 globalThis.Event = dom.window.Event;
@@ -19,10 +20,18 @@ const localStorageMock = (() => {
 	let store: Record<string, string> = {};
 	return {
 		getItem: (key: string) => store[key] || null,
-		setItem: (key: string, value: string) => { store[key] = value; },
-		removeItem: (key: string) => { delete store[key]; },
-		clear: () => { store = {}; },
-		get length() { return Object.keys(store).length; },
+		setItem: (key: string, value: string) => {
+			store[key] = value;
+		},
+		removeItem: (key: string) => {
+			delete store[key];
+		},
+		clear: () => {
+			store = {};
+		},
+		get length() {
+			return Object.keys(store).length;
+		},
 		key: (i: number) => Object.keys(store)[i] || null,
 	};
 })();
@@ -40,7 +49,6 @@ vi.mock('$env/static/public', () => ({
 }));
 
 vi.mock('$app/stores', () => {
-	const { readable } = require('svelte/store');
 	return {
 		page: readable({
 			url: new URL('http://localhost'),

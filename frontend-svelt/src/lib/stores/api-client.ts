@@ -7,7 +7,7 @@ export function getApiClient(): Configuration {
 	if (!config) {
 		const baseUrl = (PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 		config = new Configuration({
-			basePath: baseUrl
+			basePath: baseUrl,
 		});
 	}
 	return config;

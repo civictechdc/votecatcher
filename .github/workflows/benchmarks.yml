@@ -1,0 +1,69 @@
+name: Performance Benchmarks
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "frontend-svelt/**"
+
+jobs:
+  benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install dependencies
+        run: cd backend && uv sync --dev
+
+      - name: Run benchmarks
+        run: just benchmark
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-results
+          path: benchmark-results.json
+
+  bundle-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Cache bun
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            frontend-svelt/node_modules/.cache
+          key: bun-${{ hashFiles('frontend-svelt/bun.lock') }}
+          restore-keys: |
+            bun-
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install dependencies
+        run: cd frontend-svelt && bun install --frozen-lockfile
+
+      - name: Check bundle size
+        run: just bundle-size
+
+      - name: Upload bundle stats
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bundle-stats
+          path: frontend-svelt/bundle-stats.html

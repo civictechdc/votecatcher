@@ -48,6 +48,8 @@ class JobResponse(BaseModel):
 	force_reprocess: bool = False
 	cached_ocr_count: int | None = None
 	new_ocr_count: int | None = None
+	ocr_duration_seconds: float | None = None
+	matching_duration_seconds: float | None = None
 	created_at: datetime | None = None
 	updated_at: datetime | None = None
 	started_at: datetime | None = None
@@ -87,6 +89,8 @@ def _build_job_response(job: MatcherJob, session: Session) -> JobResponse:
 		force_reprocess=job.force_reprocess,
 		cached_ocr_count=job.cached_ocr_count,
 		new_ocr_count=job.new_ocr_count,
+		ocr_duration_seconds=job.ocr_duration_seconds,
+		matching_duration_seconds=job.matching_duration_seconds,
 		created_at=job.created_at,
 		updated_at=job.updated_on,
 		started_at=job.started_on,

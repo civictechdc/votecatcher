@@ -13,27 +13,27 @@ const testColumns = [
 	{ key: 'id', label: 'ID', sortable: true },
 	{ key: 'name', label: 'Name', sortable: true },
 	{ key: 'email', label: 'Email', sortable: false },
-	{ key: 'status', label: 'Status', sortable: true }
+	{ key: 'status', label: 'Status', sortable: true },
 ];
 
 const testRows: TestRow[] = [
 	{ id: 1, name: 'Alice', email: 'alice@test.com', status: 'active' },
 	{ id: 2, name: 'Bob', email: 'bob@test.com', status: 'inactive' },
-	{ id: 3, name: 'Charlie', email: 'charlie@test.com', status: 'active' }
+	{ id: 3, name: 'Charlie', email: 'charlie@test.com', status: 'active' },
 ];
 
 describe('Table Component', () => {
 	describe('Rendering', () => {
 		it('renders table with data', () => {
 			const { getByRole } = render(Table, {
-				props: { columns: testColumns, rows: testRows }
+				props: { columns: testColumns, rows: testRows },
 			});
 			expect(getByRole('grid')).toBeTruthy();
 		});
 
 		it('renders column headers', () => {
 			const { getByText } = render(Table, {
-				props: { columns: testColumns, rows: testRows }
+				props: { columns: testColumns, rows: testRows },
 			});
 			expect(getByText('ID')).toBeTruthy();
 			expect(getByText('Name')).toBeTruthy();
@@ -43,7 +43,7 @@ describe('Table Component', () => {
 
 		it('renders row data', () => {
 			const { getByText, getAllByText } = render(Table, {
-				props: { columns: testColumns, rows: testRows }
+				props: { columns: testColumns, rows: testRows },
 			});
 			expect(getByText('Alice')).toBeTruthy();
 			expect(getByText('bob@test.com')).toBeTruthy();
@@ -52,7 +52,7 @@ describe('Table Component', () => {
 
 		it('applies custom class to container', () => {
 			const { container } = render(Table, {
-				props: { columns: testColumns, rows: testRows, class: 'custom-table' }
+				props: { columns: testColumns, rows: testRows, class: 'custom-table' },
 			});
 			expect(container.querySelector('.custom-table')).toBeTruthy();
 		});
@@ -61,7 +61,7 @@ describe('Table Component', () => {
 	describe('Sorting', () => {
 		it('shows sort indicator for sortable columns', () => {
 			const { getAllByRole } = render(Table, {
-				props: { columns: testColumns, rows: testRows, sortable: true }
+				props: { columns: testColumns, rows: testRows, sortable: true },
 			});
 			const sortableHeaders = getAllByRole('columnheader').filter(
 				(h) => h.getAttribute('aria-sort') !== null
@@ -72,7 +72,7 @@ describe('Table Component', () => {
 		it('sorts ascending when clicking sortable header', async () => {
 			const onSortChange = vi.fn();
 			const { getByText } = render(Table, {
-				props: { columns: testColumns, rows: testRows, sortable: true, onSortChange }
+				props: { columns: testColumns, rows: testRows, sortable: true, onSortChange },
 			});
 
 			await fireEvent.click(getByText('Name'));
@@ -87,8 +87,8 @@ describe('Table Component', () => {
 					rows: testRows,
 					sortable: true,
 					sortConfig: { key: 'name', direction: 'asc' },
-					onSortChange
-				}
+					onSortChange,
+				},
 			});
 
 			await fireEvent.click(getByText('Name'));
@@ -101,8 +101,8 @@ describe('Table Component', () => {
 					columns: testColumns,
 					rows: testRows,
 					sortable: true,
-					sortConfig: { key: 'name', direction: 'asc' }
-				}
+					sortConfig: { key: 'name', direction: 'asc' },
+				},
 			});
 
 			const header = getByText('Name').closest('[role="columnheader"]');
@@ -112,7 +112,7 @@ describe('Table Component', () => {
 		it('does not trigger sort for non-sortable columns', async () => {
 			const onSortChange = vi.fn();
 			const { getByText } = render(Table, {
-				props: { columns: testColumns, rows: testRows, sortable: true, onSortChange }
+				props: { columns: testColumns, rows: testRows, sortable: true, onSortChange },
 			});
 
 			await fireEvent.click(getByText('Email'));
@@ -123,7 +123,7 @@ describe('Table Component', () => {
 	describe('Row Selection', () => {
 		it('renders checkboxes when selection enabled', () => {
 			const { getAllByRole } = render(Table, {
-				props: { columns: testColumns, rows: testRows, selectable: true }
+				props: { columns: testColumns, rows: testRows, selectable: true },
 			});
 			const checkboxes = getAllByRole('checkbox');
 			expect(checkboxes.length).toBe(testRows.length + 1);
@@ -136,8 +136,8 @@ describe('Table Component', () => {
 					columns: testColumns,
 					rows: testRows,
 					selectable: true,
-					onSelectionChange
-				}
+					onSelectionChange,
+				},
 			});
 
 			const checkboxes = getAllByRole('checkbox');
@@ -152,13 +152,13 @@ describe('Table Component', () => {
 					columns: testColumns,
 					rows: testRows,
 					selectable: true,
-					onSelectionChange
-				}
+					onSelectionChange,
+				},
 			});
 
 			const selectAllCheckbox = getAllByRole('checkbox')[0];
 			await fireEvent.click(selectAllCheckbox);
-			expect(onSelectionChange).toHaveBeenCalledWith(testRows.map(r => r.id));
+			expect(onSelectionChange).toHaveBeenCalledWith(testRows.map((r) => r.id));
 		});
 
 		it('shows indeterminate state for partial selection', () => {
@@ -167,8 +167,8 @@ describe('Table Component', () => {
 					columns: testColumns,
 					rows: testRows,
 					selectable: true,
-					selectedRows: [1]
-				}
+					selectedRows: [1],
+				},
 			});
 
 			const selectAllCheckbox = getAllByRole('checkbox')[0] as HTMLInputElement;
@@ -179,14 +179,14 @@ describe('Table Component', () => {
 	describe('Empty State', () => {
 		it('shows empty message when no rows', () => {
 			const { getByText } = render(Table, {
-				props: { columns: testColumns, rows: [], emptyMessage: 'No data available' }
+				props: { columns: testColumns, rows: [], emptyMessage: 'No data available' },
 			});
 			expect(getByText('No data available')).toBeTruthy();
 		});
 
 		it('uses default empty message', () => {
 			const { getByText } = render(Table, {
-				props: { columns: testColumns, rows: [] }
+				props: { columns: testColumns, rows: [] },
 			});
 			expect(getByText('No results found')).toBeTruthy();
 		});
@@ -195,7 +195,7 @@ describe('Table Component', () => {
 	describe('Loading State', () => {
 		it('shows loading spinner when loading', () => {
 			const { getByTestId, queryAllByRole } = render(Table, {
-				props: { columns: testColumns, rows: testRows, loading: true }
+				props: { columns: testColumns, rows: testRows, loading: true },
 			});
 			expect(getByTestId('table-loading')).toBeTruthy();
 			expect(queryAllByRole('gridcell').length).toBe(0);
@@ -203,7 +203,7 @@ describe('Table Component', () => {
 
 		it('hides table content when loading', () => {
 			const { queryByText } = render(Table, {
-				props: { columns: testColumns, rows: testRows, loading: true }
+				props: { columns: testColumns, rows: testRows, loading: true },
 			});
 			expect(queryByText('Alice')).toBeNull();
 		});
@@ -220,8 +220,8 @@ describe('Table Component', () => {
 					pageSize: 10,
 					currentPage: 1,
 					onPageChange: () => {},
-					onPageSizeChange: () => {}
-				}
+					onPageSizeChange: () => {},
+				},
 			});
 			expect(getByText(/Showing/)).toBeTruthy();
 		});
@@ -237,8 +237,8 @@ describe('Table Component', () => {
 					pageSize: 10,
 					currentPage: 1,
 					onPageChange,
-					onPageSizeChange: () => {}
-				}
+					onPageSizeChange: () => {},
+				},
 			});
 
 			await fireEvent.click(getByText('Next'));
@@ -249,14 +249,14 @@ describe('Table Component', () => {
 	describe('Accessibility', () => {
 		it('has proper grid role', () => {
 			const { getByRole } = render(Table, {
-				props: { columns: testColumns, rows: testRows }
+				props: { columns: testColumns, rows: testRows },
 			});
 			expect(getByRole('grid')).toBeTruthy();
 		});
 
 		it('has rowgroup for header and body', () => {
 			const { getAllByRole } = render(Table, {
-				props: { columns: testColumns, rows: testRows }
+				props: { columns: testColumns, rows: testRows },
 			});
 			const rowgroups = getAllByRole('rowgroup');
 			expect(rowgroups.length).toBe(2);
@@ -264,7 +264,7 @@ describe('Table Component', () => {
 
 		it('has columnheader role for headers', () => {
 			const { getAllByRole } = render(Table, {
-				props: { columns: testColumns, rows: testRows }
+				props: { columns: testColumns, rows: testRows },
 			});
 			const headers = getAllByRole('columnheader');
 			expect(headers.length).toBe(testColumns.length);
@@ -272,7 +272,7 @@ describe('Table Component', () => {
 
 		it('has row role for data rows', () => {
 			const { getAllByRole } = render(Table, {
-				props: { columns: testColumns, rows: testRows }
+				props: { columns: testColumns, rows: testRows },
 			});
 			const rows = getAllByRole('row');
 			expect(rows.length).toBe(testRows.length + 1);
@@ -280,7 +280,7 @@ describe('Table Component', () => {
 
 		it('has gridcell role for cells', () => {
 			const { getAllByRole } = render(Table, {
-				props: { columns: testColumns, rows: testRows }
+				props: { columns: testColumns, rows: testRows },
 			});
 			const cells = getAllByRole('gridcell');
 			expect(cells.length).toBe(testRows.length * testColumns.length);
@@ -288,14 +288,14 @@ describe('Table Component', () => {
 
 		it('supports aria-label for table', () => {
 			const { getByRole } = render(Table, {
-				props: { columns: testColumns, rows: testRows, ariaLabel: 'Users table' }
+				props: { columns: testColumns, rows: testRows, ariaLabel: 'Users table' },
 			});
 			expect(getByRole('grid').getAttribute('aria-label')).toBe('Users table');
 		});
 
 		it('marks sortable columns with aria-sort', () => {
 			const { getByText } = render(Table, {
-				props: { columns: testColumns, rows: testRows, sortable: true }
+				props: { columns: testColumns, rows: testRows, sortable: true },
 			});
 
 			const nameHeader = getByText('Name').closest('[role="columnheader"]');
@@ -306,7 +306,7 @@ describe('Table Component', () => {
 	describe('Custom Rendering', () => {
 		it('renders custom cell content via slot', () => {
 			const { getByText } = render(Table, {
-				props: { columns: testColumns, rows: testRows }
+				props: { columns: testColumns, rows: testRows },
 			});
 			expect(getByText('Alice')).toBeTruthy();
 		});

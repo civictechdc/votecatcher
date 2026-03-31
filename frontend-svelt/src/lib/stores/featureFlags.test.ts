@@ -150,7 +150,7 @@ describe('featureFlags store', () => {
 			featureFlags.toggle('simulationMode');
 			featureFlags.resetAll();
 
-			await new Promise(resolve => setTimeout(resolve, 100));
+			await new Promise((resolve) => setTimeout(resolve, 100));
 			const hasAny = get(hasOverrides);
 			expect(hasAny).toBe(false);
 		});

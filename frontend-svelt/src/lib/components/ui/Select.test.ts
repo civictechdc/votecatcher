@@ -5,14 +5,14 @@ import Select from './Select.svelte';
 const defaultOptions = [
 	{ value: 'high', label: 'High' },
 	{ value: 'medium', label: 'Medium' },
-	{ value: 'low', label: 'Low' }
+	{ value: 'low', label: 'Low' },
 ];
 
 describe('Select Component', () => {
 	describe('Rendering', () => {
 		it('renders with trigger button', () => {
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 			const combobox = getByRole('combobox');
 			expect(combobox).toBeTruthy();
@@ -20,7 +20,7 @@ describe('Select Component', () => {
 
 		it('renders with label', () => {
 			const { getByLabelText } = render(Select, {
-				props: { id: 'priority', label: 'Priority', options: defaultOptions }
+				props: { id: 'priority', label: 'Priority', options: defaultOptions },
 			});
 			const combobox = getByLabelText('Priority');
 			expect(combobox).toBeTruthy();
@@ -28,7 +28,7 @@ describe('Select Component', () => {
 
 		it('renders with placeholder text', () => {
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, placeholder: 'Select an option' }
+				props: { id: 'test-select', options: defaultOptions, placeholder: 'Select an option' },
 			});
 			const combobox = getByRole('combobox');
 			expect(combobox.textContent).toContain('Select an option');
@@ -36,14 +36,14 @@ describe('Select Component', () => {
 
 		it('renders with helper text', () => {
 			const { getByText } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, helperText: 'Choose wisely' }
+				props: { id: 'test-select', options: defaultOptions, helperText: 'Choose wisely' },
 			});
 			expect(getByText('Choose wisely')).toBeTruthy();
 		});
 
 		it('displays selected value label in trigger', () => {
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, value: 'medium' }
+				props: { id: 'test-select', options: defaultOptions, value: 'medium' },
 			});
 			const combobox = getByRole('combobox');
 			expect(combobox.textContent).toContain('Medium');
@@ -53,7 +53,7 @@ describe('Select Component', () => {
 	describe('Dropdown Behavior', () => {
 		it('opens dropdown on click', async () => {
 			const { getByRole, queryByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			expect(queryByRole('listbox')).toBeNull();
@@ -66,7 +66,7 @@ describe('Select Component', () => {
 
 		it('closes dropdown when clicking outside', async () => {
 			const { getByRole, queryByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			const combobox = getByRole('combobox');
@@ -79,7 +79,7 @@ describe('Select Component', () => {
 
 		it('shows all options when open', async () => {
 			const { getByRole, getAllByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			const combobox = getByRole('combobox');
@@ -94,7 +94,7 @@ describe('Select Component', () => {
 		it('selects an option on click', async () => {
 			const onValueChange = vi.fn();
 			const { getByRole, getAllByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, onValueChange }
+				props: { id: 'test-select', options: defaultOptions, onValueChange },
 			});
 
 			const combobox = getByRole('combobox');
@@ -108,7 +108,7 @@ describe('Select Component', () => {
 
 		it('closes dropdown after selection', async () => {
 			const { getByRole, getAllByRole, queryByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			const combobox = getByRole('combobox');
@@ -122,7 +122,7 @@ describe('Select Component', () => {
 
 		it('shows checkmark on selected option', async () => {
 			const { getByRole, getAllByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, value: 'high' }
+				props: { id: 'test-select', options: defaultOptions, value: 'high' },
 			});
 
 			const combobox = getByRole('combobox');
@@ -136,7 +136,7 @@ describe('Select Component', () => {
 	describe('Keyboard Navigation', () => {
 		it('opens dropdown with Enter key', async () => {
 			const { getByRole, queryByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			const combobox = getByRole('combobox');
@@ -148,7 +148,7 @@ describe('Select Component', () => {
 
 		it('opens dropdown with Space key', async () => {
 			const { getByRole, queryByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			const combobox = getByRole('combobox');
@@ -160,7 +160,7 @@ describe('Select Component', () => {
 
 		it('closes dropdown with Escape key', async () => {
 			const { getByRole, queryByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			const combobox = getByRole('combobox');
@@ -173,7 +173,7 @@ describe('Select Component', () => {
 
 		it('navigates options with arrow keys', async () => {
 			const { getByRole, getAllByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			const combobox = getByRole('combobox');
@@ -190,7 +190,7 @@ describe('Select Component', () => {
 		it('selects highlighted option with Enter', async () => {
 			const onValueChange = vi.fn();
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, onValueChange }
+				props: { id: 'test-select', options: defaultOptions, onValueChange },
 			});
 
 			const combobox = getByRole('combobox');
@@ -207,7 +207,7 @@ describe('Select Component', () => {
 	describe('States', () => {
 		it('renders as disabled', () => {
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, disabled: true }
+				props: { id: 'test-select', options: defaultOptions, disabled: true },
 			});
 			const combobox = getByRole('combobox');
 			expect(combobox.hasAttribute('disabled')).toBe(true);
@@ -215,7 +215,7 @@ describe('Select Component', () => {
 
 		it('does not open dropdown when disabled', async () => {
 			const { getByRole, queryByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, disabled: true }
+				props: { id: 'test-select', options: defaultOptions, disabled: true },
 			});
 
 			const combobox = getByRole('combobox');
@@ -226,7 +226,7 @@ describe('Select Component', () => {
 
 		it('renders with error state', () => {
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, error: true }
+				props: { id: 'test-select', options: defaultOptions, error: true },
 			});
 			const combobox = getByRole('combobox');
 			expect(combobox.getAttribute('aria-invalid')).toBe('true');
@@ -238,15 +238,15 @@ describe('Select Component', () => {
 					id: 'test-select',
 					options: defaultOptions,
 					error: true,
-					errorMessage: 'This field is required'
-				}
+					errorMessage: 'This field is required',
+				},
 			});
 			expect(getByText('This field is required')).toBeTruthy();
 		});
 
 		it('applies error styling to trigger', () => {
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, error: true }
+				props: { id: 'test-select', options: defaultOptions, error: true },
 			});
 			const combobox = getByRole('combobox');
 			expect(combobox.classList.contains('border-red-500')).toBe(true);
@@ -256,7 +256,7 @@ describe('Select Component', () => {
 	describe('Accessibility', () => {
 		it('has proper aria-expanded attribute', async () => {
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			const combobox = getByRole('combobox');
@@ -268,7 +268,7 @@ describe('Select Component', () => {
 
 		it('has proper aria-controls attribute', () => {
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			const combobox = getByRole('combobox');
@@ -277,7 +277,7 @@ describe('Select Component', () => {
 
 		it('has proper aria-haspopup attribute', () => {
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			const combobox = getByRole('combobox');
@@ -286,7 +286,7 @@ describe('Select Component', () => {
 
 		it('listbox has proper aria-label', async () => {
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, label: 'Priority' }
+				props: { id: 'test-select', options: defaultOptions, label: 'Priority' },
 			});
 
 			const combobox = getByRole('combobox');
@@ -298,7 +298,7 @@ describe('Select Component', () => {
 
 		it('options have proper role and value', async () => {
 			const { getByRole, getAllByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions }
+				props: { id: 'test-select', options: defaultOptions },
 			});
 
 			const combobox = getByRole('combobox');
@@ -314,7 +314,7 @@ describe('Select Component', () => {
 	describe('Search/Filter', () => {
 		it('filters options when searchable', async () => {
 			const { getByRole, getAllByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, searchable: true }
+				props: { id: 'test-select', options: defaultOptions, searchable: true },
 			});
 
 			const combobox = getByRole('combobox');
@@ -330,7 +330,7 @@ describe('Select Component', () => {
 
 		it('shows no results message when filter has no matches', async () => {
 			const { getByRole, getByText } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, searchable: true }
+				props: { id: 'test-select', options: defaultOptions, searchable: true },
 			});
 
 			const combobox = getByRole('combobox');
@@ -346,7 +346,7 @@ describe('Select Component', () => {
 	describe('Clear Button', () => {
 		it('shows clear button when value is selected and clearable is true', () => {
 			const { getByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, value: 'high', clearable: true }
+				props: { id: 'test-select', options: defaultOptions, value: 'high', clearable: true },
 			});
 
 			expect(getByRole('button', { name: /clear/i })).toBeTruthy();
@@ -360,8 +360,8 @@ describe('Select Component', () => {
 					options: defaultOptions,
 					value: 'high',
 					clearable: true,
-					onValueChange
-				}
+					onValueChange,
+				},
 			});
 
 			const clearButton = getByRole('button', { name: /clear/i });
@@ -372,7 +372,7 @@ describe('Select Component', () => {
 
 		it('does not show clear button when clearable is false', () => {
 			const { queryByRole } = render(Select, {
-				props: { id: 'test-select', options: defaultOptions, value: 'high', clearable: false }
+				props: { id: 'test-select', options: defaultOptions, value: 'high', clearable: false },
 			});
 
 			expect(queryByRole('button', { name: /clear/i })).toBeNull();

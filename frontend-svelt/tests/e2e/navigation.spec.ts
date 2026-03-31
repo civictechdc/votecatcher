@@ -43,26 +43,36 @@ test.describe('Campaign-Scoped Navigation', () => {
 		await page.waitForLoadState('domcontentloaded');
 
 		const table = page.locator('table');
-		const campaignLinks = await table.locator('a[href^="/workspace/"]').filter({
-			hasNotText: 'Campaigns'
-		}).all();
+		const campaignLinks = await table
+			.locator('a[href^="/workspace/"]')
+			.filter({
+				hasNotText: 'Campaigns',
+			})
+			.all();
 
 		if (campaignLinks.length >= 2) {
-			const firstHref = await campaignLinks[0].getAttribute('href') || '';
+			const firstHref = (await campaignLinks[0].getAttribute('href')) || '';
 			await campaignLinks[0].click();
-			await expect(page).toHaveURL(new RegExp(firstHref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), { timeout: 5000 });
+			await expect(page).toHaveURL(new RegExp(firstHref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), {
+				timeout: 5000,
+			});
 			const firstCampaignUrl = page.url();
 
 			await page.goto('/workspace/campaigns');
 			await page.waitForLoadState('domcontentloaded');
 
 			const newTable = page.locator('table');
-			const newLinks = await newTable.locator('a[href^="/workspace/"]').filter({
-				hasNotText: 'Campaigns'
-			}).all();
-			const secondHref = await newLinks[1].getAttribute('href') || '';
+			const newLinks = await newTable
+				.locator('a[href^="/workspace/"]')
+				.filter({
+					hasNotText: 'Campaigns',
+				})
+				.all();
+			const secondHref = (await newLinks[1].getAttribute('href')) || '';
 			await newLinks[1].click();
-			await expect(page).toHaveURL(new RegExp(secondHref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), { timeout: 5000 });
+			await expect(page).toHaveURL(new RegExp(secondHref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), {
+				timeout: 5000,
+			});
 			const secondCampaignUrl = page.url();
 
 			expect(firstCampaignUrl).not.toBe(secondCampaignUrl);
@@ -235,7 +245,10 @@ test.describe('Campaign Results Page', () => {
 
 				await expect(page.locator('h1').first()).toBeVisible();
 
-				const noResultsVisible = await page.locator('text=No results found').isVisible({ timeout: 1000 }).catch(() => false);
+				const noResultsVisible = await page
+					.locator('text=No results found')
+					.isVisible({ timeout: 1000 })
+					.catch(() => false);
 				if (noResultsVisible) {
 					console.log('Campaign has no results - skipping test');
 					expect(true).toBeTruthy();
@@ -251,10 +264,10 @@ test.describe('Campaign Results Page', () => {
 				}
 
 				const headerTexts = await tableHeaders.allTextContents();
-				expect(headerTexts.some(h => h.toLowerCase().includes('extracted name'))).toBeTruthy();
-				expect(headerTexts.some(h => h.toLowerCase().includes('extracted address'))).toBeTruthy();
-				expect(headerTexts.some(h => h.toLowerCase().includes('matched name'))).toBeTruthy();
-				expect(headerTexts.some(h => h.toLowerCase().includes('matched address'))).toBeTruthy();
+				expect(headerTexts.some((h) => h.toLowerCase().includes('extracted name'))).toBeTruthy();
+				expect(headerTexts.some((h) => h.toLowerCase().includes('extracted address'))).toBeTruthy();
+				expect(headerTexts.some((h) => h.toLowerCase().includes('matched name'))).toBeTruthy();
+				expect(headerTexts.some((h) => h.toLowerCase().includes('matched address'))).toBeTruthy();
 			}
 		} else {
 			console.log('No campaigns found - skipping test');
@@ -306,7 +319,10 @@ test.describe('Campaign Results Page', () => {
 				await page.goto(`/workspace/${campaignId}/results`);
 				await page.waitForLoadState('domcontentloaded');
 
-				const noResultsVisible = await page.locator('text=No results found').isVisible({ timeout: 1000 }).catch(() => false);
+				const noResultsVisible = await page
+					.locator('text=No results found')
+					.isVisible({ timeout: 1000 })
+					.catch(() => false);
 				if (noResultsVisible) {
 					console.log('Campaign has no results - skipping test');
 					expect(true).toBeTruthy();

@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 
 // Mock environment variables before importing
 vi.mock('$env/static/public', () => ({
-	PUBLIC_API_URL: 'http://localhost:8000/api'
+	PUBLIC_API_URL: 'http://localhost:8000/api',
 }));
 
 // Mock fetch globally
@@ -45,13 +45,13 @@ describe('settings store', () => {
 					betaFeatures: false,
 					debugMode: true,
 					demoMode: true,
-					demoReset: true
-				}
+					demoReset: true,
+				},
 			};
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve(mockSettings)
+				json: () => Promise.resolve(mockSettings),
 			});
 
 			await settings.fetchSettings();
@@ -85,7 +85,7 @@ describe('settings store', () => {
 
 			mockFetch.mockResolvedValueOnce({
 				ok: false,
-				status: 500
+				status: 500,
 			});
 
 			await settings.fetchSettings();
@@ -118,7 +118,7 @@ describe('settings store', () => {
 			// Resolve the fetch
 			resolveFetch!({
 				ok: true,
-				json: () => Promise.resolve({ ocr_provider: null, ocr_model: null, features: {} })
+				json: () => Promise.resolve({ ocr_provider: null, ocr_model: null, features: {} }),
 			});
 
 			await fetchPromiseResult;

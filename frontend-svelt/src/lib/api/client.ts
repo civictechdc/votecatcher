@@ -2,10 +2,7 @@
 // All direct Supabase calls in your previous app are replaced with REST endpoint calls.
 // For now endpoints are mocked under src/routes/api/*.
 import { PUBLIC_API_URL } from '$env/static/public';
-import type {
-	MatchResponse,
-	MatchingProgressResponse
-} from '$lib/api/response-types';
+import type { MatchResponse, MatchingProgressResponse } from '$lib/api/response-types';
 
 const BASE_URL = (PUBLIC_API_URL ?? '').replace(/\/$/, '');
 
@@ -90,7 +87,11 @@ export async function fetchRaw(
 		: `${BASE_URL}${path.startsWith('/') ? path : '/' + path}`;
 
 	// normalize init - cast body since we handle stringifying below
-	let init: RequestInit = { credentials: 'include', ...opts, body: opts.body as BodyInit | null | undefined };
+	let init: RequestInit = {
+		credentials: 'include',
+		...opts,
+		body: opts.body as BodyInit | null | undefined,
+	};
 
 	// Let request middlewares transform init (e.g. auth headers)
 	init = await runRequestMiddlewares(resolved, init);
@@ -108,8 +109,8 @@ export async function fetchRaw(
 			body: JSON.stringify(init.body),
 			headers: {
 				'Content-Type': 'application/json',
-				...(init.headers as Record<string, string> | undefined)
-			}
+				...(init.headers as Record<string, string> | undefined),
+			},
 		};
 	} else if (isForm) {
 		// ensure Content-Type not set so browser adds boundary
@@ -146,9 +147,8 @@ export async function request<T = unknown>(
 			// New calling convention: request({ opts, path, query, base_url })
 			const { opts: reqOpts, path, query, base_url } = pathOrOpts;
 			const pathStr = path ? '/' + path.join('/') : '';
-			const queryString = query && Object.keys(query).length > 0
-				? '?' + new URLSearchParams(query).toString()
-				: '';
+			const queryString =
+				query && Object.keys(query).length > 0 ? '?' + new URLSearchParams(query).toString() : '';
 			resolvedPath = base_url
 				? `${base_url}${pathStr}${queryString}`
 				: `${BASE_URL}${pathStr}${queryString}`;
@@ -166,7 +166,10 @@ export async function request<T = unknown>(
 		}
 		if (!res.ok) {
 			const err =
-				(parsed && typeof parsed === 'object' && (parsed as any).error) ||
+				(parsed &&
+					typeof parsed === 'object' &&
+					'error' in parsed &&
+					(parsed as { error: string }).error) ||
 				res.statusText ||
 				`HTTP ${res.status}`;
 			return { ok: false, error: String(err) };
@@ -211,7 +214,7 @@ export const api = {
 
 	fetchMatchFields: (id: string) =>
 		request(`${BASE_URL}/api/config/match-fields/${id}`, {
-			method: 'GET'
+			method: 'GET',
 		}),
 
 	demoGetMatchResults: (payload: {
@@ -222,7 +225,7 @@ export const api = {
 		request(`${BASE_URL}/api/workspace/ocr/demo`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: payload
+			body: payload,
 		}),
 
 	demoStartOcrRequest: (payload: {
@@ -233,13 +236,13 @@ export const api = {
 		request<MatchingProgressResponse>(`${BASE_URL}/api/workspace/ocr/demo_batch`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: payload
+			body: payload,
 		}),
 
 	demoGetOcrStatus: (job_id: string) =>
 		request<MatchingProgressResponse>(`${BASE_URL}/api/workspace/ocr/batch/${job_id}/status`, {
 			method: 'GET',
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
 		}),
 	demoObserveOcrStatus: (job_id: string) => {
 		const url = `${BASE_URL}/workspace/api/match/status/id/${encodeURIComponent(job_id)}`;
@@ -250,7 +253,7 @@ export const api = {
 			`${BASE_URL}/api/workspace/ocr/results/demo/${encodeURIComponent(job_id)}`,
 			{
 				method: 'GET',
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
 			}
-		)
+		),
 };

@@ -6,7 +6,7 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 from app.data.database.model.petition_scan import PetitionScan
@@ -68,9 +68,9 @@ class CampaignListResponse(BaseModel):
 class CreateCampaignRequest(BaseModel):
 	"""Request schema for creating campaign."""
 
-	name: str
-	year: int
-	region: str = "DC"
+	name: str = Field(min_length=1, max_length=255, pattern=r"^[^<>\"';&]+$")
+	year: int = Field(ge=1900, le=2100)
+	region: str = Field(default="DC", max_length=10)
 
 
 @router.post("", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)

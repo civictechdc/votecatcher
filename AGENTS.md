@@ -134,6 +134,12 @@ Usage notes:
 </skill>
 
 <skill>
+<name>detect-language</name>
+<description>Use when starting work on a project to detect the primary programming language and tooling. Use before running build, test, or lint commands.</description>
+<location>project</location>
+</skill>
+
+<skill>
 <name>dispatching-parallel-agents</name>
 <description>Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies</description>
 <location>project</location>
@@ -218,6 +224,30 @@ Usage notes:
 </skill>
 
 <skill>
+<name>python-core</name>
+<description>Use when working with Python projects, setting up Python development environments, or needing guidance on modern Python practices (3.13+), package management with uv, type hints, or tooling configuration.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>python-linting</name>
+<description>Use when encountering linting errors, code quality issues, style violations, or needing to configure ruff/flake8/pylint. Essential for maintaining code consistency and catching potential bugs early.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>python-pytest</name>
+<description>Use when writing Python tests, encountering test failures, setting up pytest, configuring fixtures, parametrization, mocking, coverage, or organizing test suites. Essential for TDD and test-driven development.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>python-type-checking</name>
+<description>Use when encountering type errors, setting up type checking, configuring basedpyright/mypy/pyright, or needing guidance on type hints, generics, protocols, or gradual typing adoption strategies.</description>
+<location>project</location>
+</skill>
+
+<skill>
 <name>risk-metrics-calculation</name>
 <description>Calculate portfolio risk metrics including VaR, CVaR, Sharpe, Sortino, and drawdown analysis. Use when measuring portfolio risk, implementing risk limits, or building risk monitoring systems.</description>
 <location>project</location>
@@ -236,8 +266,50 @@ Usage notes:
 </skill>
 
 <skill>
+<name>security-auth</name>
+<description>Use when implementing authentication or authorization. Covers OAuth, JWT, session management, password handling, MFA, and access control patterns.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>security-core</name>
+<description>Use when writing or modifying code. Apply OWASP secure coding principles automatically. This skill is always active.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>security-crypto</name>
+<description>Use when implementing encryption, hashing, or cryptographic operations. Covers symmetric/asymmetric encryption, hashing, TLS, certificates, and key management.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>security-dependencies</name>
+<description>Use when managing dependencies or checking for vulnerabilities. Covers dependency scanning, CVE management, supply chain security, and update strategies.</description>
+<location>project</location>
+</skill>
+
+<skill>
 <name>security-requirement-extraction</name>
 <description>Derive security requirements from threat models and business context. Use when translating threats into actionable requirements, creating security user stories, or building security test cases.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>security-review</name>
+<description>Use when reviewing code for security vulnerabilities or performing security audits.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>security-secrets</name>
+<description>Use when handling API keys, passwords, tokens, or other sensitive credentials. Covers secrets management, environment variables, vaults, and rotation strategies.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>security-testing</name>
+<description>Use when testing code for security vulnerabilities. Covers SAST, DAST, dependency scanning, fuzzing, and penetration testing.</description>
 <location>project</location>
 </skill>
 
@@ -328,6 +400,114 @@ Usage notes:
 <skill>
 <name>writing-skills</name>
 <description>Use when creating new skills, editing existing skills, or verifying skills work before deployment</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>design-an-interface</name>
+<description>Generate multiple radically different interface designs for a module using parallel sub-agents. Use when user wants to design an API, explore interface options, compare module shapes, or mentions "design it twice".</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>edit-article</name>
+<description>Edit and improve articles by restructuring sections, improving clarity, and tightening prose. Use when user wants to edit, revise, or improve an article draft.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>git-guardrails-claude-code</name>
+<description>Set up Claude Code hooks to block dangerous git commands (push, reset --hard, clean, branch -D, etc.) before they execute. Use when user wants to prevent destructive git operations, add git safety hooks, or block git push/reset in Claude Code.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>grill-me</name>
+<description>Interview the user relentlessly about a plan or design until reaching shared understanding, resolving each branch of the decision tree. Use when user wants to stress-test a plan, get grilled on their design, or mentions "grill me".</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>improve-codebase-architecture</name>
+<description>Explore a codebase to find opportunities for architectural improvement, focusing on making the codebase more testable by deepening shallow modules. Use when user wants to improve architecture, find refactoring opportunities, consolidate tightly-coupled modules, or make a codebase more AI-navigable.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>migrate-to-shoehorn</name>
+<description>Migrate test files from `as` type assertions to @total-typescript/shoehorn. Use when user mentions shoehorn, wants to replace `as` in tests, or needs partial test data.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>obsidian-vault</name>
+<description>Search, create, and manage notes in the Obsidian vault with wikilinks and index notes. Use when user wants to find, create, or organize notes in Obsidian.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>prd-to-issues</name>
+<description>Break a PRD into independently-grabbable GitHub issues using tracer-bullet vertical slices. Use when user wants to convert a PRD to issues, create implementation tickets, or break down a PRD into work items.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>prd-to-plan</name>
+<description>Turn a PRD into a multi-phase implementation plan using tracer-bullet vertical slices, saved as a local Markdown file in ./plans/. Use when user wants to break down a PRD, create an implementation plan, plan phases from a PRD, or mentions "tracer bullets".</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>qa</name>
+<description>Interactive QA session where user reports bugs or issues conversationally, and the agent files GitHub issues. Explores the codebase in the background for context and domain language. Use when user wants to report bugs, do QA, file issues conversationally, or mentions "QA session".</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>request-refactor-plan</name>
+<description>Create a detailed refactor plan with tiny commits via user interview, then file it as a GitHub issue. Use when user wants to plan a refactor, create a refactoring RFC, or break a refactor into safe incremental steps.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>scaffold-exercises</name>
+<description>Create exercise directory structures with sections, problems, solutions, and explainers that pass linting. Use when user wants to scaffold exercises, create exercise stubs, or set up a new course section.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>setup-pre-commit</name>
+<description>Set up Husky pre-commit hooks with lint-staged (Prettier), type checking, and tests in the current repo. Use when user wants to add pre-commit hooks, set up Husky, configure lint-staged, or add commit-time formatting/typechecking/testing.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>tdd</name>
+<description>Test-driven development with red-green-refactor loop. Use when user wants to build features or fix bugs using TDD, mentions "red-green-refactor", wants integration tests, or asks for test-first development.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>triage-issue</name>
+<description>Triage a bug or issue by exploring the codebase to find root cause, then create a GitHub issue with a TDD-based fix plan. Use when user reports a bug, wants to file an issue, mentions "triage", or wants to investigate and plan a fix for a problem.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>ubiquitous-language</name>
+<description>Extract a DDD-style ubiquitous language glossary from the current conversation, flagging ambiguities and proposing canonical terms. Saves to UBIQUITOUS_LANGUAGE.md. Use when user wants to define domain terms, build a glossary, harden terminology, create a ubiquitous language, or mentions "domain model" or "DDD".</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>write-a-prd</name>
+<description>Create a PRD through user interview, codebase exploration, and module design, then submit as a GitHub issue. Use when user wants to write a PRD, create a product requirements document, or plan a new feature.</description>
+<location>project</location>
+</skill>
+
+<skill>
+<name>write-a-skill</name>
+<description>Create new agent skills with proper structure, progressive disclosure, and bundled resources. Use when user wants to create, write, or build a new skill.</description>
 <location>project</location>
 </skill>
 

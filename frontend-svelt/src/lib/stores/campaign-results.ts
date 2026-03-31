@@ -48,7 +48,7 @@ function createCampaignResultsStore() {
 		confidence: undefined,
 		loading: false,
 		initialized: false,
-		error: null
+		error: null,
 	});
 
 	return {
@@ -65,13 +65,13 @@ function createCampaignResultsStore() {
 				error: null,
 				page,
 				pageSize,
-				confidence
+				confidence,
 			}));
 
 			try {
 				const params = new URLSearchParams({
 					page: String(page),
-					page_size: String(pageSize)
+					page_size: String(pageSize),
 				});
 				if (confidence) {
 					params.append('confidence', confidence);
@@ -92,14 +92,14 @@ function createCampaignResultsStore() {
 					results: data.results,
 					total: data.total,
 					loading: false,
-					initialized: true
+					initialized: true,
 				}));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
 				update((s) => ({
 					...s,
 					loading: false,
-					error: message
+					error: message,
 				}));
 			}
 		},
@@ -117,9 +117,9 @@ function createCampaignResultsStore() {
 				confidence: undefined,
 				loading: false,
 				initialized: false,
-				error: null
+				error: null,
 			});
-		}
+		},
 	};
 }
 
