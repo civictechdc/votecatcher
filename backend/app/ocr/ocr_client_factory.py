@@ -7,6 +7,7 @@ from langchain_core.runnables import Runnable
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mistralai import ChatMistralAI
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
 from app.ocr.data.data_models import OCRData
 from app.settings import GeminiAiConfig, MistralAiConfig, OpenAiConfig, load_settings
@@ -51,7 +52,7 @@ def _create_ocr_client() -> Runnable:
 			).with_structured_output(OCRData)
 		case MistralAiConfig():
 			client = ChatMistralAI(
-				api_key=ocr_config.api_key,
+				api_key=SecretStr(ocr_config.api_key),
 				temperature=0.0,
 				model_name=ocr_config.model,
 			).with_structured_output(OCRData)

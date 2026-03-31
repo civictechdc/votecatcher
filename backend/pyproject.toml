@@ -99,7 +99,7 @@ entrypoint = "app.api:app"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = "app"
-addopts = ["--import-mode=importlib"]
+addopts = ["--import-mode=importlib", "--cov=app", "--cov-fail-under=36"]
 
 [tool.ruff]
 line-length = 88

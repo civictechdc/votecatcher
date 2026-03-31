@@ -44,7 +44,9 @@ next-env.d.ts
 .supabase
 
 # IDE
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
@@ -106,6 +108,9 @@ temp/
 .agent-workspace/
 .agent/
 
+# Secret detection baseline (contains detected patterns)
+.secrets.baseline
+
 # Cursor
 .cursor/
 
@@ -137,13 +142,6 @@ temp/
 ehthumbs.db
 Icon?
 
-# Editor directories and files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
 # Supabase specific
 .supabase/
 supabase/.temp/
@@ -166,6 +164,10 @@ supabase/.env
 !eslint.config.mjs
 !next.config.ts
 !public/config.json
+!.github/renovate.json
+!.zed/settings.json
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Upload directories
 uploads/
@@ -173,6 +175,9 @@ temp-uploads/
 
 # Cursor
 .cursor/
+
+# Votecatcher data files (contain sensitive batch/API data)
+Votecatcher/
 
 # data files
 sample_data

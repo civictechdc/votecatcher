@@ -34,7 +34,6 @@ from app.ocr.ocr_manager import (
 from app.ocr.ocr_result_repo import CreateOcrResult, OcrResultRepository
 from app.settings import OpenAiConfig
 from app.settings.env_settings import AppSettings
-from app.settings.settings_repo import OpenAiConfig
 
 logger = structlog.get_logger(__name__)
 _POLLING_INTERVAL_IN_SECONDS: float = 5.0
@@ -109,10 +108,12 @@ class BatchOcrHandler:
 		return matching_task
 
 	async def start_ocr_job(self, ocr_data: OcrRequest) -> MatchingTask:
+		assert self.settings.ocr_api_key is not None
+		assert self.settings.ocr_model is not None
 		config: OpenAiConfig = OpenAiConfig(
 			api_key=self.settings.ocr_api_key,
 			model=self.settings.ocr_model,
-			name=self.settings.ocr_provider_name,
+			name=self.settings.ocr_provider_name or "open_ai",
 		)
 		ocr_client: OcrClient = self._create_batch_ocr_client(config)
 		ocr_job_status: OcrJobStatus = await ocr_client.create_batch_job(ocr_data)
@@ -190,11 +191,15 @@ class BatchOcrHandler:
 
 				# Update the matching task from the latest ocr job state
 				logger.debug(
-					f"Current job status: {current_task.status}. Ocr task status: {ocr_status.task_status}"
+					"Current job status: %s. Ocr task status: %s",
+					current_task.status,
+					ocr_status.task_status,
 				)
 				if current_task.status != ocr_status.task_status:
 					logger.debug(
-						f"Job has switched status from {current_task.status} to {ocr_status.task_status}"
+						"Job has switched status from %s to %s",
+						current_task.status,
+						ocr_status.task_status,
 					)
 					current_task = await self._update_task_status(ocr_status)
 				else:

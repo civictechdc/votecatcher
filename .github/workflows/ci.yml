@@ -7,42 +7,108 @@ on:
     branches: [main]
 
 jobs:
-  backend-lint:
+  lockfile-integrity:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Install UV
         uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
 
-      - name: Run ruff check
-        run: uv run ruff check backend/
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
 
-      - name: Run ruff format check
-        run: uv run ruff format --check backend/
+      - name: Check Python lockfile
+        run: cd backend && uv lock --check
+
+      - name: Check JS lockfile
+        run: cd frontend-svelt && bun install --frozen-lockfile
+
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'justfile'
+            frontend:
+              - 'frontend-svelt/**'
+              - 'justfile'
+
+  backend-lint:
+    needs: [lockfile-integrity, changes]
+    if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install dependencies
+        run: cd backend && uv sync --dev
+
+      - name: Run backend lint
+        run: just lint-backend
 
   backend-typecheck:
+    needs: [lockfile-integrity, changes]
+    if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Install UV
         uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
 
-      - name: Run basedpyright
-        run: uv run basedpyright backend/
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install dependencies
+        run: cd backend && uv sync --dev
+
+      - name: Run backend typecheck
+        run: just typecheck-backend
 
   backend-test:
+    needs: [lockfile-integrity, changes]
+    if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Install UV
         uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
 
-      - name: Run pytest with coverage
-        run: uv run pytest backend/tests --cov=app --cov-report=xml
-        working-directory: backend
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install dependencies
+        run: cd backend && uv sync --dev
+
+      - name: Run backend tests
+        run: just test-backend
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -51,6 +117,8 @@ jobs:
           fail_ci_if_error: true
 
   frontend-lint:
+    needs: [lockfile-integrity, changes]
+    if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -58,19 +126,28 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
 
+      - name: Cache bun
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            frontend-svelt/node_modules/.cache
+          key: bun-${{ hashFiles('frontend-svelt/bun.lock') }}
+          restore-keys: |
+            bun-
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Install dependencies
-        run: bun install
-        working-directory: frontend-svelt
+        run: cd frontend-svelt && bun install --frozen-lockfile
 
-      - name: Run oxlint
-        run: bun run oxlint
-        working-directory: frontend-svelt
-
-      - name: Run format check
-        run: bun run format:check
-        working-directory: frontend-svelt
+      - name: Run frontend lint
+        run: just lint-frontend
 
   frontend-typecheck:
+    needs: [lockfile-integrity, changes]
+    if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -78,15 +155,28 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
 
-      - name: Install dependencies
-        run: bun install
-        working-directory: frontend-svelt
+      - name: Cache bun
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            frontend-svelt/node_modules/.cache
+          key: bun-${{ hashFiles('frontend-svelt/bun.lock') }}
+          restore-keys: |
+            bun-
 
-      - name: Run svelte-check
-        run: bun run check
-        working-directory: frontend-svelt
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install dependencies
+        run: cd frontend-svelt && bun install --frozen-lockfile
+
+      - name: Run frontend typecheck
+        run: just typecheck-frontend
 
   frontend-test:
+    needs: [lockfile-integrity, changes]
+    if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -94,21 +184,66 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
 
-      - name: Install dependencies
-        run: bun install
-        working-directory: frontend-svelt
+      - name: Cache bun
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            frontend-svelt/node_modules/.cache
+          key: bun-${{ hashFiles('frontend-svelt/bun.lock') }}
+          restore-keys: |
+            bun-
 
-      - name: Run vitest
-        run: bun run test
-        working-directory: frontend-svelt
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install dependencies
+        run: cd frontend-svelt && bun install --frozen-lockfile
+
+      - name: Run frontend tests
+        run: just test-frontend
 
   docker-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build backend Docker image
-        run: docker build -t votecatcher-backend ./backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: false
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
       - name: Build frontend Docker image
-        run: docker build -t votecatcher-frontend ./frontend-svelt
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend-svelt
+          push: false
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  justfile-makefile-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Makefile is in sync with justfile
+        run: python scripts/just-to-make.py --check
