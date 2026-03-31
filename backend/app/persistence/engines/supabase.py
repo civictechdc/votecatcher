@@ -7,7 +7,7 @@ from typing import override
 
 import structlog
 from pydantic import SecretStr
-from sqlalchemy import Engine
+from sqlalchemy import Engine, text
 from sqlalchemy.exc import DBAPIError, OperationalError
 from sqlmodel import Session, create_engine
 from supabase import Client, create_client
@@ -76,7 +76,7 @@ class SupabaseEngine(BaseEngine):
 		try:
 			engine = self._get_engine()
 			with engine.connect() as conn:
-				conn.execute(__import__("sqlalchemy").text("SELECT 1"))
+				conn.execute(text("SELECT 1"))
 			return True
 		except (OperationalError, DBAPIError) as e:
 			logger.error("Supabase health check failed", error=str(e))

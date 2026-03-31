@@ -45,5 +45,8 @@ def get_engine():
 def get_db_session() -> Generator[Session]:
 	"""Get database session for dependency injection."""
 	engine = get_engine()
-	with engine.create_session() as session:
+	session = engine.create_session()
+	try:
 		yield session
+	finally:
+		session.close()

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
-import Page from '../../../src/routes/workspace/campaigns/+page.svelte';
+import Page from '../../../src/routes/(app)/workspace/campaigns/+page.svelte';
 import type { CampaignResponse } from '$lib/api/generated';
 
 vi.mock('$lib/stores/campaigns', () => ({
