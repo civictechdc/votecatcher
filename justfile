@@ -101,11 +101,39 @@ migrate-create msg="description":
 db-reset:
     cd backend && uv run alembic downgrade base && uv run alembic upgrade head
 
-# Run security scans (bandit, pip-audit, bun audit)
+# Run all security scans
 security-scan:
+    just security-scan-backend
+    just security-scan-frontend
+
+# Run backend security scans (bandit, pip-audit)
+security-scan-backend:
     cd backend && uv run bandit -r app/
     cd backend && uv run pip-audit
+
+# Run frontend security scan (bun audit)
+security-scan-frontend:
     cd frontend-svelt && bun audit
+
+# Run SAST with semgrep (full scan)
+sast:
+    semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --json -o semgrep-results.json backend/ frontend-svelt/src/
+
+# Run SAST with baseline commit mode (PR diffs only)
+sast-pr:
+    semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --baseline-commit origin/main --json -o semgrep-pr.json backend/ frontend-svelt/src/
+
+# Run SCA — dependency vulnerability + license scanning
+sca:
+    osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses
+    trivy fs --severity CRITICAL,HIGH --scanners vuln,license .
+
+# Run container image scanning
+container-scan:
+    docker build -t votecatcher-backend ./backend
+    docker build -t votecatcher-frontend ./frontend-svelt
+    trivy image --severity CRITICAL,HIGH votecatcher-backend
+    trivy image --severity CRITICAL,HIGH votecatcher-frontend
 
 # Run Dockerfile linting with hadolint
 docker-lint:
@@ -119,8 +147,8 @@ lint-backend:
 
 # Lint frontend only (oxlint + format check)
 lint-frontend:
-    cd frontend-svelt && bun run lint || echo "WARNING: Frontend lint has pre-existing errors (tracked in Phase 2)"
-    cd frontend-svelt && bun run fmt:check || echo "WARNING: Frontend format has pre-existing issues (tracked in Phase 2)"
+    cd frontend-svelt && bun run lint
+    cd frontend-svelt && bun run fmt:check
 
 # Typecheck backend only
 typecheck-backend:
@@ -137,6 +165,24 @@ test-backend:
 # Run backend integration tests (requires PostgreSQL)
 test-backend-integration:
     cd backend && uv run pytest tests/integration
+
+# Run DAST scan with nuclei (requires running backend at localhost:8080)
+dast:
+    nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -json -o nuclei-results.json
+
+# Run code duplication analysis
+duplication:
+    jscpd backend/app/ frontend-svelt/src/ --min-lines 5 --min-tokens 50 --threshold 5 --reporters html
+
+# Run complexity analysis
+complexity:
+    cd backend && uv run radon cc app/ -a -nb
+    cd backend && uv run radon mi app/ -nb
+
+# Run dead code analysis
+dead-code:
+    cd backend && uv run vulture app/ --min-confidence 80 --format json > vulture-report.json
+    cd frontend-svelt && bunx ts-prune --json > ts-prune-report.json
 
 # Run frontend tests
 test-frontend:
@@ -158,9 +204,9 @@ ci-sim:
     @echo "=== Frontend Typecheck ==="
     just typecheck-frontend
     @echo "=== Security Scan ==="
-    just security-scan || echo "WARNING: Security scan has pre-existing issues or missing tools"
+    just security-scan
     @echo "=== Docker Lint ==="
-    just docker-lint || echo "WARNING: Docker lint has pre-existing findings"
+    just docker-lint
     @echo "=== CI Simulation Complete ==="
 
 # Sync Makefile from justfile (for Unix users)

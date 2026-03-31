@@ -1,0 +1,54 @@
+name: Code Quality Analysis
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install dependencies
+        run: |
+          cd backend && uv sync --dev
+          cd frontend-svelt && bun install --frozen-lockfile
+
+      - name: Install code quality tools
+        run: npm install -g jscpd ts-prune
+
+      - name: Run duplication analysis
+        run: just duplication
+        continue-on-error: true
+
+      - name: Run complexity analysis
+        run: just complexity
+        continue-on-error: true
+
+      - name: Run dead code analysis
+        run: just dead-code
+        continue-on-error: true
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: code-quality-reports
+          path: |
+            jscpd-report/
+            vulture-report.json
+            ts-prune-report.json

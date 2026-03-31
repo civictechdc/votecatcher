@@ -1,7 +1,7 @@
 # DO NOT EDIT - Generated from justfile by scripts/just-to-make.py
 # To update: python scripts/just-to-make.py > Makefile
 
-.PHONY: default install dev test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration test-frontend ci-sim sync-makefile
+.PHONY: default install dev test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration dast duplication complexity dead-code test-frontend ci-sim sync-makefile
 
 default:
 	@just --list
@@ -78,9 +78,31 @@ db-reset:
 	cd backend && uv run alembic downgrade base && uv run alembic upgrade head
 
 security-scan:
+	just security-scan-backend
+	just security-scan-frontend
+
+security-scan-backend:
 	cd backend && uv run bandit -r app/
 	cd backend && uv run pip-audit
+
+security-scan-frontend:
 	cd frontend-svelt && bun audit
+
+sast:
+	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --json -o semgrep-results.json backend/ frontend-svelt/src/
+
+sast-pr:
+	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --baseline-commit origin/main --json -o semgrep-pr.json backend/ frontend-svelt/src/
+
+sca:
+	osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses
+	trivy fs --severity CRITICAL,HIGH --scanners vuln,license .
+
+container-scan:
+	docker build -t votecatcher-backend ./backend
+	docker build -t votecatcher-frontend ./frontend-svelt
+	trivy image --severity CRITICAL,HIGH votecatcher-backend
+	trivy image --severity CRITICAL,HIGH votecatcher-frontend
 
 docker-lint:
 	hadolint backend/Dockerfile
@@ -91,8 +113,8 @@ lint-backend:
 	cd backend && uv run ruff format --check .
 
 lint-frontend:
-	cd frontend-svelt && bun run lint || echo "WARNING: Frontend lint has pre-existing errors (tracked in Phase 2)"
-	cd frontend-svelt && bun run fmt:check || echo "WARNING: Frontend format has pre-existing issues (tracked in Phase 2)"
+	cd frontend-svelt && bun run lint
+	cd frontend-svelt && bun run fmt:check
 
 typecheck-backend:
 	cd backend && uv run basedpyright
@@ -105,6 +127,20 @@ test-backend:
 
 test-backend-integration:
 	cd backend && uv run pytest tests/integration
+
+dast:
+	nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -json -o nuclei-results.json
+
+duplication:
+	jscpd backend/app/ frontend-svelt/src/ --min-lines 5 --min-tokens 50 --threshold 5 --reporters html
+
+complexity:
+	cd backend && uv run radon cc app/ -a -nb
+	cd backend && uv run radon mi app/ -nb
+
+dead-code:
+	cd backend && uv run vulture app/ --min-confidence 80 --format json > vulture-report.json
+	cd frontend-svelt && bunx ts-prune --json > ts-prune-report.json
 
 test-frontend:
 	cd frontend-svelt && bun run test:unit
@@ -124,9 +160,9 @@ ci-sim:
 	@echo "=== Frontend Typecheck ==="
 	just typecheck-frontend
 	@echo "=== Security Scan ==="
-	just security-scan || echo "WARNING: Security scan has pre-existing issues or missing tools"
+	just security-scan
 	@echo "=== Docker Lint ==="
-	just docker-lint || echo "WARNING: Docker lint has pre-existing findings"
+	just docker-lint
 	@echo "=== CI Simulation Complete ==="
 
 sync-makefile:

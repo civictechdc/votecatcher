@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: '0 3 * * *'
 
 jobs:
   backend-security:
@@ -14,17 +16,18 @@ jobs:
 
       - name: Install UV
         uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
 
-      - name: Install security tools
-        run: |
-          pip install bandit pip-audit
+      - name: Install just
+        uses: extractions/setup-just@v2
 
-      - name: Run bandit
-        run: bandit -c backend/pyproject.toml -r backend/
+      - name: Install dependencies
+        run: cd backend && uv sync --dev
 
-      - name: Run pip-audit
-        run: uv pip audit
-        working-directory: backend
+      - name: Run backend security scan
+        run: just security-scan-backend
 
   frontend-security:
     runs-on: ubuntu-latest
@@ -34,13 +37,24 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
 
-      - name: Install dependencies
-        run: bun install
-        working-directory: frontend-svelt
+      - name: Cache bun
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            frontend-svelt/node_modules/.cache
+          key: bun-${{ hashFiles('frontend-svelt/bun.lock') }}
+          restore-keys: |
+            bun-
 
-      - name: Run bun audit
-        run: bun audit
-        working-directory: frontend-svelt
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install dependencies
+        run: cd frontend-svelt && bun install --frozen-lockfile
+
+      - name: Run frontend security scan
+        run: just security-scan-frontend
 
   secrets-scan:
     runs-on: ubuntu-latest
@@ -54,6 +68,67 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  sast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Run semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: "auto,p/owasp-top-ten,p/fastapi,p/jwt,p/xss"
+          baseline-commit: ${{ github.base_ref || 'main' }}
+          generateSarif: "1"
+
+      - name: Upload semgrep results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-results
+          path: semgrep-results.json
+
+  sca:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install osv-scanner
+        run: go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+
+      - name: Install Trivy
+        run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Scan dependencies with osv-scanner
+        run: osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses
+        continue-on-error: true
+
+      - name: Check for AGPL/GPL/LGPL licenses
+        run: |
+          if osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses --json 2>/dev/null | grep -q "AGPL\|GPL\|LGPL"; then
+            echo "::warning ::AGPL/GPL/LGPL licenses detected - review for compliance"
+          fi
+
+      - name: Scan filesystem with Trivy
+        run: trivy fs --severity CRITICAL,HIGH --scanners vuln,license --format json --output trivy-results.json .
+        continue-on-error: true
+
+      - name: Upload SCA results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sca-results
+          path: |
+            osv-results.json
+            trivy-results.json
+
   container-scan:
     runs-on: ubuntu-latest
     steps:
@@ -66,15 +141,58 @@ jobs:
         run: docker build -t votecatcher-frontend ./frontend-svelt
 
       - name: Run Trivy on backend
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: votecatcher-backend
           severity: CRITICAL,HIGH
           exit-code: 1
 
       - name: Run Trivy on frontend
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: votecatcher-frontend
           severity: CRITICAL,HIGH
           exit-code: 1
+
+  dast:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install nuclei
+        run: go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+
+      - name: Update nuclei templates
+        run: nuclei -update-templates
+
+      - name: Install dependencies
+        run: cd backend && uv sync --dev
+
+      - name: Start backend
+        run: cd backend && uv run python -m app &
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./test.db"
+
+      - name: Wait for backend
+        run: sleep 10
+
+      - name: Run DAST scan
+        run: just dast
+        continue-on-error: true
+
+      - name: Upload nuclei results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nuclei-results
+          path: nuclei-results.json

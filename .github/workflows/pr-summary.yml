@@ -1,0 +1,25 @@
+name: PR Quality Summary
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  pr-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate PR summary
+        run: |
+          echo "## Quality Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Files Changed" >> $GITHUB_STEP_SUMMARY
+          echo "\`${{ github.event.pull_request.additions }}\` additions, \`${{ github.event.pull_request.deletions }}\` deletions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quality Checks" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Lint passes" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Type checking passes" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Tests pass" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Security scan passes" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Coverage maintained" >> $GITHUB_STEP_SUMMARY
