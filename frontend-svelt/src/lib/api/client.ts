@@ -3,6 +3,12 @@
 // For now endpoints are mocked under src/routes/api/*.
 import { PUBLIC_API_URL } from '$env/static/public';
 import type { MatchResponse, MatchingProgressResponse } from '$lib/api/response-types';
+import type {
+	DatabaseStatus,
+	SupabaseCredentials,
+	ConnectionTestResult,
+	ProvisionResult,
+} from '$lib/api/database-types';
 
 const BASE_URL = (PUBLIC_API_URL ?? '').replace(/\/$/, '');
 
@@ -256,4 +262,20 @@ export const api = {
 				headers: { 'Content-Type': 'application/json' },
 			}
 		),
+
+	database: {
+		getStatus: () => request<DatabaseStatus>('/database/status', { method: 'GET' }),
+		testSupabase: (credentials: SupabaseCredentials) =>
+			request<ConnectionTestResult>('/database/supabase/test', {
+				method: 'POST',
+				body: credentials,
+			}),
+		provisionSupabase: (credentials: SupabaseCredentials) =>
+			request<ProvisionResult>('/database/supabase/provision', {
+				method: 'POST',
+				body: credentials,
+			}),
+		disconnectSupabase: () =>
+			request<{ success: boolean }>('/database/supabase', { method: 'DELETE' }),
+	},
 };
