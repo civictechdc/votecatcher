@@ -1,11 +1,17 @@
 """Aggregated application settings."""
 
+import os
 from functools import lru_cache
 from pathlib import Path
+from typing import override
 
-import structlog
 from pydantic import Field, SecretStr
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import (
+	BaseSettings,
+	DotEnvSettingsSource,
+	PydanticBaseSettingsSource,
+	SettingsConfigDict,
+)
 
 from app.settings.providers.database_config import DatabaseConfig
 from app.settings.providers.feature_config import FeatureConfig
@@ -13,13 +19,23 @@ from app.settings.providers.ocr_config import OcrConfig
 from app.settings.providers.supabase_config import SupabaseConfig
 from app.settings.sources.environment import EnvironmentSource
 
-logger = structlog.get_logger(__name__)
-
 BACKEND_DIR = Path(__file__).parent.parent.parent
 
 
 def _resolve_env_path() -> Path:
-	"""Resolve the env file path based on priority."""
+	"""Resolve the env file path based on priority.
+
+	Checks SETTINGS_ENV_FILE first for test override, then falls
+	back to ENV_FILE, .env.local, or NODE_ENV-based path.
+
+	Called lazily at Settings instantiation time (not module level)
+	so tests can override via SETTINGS_ENV_FILE env var or by
+	setting Settings.model_config['env_file'] before importing.
+	"""
+	override = os.environ.get("SETTINGS_ENV_FILE")
+	if override:
+		return Path(override)
+
 	env_source = EnvironmentSource()
 	env_file = env_source.get("ENV_FILE")
 
@@ -39,9 +55,26 @@ class Settings(BaseSettings):
 
 	model_config = SettingsConfigDict(
 		extra="ignore",
-		env_file=str(_resolve_env_path()),
 		env_file_encoding="utf-8",
 	)
+
+	@classmethod
+	@override
+	def settings_customise_sources(
+		cls,
+		settings_cls: type[BaseSettings],
+		init_settings: PydanticBaseSettingsSource,
+		env_settings: PydanticBaseSettingsSource,
+		dotenv_settings: PydanticBaseSettingsSource,
+		file_secret_settings: PydanticBaseSettingsSource,
+	) -> tuple[PydanticBaseSettingsSource, ...]:
+		env_path = _resolve_env_path()
+		dotenv = DotEnvSettingsSource(
+			settings_cls,
+			env_file=env_path,
+			env_file_encoding="utf-8",
+		)
+		return (init_settings, env_settings, dotenv, file_secret_settings)
 
 	database_url: str = Field(
 		default="sqlite:///./votecatcher.db", alias="DATABASE_URL"
@@ -109,6 +142,4 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
 	"""Get cached settings instance."""
-	env_path = _resolve_env_path()
-	logger.debug("Loading settings", env_path=str(env_path))
 	return Settings()

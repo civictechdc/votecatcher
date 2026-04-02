@@ -2,6 +2,7 @@ import os
 import pathlib
 import tomllib
 from dataclasses import dataclass
+from typing import override
 
 from app.utils import enable_debug_logging, logger
 
@@ -14,6 +15,10 @@ class OpenAiConfig:
 	model: str
 	name: str = "open_ai"
 
+	@override
+	def __repr__(self) -> str:
+		return f"OpenAiConfig(api_key=***, model={self.model!r}, name={self.name!r})"
+
 
 @dataclass
 class MistralAiConfig:
@@ -21,12 +26,20 @@ class MistralAiConfig:
 	model: str
 	name: str = "mistral_ai"
 
+	@override
+	def __repr__(self) -> str:
+		return f"MistralAiConfig(api_key=***, model={self.model!r}, name={self.name!r})"
+
 
 @dataclass
 class GeminiAiConfig:
 	api_key: str
 	model: str
 	name: str = "gemini_ai"
+
+	@override
+	def __repr__(self) -> str:
+		return f"GeminiAiConfig(api_key=***, model={self.model!r}, name={self.name!r})"
 
 
 @dataclass
@@ -55,7 +68,8 @@ def _create_provider_config(
 
 
 def override_settings(config: OpenAiConfig | MistralAiConfig | GeminiAiConfig):
-	_current_settings = config
+	global _current_settings
+	_current_settings = SettingsData(selected_config=config)
 
 
 def load_settings(
@@ -91,7 +105,7 @@ def load_settings(
 				env_provider_name, env_provider_model, env_provider_api_key
 			)
 		)
-		logger.debug(f"Loading env settings override: {_current_settings}")
+		logger.debug("Loading env settings override", settings=_current_settings)
 		return _current_settings
 
 	if (_current_settings) and (not reload_settings):
@@ -107,7 +121,7 @@ def load_settings(
 	try:
 		with open(file, "rb") as f:
 			settings = tomllib.load(f)
-	except Exception:
+	except (FileNotFoundError, tomllib.TOMLDecodeError):
 		logger.info(
 			f"Could not load settings from {file}. Please ensure the file "
 			f"exists and is in the correct format."
@@ -153,7 +167,7 @@ def load_settings(
 
 	_current_settings.debug_mode = settings.get("debug_mode", False)
 
-	logger.debug(f"Loaded settings: {_current_settings}")
+	logger.debug("Loaded settings", settings=_current_settings)
 	logger.info(
 		"Selected OCR engine {x} with model {y}:".format(
 			x=selected_engine, y=engine_config["model"]
