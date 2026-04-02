@@ -51,6 +51,8 @@ class CampaignRepository(Protocol):
 
 	def list_active(self) -> list[Campaign]: ...
 
+	def list_all(self) -> list[Campaign]: ...
+
 
 @runtime_checkable
 class VoterRepository(Protocol):

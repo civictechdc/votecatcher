@@ -6,7 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-class RegisteredVoter(BaseModel):
+class RegisteredVoter(BaseModel, frozen=True):
 	"""Registered voter domain object for business logic."""
 
 	id: int | None = None

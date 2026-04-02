@@ -6,7 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-class Petition(BaseModel):
+class Petition(BaseModel, frozen=True):
 	"""Petition domain object for business logic."""
 
 	id: int | None = None
