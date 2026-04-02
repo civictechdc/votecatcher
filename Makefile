@@ -95,7 +95,7 @@ security-scan:
 
 security-scan-backend:
 	cd backend && uv run bandit -r app/
-	cd backend && uv run pip-audit
+	cd backend && uv audit
 
 security-scan-frontend:
 	cd frontend-svelt && bun audit

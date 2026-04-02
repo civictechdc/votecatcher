@@ -92,6 +92,7 @@
 		"postgres": "^3.4.8",
 		"tailwind-merge": "^3.5.0"
 	},
+	"trustedDependencies": [],
 	"size-limit": [
 		{
 			"path": ".svelte-kit/output/client/**/*.js",

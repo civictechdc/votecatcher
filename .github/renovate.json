@@ -2,6 +2,11 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "schedule": ["every weekend"],
+  "minimumReleaseAge": "3 days",
+  "minimumReleaseAgeBehaviour": "timestamp-required",
+  "internalChecksFilter": "strict",
+  "prCreation": "not-pending",
+  "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
@@ -11,8 +16,30 @@
     {
       "matchPackageNames": ["python"],
       "schedule": ["on the first day of the month"]
+    },
+    {
+      "matchDatasources": ["npm"],
+      "minimumReleaseAge": "3 days",
+      "description": "npm packages can be unpublished within 72 hours"
+    },
+    {
+      "matchDatasources": ["pypi"],
+      "minimumReleaseAge": "3 days",
+      "description": "PyPI supply-chain cooling period"
+    },
+    {
+      "matchUpdateTypes": ["patch"],
+      "matchDatasources": ["npm", "pypi"],
+      "automerge": true,
+      "minimumReleaseAge": "1 day",
+      "description": "Patches get shorter cooling period, still automerged after 1 day"
     }
   ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "minimumReleaseAge": null,
+    "prCreation": "immediate"
+  },
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": ["every weekend"]

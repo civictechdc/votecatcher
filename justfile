@@ -120,10 +120,10 @@ security-scan:
     just security-scan-backend
     just security-scan-frontend
 
-# Run backend security scans (bandit, pip-audit)
+# Run backend security scans (bandit, uv audit)
 security-scan-backend:
     cd backend && uv run bandit -r app/
-    cd backend && uv run pip-audit
+    cd backend && uv audit
 
 # Run frontend security scan (bun audit)
 security-scan-frontend:
