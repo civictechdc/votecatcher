@@ -15,8 +15,11 @@ def session_fixture():
 	)
 	SQLModel.metadata.create_all(test_engine)
 
-	with Session(test_engine) as session:
-		yield session
+	try:
+		with Session(test_engine) as session:
+			yield session
+	finally:
+		test_engine.dispose()
 
 
 @pytest.fixture

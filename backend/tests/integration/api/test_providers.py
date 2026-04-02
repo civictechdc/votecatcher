@@ -1,27 +1,5 @@
 """Integration tests for provider settings endpoints."""
 
-import pytest
-from fastapi.testclient import TestClient
-from sqlmodel import Session
-
-from app.api import app
-from app.data.database.model.llm_provider_config import LlmProviderConfig
-from app.data.database.session import engine, init_db
-
-
-@pytest.fixture
-def client():
-	return TestClient(app)
-
-
-@pytest.fixture
-def session():
-	init_db()
-	with Session(engine) as session:
-		session.query(LlmProviderConfig).delete()
-		session.commit()
-		yield session
-
 
 class TestListProviders:
 	def test_list_providers_returns_all_supported(self, client, session):

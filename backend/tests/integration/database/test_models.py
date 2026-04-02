@@ -3,6 +3,8 @@
 import pytest
 from sqlmodel import Session, SQLModel, create_engine
 
+pytestmark = pytest.mark.skip(reason="Requires local PostgreSQL — use Docker or CI")
+
 
 @pytest.fixture
 def db_engine():
@@ -14,6 +16,7 @@ def db_engine():
 	SQLModel.metadata.create_all(engine)
 	yield engine
 	SQLModel.metadata.drop_all(engine)
+	engine.dispose()
 
 
 @pytest.fixture

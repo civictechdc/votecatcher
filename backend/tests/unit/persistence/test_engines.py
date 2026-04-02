@@ -1,6 +1,7 @@
 """Tests for persistence engines."""
 
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from pydantic import SecretStr
 from sqlmodel import Session
@@ -100,3 +101,84 @@ class TestSupabaseEngine:
 		url = engine.connection_url
 		assert "secret" not in url
 		assert "****" in url
+
+	def test_initialize_skips_alembic_when_no_ini(self):
+		"""Initialize should skip Alembic when alembic.ini missing."""
+		from app.persistence.engines.supabase import SupabaseEngine
+
+		engine = SupabaseEngine(
+			project_url="https://test.supabase.co",
+			service_key=SecretStr("test_key"),
+			database_url="postgresql://test",
+		)
+		with (
+			patch(
+				"app.persistence.engines.supabase._BACKEND_DIR",
+				Path("/nonexistent"),
+			),
+			patch.object(engine, "_get_engine") as mock_get_engine,
+		):
+			mock_engine = MagicMock()
+			mock_conn = MagicMock()
+			mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
+			mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+			mock_get_engine.return_value = mock_engine
+			engine.initialize()
+
+	def test_initialize_runs_alembic_when_ini_exists(self, tmp_path: Path):
+		"""Initialize should attempt Alembic upgrade when alembic.ini exists."""
+		from app.persistence.engines.supabase import SupabaseEngine
+
+		alembic_ini = tmp_path / "alembic.ini"
+		alembic_ini.write_text("[alembic]\nscript_location = alembic\n")
+
+		engine = SupabaseEngine(
+			project_url="https://test.supabase.co",
+			service_key=SecretStr("test_key"),
+			database_url="postgresql://test",
+		)
+		with (
+			patch(
+				"app.persistence.engines.supabase._BACKEND_DIR",
+				tmp_path,
+			),
+			patch("alembic.command.upgrade") as mock_upgrade,
+			patch.object(engine, "_get_engine") as mock_get_engine,
+		):
+			mock_engine = MagicMock()
+			mock_conn = MagicMock()
+			mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
+			mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+			mock_get_engine.return_value = mock_engine
+			engine.initialize()
+			mock_upgrade.assert_called_once()
+
+	def test_initialize_tolerates_alembic_failure(self, tmp_path: Path):
+		"""Initialize should continue if Alembic migration fails."""
+		from app.persistence.engines.supabase import SupabaseEngine
+
+		alembic_ini = tmp_path / "alembic.ini"
+		alembic_ini.write_text("[alembic]\nscript_location = alembic\n")
+
+		engine = SupabaseEngine(
+			project_url="https://test.supabase.co",
+			service_key=SecretStr("test_key"),
+			database_url="postgresql://test",
+		)
+		with (
+			patch(
+				"app.persistence.engines.supabase._BACKEND_DIR",
+				tmp_path,
+			),
+			patch(
+				"alembic.command.upgrade",
+				side_effect=Exception("migration failed"),
+			),
+			patch.object(engine, "_get_engine") as mock_get_engine,
+		):
+			mock_engine = MagicMock()
+			mock_conn = MagicMock()
+			mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
+			mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+			mock_get_engine.return_value = mock_engine
+			engine.initialize()

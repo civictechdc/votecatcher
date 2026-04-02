@@ -38,7 +38,8 @@ class TestOCRServiceIntegration:
 		"""Create in-memory SQLite engine for testing."""
 		engine = create_engine("sqlite:///:memory:", echo=False)
 		SQLModel.metadata.create_all(engine)
-		return engine
+		yield engine
+		engine.dispose()
 
 	@pytest.fixture
 	def session(self, engine):
@@ -307,7 +308,8 @@ class TestOCRServiceErrorHandling:
 		"""Create in-memory SQLite engine for testing."""
 		engine = create_engine("sqlite:///:memory:", echo=False)
 		SQLModel.metadata.create_all(engine)
-		return engine
+		yield engine
+		engine.dispose()
 
 	@pytest.fixture
 	def session(self, engine):

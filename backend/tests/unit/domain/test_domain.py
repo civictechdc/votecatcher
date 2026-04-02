@@ -71,6 +71,52 @@ class TestCampaign:
 		)
 		assert campaign.is_active() is False
 
+	def test_is_active_uses_date_range_when_provided(self):
+		"""When start_date/end_date are set, date range takes priority over year."""
+		from app.domain.campaign import Campaign
+
+		today = date.today()
+		campaign = Campaign(
+			unique_name="test",
+			title="Test",
+			year="2020",
+			region_id=UUID("00000000-0000-0000-0000-000000000001"),
+			start_date=date(today.year, 1, 1),
+			end_date=date(today.year, 12, 31),
+		)
+		assert campaign.is_active() is True
+
+	def test_is_active_date_range_cross_year(self):
+		"""Cross-year campaign should be active within date range."""
+		from app.domain.campaign import Campaign
+
+		today = date.today()
+		prev_year = today.year - 1
+		campaign = Campaign(
+			unique_name="test",
+			title="Test",
+			year=str(today.year),
+			region_id=UUID("00000000-0000-0000-0000-000000000001"),
+			start_date=date(prev_year, 7, 1),
+			end_date=date(today.year, 12, 31),
+		)
+		assert campaign.is_active() is True
+
+	def test_is_active_date_range_expired(self):
+		"""Campaign with past end_date should not be active."""
+		from app.domain.campaign import Campaign
+
+		campaign = Campaign(
+			unique_name="test",
+			title="Test",
+			year="2024",
+			region_id=UUID("00000000-0000-0000-0000-000000000001"),
+			start_date=date(2024, 1, 1),
+			end_date=date(2024, 12, 31),
+		)
+		if date.today().year > 2024:
+			assert campaign.is_active() is False
+
 	def test_repr_masks_sensitive_fields(self):
 		"""Campaign repr should be safe for logging."""
 		from app.domain.campaign import Campaign

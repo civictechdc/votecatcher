@@ -1,15 +1,6 @@
 """Tests for error handling and CORS headers on error responses."""
 
-import pytest
 from fastapi.testclient import TestClient
-
-from app.api import app
-
-
-@pytest.fixture
-def client():
-	"""Create test client."""
-	return TestClient(app)
 
 
 class TestErrorHandlingCORS:
