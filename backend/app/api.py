@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from app.data import DbClient, get_db_client
 from app.data.database.session import get_db_session, init_db
 from app.data.memory_db import get_memory_db
+from app.dependencies import warn_database_api_key_missing
 from app.jobs import worker as job_worker
 from app.logger_config.app_logger import (
 	configure_logger,
@@ -22,6 +23,7 @@ from app.logger_config.app_logger import (
 from app.routers import (
 	campaign_router,
 	config_router,
+	database_router,
 	demo_router,
 	events_router,
 	job_router,
@@ -53,6 +55,7 @@ async def lifespan(app: FastAPI):
 		configure_logger(False)
 
 	init_db()
+	warn_database_api_key_missing()
 
 	logger.info("Starting job worker")
 	worker_task = asyncio.create_task(job_worker.start_worker())
@@ -162,5 +165,6 @@ app.include_router(session_router)
 app.include_router(demo_router)
 app.include_router(config_router)
 app.include_router(provider_router)
+app.include_router(database_router)
 app.include_router(region_router.router)
 app.include_router(events_router.router)
