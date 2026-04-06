@@ -305,7 +305,7 @@ You can also set `ENV_FILE` directly for tests or scripts that don't use `main.p
 cd backend
 
 # Load specific env file
-ENV_FILE=.env.dev uv run python -c "from app.settings.env_settings import get_settings; print(get_settings().demo_mode)"
+ENV_FILE=.env.dev uv run python -c "from app.settings import get_settings; print(get_settings().feature_demo)"
 
 # Or in pytest
 ENV_FILE=.env.simulation uv run pytest tests/

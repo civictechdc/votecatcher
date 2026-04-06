@@ -75,8 +75,6 @@ You are token-efficient. Minimize context usage by:
 
 ### Completed: Code Quality Tools Migration
 
-> **Source:** `docs/plans/code-quality-tools-migration.md`
-
 | Phase | Status | Tasks | Notes |
 |-------|--------|-------|-------|
 | 1. Fallow for `frontend-svelt/` | Complete | 1A, 1B, 1C | v2.11.0 installed, .fallowrc.json created, 82 issues baseline |
@@ -86,8 +84,6 @@ You are token-efficient. Minimize context usage by:
 | 5. Remove ts-prune | Complete | 5A, 5B, 5C | Removed all ts-prune references from CI, justfile, Makefile; *.json already gitignored |
 
 ### Completed: Settings Consolidation (R13)
-
-> **Source:** `docs/plans/settings-consolidation.md`
 
 | Phase | Status | Notes |
 |-------|--------|-------|
@@ -212,16 +208,13 @@ When building frontend components:
 |------|----------|
 | Fallow Refactor (frontend — Next.js) | `docs/plans/fallow-refactor.md` |
 
-### Completed
+### Completed (docs archived/removed)
 
-| Plan | Document |
-|------|----------|
-| Settings Consolidation (R13) | `docs/plans/settings-consolidation.md` |
-
-| Plan | Document |
-|------|----------|
-| Code Quality Tools Migration | `docs/plans/code-quality-tools-migration.md` |
-| Supabase Integration (Phases 1-5) | `docs/plans/supabase-integration/00-INDEX.md` |
+| Plan | Status |
+|------|--------|
+| Settings Consolidation (R13) | Complete |
+| Code Quality Tools Migration | Complete |
+| Supabase Integration (Phases 1-5) | Complete |
 
 ---
 
