@@ -70,13 +70,25 @@ uv run ruff format app/     # Format
 uv run pytest tests/ -v     # Tests
 ```
 
-**Frontend:**
+**Frontend (SvelteKit — `frontend-svelt/`):**
 ```bash
 cd frontend-svelt
 bun run typecheck           # Type check
 bun run lint               # Lint
 bun run lint:fix           # Format
 bun run test               # Tests
+```
+
+**Frontend (Next.js — `frontend/`):**
+```bash
+cd frontend
+npx next lint              # Lint
+npx next build             # Type check + build
+npx fallow                 # Dead code, duplication, complexity
+npx fallow dead-code       # Unused files, exports, dependencies
+npx fallow dupes           # Code duplication analysis
+npx fallow health          # Complexity hotspots
+npx fallow audit --base main  # PR quality gate
 ```
 
 ### 4. Commit and Push
@@ -122,6 +134,12 @@ votecatcher/
 │   │   └── ...
 │   └── tests/           # Test suites
 │
+├── frontend/             # Next.js frontend (React)
+│   ├── app/             # Pages and API routes
+│   ├── components/      # UI components (shadcn/ui)
+│   ├── lib/             # Shared utilities
+│   └── ...
+│
 ├── frontend-svelt/       # SvelteKit frontend
 │   ├── src/
 │   │   ├── routes/      # Pages
@@ -144,3 +162,31 @@ votecatcher/
 - [Running Locally](../running-locally.md) - Detailed setup
 - [Architecture](../architecture/README.md) - System design
 - [API Specification](../../backend/openapi.yaml) - OpenAPI spec
+- [Fallow Refactor Plan](../plans/fallow-refactor.md) - Frontend code quality improvement plan
+
+## Code Quality Tools
+
+### Frontend Static Analysis (fallow)
+
+[Fallow](https://github.com/fallow-rs/fallow) is a Rust-based static analyzer for TypeScript/JavaScript that finds unused code, duplication, and complexity hotspots. It runs in the `frontend/` (Next.js) directory.
+
+```bash
+cd frontend
+npx fallow                  # Full analysis (dead code + dupes + complexity)
+npx fallow dead-code        # Unused files, exports, dependencies
+npx fallow dupes            # Code duplication detection
+npx fallow health --score   # Complexity analysis with project health score
+npx fallow audit --base main  # PR quality gate (pass/warn/fail)
+```
+
+Configuration: `frontend/.fallowrc.json` (see [fallow config docs](https://docs.fallow.tools/configuration/overview))
+
+### Backend Quality (Python)
+
+```bash
+cd backend
+uv run ruff check app/      # Lint
+uv run ruff format app/     # Format
+uv run basedpyright app/    # Type check
+uv run vulture app/         # Dead code detection
+```

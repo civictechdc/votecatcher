@@ -206,7 +206,7 @@ When building frontend components:
 
 | Plan | Document |
 |------|----------|
-| Fallow Refactor (frontend — Next.js) | `docs/plans/fallow-refactor.md` |
+| _None_ | — |
 
 ### Completed (docs archived/removed)
 
