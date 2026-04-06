@@ -93,10 +93,19 @@ class Settings(BaseSettings):
 	ocr_model: str | None = Field(default=None, alias="OCR_PROVIDER_MODEL")
 	ocr_api_key: SecretStr | None = Field(default=None, alias="OCR_PROVIDER_API_KEY")
 
+	app_name: str = Field(default="Votecatcher Backend", alias="APP_NAME")
+	version: str = Field(default="", alias="APP_VERSION")
+
 	feature_simulation: bool = Field(default=False, alias="FEATURE_ENABLE_SIMULATION")
 	feature_beta: bool = Field(default=False, alias="FEATURE_ENABLE_BETA_FEATURES")
 	feature_debug: bool = Field(default=False, alias="FEATURE_ENABLE_DEBUG_MODE")
 	feature_demo: bool = Field(default=False, alias="FEATURE_DEMO_MODE")
+	demo_reset: bool = Field(default=False, alias="FEATURE_DEMO_RESET")
+	always_batch_ocr: bool = Field(default=True, alias="FEATURE_ALWAYS_BATCH_OCR")
+
+	clear_runtime_on_launch: bool = Field(
+		default=False, alias="DEV_CLEAR_RUNTIME_ON_LAUNCH"
+	)
 
 	runtime_dir: Path | None = Field(default=None, alias="DEV_LOCAL_RUNTIME_DIR")
 	local_db: Path | None = Field(default=None, alias="DEV_LOCAL_RUNTIME_DB_DIR")
@@ -137,6 +146,11 @@ class Settings(BaseSettings):
 			debug_mode=self.feature_debug,
 			demo_mode=self.feature_demo,
 		)
+
+	def local_campaign_base_dir(self) -> Path:
+		if self.runtime_dir is None or self.campaigns_dir is None:
+			raise ValueError("runtime_dir and campaigns_dir must be set")
+		return self.runtime_dir.joinpath(self.campaigns_dir)
 
 
 @lru_cache

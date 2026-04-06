@@ -47,12 +47,12 @@ You are token-efficient. Minimize context usage by:
 ## Quick Start: Find Next Work
 
 ```
-1. Read: docs/plans/supabase-integration/00-INDEX.md  ← Start here
-2. Find: First task group with status "Not Started"
-3. Run: Entrance gate command
+1. Read: docs/plans/code-quality-tools-migration.md  ← Active plan
+2. Find: First phase with status "Not Started"
+3. Run: Entrance gate (if any)
 4. Work: Follow task steps sequentially
-5. Run: Exit gate command
-6. Update: Phase status table
+5. Run: Exit gate
+6. Update: Phase status table above
 ```
 
 ---
@@ -61,15 +61,49 @@ You are token-efficient. Minimize context usage by:
 
 > **Update this section when starting/completing task groups**
 
+> **Active:** No active phase — all tasks complete or open tech debt.
+
+### Completed: Supabase Integration (Phases 1-5)
+
 | Phase | Status | Current Task Group |
 |-------|--------|-------------------|
 | 1. Configuration | Complete | All task groups (1A-1D) done + reviewer feedback (R1-R5, R10) addressed |
-| 2. Persistence | Complete | All task groups (2A-2E) done + adaptations for actual DB schemas, mismatched in domain objects andrepos |
-| 3. Frontend | Not Started | - |
-| 4. Backend API | Not Started | - |
-| 5. Docker/CI | Not Started | - |
+| 2. Persistence | Complete | All task groups (2A-2E) done + adaptations for actual DB schemas |
+| 3. Frontend | Complete | All task groups (3A-3D) done |
+| 4. Backend API | Complete | All task groups (4A-4D) done |
+| 5. Docker/CI | Complete | All task groups (5-Pre, 5A-5D) done |
 
-**Last Updated:** 2026-03-27
+### Completed: Code Quality Tools Migration
+
+> **Source:** `docs/plans/code-quality-tools-migration.md`
+
+| Phase | Status | Tasks | Notes |
+|-------|--------|-------|-------|
+| 1. Fallow for `frontend-svelt/` | Complete | 1A, 1B, 1C | v2.11.0 installed, .fallowrc.json created, 82 issues baseline |
+| 2. Vulture for `backend/` | Complete | 2A, 2B, 2C, 2D | [tool.vulture] configured, whitelist created, 1 known issue (unreachable code in ocr_helper.py) |
+| 3. Justfile recipes | Complete | 3A, 3B, 3C, 3D, 3E | All recipes in place; regenerated Makefile to remove stale ts-prune |
+| 4. CI workflows | Complete | 4A, 4B, 4C, 4D | Removed ts-prune, added fallow-svelte to code-quality.yml + ci.yml |
+| 5. Remove ts-prune | Complete | 5A, 5B, 5C | Removed all ts-prune references from CI, justfile, Makefile; *.json already gitignored |
+
+### Completed: Settings Consolidation (R13)
+
+> **Source:** `docs/plans/settings-consolidation.md`
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| 1. RED | Complete | 10 failing tests for missing Settings fields |
+| 2. GREEN | Complete | Added 5 fields + `local_campaign_base_dir()` to Settings. 17 tests pass. |
+| 3. REFACTOR | Complete | Migrated 5 app files + 3 test files + `worker.py` field renames. |
+| 4. Remove env_settings | Complete | Deleted `env_settings.py`, added `TestEnvSettingsRemoved` test |
+| 5. Exit gate | Complete | 378 unit tests pass, 0 basedpyright errors, ruff clean |
+
+### Open Tasks
+
+| # | ID | Severity | File | Task | Status |
+|---|----|----------|------|------|--------|
+| 1 | TD-15 | Low | `frontend-svelt/` | 197 svelte-check errors (jsdom/Svelte 5 — separate from Supabase) | Open (out of scope) |
+| 2 | TD-19 | Low | `tests/integration/` | 2 ResourceWarning: unclosed database (down from 236, R7-5 fixed) | Mitigated |
+| 3 | R13 | Low | `app/settings/` | Consolidate dual settings systems (`AppSettings` vs `Settings`, 20+ imports) | Complete |
 
 ---
 
@@ -172,14 +206,30 @@ When building frontend components:
 
 ## Plan Documents
 
-| Phase | Document |
-|-------|----------|
-| Index | `docs/plans/supabase-integration/00-INDEX.md` |
-| Phase 1 | `docs/plans/supabase-integration/01-configuration-architecture.md` |
-| Phase 2 | `docs/plans/supabase-integration/02-persistence-layer.md` |
-| Phase 3 | `docs/plans/supabase-integration/03-frontend-onboarding-v2.md` |
-| Phase 4 | `docs/plans/supabase-integration/04-backend-api-cli.md` |
-| Phase 5 | `docs/plans/supabase-integration/05-docker-cicd.md` |
+### Active
+
+| Plan | Document |
+|------|----------|
+| Fallow Refactor (frontend — Next.js) | `docs/plans/fallow-refactor.md` |
+
+### Completed
+
+| Plan | Document |
+|------|----------|
+| Settings Consolidation (R13) | `docs/plans/settings-consolidation.md` |
+
+| Plan | Document |
+|------|----------|
+| Code Quality Tools Migration | `docs/plans/code-quality-tools-migration.md` |
+| Supabase Integration (Phases 1-5) | `docs/plans/supabase-integration/00-INDEX.md` |
+
+---
+
+## Reviews
+
+| Review | Date | Status | Findings |
+|--------|------|--------|----------|
+| [Phases 1-3](./reviews/phases-1-3-review.md) | 2026-03-31 | 🟢 Approved | NEW-1, NEW-5, NEW-6 resolved; NEW-2/NEW-3 tech debt; V-T1..V-T5 from independent verification |
 
 ---
 
@@ -196,7 +246,8 @@ When building frontend components:
 ### CI/CD (Automatic)
 - Test suite runs on push
 - Type check runs on PR
-- Schema docs regenerate on model changes
+- Fallow analysis runs on PR (both `frontend/` and `frontend-svelt/`)
+- Nightly code quality: fallow + vulture + jscpd + radon
 
 ### Manual Triggers
 - `make schema-docs` - Regenerate DB diagrams
@@ -205,3 +256,43 @@ When building frontend components:
 ---
 
 **Remember: Evidence before assertions. Exit gates before completion. Trust automations. Update phase status regularly.**
+
+---
+
+## Developer Action Items from Review
+
+> **Active tasks live in "Current Phase → Open Tasks" table above.**
+> Historical items below are retained for audit trail.
+
+### Review #6 (2026-04-01) — 🟢 Approved
+
+All prior review items resolved. 6 non-blocking tasks remain — see Open Tasks table above.
+
+### Reviews #1-#5 (2026-03-31 to 2026-04-01)
+
+> Source: `openspec/reviews/phases-1-3-review.md`
+
+### Before Phase 4 (Required)
+
+- [x] **R14** — Resolved. Plan documents exist. Updated `00-INDEX.md` statuses.
+- [x] **R15** — Resolved. DEVELOPER.md and `00-INDEX.md` now consistent.
+
+### Recommended Cleanup (Non-Blocking)
+
+- [x] **R13** — Complete. Merged `AppSettings` into `Settings`. `env_settings.py` deleted, all consumers migrated, 378 unit tests pass.
+- [x] **R6** — Added `clear_engine_cache()` to `persistence/session.py`. Phase 4 service should call it after provision/disconnect.
+- [x] **R1** — Added `__repr__()` masking to provider dataclasses. Full `SecretStr` migration deferred (17 call sites).
+- [x] **R4** — Switched f-string logging to lazy structlog formatting in `settings_repo.py`.
+
+### Independent Verification Task Items (2026-03-31)
+
+> Source: `openspec/reviews/phases-1-3-review.md` — Independent Verification Addendum
+
+- [x] **V-T1** — Fixed 3 database test assertion failures in `tests/unit/api/database.test.ts` (URL path mismatch: tests expected `/api/` prefix but client uses `/database/` directly)
+- [x] **V-T2** — Tracked as TD-15 (197 svelte-check errors, jsdom/Svelte 5 incompatibility — out of scope)
+- [x] **V-T3** — Tracked as tech debt (frontend test failures tracked separately from Supabase work)
+- [x] **RV-4** — Fixed. `tests/integration/api/conftest.py` rewritten. Both `get_session` + `get_db_session` overridden. `init_db` and `get_engine` patched.
+- [x] **RV-5** — Fixed. Uses `unittest.mock.patch` instead of undefined `monkeypatch`.
+- [x] **RV-7** — Fixed. `test_models.py` skipped (requires local PostgreSQL).
+- [x] **RV-8** — Fixed. `test_connection()` logs auth failure as warning instead of silently suppressing.
+- [x] **RV-9** — Documented. `_mask_url()` kept in both files due to circular import constraint.

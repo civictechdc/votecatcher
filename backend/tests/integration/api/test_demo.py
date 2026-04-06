@@ -60,7 +60,7 @@ class TestDemoDataLoading:
 
 	def test_load_dc_petition_2024_creates_data(self, session: Session, monkeypatch):
 		"""Test that loading dc-petition-2024 creates all entities."""
-		from app.settings.env_settings import get_settings
+		from app.settings import get_settings
 
 		# Clear cache and set env vars before importing
 		get_settings.cache_clear()
@@ -94,7 +94,7 @@ class TestDemoDataLoading:
 		from sqlmodel import select
 
 		from app.data.database.model.schema import Region
-		from app.settings.env_settings import get_settings
+		from app.settings import get_settings
 
 		get_settings.cache_clear()
 		monkeypatch.setenv("FEATURE_DEMO_MODE", "true")

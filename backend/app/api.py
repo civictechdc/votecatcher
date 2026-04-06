@@ -33,7 +33,7 @@ from app.routers import (
 	session_router,
 	upload_router,
 )
-from app.settings.env_settings import get_settings
+from app.settings import get_settings
 
 logger = structlog.get_logger(__name__)
 

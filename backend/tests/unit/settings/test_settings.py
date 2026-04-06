@@ -1,5 +1,9 @@
 """Tests for aggregated Settings."""
 
+import importlib
+from pathlib import Path
+
+import pytest
 from pydantic import SecretStr
 
 
@@ -67,3 +71,86 @@ class TestSettings:
 			SUPABASE_REGION="aws-0-eu-west-1",
 		)
 		assert settings.supabase.region == "aws-0-eu-west-1"
+
+
+class TestSettingsConsolidatedFields:
+	"""Tests for fields migrated from AppSettings (R13)."""
+
+	def test_app_name_default(self):
+		from app.settings.settings import Settings
+
+		settings = Settings()
+		assert settings.app_name == "Votecatcher Backend"
+
+	def test_version_default(self):
+		from app.settings.settings import Settings
+
+		settings = Settings()
+		assert settings.version == ""
+
+	def test_clear_runtime_on_launch_default(self):
+		from app.settings.settings import Settings
+
+		settings = Settings()
+		assert settings.clear_runtime_on_launch is False
+
+	def test_demo_reset_default(self):
+		from app.settings.settings import Settings
+
+		settings = Settings(FEATURE_DEMO_RESET=False)
+		assert settings.demo_reset is False
+
+	def test_demo_reset_can_be_enabled(self):
+		from app.settings.settings import Settings
+
+		settings = Settings(FEATURE_DEMO_RESET=True)
+		assert settings.demo_reset is True
+
+	def test_always_batch_ocr_default(self):
+		from app.settings.settings import Settings
+
+		settings = Settings(FEATURE_ALWAYS_BATCH_OCR=True)
+		assert settings.always_batch_ocr is True
+
+	def test_always_batch_ocr_can_be_disabled(self):
+		from app.settings.settings import Settings
+
+		settings = Settings(FEATURE_ALWAYS_BATCH_OCR=False)
+		assert settings.always_batch_ocr is False
+
+	def test_local_campaign_base_dir(self):
+		from app.settings.settings import Settings
+
+		settings = Settings(
+			DEV_LOCAL_RUNTIME_DIR=Path("/tmp/runtime"),
+			DEV_LOCAL_CAMPAIGNS_DIR=Path("campaigns"),
+		)
+		result = settings.local_campaign_base_dir()
+		assert result == Path("/tmp/runtime/campaigns")
+
+	def test_local_campaign_base_dir_raises_without_required_dirs(self):
+		from app.settings.settings import Settings
+
+		settings = Settings()
+		with pytest.raises(ValueError):
+			settings.local_campaign_base_dir()
+
+	def test_feature_demo_default(self):
+		from app.settings.settings import Settings
+
+		settings = Settings(FEATURE_DEMO_MODE=False)
+		assert settings.feature_demo is False
+
+	def test_feature_demo_can_be_enabled(self):
+		from app.settings.settings import Settings
+
+		settings = Settings(FEATURE_DEMO_MODE=True)
+		assert settings.feature_demo is True
+
+
+class TestEnvSettingsRemoved:
+	"""env_settings module should no longer exist (R13 Phase 4)."""
+
+	def test_env_settings_module_not_importable(self):
+		with pytest.raises(ModuleNotFoundError):
+			importlib.import_module("app.settings.env_settings")

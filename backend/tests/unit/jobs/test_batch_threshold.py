@@ -15,9 +15,9 @@ class TestBatchThresholdAndFeatureFlag:
 
 	def test_always_batch_ocr_flag_exists(self):
 		"""Verify always_batch_ocr flag exists in settings."""
-		from app.settings.env_settings import AppSettings
+		from app.settings import Settings
 
-		settings = AppSettings()
+		settings = Settings(FEATURE_ALWAYS_BATCH_OCR=True)
 		assert hasattr(settings, "always_batch_ocr"), (
 			"Settings should have always_batch_ocr attribute"
 		)
@@ -35,7 +35,7 @@ class TestBatchThresholdAndFeatureFlag:
 	def test_config_endpoint_returns_always_batch_flag(self):
 		"""Verify /config/features endpoint returns alwaysBatchOcr value."""
 		from app.routers.config_router import get_features
-		from app.settings.env_settings import get_settings
+		from app.settings import get_settings
 
 		settings = get_settings()
 		response = get_features(settings)
@@ -46,7 +46,7 @@ class TestBatchThresholdAndFeatureFlag:
 	def test_settings_endpoint_returns_always_batch_flag(self):
 		"""Verify /config/settings endpoint returns alwaysBatchOcr in features."""
 		from app.routers.config_router import get_settings_endpoint
-		from app.settings.env_settings import get_settings
+		from app.settings import get_settings
 
 		settings = get_settings()
 		response = get_settings_endpoint(settings)

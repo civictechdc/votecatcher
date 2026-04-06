@@ -9,7 +9,7 @@ from sqlalchemy import text
 from sqlmodel import Session
 
 from app.dependencies import get_session
-from app.settings.env_settings import AppSettings, get_settings
+from app.settings import Settings, get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -37,14 +37,14 @@ class SettingsResponse(BaseModel):
 
 @router.get("/features", response_model=FeatureFlagsResponse)
 def get_features(
-	settings: Annotated[AppSettings, Depends(get_settings)],
+	settings: Annotated[Settings, Depends(get_settings)],
 ) -> FeatureFlagsResponse:
 	"""Get feature flags."""
 	return FeatureFlagsResponse(
-		simulationMode=settings.enable_simulation,
-		betaFeatures=settings.enable_beta_features,
-		debugMode=settings.enable_debug_mode,
-		demoMode=settings.demo_mode,
+		simulationMode=settings.feature_simulation,
+		betaFeatures=settings.feature_beta,
+		debugMode=settings.feature_debug,
+		demoMode=settings.feature_demo,
 		demoReset=settings.demo_reset,
 		alwaysBatchOcr=settings.always_batch_ocr,
 	)
@@ -52,17 +52,17 @@ def get_features(
 
 @router.get("/settings", response_model=SettingsResponse)
 def get_settings_endpoint(
-	settings: Annotated[AppSettings, Depends(get_settings)],
+	settings: Annotated[Settings, Depends(get_settings)],
 ) -> SettingsResponse:
 	"""Get application settings."""
 	return SettingsResponse(
 		ocr_provider=settings.ocr_provider_name,
 		ocr_model=settings.ocr_model,
 		features=FeatureFlagsResponse(
-			simulationMode=settings.enable_simulation,
-			betaFeatures=settings.enable_beta_features,
-			debugMode=settings.enable_debug_mode,
-			demoMode=settings.demo_mode,
+			simulationMode=settings.feature_simulation,
+			betaFeatures=settings.feature_beta,
+			debugMode=settings.feature_debug,
+			demoMode=settings.feature_demo,
 			demoReset=settings.demo_reset,
 			alwaysBatchOcr=settings.always_batch_ocr,
 		),
@@ -79,7 +79,7 @@ class ResetDataResponse(BaseModel):
 @router.post("/reset-data", response_model=ResetDataResponse)
 def reset_all_data(
 	db_session: Annotated[Session, Depends(get_session)],
-	settings: Annotated[AppSettings, Depends(get_settings)],
+	settings: Annotated[Settings, Depends(get_settings)],
 ) -> ResetDataResponse:
 	"""Reset all application data.
 
@@ -95,7 +95,7 @@ def reset_all_data(
 	This is a destructive operation and should only be enabled in
 	non-production environments.
 	"""
-	if settings.demo_mode or settings.enable_debug_mode or settings.enable_simulation:
+	if settings.feature_demo or settings.feature_debug or settings.feature_simulation:
 		conn = db_session.connection()
 		deleted_counts = {}
 

@@ -28,10 +28,10 @@ from app.data.database.model.schema import Campaign
 from app.data.database.session import engine
 from app.events import JobProgressEvent, JobStatusEvent, MetricsUpdatedEvent, event_bus
 from app.services.metrics import MetricsService
-from app.settings.env_settings import get_settings
+from app.settings import get_settings
 
 if TYPE_CHECKING:
-	from app.settings.env_settings import AppSettings
+	from app.settings import Settings
 
 logger = structlog.get_logger(__name__)
 
@@ -56,7 +56,7 @@ class JobWorker:
 		running: Flag to control worker loop
 	"""
 
-	def __init__(self, settings: "AppSettings | None" = None) -> None:
+	def __init__(self, settings: "Settings | None" = None) -> None:
 		self.settings = settings or get_settings()
 		self.running = False
 
@@ -65,7 +65,7 @@ class JobWorker:
 		self.running = True
 		await self._detect_orphaned_jobs()
 		logger.info(
-			"Job worker started", simulation_mode=self.settings.enable_simulation
+			"Job worker started", simulation_mode=self.settings.feature_simulation
 		)
 
 		while self.running:
@@ -293,7 +293,7 @@ class JobWorker:
 			"Starting OCR phase",
 			job_id=job.id,
 			crop_count=len(crops),
-			simulation_mode=self.settings.enable_simulation,
+			simulation_mode=self.settings.feature_simulation,
 			force_reprocess=job.force_reprocess,
 		)
 
@@ -360,7 +360,7 @@ class JobWorker:
 				processing_count=len(crops_to_process),
 			)
 
-		if self.settings.enable_simulation:
+		if self.settings.feature_simulation:
 			await self._run_simulated_ocr(session, job, ocr_job, crops_to_process)
 		else:
 			if (

@@ -32,8 +32,7 @@ from app.ocr.ocr_manager import (
 	ReadOcrResult,
 )
 from app.ocr.ocr_result_repo import CreateOcrResult, OcrResultRepository
-from app.settings import OpenAiConfig
-from app.settings.env_settings import AppSettings
+from app.settings import OpenAiConfig, Settings
 
 logger = structlog.get_logger(__name__)
 _POLLING_INTERVAL_IN_SECONDS: float = 5.0
@@ -42,7 +41,7 @@ _POLLING_INTERVAL_IN_SECONDS: float = 5.0
 class BatchOcrHandler:
 	def __init__(
 		self,
-		settings: AppSettings,
+		settings: Settings,
 		ocr_provider_repo: OcrProviderRepository,
 		ocr_job_repo: OcrJobRepository,
 		matching_task_repo: MatchTaskRepository,
@@ -55,7 +54,7 @@ class BatchOcrHandler:
 		self.match_task_repo: MatchTaskRepository = matching_task_repo
 		self.ocr_result_repo: OcrResultRepository = ocr_result_repo
 		self.ocr_job_repo: OcrJobRepository = ocr_job_repo
-		self.settings: AppSettings = settings
+		self.settings: Settings = settings
 		self._active_clients_from_job: dict[str, OcrClient] = {}
 		self._active_ocr_state: dict[str, MatchingTask] = {}
 		self.tasks_events: dict[str, asyncio.Event] = {}
@@ -111,7 +110,7 @@ class BatchOcrHandler:
 		assert self.settings.ocr_api_key is not None
 		assert self.settings.ocr_model is not None
 		config: OpenAiConfig = OpenAiConfig(
-			api_key=self.settings.ocr_api_key,
+			api_key=self.settings.ocr_api_key.get_secret_value(),
 			model=self.settings.ocr_model,
 			name=self.settings.ocr_provider_name or "open_ai",
 		)

@@ -9,7 +9,7 @@ from sqlmodel import Session
 
 from app.demo.demo_service import DemoDataService
 from app.dependencies import get_session
-from app.settings.env_settings import AppSettings, get_settings
+from app.settings import Settings, get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -39,16 +39,16 @@ PREBAKED_SESSIONS = [
 ]
 
 
-def check_demo_mode(settings: AppSettings) -> None:
+def check_demo_mode(settings: Settings) -> None:
 	"""Check if demo mode is enabled."""
-	if not settings.demo_mode:
+	if not settings.feature_demo:
 		raise HTTPException(
 			status_code=status.HTTP_403_FORBIDDEN,
 			detail="Demo mode not enabled",
 		)
 
 
-def check_demo_reset(settings: AppSettings) -> None:
+def check_demo_reset(settings: Settings) -> None:
 	"""Check if demo mode and reset are enabled."""
 	check_demo_mode(settings)
 	if not settings.demo_reset:
@@ -60,7 +60,7 @@ def check_demo_reset(settings: AppSettings) -> None:
 
 @router.get("/sessions", response_model=PrebakedSessionList)
 def list_prebaked_sessions(
-	settings: Annotated[AppSettings, Depends(get_settings)],
+	settings: Annotated[Settings, Depends(get_settings)],
 ) -> PrebakedSessionList:
 	"""List available pre-baked demo sessions."""
 	check_demo_mode(settings)
@@ -70,7 +70,7 @@ def list_prebaked_sessions(
 @router.post("/reset", status_code=status.HTTP_204_NO_CONTENT)
 def reset_demo_data(
 	db_session: Annotated[Session, Depends(get_session)],
-	settings: Annotated[AppSettings, Depends(get_settings)],
+	settings: Annotated[Settings, Depends(get_settings)],
 ) -> None:
 	"""Reset all demo data to initial state."""
 	check_demo_reset(settings)
@@ -84,7 +84,7 @@ def reset_demo_data(
 def load_prebaked_session(
 	session_id: str,
 	db_session: Annotated[Session, Depends(get_session)],
-	settings: Annotated[AppSettings, Depends(get_settings)],
+	settings: Annotated[Settings, Depends(get_settings)],
 ) -> dict:
 	"""Load a pre-baked demo session."""
 	check_demo_mode(settings)
