@@ -55,7 +55,7 @@
       "request": "launch",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
-      "cwd": "${workspaceFolder}/frontend-svelt",
+      "cwd": "${workspaceFolder}/frontend",
       "console": "integratedTerminal",
       "serverReadyAction": {
         "pattern": "Local:.*(https?://[^ ]+)",
@@ -68,7 +68,7 @@
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:5173",
-      "webRoot": "${workspaceFolder}/frontend-svelt",
+      "webRoot": "${workspaceFolder}/frontend",
       "sourceMaps": true
     }
   ]

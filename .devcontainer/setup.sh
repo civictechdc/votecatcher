@@ -42,13 +42,13 @@ EOF
 	echo "✓ Created backend/.env.local"
 fi
 
-if [ ! -f /workspace/frontend-svelt/.env.local ]; then
-	echo "Creating frontend-svelt/.env.local..."
-	cat >/workspace/frontend-svelt/.env.local <<EOF
+if [ ! -f /workspace/frontend/.env.local ]; then
+	echo "Creating frontend/.env.local..."
+	cat >/workspace/frontend/.env.local <<EOF
 VITE_API_URL=http://localhost:8080
 DEMO_MODE=false
 EOF
-	echo "✓ Created frontend-svelt/.env.local"
+	echo "✓ Created frontend/.env.local"
 fi
 
 echo ""

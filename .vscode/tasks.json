@@ -1,0 +1,89 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Backend: Install Dependencies",
+      "type": "shell",
+      "command": "uv sync --dev",
+      "cwd": "${workspaceFolder}/backend",
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Run Server (Local)",
+      "type": "shell",
+      "command": "uv run main.py --env local",
+      "cwd": "${workspaceFolder}/backend",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": ".*",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "Uvicorn running on"
+        }
+      }
+    },
+    {
+      "label": "Backend: Run Tests",
+      "type": "shell",
+      "command": "uv run pytest tests/ -v",
+      "cwd": "${workspaceFolder}/backend",
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Type Check",
+      "type": "shell",
+      "command": "uv run basedpyright app/",
+      "cwd": "${workspaceFolder}/backend",
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Lint",
+      "type": "shell",
+      "command": "uv run ruff check app/",
+      "cwd": "${workspaceFolder}/backend",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend SvelteKit: Install Dependencies",
+      "type": "shell",
+      "command": "bun install",
+      "cwd": "${workspaceFolder}/frontend",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend SvelteKit: Dev Server",
+      "type": "shell",
+      "command": "bun run dev",
+      "cwd": "${workspaceFolder}/frontend",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": ".*",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "Local:.*http"
+        }
+      }
+    },
+    {
+      "label": "Frontend SvelteKit: Type Check",
+      "type": "shell",
+      "command": "bun run check",
+      "cwd": "${workspaceFolder}/frontend",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend SvelteKit: Run Tests",
+      "type": "shell",
+      "command": "bun run test:unit",
+      "cwd": "${workspaceFolder}/frontend",
+      "problemMatcher": []
+    },
+    {
+      "label": "Full Stack: Start All (Local)",
+      "dependsOn": ["Backend: Run Server (Local)", "Frontend SvelteKit: Dev Server"],
+      "problemMatcher": []
+    }
+  ]
+}

@@ -7,8 +7,8 @@ services:
   frontend:
     volumes:
       - .:/workspace:cached
-      - votecatcher-node-modules:/workspace/frontend-svelt/node_modules
-      - votecatcher-sveltekit-build:/workspace/frontend-svelte/.svelte-kit
+      - votecatcher-node-modules:/workspace/frontend/node_modules
+      - votecatcher-sveltekit-build:/workspace/frontend/.svelte-kit
     command: sleep infinity
     environment:
       - VITE_API_URL=http://localhost:8080
