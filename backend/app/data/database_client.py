@@ -17,8 +17,8 @@ load_dotenv()
 async def _get_supabase_client() -> AsyncClient:
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY")
-    assert url and key
-    "SUPABASE_URL and SUPABASE_KEY required"
+    if not url or not key:
+        raise ValueError("SUPABASE_URL and SUPABASE_KEY required")
     supabase: AsyncClient = await acreate_client(supabase_url=url, supabase_key=key)
     return supabase
 

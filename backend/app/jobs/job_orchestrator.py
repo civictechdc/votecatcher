@@ -5,6 +5,7 @@ in SPEC.md §3.3. Handles state transitions, error recovery, and coordination
 between OCR and matching services.
 """
 
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -53,7 +54,7 @@ class JobOrchestrator:
         self.session = session
         self.ocr_service = ocr_service
         self.matching_service = matching_service
-        self.storage_base = storage_base or Path("/tmp")
+        self.storage_base = storage_base or Path(tempfile.gettempdir())
 
     def create_matcher_job(self, campaign_id: UUID) -> MatcherJob:
         """Create a new matcher job with NOT_STARTED status.

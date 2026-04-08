@@ -10,7 +10,8 @@ async def create_async_supabase_client() -> AsyncClient:
     try:
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_KEY")
-        assert url and key, "SUPABASE_URL and SUPABASE_KEY required"
+        if not url or not key:
+            raise ValueError("SUPABASE_URL and SUPABASE_KEY required")
         supabase: AsyncClient = await acreate_client(supabase_url=url, supabase_key=key)
         return supabase
     except Exception:
@@ -24,7 +25,8 @@ def create_supabase_client() -> Client:
     try:
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_KEY")
-        assert url and key, "SUPABASE_URL and SUPABASE_KEY required"
+        if not url or not key:
+            raise ValueError("SUPABASE_URL and SUPABASE_KEY required")
         supabase: Client = create_client(supabase_url=url, supabase_key=key)
         return supabase
     except Exception:
