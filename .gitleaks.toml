@@ -34,8 +34,8 @@ regexes = [
 ]
 paths = [
     '''^backend/tests/.*$''',
-    '''^frontend-svelt/tests/.*$''',
+    '''^frontend/tests/.*$''',
     '''^\.agent/skills/.*$''',
     '''^backend/\.agent/skills/.*$''',
-    '''^frontend-svelt/\.agent/skills/.*$''',
+    '''^frontend/\.agent/skills/.*$''',
 ]
