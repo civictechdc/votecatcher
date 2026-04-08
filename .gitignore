@@ -44,9 +44,7 @@ next-env.d.ts
 .supabase
 
 # IDE
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
+.vscode/
 .idea/
 *.swp
 *.swo

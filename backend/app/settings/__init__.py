@@ -1,14 +1,13 @@
-from app.settings.providers.database_config import DatabaseConfig
-from app.settings.providers.feature_config import FeatureConfig
-from app.settings.providers.ocr_config import OcrConfig
-from app.settings.providers.supabase_config import SupabaseConfig
-from app.settings.settings import Settings, get_settings
+from .settings_repo import OpenAiConfig
+from .settings_repo import MistralAiConfig
+from .settings_repo import GeminiAiConfig
+from .settings_repo import SettingsData
+from .settings_repo import load_settings
 
 __all__ = [
-	"get_settings",
-	"Settings",
-	"DatabaseConfig",
-	"SupabaseConfig",
-	"OcrConfig",
-	"FeatureConfig",
+    "load_settings",
+    "SettingsData",
+    "OpenAiConfig",
+    "MistralAiConfig",
+    "GeminiAiConfig",
 ]
