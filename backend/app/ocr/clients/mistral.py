@@ -12,6 +12,7 @@ import structlog
 
 from app.matching.match_repository import MatchingStatus
 from app.ocr.data.data_models import OCRData
+from app.ocr.ocr_client_factory import ProviderConfig
 from app.ocr.ocr_manager import (
 	OcrClient,
 	OcrJobStatus,
@@ -20,7 +21,6 @@ from app.ocr.ocr_manager import (
 	OcrResult,
 	create_batch_payload,
 )
-from app.settings import MistralAiConfig
 
 logger = structlog.get_logger(__name__)
 
@@ -35,8 +35,8 @@ STATUS_MAPPING: dict[str, MatchingStatus] = {
 
 
 class MistralOcrClient(OcrClient):
-	def __init__(self, config: MistralAiConfig, output_dir: Path) -> None:
-		self.config: MistralAiConfig = config
+	def __init__(self, config: ProviderConfig, output_dir: Path) -> None:
+		self.config: ProviderConfig = config
 		self.parent_dir: Path = output_dir
 
 	def _get_client(self):

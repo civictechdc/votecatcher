@@ -16,6 +16,7 @@ from openai.types.file_object import FileObject
 
 from app.matching.match_repository import MatchingStatus
 from app.ocr.data.data_models import OCRData, OCREntry
+from app.ocr.ocr_client_factory import ProviderConfig
 from app.ocr.ocr_manager import (
 	OcrJobStatus,
 	OcrMessageData,
@@ -23,7 +24,6 @@ from app.ocr.ocr_manager import (
 	OcrResult,
 	create_batch_payload,
 )
-from app.settings import OpenAiConfig
 
 logger = structlog.get_logger(__name__)
 
@@ -41,8 +41,8 @@ STATUS_MAPPING: dict[str, MatchingStatus] = {
 
 
 class OpenAiOcrClient:
-	def __init__(self, config: OpenAiConfig, output_dir: Path) -> None:
-		self.config: OpenAiConfig = config
+	def __init__(self, config: ProviderConfig, output_dir: Path) -> None:
+		self.config: ProviderConfig = config
 		self.client: AsyncOpenAI = AsyncOpenAI(
 			api_key=config.api_key,
 		)

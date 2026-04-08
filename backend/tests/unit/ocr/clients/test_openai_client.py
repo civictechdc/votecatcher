@@ -10,14 +10,15 @@ from openai.types.batch import Batch
 from app.matching.match_repository import MatchingStatus
 from app.ocr.clients.open_ai import STATUS_MAPPING, OpenAiOcrClient
 from app.ocr.data.data_models import EncodedPetitionPage
+from app.ocr.ocr_client_factory import ProviderConfig
 from app.ocr.ocr_manager import OcrRequest
-from app.settings import OpenAiConfig
 
 
 @pytest.fixture
 def mock_config():
 	"""Create mock OpenAI configuration."""
-	return OpenAiConfig(
+	return ProviderConfig(
+		provider="openai",
 		api_key="test-api-key",
 		model="gpt-4o",
 	)

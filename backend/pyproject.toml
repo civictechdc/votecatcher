@@ -29,10 +29,6 @@ dependencies = [
 	"granian>=2.6.0",
 	"httpx>=0.28.1",
 	"ipywidgets>=8.1.5",
-	"langchain-core>=0.3.51",
-	"langchain-google-genai>=2.1.2",
-	"langchain-mistralai>=0.2.10",
-	"langchain-openai>=0.3.12",
 	"loguru>=0.7.3",
 	"matplotlib>=3.10.1",
 	"mistralai>=1.9.11",
@@ -121,12 +117,10 @@ include = ["app"]
 exclude = [
 	"**/node_modules",
 	"**/__pycache__",
-	# TEMPORARY: Pre-existing code to type-check in Phase 1-2
-	"app/data/database/local/demo_*.py", # Demo DB code - Phase 1
-	"app/settings/settings_repo.py", # Settings repo - Phase 1
-	"app/ocr", # OCR clients/handlers - Phase 2
-	"app/routers/file_route.py", # File upload routes - Phase 2
-	"app/matching/fuzzy_match_helper.py", # Fuzzy matching - Phase 2
+	# TEMPORARY: Pre-existing code to type-check
+	"app/data/database/local/demo_*.py",
+	"app/routers/file_route.py",
+	"app/matching/fuzzy_match_helper.py",
 	# PERMANENT: None currently
 ]
 typeCheckingMode = "standard"
@@ -149,3 +143,9 @@ reportUnannotatedClassAttribute = "none"
 [tool.bandit]
 exclude_dirs = ["tests", ".venv", "node_modules"]
 skips = ["B101"]
+
+[tool.vulture]
+paths = ["app"]
+min_confidence = 80
+sort_by_size = true
+exclude = ["app/data/database/model/__init__.py"]

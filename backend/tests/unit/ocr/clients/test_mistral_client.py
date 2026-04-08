@@ -7,14 +7,15 @@ import pytest
 
 from app.matching.match_repository import MatchingStatus
 from app.ocr.data.data_models import EncodedPetitionPage
+from app.ocr.ocr_client_factory import ProviderConfig
 from app.ocr.ocr_manager import OcrRequest
-from app.settings import MistralAiConfig
 
 
 @pytest.fixture
 def mock_config():
 	"""Create mock Mistral configuration."""
-	return MistralAiConfig(
+	return ProviderConfig(
+		provider="mistral",
 		api_key="test-mistral-api-key",
 		model="mistral-large-latest",
 	)

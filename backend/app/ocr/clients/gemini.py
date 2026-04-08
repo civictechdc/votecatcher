@@ -12,6 +12,7 @@ from google.genai.types import BatchJob
 
 from app.matching.match_repository import MatchingStatus
 from app.ocr.data.data_models import OCRData
+from app.ocr.ocr_client_factory import ProviderConfig
 from app.ocr.ocr_manager import (
 	OcrClient,
 	OcrJobStatus,
@@ -20,7 +21,6 @@ from app.ocr.ocr_manager import (
 	OcrResult,
 	create_batch_payload,
 )
-from app.settings import GeminiAiConfig
 
 logger = structlog.get_logger(__name__)
 
@@ -37,8 +37,8 @@ STATUS_MAPPING: dict[str, MatchingStatus] = {
 
 
 class GeminiOcrClient(OcrClient):
-	def __init__(self, config: GeminiAiConfig, output_dir: Path) -> None:
-		self.config: GeminiAiConfig = config
+	def __init__(self, config: ProviderConfig, output_dir: Path) -> None:
+		self.config: ProviderConfig = config
 		self.parent_dir: Path = output_dir
 
 	async def create_batch_job(self, request_data: OcrRequest) -> OcrJobStatus:

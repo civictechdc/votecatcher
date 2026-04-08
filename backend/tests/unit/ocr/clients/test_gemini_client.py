@@ -7,14 +7,15 @@ import pytest
 
 from app.matching.match_repository import MatchingStatus
 from app.ocr.data.data_models import EncodedPetitionPage
+from app.ocr.ocr_client_factory import ProviderConfig
 from app.ocr.ocr_manager import OcrRequest
-from app.settings import GeminiAiConfig
 
 
 @pytest.fixture
 def mock_config():
 	"""Create mock Gemini configuration."""
-	return GeminiAiConfig(
+	return ProviderConfig(
+		provider="gemini",
 		api_key="test-gemini-api-key",
 		model="gemini-1.5-flash",
 	)
