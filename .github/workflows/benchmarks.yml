@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - "backend/**"
-      - "frontend-svelt/**"
+      - "frontend/**"
 
 jobs:
   benchmarks:
@@ -47,8 +47,8 @@ jobs:
         with:
           path: |
             ~/.bun/install/cache
-            frontend-svelt/node_modules/.cache
-          key: bun-${{ hashFiles('frontend-svelt/bun.lock') }}
+            frontend/node_modules/.cache
+          key: bun-${{ hashFiles('frontend/bun.lock') }}
           restore-keys: |
             bun-
 
@@ -56,7 +56,7 @@ jobs:
         uses: extractions/setup-just@v2
 
       - name: Install dependencies
-        run: cd frontend-svelt && bun install --frozen-lockfile
+        run: cd frontend && bun install --frozen-lockfile
 
       - name: Check bundle size
         run: just bundle-size
@@ -66,4 +66,4 @@ jobs:
         if: always()
         with:
           name: bundle-stats
-          path: frontend-svelt/bundle-stats.html
+          path: frontend/bundle-stats.html

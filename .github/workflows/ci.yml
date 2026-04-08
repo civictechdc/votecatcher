@@ -24,7 +24,7 @@ jobs:
         run: cd backend && uv lock --check
 
       - name: Check JS lockfile
-        run: cd frontend-svelt && bun install --frozen-lockfile
+        run: cd frontend && bun install --frozen-lockfile
 
   docs-validation:
     runs-on: ubuntu-latest
@@ -38,7 +38,6 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
-      frontend-svelt: ${{ steps.filter.outputs.frontend-svelt }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -49,10 +48,8 @@ jobs:
               - 'backend/**'
               - 'justfile'
             frontend:
-              - 'frontend-svelt/**'
+              - 'frontend/**'
               - 'justfile'
-            frontend-svelt:
-              - 'frontend-svelt/**'
 
   backend-lint:
     needs: [changes]
@@ -150,8 +147,8 @@ jobs:
         with:
           path: |
             ~/.bun/install/cache
-            frontend-svelt/node_modules/.cache
-          key: bun-${{ hashFiles('frontend-svelt/bun.lock') }}
+            frontend/node_modules/.cache
+          key: bun-${{ hashFiles('frontend/bun.lock') }}
           restore-keys: |
             bun-
 
@@ -159,7 +156,7 @@ jobs:
         uses: extractions/setup-just@v2
 
       - name: Install dependencies
-        run: cd frontend-svelt && bun install --frozen-lockfile
+        run: cd frontend && bun install --frozen-lockfile
 
       - name: Run frontend lint
         run: just lint-frontend
@@ -179,8 +176,8 @@ jobs:
         with:
           path: |
             ~/.bun/install/cache
-            frontend-svelt/node_modules/.cache
-          key: bun-${{ hashFiles('frontend-svelt/bun.lock') }}
+            frontend/node_modules/.cache
+          key: bun-${{ hashFiles('frontend/bun.lock') }}
           restore-keys: |
             bun-
 
@@ -188,7 +185,7 @@ jobs:
         uses: extractions/setup-just@v2
 
       - name: Install dependencies
-        run: cd frontend-svelt && bun install --frozen-lockfile
+        run: cd frontend && bun install --frozen-lockfile
 
       - name: Run frontend typecheck
         run: just typecheck-frontend
@@ -208,8 +205,8 @@ jobs:
         with:
           path: |
             ~/.bun/install/cache
-            frontend-svelt/node_modules/.cache
-          key: bun-${{ hashFiles('frontend-svelt/bun.lock') }}
+            frontend/node_modules/.cache
+          key: bun-${{ hashFiles('frontend/bun.lock') }}
           restore-keys: |
             bun-
 
@@ -217,14 +214,14 @@ jobs:
         uses: extractions/setup-just@v2
 
       - name: Install dependencies
-        run: cd frontend-svelt && bun install --frozen-lockfile
+        run: cd frontend && bun install --frozen-lockfile
 
       - name: Run frontend tests
         run: just test-frontend
 
-  frontend-svelt-fallow:
+  frontend-fallow:
     needs: [changes]
-    if: needs.changes.outputs.frontend-svelt == 'true' || github.ref == 'refs/heads/main'
+    if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -233,14 +230,14 @@ jobs:
         uses: oven-sh/setup-bun@v1
 
       - name: Install dependencies
-        run: cd frontend-svelt && bun install --frozen-lockfile
+        run: cd frontend && bun install --frozen-lockfile
 
       - name: Run fallow audit
-        run: cd frontend-svelt && npx fallow audit --base origin/main --format compact
+        run: cd frontend && npx fallow audit --base origin/main --format compact
 
   docker-build:
-    needs: [backend-test, frontend-test, frontend-svelt-fallow, security-test-backend, dast-smoke]
-    if: (needs.backend-test.result == 'success' && needs.frontend-test.result == 'success' && needs.frontend-svelt-fallow.result == 'success' && needs.dast-smoke.result == 'success') || github.ref == 'refs/heads/main'
+    needs: [backend-test, frontend-test, frontend-fallow, security-test-backend, dast-smoke]
+    if: (needs.backend-test.result == 'success' && needs.frontend-test.result == 'success' && needs.frontend-fallow.result == 'success' && needs.dast-smoke.result == 'success') || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -280,7 +277,7 @@ jobs:
       - name: Build frontend Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./frontend-svelt
+          context: ./frontend
           push: false
           cache-from: type=local,src=/tmp/.buildx-cache-frontend
           cache-to: type=local,dest=/tmp/.buildx-cache-frontend-new,mode=max

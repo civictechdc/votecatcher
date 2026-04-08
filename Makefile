@@ -1,14 +1,14 @@
 # DO NOT EDIT - Generated from justfile by scripts/just-to-make.py
 # To update: python scripts/just-to-make.py > Makefile
 
-.PHONY: default install dev dev-backend dev-frontend test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration security-test dast duplication duplication-svelte duplication-all complexity complexity-check dead-code dead-code-svelte fallow-svelte fallow-svelte-dead-code fallow-svelte-dupes fallow-svelte-health fallow-svelte-audit test-frontend sbom license-check edge-functions bundle-size benchmark ci-sim install-tools install-hooks validate-docs sync-makefile
+.PHONY: default install dev dev-backend dev-frontend test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration security-test dast duplication duplication-frontend duplication-all complexity complexity-check dead-code dead-code-frontend fallow fallow-dead-code fallow-dupes fallow-health fallow-audit test-frontend sbom license-check edge-functions bundle-size benchmark ci-sim install-tools install-hooks validate-docs sync-makefile
 
 default:
 	@just --list
 
 install:
 	cd backend && uv sync
-	cd frontend-svelt && bun install
+	cd frontend && bun install
 
 dev:
 	docker compose up --build
@@ -17,29 +17,29 @@ dev-backend:
 	cd backend && uv run python -m app --env local
 
 dev-frontend:
-	cd frontend-svelt && bun run dev
+	cd frontend && bun run dev
 
 test:
 	cd backend && uv run pytest
-	cd frontend-svelt && bun run test:unit
+	cd frontend && bun run test:unit
 
 lint:
 	@echo "=== Linting all modified files ==="
 	cd backend && uv run ruff check .
 	cd backend && uv run ruff format --check .
-	cd frontend-svelt && bun run lint
-	cd frontend-svelt && bun run fmt:check
+	cd frontend && bun run lint
+	cd frontend && bun run fmt:check
 	@echo "=== Linting complete ==="
 
 typecheck:
 	@echo "=== Typechecking all modified files ==="
 	cd backend && uv run basedpyright
-	cd frontend-svelt && bun run check
+	cd frontend && bun run check
 	@echo "=== Typechecking complete ==="
 
 clean:
 	rm -rf backend/.pytest_cache backend/.ruff_cache backend/__pycache__ backend/**/__pycache__
-	rm -rf frontend-svelt/.svelte-kit frontend-svelt/node_modules/.cache
+	rm -rf frontend/.svelte-kit frontend/node_modules/.cache
 
 docker-up:
 	docker-compose up -d
@@ -98,41 +98,41 @@ security-scan-backend:
 	cd backend && uv audit
 
 security-scan-frontend:
-	cd frontend-svelt && bun audit
+	cd frontend && bun audit
 
 sast:
-	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --json -o semgrep-results.json backend/ frontend-svelt/src/
+	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --json -o semgrep-results.json backend/ frontend/src/
 
 sast-pr:
-	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --baseline-commit origin/main --json -o semgrep-pr.json backend/ frontend-svelt/src/
+	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --baseline-commit origin/main --json -o semgrep-pr.json backend/ frontend/src/
 
 sca:
-	osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses
+	osv-scanner --lockfile=backend/uv.lock --lockfile=frontend/bun.lock --licenses
 	trivy fs --severity CRITICAL,HIGH --scanners vuln,license --format json --output trivy-results.json .
 
 container-scan:
 	docker build -t votecatcher-backend ./backend
-	docker build -t votecatcher-frontend ./frontend-svelt
+	docker build -t votecatcher-frontend ./frontend
 	trivy image --severity CRITICAL,HIGH votecatcher-backend
 	trivy image --severity CRITICAL,HIGH votecatcher-frontend
 
 docker-lint:
 	hadolint backend/Dockerfile
-	hadolint frontend-svelt/Dockerfile
+	hadolint frontend/Dockerfile
 
 lint-backend:
 	cd backend && uv run ruff check .
 	cd backend && uv run ruff format --check .
 
 lint-frontend:
-	cd frontend-svelt && bun run lint
-	cd frontend-svelt && bun run fmt:check
+	cd frontend && bun run lint
+	cd frontend && bun run fmt:check
 
 typecheck-backend:
 	cd backend && uv run basedpyright
 
 typecheck-frontend:
-	cd frontend-svelt && bun run check
+	cd frontend && bun run check
 
 test-backend:
 	cd backend && uv run pytest tests/unit tests/matching tests/test_config.py --cov=app --cov-report=xml
@@ -151,12 +151,12 @@ dast:
 duplication:
 	jscpd backend/app/ --min-lines 5 --min-tokens 50 --threshold 5 --reporters html
 
-duplication-svelte:
-	cd frontend-svelt && npx fallow dupes
+duplication-frontend:
+	cd frontend && npx fallow dupes
 
 duplication-all:
 	just duplication
-	just duplication-svelte
+	just duplication-frontend
 
 complexity:
 	cd backend && uv run radon cc app/ -a -nb --total-average
@@ -168,34 +168,34 @@ complexity-check:
 dead-code:
 	cd backend && uv run vulture app/ vulture-whitelist.py --format json > vulture-report.json
 
-dead-code-svelte:
-	cd frontend-svelt && npx fallow dead-code
+dead-code-frontend:
+	cd frontend && npx fallow dead-code
 
-fallow-svelte:
-	cd frontend-svelt && npx fallow
+fallow:
+	cd frontend && npx fallow
 
-fallow-svelte-dead-code:
-	cd frontend-svelt && npx fallow dead-code
+fallow-dead-code:
+	cd frontend && npx fallow dead-code
 
-fallow-svelte-dupes:
-	cd frontend-svelt && npx fallow dupes
+fallow-dupes:
+	cd frontend && npx fallow dupes
 
-fallow-svelte-health:
-	cd frontend-svelt && npx fallow health
+fallow-health:
+	cd frontend && npx fallow health
 
-fallow-svelte-audit:
-	cd frontend-svelt && npx fallow audit --base main
+fallow-audit:
+	cd frontend && npx fallow audit --base main
 
 test-frontend:
-	cd frontend-svelt && bun run test:unit
+	cd frontend && bun run test:unit
 
 sbom:
 	syft backend/ -o spdx-json > sbom-backend.spdx.json
-	syft frontend-svelt/ -o spdx-json > sbom-frontend.spdx.json
+	syft frontend/ -o spdx-json > sbom-frontend.spdx.json
 
 license-check:
 	@command -v osv-scanner >/dev/null 2>&1 || (echo "ERROR: osv-scanner not installed — run 'just install-tools'" && exit 1)
-	@osv-scanner --lockfile=backend/uv.lock --lockfile=frontend-svelt/bun.lock --licenses --format json --output /tmp/osv-licenses.json || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
+	@osv-scanner --lockfile=backend/uv.lock --lockfile=frontend/bun.lock --licenses --format json --output /tmp/osv-licenses.json || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
 	@if [ ! -s /tmp/osv-licenses.json ]; then echo "ERROR: osv-scanner produced no output" && exit 1; fi
 	@if grep -q "AGPL\|GPL\|LGPL" /tmp/osv-licenses.json; then echo "ERROR: AGPL/GPL/LGPL licenses detected" && exit 1; fi
 	@echo "OK: No copyleft license violations"
@@ -205,8 +205,8 @@ edge-functions:
 	cd supabase/functions && deno check */index.ts
 
 bundle-size:
-	cd frontend-svelt && bun run build
-	cd frontend-svelt && npx size-limit
+	cd frontend && bun run build
+	cd frontend && npx size-limit
 
 benchmark:
 	cd backend && uv run pytest tests/benchmarks/ --benchmark-only --benchmark-json=../benchmark-results.json
@@ -214,7 +214,7 @@ benchmark:
 ci-sim:
 	@echo "=== Lockfile Integrity ==="
 	cd backend && uv lock --check
-	cd frontend-svelt && bun install --frozen-lockfile
+	cd frontend && bun install --frozen-lockfile
 	@echo "=== Backend Lint ==="
 	just lint-backend
 	@echo "=== Backend Typecheck ==="

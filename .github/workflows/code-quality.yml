@@ -26,21 +26,21 @@ jobs:
       - name: Install dependencies
         run: |
           cd backend && uv sync --dev
-          cd frontend-svelt && bun install --frozen-lockfile
+          cd frontend && bun install --frozen-lockfile
 
       - name: Install code quality tools
         run: npm install -g jscpd fallow
 
-      - name: Run fallow analysis (frontend-svelt — SvelteKit)
-        run: cd frontend-svelt && npx fallow --format json --sarif-file fallow-results.sarif > fallow-results.json
+      - name: Run fallow analysis (frontend — SvelteKit)
+        run: cd frontend && npx fallow --format json --sarif-file fallow-results.sarif > fallow-results.json
         continue-on-error: true
 
-      - name: Upload fallow SARIF results (frontend-svelt)
+      - name: Upload fallow SARIF results (frontend)
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: frontend-svelt/fallow-results.sarif
-          category: fallow-frontend-svelt
+          sarif_file: frontend/fallow-results.sarif
+          category: fallow-frontend
 
       - name: Run duplication analysis (backend only)
         run: just duplication
@@ -51,8 +51,8 @@ jobs:
       - name: Run dead code analysis (backend — Python)
         run: just dead-code
 
-      - name: Run dead code analysis (frontend-svelt — SvelteKit)
-        run: cd frontend-svelt && npx fallow dead-code --format json > ../fallow-svelte-dead-code.json
+      - name: Run dead code analysis (frontend — SvelteKit)
+        run: cd frontend && npx fallow dead-code --format json > ../fallow-frontend-dead-code.json
         continue-on-error: true
 
       - name: Check quality thresholds
@@ -88,8 +88,8 @@ jobs:
           else
             echo "::warning::vulture report not found — Python dead code analysis skipped"
           fi
-          if [ -f fallow-svelte-dead-code.json ]; then
-            SVELTE_DEAD=$(python3 -c "import json; d=json.load(open('fallow-svelte-dead-code.json')); print(len(d.get('deadCode',{}).get('unusedFiles',[])))" 2>/dev/null)
+          if [ -f fallow-frontend-dead-code.json ]; then
+            SVELTE_DEAD=$(python3 -c "import json; d=json.load(open('fallow-frontend-dead-code.json')); print(len(d.get('deadCode',{}).get('unusedFiles',[])))" 2>/dev/null)
             if [ -z "$SVELTE_DEAD" ]; then
               echo "::warning::Could not parse fallow-svelte dead code JSON"
               SVELTE_DEAD=0
@@ -116,9 +116,9 @@ jobs:
           path: |
             jscpd-report/
             vulture-report.json
-            frontend-svelt/fallow-results.json
-            frontend-svelt/fallow-results.sarif
-            fallow-svelte-dead-code.json
+            frontend/fallow-results.json
+            frontend/fallow-results.sarif
+            fallow-frontend-dead-code.json
 
       - name: Create failure issue
         if: failure()
