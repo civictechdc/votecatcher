@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 BASELINE_FILE="backend/typecheck-baseline.json"
 
@@ -14,14 +14,23 @@ BASELINE_COUNT=$(python3 -c "import json; print(json.load(open('$BASELINE_FILE')
 TMPFILE=$(mktemp /tmp/basedpyright-XXXXXX.json)
 trap "rm -f $TMPFILE" EXIT
 
-(cd backend && uv run basedpyright --outputjson 2>/dev/null) >"$TMPFILE"
+(cd backend && uv run basedpyright --outputjson) >"$TMPFILE" 2>/dev/null || true
 
 ACTUAL_COUNT=$(python3 -c "
-import json
-data = json.load(open('$TMPFILE'))
-errors = [d for d in data.get('generalDiagnostics', []) if d['severity'] == 'error']
-print(len(errors))
+import json, sys
+try:
+    data = json.load(open('$TMPFILE'))
+    errors = [d for d in data.get('generalDiagnostics', []) if d['severity'] == 'error']
+    print(len(errors))
+except Exception as e:
+    print(f'::error::Failed to parse basedpyright output: {e}', file=sys.stderr)
+    print('-1')
 ")
+
+if [ "$ACTUAL_COUNT" -eq "-1" ]; then
+	echo "::error::Failed to get typecheck error count"
+	exit 1
+fi
 
 if [ "$ACTUAL_COUNT" -gt "$BASELINE_COUNT" ]; then
 	echo "::error::$ACTUAL_COUNT type errors (baseline: $BASELINE_COUNT). Run 'scripts/update-typecheck-baseline.sh' to accept new baseline."

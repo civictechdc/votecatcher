@@ -107,7 +107,7 @@ sast-pr:
 	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --baseline-commit origin/main --json -o semgrep-pr.json backend/ frontend/src/
 
 sca:
-	osv-scanner --lockfile=backend/uv.lock --lockfile=frontend/bun.lock --licenses
+	osv-scanner scan --lockfile=backend/uv.lock --lockfile=frontend/bun.lock
 	trivy fs --severity CRITICAL,HIGH --scanners vuln,license --format json --output trivy-results.json .
 
 container-scan:
