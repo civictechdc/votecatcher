@@ -26,24 +26,24 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-	op.add_column(
-		"ocr_results",
-		sa.Column(
-			"ocr_index",
-			sa.Integer(),
-			nullable=False,
-			server_default="0",
-		),
-	)
-	op.drop_constraint("crop_id", "ocr_results", type_="unique")
-	op.create_index(
-		"idx_ocr_results_crop_index",
-		"ocr_results",
-		["crop_id", "ocr_index"],
-	)
+    op.add_column(
+        "ocr_results",
+        sa.Column(
+            "ocr_index",
+            sa.Integer(),
+            nullable=False,
+            server_default="0",
+        ),
+    )
+    op.drop_constraint("crop_id", "ocr_results", type_="unique")
+    op.create_index(
+        "idx_ocr_results_crop_index",
+        "ocr_results",
+        ["crop_id", "ocr_index"],
+    )
 
 
 def downgrade() -> None:
-	op.drop_index("idx_ocr_results_crop_index", table_name="ocr_results")
-	op.create_unique_constraint("crop_id", "ocr_results", ["crop_id"])
-	op.drop_column("ocr_results", "ocr_index")
+    op.drop_index("idx_ocr_results_crop_index", table_name="ocr_results")
+    op.create_unique_constraint("crop_id", "ocr_results", ["crop_id"])
+    op.drop_column("ocr_results", "ocr_index")

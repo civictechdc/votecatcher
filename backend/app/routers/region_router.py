@@ -20,86 +20,86 @@ SessionDep = Annotated[Session, Depends(get_session)]
 
 
 class VoterListStatusResponse(BaseModel):
-	"""Response schema for voter list status."""
+    """Response schema for voter list status."""
 
-	exists: bool
-	upload: dict | None = None
+    exists: bool
+    upload: dict | None = None
 
 
 class DeleteVoterListResponse(BaseModel):
-	"""Response schema for deleting voter list."""
+    """Response schema for deleting voter list."""
 
-	deleted_count: int
-	success: bool
+    deleted_count: int
+    success: bool
 
 
 @router.get("/{region_id}/voter-list", response_model=VoterListStatusResponse)
 async def get_voter_list_status(
-	region_id: UUID,
-	session: SessionDep,
+    region_id: UUID,
+    session: SessionDep,
 ) -> VoterListStatusResponse:
-	"""Get the current voter list status for a region.
+    """Get the current voter list status for a region.
 
-	Args:
-		region_id: Region UUID
-		session: Database session
+    Args:
+            region_id: Region UUID
+            session: Database session
 
-	Returns:
-		Voter list status with upload info if exists
-	"""
-	service = VoterListService(session)
-	upload = service.get_active_upload(region_id)
+    Returns:
+            Voter list status with upload info if exists
+    """
+    service = VoterListService(session)
+    upload = service.get_active_upload(region_id)
 
-	if not upload:
-		return VoterListStatusResponse(exists=False, upload=None)
+    if not upload:
+        return VoterListStatusResponse(exists=False, upload=None)
 
-	return VoterListStatusResponse(
-		exists=True,
-		upload={
-			"id": str(upload.id),
-			"original_filename": upload.original_filename,
-			"file_size": upload.file_size,
-			"row_count": upload.row_count,
-			"uploaded_at": upload.uploaded_at.isoformat(),
-			"status": upload.status.value,
-		},
-	)
+    return VoterListStatusResponse(
+        exists=True,
+        upload={
+            "id": str(upload.id),
+            "original_filename": upload.original_filename,
+            "file_size": upload.file_size,
+            "row_count": upload.row_count,
+            "uploaded_at": upload.uploaded_at.isoformat(),
+            "status": upload.status.value,
+        },
+    )
 
 
 @router.delete(
-	"/{region_id}/voter-list",
-	response_model=DeleteVoterListResponse,
-	status_code=status.HTTP_200_OK,
+    "/{region_id}/voter-list",
+    response_model=DeleteVoterListResponse,
+    status_code=status.HTTP_200_OK,
 )
 async def delete_voter_list(
-	region_id: UUID,
-	session: SessionDep,
+    region_id: UUID,
+    session: SessionDep,
 ) -> DeleteVoterListResponse:
-	"""Delete all voters for a region and mark uploads as superseded.
+    """Delete all voters for a region and mark uploads as superseded.
 
-	Args:
-		region_id: Region UUID
-		session: Database session
+    Args:
+            region_id: Region UUID
+            session: Database session
 
-	Returns:
-		Count of deleted voters
-	"""
-	service = VoterListService(session)
+    Returns:
+            Count of deleted voters
+    """
+    service = VoterListService(session)
 
-	deleted_count = service.delete_voters_for_region(region_id)
+    deleted_count = service.delete_voters_for_region(region_id)
 
-	uploads = session.exec(
-		select(VoterListUpload).where(VoterListUpload.region_id == region_id)
-	).all()
-	for upload in uploads:
-		upload.status = UploadStatus.SUPERSEDED
+    uploads = session.exec(
+        select(VoterListUpload).where(VoterListUpload.region_id == region_id)
+    ).all()
+    for upload in uploads:
+        upload.status = UploadStatus.SUPERSEDED
 
-	session.commit()
+    session.commit()
 
-	logger.info(
-		"Voter list deleted",
-		region_id=str(region_id),
-		deleted_count=deleted_count,
-	)
+    logger.info(
+        "Voter list deleted",
+        region_id=str(region_id),
+        deleted_count=deleted_count,
+    )
 
-	return DeleteVoterListResponse(deleted_count=deleted_count, success=True)
+    return DeleteVoterListResponse(deleted_count=deleted_count, success=True)

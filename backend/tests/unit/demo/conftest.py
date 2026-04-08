@@ -4,10 +4,10 @@ import pytest
 from sqlmodel import Session, SQLModel, create_engine
 
 from app.data.database.model.jobs import (  # noqa: F401
-	MatcherJob,
-	OcrJob,
-	OcrModel,
-	OcrProvider,
+    MatcherJob,
+    OcrJob,
+    OcrModel,
+    OcrProvider,
 )
 from app.data.database.model.match_result import MatchResult  # noqa: F401
 from app.data.database.model.ocr_result import OcrResult  # noqa: F401
@@ -21,8 +21,8 @@ from app.data.database.model.user import User  # noqa: F401
 
 @pytest.fixture(name="session", scope="function")
 def session_fixture():
-	"""Create an in-memory SQLite session for unit tests."""
-	engine = create_engine("sqlite:///:memory:", echo=False)
-	SQLModel.metadata.create_all(engine)
-	with Session(engine) as session:
-		yield session
+    """Create an in-memory SQLite session for unit tests."""
+    engine = create_engine("sqlite:///:memory:", echo=False)
+    SQLModel.metadata.create_all(engine)
+    with Session(engine) as session:
+        yield session

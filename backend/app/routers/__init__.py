@@ -9,13 +9,13 @@ from app.routers.session_router import router as session_router
 from app.routers.upload_router import router as upload_router
 
 __all__ = [
-	"campaign_router",
-	"config_router",
-	"database_router",
-	"demo_router",
-	"job_router",
-	"provider_router",
-	"results_router",
-	"session_router",
-	"upload_router",
+    "campaign_router",
+    "config_router",
+    "database_router",
+    "demo_router",
+    "job_router",
+    "provider_router",
+    "results_router",
+    "session_router",
+    "upload_router",
 ]

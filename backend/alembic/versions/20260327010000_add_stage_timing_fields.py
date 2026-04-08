@@ -20,16 +20,16 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-	op.add_column(
-		"matcher_jobs",
-		sa.Column("ocr_duration_seconds", sa.Float(), nullable=True),
-	)
-	op.add_column(
-		"matcher_jobs",
-		sa.Column("matching_duration_seconds", sa.Float(), nullable=True),
-	)
+    op.add_column(
+        "matcher_jobs",
+        sa.Column("ocr_duration_seconds", sa.Float(), nullable=True),
+    )
+    op.add_column(
+        "matcher_jobs",
+        sa.Column("matching_duration_seconds", sa.Float(), nullable=True),
+    )
 
 
 def downgrade() -> None:
-	op.drop_column("matcher_jobs", "matching_duration_seconds")
-	op.drop_column("matcher_jobs", "ocr_duration_seconds")
+    op.drop_column("matcher_jobs", "matching_duration_seconds")
+    op.drop_column("matcher_jobs", "ocr_duration_seconds")

@@ -7,7 +7,7 @@ _memory_db: dict[str, Any] | None = None
 
 
 def get_memory_db() -> dict[str, Any]:
-	global _memory_db
-	if _memory_db is None:
-		_memory_db = {}
-	return _memory_db
+    global _memory_db
+    if _memory_db is None:
+        _memory_db = {}
+    return _memory_db

@@ -24,618 +24,618 @@ DEFAULT_REGION_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
 
 def _ensure_default_region(session: Session) -> uuid.UUID:
-	region = session.exec(select(Region).where(Region.region_key == "DC")).first()
-	if region:
-		return region.id
-	region = Region(
-		id=DEFAULT_REGION_ID,
-		region_key="DC",
-		region_name="Washington, DC",
-		country_code="US",
-	)
-	session.add(region)
-	session.commit()
-	return region.id
+    region = session.exec(select(Region).where(Region.region_key == "DC")).first()
+    if region:
+        return region.id
+    region = Region(
+        id=DEFAULT_REGION_ID,
+        region_key="DC",
+        region_name="Washington, DC",
+        country_code="US",
+    )
+    session.add(region)
+    session.commit()
+    return region.id
 
 
 class CampaignResponse(BaseModel):
-	"""Response schema for campaign."""
+    """Response schema for campaign."""
 
-	id: uuid.UUID | None
-	unique_name: str
-	title: str
-	year: str
-	region: str | None
-	region_id: uuid.UUID | None
-	created_at: datetime | None
-	updated_at: datetime | None
+    id: uuid.UUID | None
+    unique_name: str
+    title: str
+    year: str
+    region: str | None
+    region_id: uuid.UUID | None
+    created_at: datetime | None
+    updated_at: datetime | None
 
 
 def _get_region_key(session: Session, region_id: uuid.UUID | None) -> str | None:
-	if not region_id:
-		return None
-	region = session.get(Region, region_id)
-	return region.region_key if region else None
+    if not region_id:
+        return None
+    region = session.get(Region, region_id)
+    return region.region_key if region else None
 
 
 class CampaignListResponse(BaseModel):
-	"""Response schema for campaign list."""
+    """Response schema for campaign list."""
 
-	campaigns: list[CampaignResponse]
-	total: int
+    campaigns: list[CampaignResponse]
+    total: int
 
 
 class CreateCampaignRequest(BaseModel):
-	"""Request schema for creating campaign."""
+    """Request schema for creating campaign."""
 
-	name: str = Field(min_length=1, max_length=255, pattern=r"^[^<>\"';&]+$")
-	year: int = Field(ge=1900, le=2100)
-	region: str = Field(default="DC", max_length=10)
+    name: str = Field(min_length=1, max_length=255, pattern=r"^[^<>\"';&]+$")
+    year: int = Field(ge=1900, le=2100)
+    region: str = Field(default="DC", max_length=10)
 
 
 @router.post("", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
 def create_campaign(
-	request: CreateCampaignRequest,
-	session: SessionDep,
+    request: CreateCampaignRequest,
+    session: SessionDep,
 ) -> CampaignResponse:
-	"""Create a new campaign."""
-	region_id = _ensure_default_region(session)
-	campaign = Campaign(
-		unique_name=request.name,
-		title=request.name,
-		year=str(request.year),
-		region_id=region_id,
-	)
-	session.add(campaign)
-	session.commit()
-	session.refresh(campaign)
+    """Create a new campaign."""
+    region_id = _ensure_default_region(session)
+    campaign = Campaign(
+        unique_name=request.name,
+        title=request.name,
+        year=str(request.year),
+        region_id=region_id,
+    )
+    session.add(campaign)
+    session.commit()
+    session.refresh(campaign)
 
-	logger.info(
-		"Campaign created",
-		campaign_id=campaign.id,
-		unique_name=campaign.unique_name,
-		year=campaign.year,
-	)
+    logger.info(
+        "Campaign created",
+        campaign_id=campaign.id,
+        unique_name=campaign.unique_name,
+        year=campaign.year,
+    )
 
-	return CampaignResponse(
-		id=campaign.id,
-		unique_name=campaign.unique_name,
-		title=campaign.title,
-		year=campaign.year,
-		region=_get_region_key(session, campaign.region_id),
-		region_id=campaign.region_id,
-		created_at=campaign.created_at,
-		updated_at=campaign.updated_at,
-	)
+    return CampaignResponse(
+        id=campaign.id,
+        unique_name=campaign.unique_name,
+        title=campaign.title,
+        year=campaign.year,
+        region=_get_region_key(session, campaign.region_id),
+        region_id=campaign.region_id,
+        created_at=campaign.created_at,
+        updated_at=campaign.updated_at,
+    )
 
 
 @router.get("", response_model=CampaignListResponse)
 def list_campaigns(
-	session: SessionDep,
-	offset: int = 0,
-	limit: int = 100,
+    session: SessionDep,
+    offset: int = 0,
+    limit: int = 100,
 ) -> CampaignListResponse:
-	"""List all campaigns."""
-	statement = select(Campaign).offset(offset).limit(limit)
-	campaigns = session.exec(statement).all()
+    """List all campaigns."""
+    statement = select(Campaign).offset(offset).limit(limit)
+    campaigns = session.exec(statement).all()
 
-	count_statement = select(Campaign)
-	total = len(session.exec(count_statement).all())
+    count_statement = select(Campaign)
+    total = len(session.exec(count_statement).all())
 
-	return CampaignListResponse(
-		campaigns=[
-			CampaignResponse(
-				id=c.id,
-				unique_name=c.unique_name,
-				title=c.title,
-				year=c.year,
-				region=_get_region_key(session, c.region_id),
-				region_id=c.region_id,
-				created_at=c.created_at,
-				updated_at=c.updated_at,
-			)
-			for c in campaigns
-		],
-		total=total,
-	)
+    return CampaignListResponse(
+        campaigns=[
+            CampaignResponse(
+                id=c.id,
+                unique_name=c.unique_name,
+                title=c.title,
+                year=c.year,
+                region=_get_region_key(session, c.region_id),
+                region_id=c.region_id,
+                created_at=c.created_at,
+                updated_at=c.updated_at,
+            )
+            for c in campaigns
+        ],
+        total=total,
+    )
 
 
 @router.get("/{campaign_id}", response_model=CampaignResponse)
 def get_campaign(
-	campaign_id: uuid.UUID,
-	session: SessionDep,
+    campaign_id: uuid.UUID,
+    session: SessionDep,
 ) -> CampaignResponse:
-	"""Get campaign details."""
-	campaign = session.get(Campaign, campaign_id)
-	if not campaign:
-		raise HTTPException(
-			status_code=status.HTTP_404_NOT_FOUND,
-			detail=f"Campaign {campaign_id} not found",
-		)
+    """Get campaign details."""
+    campaign = session.get(Campaign, campaign_id)
+    if not campaign:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Campaign {campaign_id} not found",
+        )
 
-	return CampaignResponse(
-		id=campaign.id,
-		unique_name=campaign.unique_name,
-		title=campaign.title,
-		year=campaign.year,
-		region=_get_region_key(session, campaign.region_id),
-		region_id=campaign.region_id,
-		created_at=campaign.created_at,
-		updated_at=campaign.updated_at,
-	)
+    return CampaignResponse(
+        id=campaign.id,
+        unique_name=campaign.unique_name,
+        title=campaign.title,
+        year=campaign.year,
+        region=_get_region_key(session, campaign.region_id),
+        region_id=campaign.region_id,
+        created_at=campaign.created_at,
+        updated_at=campaign.updated_at,
+    )
 
 
 @router.delete("/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_campaign(
-	campaign_id: uuid.UUID,
-	session: SessionDep,
+    campaign_id: uuid.UUID,
+    session: SessionDep,
 ) -> None:
-	"""Delete a campaign."""
-	campaign = session.get(Campaign, campaign_id)
-	if not campaign:
-		raise HTTPException(
-			status_code=status.HTTP_404_NOT_FOUND,
-			detail=f"Campaign {campaign_id} not found",
-		)
-	session.delete(campaign)
-	session.commit()
-	logger.info("Campaign deleted", campaign_id=campaign_id)
+    """Delete a campaign."""
+    campaign = session.get(Campaign, campaign_id)
+    if not campaign:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Campaign {campaign_id} not found",
+        )
+    session.delete(campaign)
+    session.commit()
+    logger.info("Campaign deleted", campaign_id=campaign_id)
 
 
 class CampaignMetricsResponse(BaseModel):
-	"""Response schema for campaign metrics."""
+    """Response schema for campaign metrics."""
 
-	total_signatures: int
-	processed: int
-	high_confidence: int
-	medium_confidence: int
-	low_confidence: int
-	progress_percentage: float
-	last_job: dict | None
-	voter_list_count: int | None
+    total_signatures: int
+    processed: int
+    high_confidence: int
+    medium_confidence: int
+    low_confidence: int
+    progress_percentage: float
+    last_job: dict | None
+    voter_list_count: int | None
 
 
 class PetitionScanResponse(BaseModel):
-	"""Response schema for a petition scan."""
+    """Response schema for a petition scan."""
 
-	id: int
-	original_filename: str
-	file_size: int | None
-	page_count: int | None
-	uploaded_at: datetime
+    id: int
+    original_filename: str
+    file_size: int | None
+    page_count: int | None
+    uploaded_at: datetime
 
 
 class PetitionScanListResponse(BaseModel):
-	"""Response schema for listing petition scans."""
+    """Response schema for listing petition scans."""
 
-	scans: list[PetitionScanResponse]
-	total: int
+    scans: list[PetitionScanResponse]
+    total: int
 
 
 @router.get("/{campaign_id}/metrics", response_model=CampaignMetricsResponse)
 def get_campaign_metrics(
-	campaign_id: uuid.UUID,
-	session: SessionDep,
+    campaign_id: uuid.UUID,
+    session: SessionDep,
 ) -> CampaignMetricsResponse:
-	"""Get campaign metrics including signature counts and confidence breakdown.
+    """Get campaign metrics including signature counts and confidence breakdown.
 
-	Args:
-		campaign_id: Campaign UUID
-		session: Database session
+    Args:
+            campaign_id: Campaign UUID
+            session: Database session
 
-	Returns:
-		Metrics including total signatures, processed count, confidence
-		breakdown, progress percentage, and last job information.
+    Returns:
+            Metrics including total signatures, processed count, confidence
+            breakdown, progress percentage, and last job information.
 
-	Raises:
-		HTTPException: 404 if campaign not found
-	"""
-	from app.services.metrics import MetricsService
+    Raises:
+            HTTPException: 404 if campaign not found
+    """
+    from app.services.metrics import MetricsService
 
-	campaign = session.get(Campaign, campaign_id)
-	if not campaign:
-		raise HTTPException(
-			status_code=status.HTTP_404_NOT_FOUND,
-			detail=f"Campaign {campaign_id} not found",
-		)
+    campaign = session.get(Campaign, campaign_id)
+    if not campaign:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Campaign {campaign_id} not found",
+        )
 
-	service = MetricsService(session)
-	metrics = service.compute_campaign_metrics(campaign_id)
+    service = MetricsService(session)
+    metrics = service.compute_campaign_metrics(campaign_id)
 
-	return CampaignMetricsResponse(**metrics)
+    return CampaignMetricsResponse(**metrics)
 
 
 @router.get("/{campaign_id}/scans", response_model=PetitionScanListResponse)
 def list_campaign_scans(
-	campaign_id: uuid.UUID,
-	session: SessionDep,
+    campaign_id: uuid.UUID,
+    session: SessionDep,
 ) -> PetitionScanListResponse:
-	"""List all petition scans for a campaign.
+    """List all petition scans for a campaign.
 
-	Args:
-		campaign_id: Campaign UUID
-		session: Database session
+    Args:
+            campaign_id: Campaign UUID
+            session: Database session
 
-	Returns:
-		List of petition scans with total count
+    Returns:
+            List of petition scans with total count
 
-	Raises:
-		HTTPException: 404 if campaign not found
-	"""
-	campaign = session.get(Campaign, campaign_id)
-	if not campaign:
-		raise HTTPException(
-			status_code=status.HTTP_404_NOT_FOUND,
-			detail=f"Campaign {campaign_id} not found",
-		)
+    Raises:
+            HTTPException: 404 if campaign not found
+    """
+    campaign = session.get(Campaign, campaign_id)
+    if not campaign:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Campaign {campaign_id} not found",
+        )
 
-	statement = select(PetitionScan).where(PetitionScan.campaign_id == campaign_id)
-	scans = session.exec(statement).all()
+    statement = select(PetitionScan).where(PetitionScan.campaign_id == campaign_id)
+    scans = session.exec(statement).all()
 
-	return PetitionScanListResponse(
-		scans=[
-			PetitionScanResponse(
-				id=s.id,
-				original_filename=s.original_filename,
-				file_size=s.file_size,
-				page_count=s.page_count,
-				uploaded_at=s.uploaded_at,
-			)
-			for s in scans
-		],
-		total=len(scans),
-	)
+    return PetitionScanListResponse(
+        scans=[
+            PetitionScanResponse(
+                id=s.id,
+                original_filename=s.original_filename,
+                file_size=s.file_size,
+                page_count=s.page_count,
+                uploaded_at=s.uploaded_at,
+            )
+            for s in scans
+        ],
+        total=len(scans),
+    )
 
 
 @router.delete("/{campaign_id}/scans/{scan_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_campaign_scan(
-	campaign_id: uuid.UUID,
-	scan_id: int,
-	session: SessionDep,
+    campaign_id: uuid.UUID,
+    scan_id: int,
+    session: SessionDep,
 ) -> None:
-	"""Delete a petition scan.
+    """Delete a petition scan.
 
-	Args:
-		campaign_id: Campaign UUID
-		scan_id: Petition scan ID
-		session: Database session
+    Args:
+            campaign_id: Campaign UUID
+            scan_id: Petition scan ID
+            session: Database session
 
-	Raises:
-		HTTPException: 404 if campaign or scan not found
-	"""
-	campaign = session.get(Campaign, campaign_id)
-	if not campaign:
-		raise HTTPException(
-			status_code=status.HTTP_404_NOT_FOUND,
-			detail=f"Campaign {campaign_id} not found",
-		)
+    Raises:
+            HTTPException: 404 if campaign or scan not found
+    """
+    campaign = session.get(Campaign, campaign_id)
+    if not campaign:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Campaign {campaign_id} not found",
+        )
 
-	scan = session.exec(
-		select(PetitionScan).where(
-			PetitionScan.id == scan_id,
-			PetitionScan.campaign_id == campaign_id,
-		)
-	).first()
+    scan = session.exec(
+        select(PetitionScan).where(
+            PetitionScan.id == scan_id,
+            PetitionScan.campaign_id == campaign_id,
+        )
+    ).first()
 
-	if not scan:
-		raise HTTPException(
-			status_code=status.HTTP_404_NOT_FOUND,
-			detail=f"Scan {scan_id} not found for campaign {campaign_id}",
-		)
+    if not scan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Scan {scan_id} not found for campaign {campaign_id}",
+        )
 
-	session.delete(scan)
-	session.commit()
-	logger.info("Petition scan deleted", scan_id=scan_id, campaign_id=campaign_id)
+    session.delete(scan)
+    session.commit()
+    logger.info("Petition scan deleted", scan_id=scan_id, campaign_id=campaign_id)
 
 
 class CampaignMatchPrediction(BaseModel):
-	"""Schema for a single match prediction."""
+    """Schema for a single match prediction."""
 
-	rank: int
-	voter_name: str
-	voter_address: str
-	similarity_score: float
-	confidence: str
+    rank: int
+    voter_name: str
+    voter_address: str
+    similarity_score: float
+    confidence: str
 
 
 class CampaignResultResponse(BaseModel):
-	"""Response schema for a single result."""
+    """Response schema for a single result."""
 
-	ocr_result_id: int
-	extracted_name: str
-	extracted_address: str
-	crop_id: int
-	job_id: int
-	predictions: list[CampaignMatchPrediction]
+    ocr_result_id: int
+    extracted_name: str
+    extracted_address: str
+    crop_id: int
+    job_id: int
+    predictions: list[CampaignMatchPrediction]
 
 
 class CampaignResultsListResponse(BaseModel):
-	"""Response schema for paginated campaign results."""
+    """Response schema for paginated campaign results."""
 
-	results: list[CampaignResultResponse]
-	total: int
-	page: int
-	page_size: int
+    results: list[CampaignResultResponse]
+    total: int
+    page: int
+    page_size: int
 
 
 @router.get("/{campaign_id}/results", response_model=CampaignResultsListResponse)
 def get_campaign_results(
-	campaign_id: uuid.UUID,
-	session: SessionDep,
-	confidence: str | None = None,
-	page: int = 1,
-	page_size: int = 50,
+    campaign_id: uuid.UUID,
+    session: SessionDep,
+    confidence: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
 ) -> CampaignResultsListResponse:
-	"""Get match results for all jobs in a campaign.
+    """Get match results for all jobs in a campaign.
 
-	Args:
-		campaign_id: Campaign UUID
-		session: Database session
-		confidence: Filter by confidence level (HIGH/MEDIUM/LOW, optional)
-		page: Page number (1-indexed)
-		page_size: Items per page
+    Args:
+            campaign_id: Campaign UUID
+            session: Database session
+            confidence: Filter by confidence level (HIGH/MEDIUM/LOW, optional)
+            page: Page number (1-indexed)
+            page_size: Items per page
 
-	Returns:
-		Paginated match results for the campaign
+    Returns:
+            Paginated match results for the campaign
 
-	Raises:
-		HTTPException: 404 if campaign not found
-	"""
-	from app.data.database.model.jobs import MatcherJob
-	from app.data.database.model.match_result import ConfidenceLevel, MatchResult
-	from app.data.database.model.ocr_result import OcrResult
-	from app.data.database.model.registered_voter import RegisteredVoter
+    Raises:
+            HTTPException: 404 if campaign not found
+    """
+    from app.data.database.model.jobs import MatcherJob
+    from app.data.database.model.match_result import ConfidenceLevel, MatchResult
+    from app.data.database.model.ocr_result import OcrResult
+    from app.data.database.model.registered_voter import RegisteredVoter
 
-	campaign = session.get(Campaign, campaign_id)
-	if not campaign:
-		raise HTTPException(
-			status_code=status.HTTP_404_NOT_FOUND,
-			detail=f"Campaign {campaign_id} not found",
-		)
+    campaign = session.get(Campaign, campaign_id)
+    if not campaign:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Campaign {campaign_id} not found",
+        )
 
-	job_ids_statement = select(MatcherJob.id).where(
-		MatcherJob.campaign_id == campaign_id
-	)
-	job_ids: list[int] = list(session.exec(job_ids_statement).all())
+    job_ids_statement = select(MatcherJob.id).where(
+        MatcherJob.campaign_id == campaign_id
+    )
+    job_ids: list[int] = list(session.exec(job_ids_statement).all())
 
-	if not job_ids:
-		return CampaignResultsListResponse(
-			results=[],
-			total=0,
-			page=page,
-			page_size=page_size,
-		)
+    if not job_ids:
+        return CampaignResultsListResponse(
+            results=[],
+            total=0,
+            page=page,
+            page_size=page_size,
+        )
 
-	confidence_filter = None
-	if confidence:
-		try:
-			confidence_filter = ConfidenceLevel(confidence.upper())
-		except ValueError:
-			confidence_filter = None
+    confidence_filter = None
+    if confidence:
+        try:
+            confidence_filter = ConfidenceLevel(confidence.upper())
+        except ValueError:
+            confidence_filter = None
 
-	total_statement = select(MatchResult).where(MatchResult.matcher_job_id.in_(job_ids))
-	if confidence_filter:
-		total_statement = total_statement.where(
-			MatchResult.confidence_level == confidence_filter
-		)
+    total_statement = select(MatchResult).where(MatchResult.matcher_job_id.in_(job_ids))
+    if confidence_filter:
+        total_statement = total_statement.where(
+            MatchResult.confidence_level == confidence_filter
+        )
 
-	all_match_results = session.exec(total_statement).all()
-	total = len({r.ocr_result_id for r in all_match_results})
+    all_match_results = session.exec(total_statement).all()
+    total = len({r.ocr_result_id for r in all_match_results})
 
-	if total == 0:
-		return CampaignResultsListResponse(
-			results=[],
-			total=0,
-			page=page,
-			page_size=page_size,
-		)
+    if total == 0:
+        return CampaignResultsListResponse(
+            results=[],
+            total=0,
+            page=page,
+            page_size=page_size,
+        )
 
-	ocr_result_ids = sorted({r.ocr_result_id for r in all_match_results})
-	offset = (page - 1) * page_size
-	paginated_ocr_ids = ocr_result_ids[offset : offset + page_size]
+    ocr_result_ids = sorted({r.ocr_result_id for r in all_match_results})
+    offset = (page - 1) * page_size
+    paginated_ocr_ids = ocr_result_ids[offset : offset + page_size]
 
-	page_match_results = [
-		r for r in all_match_results if r.ocr_result_id in paginated_ocr_ids
-	]
+    page_match_results = [
+        r for r in all_match_results if r.ocr_result_id in paginated_ocr_ids
+    ]
 
-	voter_ids = {r.voter_id for r in page_match_results if r.voter_id}
-	voters_by_id: dict[int, RegisteredVoter] = {}
+    voter_ids = {r.voter_id for r in page_match_results if r.voter_id}
+    voters_by_id: dict[int, RegisteredVoter] = {}
 
-	if voter_ids:
-		voters = session.exec(
-			select(RegisteredVoter).where(RegisteredVoter.id.in_(voter_ids))
-		).all()
-		voters_by_id = {v.id: v for v in voters}
+    if voter_ids:
+        voters = session.exec(
+            select(RegisteredVoter).where(RegisteredVoter.id.in_(voter_ids))
+        ).all()
+        voters_by_id = {v.id: v for v in voters}
 
-	predictions_by_ocr: dict[int, list[CampaignMatchPrediction]] = {}
-	job_ids_by_ocr: dict[int, int] = {}
+    predictions_by_ocr: dict[int, list[CampaignMatchPrediction]] = {}
+    job_ids_by_ocr: dict[int, int] = {}
 
-	for result in page_match_results:
-		ocr_id = result.ocr_result_id
-		if ocr_id not in predictions_by_ocr:
-			predictions_by_ocr[ocr_id] = []
-		if ocr_id not in job_ids_by_ocr:
-			job_ids_by_ocr[ocr_id] = result.matcher_job_id
+    for result in page_match_results:
+        ocr_id = result.ocr_result_id
+        if ocr_id not in predictions_by_ocr:
+            predictions_by_ocr[ocr_id] = []
+        if ocr_id not in job_ids_by_ocr:
+            job_ids_by_ocr[ocr_id] = result.matcher_job_id
 
-		voter = voters_by_id.get(result.voter_id) if result.voter_id else None
+        voter = voters_by_id.get(result.voter_id) if result.voter_id else None
 
-		voter_name = ""
-		voter_address = ""
-		if voter:
-			name_parts = []
-			if voter.name_data:
-				first = voter.name_data.get("first_name", "")
-				last = voter.name_data.get("last_name", "")
-				if first:
-					name_parts.append(first)
-				if last:
-					name_parts.append(last)
-			voter_name = " ".join(name_parts)
+        voter_name = ""
+        voter_address = ""
+        if voter:
+            name_parts = []
+            if voter.name_data:
+                first = voter.name_data.get("first_name", "")
+                last = voter.name_data.get("last_name", "")
+                if first:
+                    name_parts.append(first)
+                if last:
+                    name_parts.append(last)
+            voter_name = " ".join(name_parts)
 
-			if voter.address_data:
-				addr_parts = []
-				street = voter.address_data.get("street", "")
-				city = voter.address_data.get("city", "")
-				state = voter.address_data.get("state", "")
-				zip_code = voter.address_data.get("zip", "")
-				if street:
-					addr_parts.append(street)
-				if city:
-					addr_parts.append(city)
-				if state:
-					addr_parts.append(state)
-				if zip_code:
-					addr_parts.append(zip_code)
-				voter_address = ", ".join(addr_parts)
+            if voter.address_data:
+                addr_parts = []
+                street = voter.address_data.get("street", "")
+                city = voter.address_data.get("city", "")
+                state = voter.address_data.get("state", "")
+                zip_code = voter.address_data.get("zip", "")
+                if street:
+                    addr_parts.append(street)
+                if city:
+                    addr_parts.append(city)
+                if state:
+                    addr_parts.append(state)
+                if zip_code:
+                    addr_parts.append(zip_code)
+                voter_address = ", ".join(addr_parts)
 
-		predictions_by_ocr[ocr_id].append(
-			CampaignMatchPrediction(
-				rank=result.rank,
-				voter_name=voter_name,
-				voter_address=voter_address,
-				similarity_score=result.similarity_score,
-				confidence=result.confidence_level.value
-				if result.confidence_level
-				else "LOW",
-			)
-		)
+        predictions_by_ocr[ocr_id].append(
+            CampaignMatchPrediction(
+                rank=result.rank,
+                voter_name=voter_name,
+                voter_address=voter_address,
+                similarity_score=result.similarity_score,
+                confidence=result.confidence_level.value
+                if result.confidence_level
+                else "LOW",
+            )
+        )
 
-	for ocr_id in predictions_by_ocr:
-		predictions_by_ocr[ocr_id].sort(key=lambda p: p.rank)
+    for ocr_id in predictions_by_ocr:
+        predictions_by_ocr[ocr_id].sort(key=lambda p: p.rank)
 
-	ocr_ids_to_fetch = set(paginated_ocr_ids)
-	ocr_results_by_id: dict[int, OcrResult] = {}
+    ocr_ids_to_fetch = set(paginated_ocr_ids)
+    ocr_results_by_id: dict[int, OcrResult] = {}
 
-	if ocr_ids_to_fetch:
-		ocr_results = session.exec(
-			select(OcrResult).where(OcrResult.id.in_(ocr_ids_to_fetch))
-		).all()
-		ocr_results_by_id = {o.id: o for o in ocr_results}
+    if ocr_ids_to_fetch:
+        ocr_results = session.exec(
+            select(OcrResult).where(OcrResult.id.in_(ocr_ids_to_fetch))
+        ).all()
+        ocr_results_by_id = {o.id: o for o in ocr_results}
 
-	results = []
-	for ocr_id in paginated_ocr_ids:
-		ocr_result = ocr_results_by_id.get(ocr_id)
+    results = []
+    for ocr_id in paginated_ocr_ids:
+        ocr_result = ocr_results_by_id.get(ocr_id)
 
-		extracted_name = ""
-		extracted_address = ""
-		crop_id = 0
-		if ocr_result:
-			if isinstance(ocr_result.extracted_text, dict):
-				extracted_name = ocr_result.extracted_text.get("name") or ""
-				extracted_address = ocr_result.extracted_text.get("address") or ""
-			elif ocr_result.extracted_text:
-				extracted_name = str(ocr_result.extracted_text)
-			crop_id = ocr_result.crop_id
+        extracted_name = ""
+        extracted_address = ""
+        crop_id = 0
+        if ocr_result:
+            if isinstance(ocr_result.extracted_text, dict):
+                extracted_name = ocr_result.extracted_text.get("name") or ""
+                extracted_address = ocr_result.extracted_text.get("address") or ""
+            elif ocr_result.extracted_text:
+                extracted_name = str(ocr_result.extracted_text)
+            crop_id = ocr_result.crop_id
 
-		predictions = predictions_by_ocr.get(ocr_id, [])[:5]
-		job_id = job_ids_by_ocr.get(ocr_id, 0)
+        predictions = predictions_by_ocr.get(ocr_id, [])[:5]
+        job_id = job_ids_by_ocr.get(ocr_id, 0)
 
-		results.append(
-			CampaignResultResponse(
-				ocr_result_id=ocr_id,
-				extracted_name=extracted_name,
-				extracted_address=extracted_address,
-				crop_id=crop_id,
-				job_id=job_id,
-				predictions=predictions,
-			)
-		)
+        results.append(
+            CampaignResultResponse(
+                ocr_result_id=ocr_id,
+                extracted_name=extracted_name,
+                extracted_address=extracted_address,
+                crop_id=crop_id,
+                job_id=job_id,
+                predictions=predictions,
+            )
+        )
 
-	return CampaignResultsListResponse(
-		results=results,
-		total=total,
-		page=page,
-		page_size=page_size,
-	)
+    return CampaignResultsListResponse(
+        results=results,
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 class SetupStatusResponse(BaseModel):
-	"""Response schema for campaign setup status."""
+    """Response schema for campaign setup status."""
 
-	voter_list: dict
-	petitions: dict
-	jobs: dict
-	state: str
+    voter_list: dict
+    petitions: dict
+    jobs: dict
+    state: str
 
 
 @router.get("/{campaign_id}/setup-status", response_model=SetupStatusResponse)
 def get_setup_status(
-	campaign_id: uuid.UUID,
-	session: SessionDep,
+    campaign_id: uuid.UUID,
+    session: SessionDep,
 ) -> SetupStatusResponse:
-	"""Get campaign setup status for progress stepper.
+    """Get campaign setup status for progress stepper.
 
-	Args:
-		campaign_id: Campaign UUID
-		session: Database session
+    Args:
+            campaign_id: Campaign UUID
+            session: Database session
 
-	Returns:
-		Setup status with voter list, petitions, and job info
+    Returns:
+            Setup status with voter list, petitions, and job info
 
-	Raises:
-		HTTPException: 404 if campaign not found
-	"""
-	from app.data.database.model.jobs import MatcherJob
-	from app.data.database.model.petition_scan import PetitionScan
-	from app.services.voter_list_service import VoterListService
+    Raises:
+            HTTPException: 404 if campaign not found
+    """
+    from app.data.database.model.jobs import MatcherJob
+    from app.data.database.model.petition_scan import PetitionScan
+    from app.services.voter_list_service import VoterListService
 
-	campaign = session.get(Campaign, campaign_id)
-	if not campaign:
-		raise HTTPException(
-			status_code=status.HTTP_404_NOT_FOUND,
-			detail=f"Campaign {campaign_id} not found",
-		)
+    campaign = session.get(Campaign, campaign_id)
+    if not campaign:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Campaign {campaign_id} not found",
+        )
 
-	voter_list_service = VoterListService(session)
-	voter_upload = voter_list_service.get_active_upload(campaign.region_id)
+    voter_list_service = VoterListService(session)
+    voter_upload = voter_list_service.get_active_upload(campaign.region_id)
 
-	scans = session.exec(
-		select(PetitionScan).where(PetitionScan.campaign_id == campaign_id)
-	).all()
+    scans = session.exec(
+        select(PetitionScan).where(PetitionScan.campaign_id == campaign_id)
+    ).all()
 
-	jobs = session.exec(
-		select(MatcherJob).where(MatcherJob.campaign_id == campaign_id)
-	).all()
+    jobs = session.exec(
+        select(MatcherJob).where(MatcherJob.campaign_id == campaign_id)
+    ).all()
 
-	has_voter_list = voter_upload is not None
-	has_petitions = len(scans) > 0
-	has_jobs = len(jobs) > 0
+    has_voter_list = voter_upload is not None
+    has_petitions = len(scans) > 0
+    has_jobs = len(jobs) > 0
 
-	if not has_voter_list and not has_petitions:
-		state = "empty"
-	elif has_voter_list and not has_petitions:
-		state = "voter_only"
-	elif not has_voter_list and has_petitions:
-		state = "petitions_only"
-	elif not has_jobs:
-		state = "ready_to_process"
-	else:
-		state = "has_jobs"
+    if not has_voter_list and not has_petitions:
+        state = "empty"
+    elif has_voter_list and not has_petitions:
+        state = "voter_only"
+    elif not has_voter_list and has_petitions:
+        state = "petitions_only"
+    elif not has_jobs:
+        state = "ready_to_process"
+    else:
+        state = "has_jobs"
 
-	return SetupStatusResponse(
-		voter_list={
-			"exists": has_voter_list,
-			"row_count": voter_upload.row_count if voter_upload else None,
-			"uploaded_at": voter_upload.uploaded_at.isoformat()
-			if voter_upload
-			else None,
-			"region_name": _get_region_key(session, campaign.region_id),
-		},
-		petitions={
-			"exists": has_petitions,
-			"file_count": len(scans),
-			"signature_count": sum(s.page_count or 0 for s in scans),
-		},
-		jobs={
-			"total": len(jobs),
-			"active": len(
-				[
-					j
-					for j in jobs
-					if j.current_status
-					in ["NOT_STARTED", "OCR_PENDING", "OCR_STARTED", "MATCHING"]
-				]
-			),
-		},
-		state=state,
-	)
+    return SetupStatusResponse(
+        voter_list={
+            "exists": has_voter_list,
+            "row_count": voter_upload.row_count if voter_upload else None,
+            "uploaded_at": voter_upload.uploaded_at.isoformat()
+            if voter_upload
+            else None,
+            "region_name": _get_region_key(session, campaign.region_id),
+        },
+        petitions={
+            "exists": has_petitions,
+            "file_count": len(scans),
+            "signature_count": sum(s.page_count or 0 for s in scans),
+        },
+        jobs={
+            "total": len(jobs),
+            "active": len(
+                [
+                    j
+                    for j in jobs
+                    if j.current_status
+                    in ["NOT_STARTED", "OCR_PENDING", "OCR_STARTED", "MATCHING"]
+                ]
+            ),
+        },
+        state=state,
+    )

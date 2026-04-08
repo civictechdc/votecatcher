@@ -19,21 +19,21 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-	op.add_column(
-		"matcher_jobs",
-		sa.Column("force_reprocess", sa.Boolean(), nullable=False, server_default="0"),
-	)
-	op.add_column(
-		"matcher_jobs",
-		sa.Column("cached_ocr_count", sa.Integer(), nullable=True),
-	)
-	op.add_column(
-		"matcher_jobs",
-		sa.Column("new_ocr_count", sa.Integer(), nullable=True),
-	)
+    op.add_column(
+        "matcher_jobs",
+        sa.Column("force_reprocess", sa.Boolean(), nullable=False, server_default="0"),
+    )
+    op.add_column(
+        "matcher_jobs",
+        sa.Column("cached_ocr_count", sa.Integer(), nullable=True),
+    )
+    op.add_column(
+        "matcher_jobs",
+        sa.Column("new_ocr_count", sa.Integer(), nullable=True),
+    )
 
 
 def downgrade() -> None:
-	op.drop_column("matcher_jobs", "new_ocr_count")
-	op.drop_column("matcher_jobs", "cached_ocr_count")
-	op.drop_column("matcher_jobs", "force_reprocess")
+    op.drop_column("matcher_jobs", "new_ocr_count")
+    op.drop_column("matcher_jobs", "cached_ocr_count")
+    op.drop_column("matcher_jobs", "force_reprocess")

@@ -10,30 +10,30 @@ logger = structlog.get_logger(__name__)
 
 
 class EnvFileSource:
-	"""Load configuration from a .env file."""
+    """Load configuration from a .env file."""
 
-	def __init__(self, path: Path):
-		self._path = path
-		self._values: dict[str, str | None] = {}
-		self._loaded = False
-		self._lock = threading.Lock()
+    def __init__(self, path: Path):
+        self._path = path
+        self._values: dict[str, str | None] = {}
+        self._loaded = False
+        self._lock = threading.Lock()
 
-	def _ensure_loaded(self) -> None:
-		if self._loaded:
-			return
+    def _ensure_loaded(self) -> None:
+        if self._loaded:
+            return
 
-		with self._lock:
-			if self._loaded:
-				return
+        with self._lock:
+            if self._loaded:
+                return
 
-			if self._path.exists():
-				self._values = dict(dotenv_values(self._path))
-				logger.debug("Loaded env file", path=str(self._path))
-			else:
-				logger.debug("Env file not found", path=str(self._path))
+            if self._path.exists():
+                self._values = dict(dotenv_values(self._path))
+                logger.debug("Loaded env file", path=str(self._path))
+            else:
+                logger.debug("Env file not found", path=str(self._path))
 
-			self._loaded = True
+            self._loaded = True
 
-	def get(self, key: str, default: str | None = None) -> str | None:
-		self._ensure_loaded()
-		return self._values.get(key, default)
+    def get(self, key: str, default: str | None = None) -> str | None:
+        self._ensure_loaded()
+        return self._values.get(key, default)
