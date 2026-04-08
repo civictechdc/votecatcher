@@ -316,7 +316,7 @@ ENV_FILE=.env.simulation uv run pytest tests/
 SvelteKit/Vite uses the `MODE` environment variable:
 
 ```bash
-cd frontend-svelt
+cd frontend
 
 # Default (development mode)
 bun run dev                    # Loads .env, .env.local, .env.development
@@ -363,7 +363,7 @@ backend/
 ├── .env.demo             # Demo mode
 └── .env.prod             # Production mode (git-ignored)
 
-frontend-svelt/
+frontend/
 ├── .env.example          # Template (committed)
 ├── .env                  # Base config
 ├── .env.local            # Local overrides (git-ignored)

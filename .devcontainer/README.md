@@ -20,7 +20,7 @@ uv run main.py --env local
 
 **Terminal 2 - Frontend:**
 ```bash
-cd frontend-svelt
+cd frontend
 bun run dev
 ```
 

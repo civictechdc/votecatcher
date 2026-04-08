@@ -135,7 +135,7 @@ uv run ruff format app/
 ### Installation
 
 ```bash
-cd frontend-svelt
+cd frontend
 bun install
 ```
 
@@ -173,7 +173,7 @@ BETTER_AUTH_SECRET=demo-secret
 ### Running the Frontend
 
 ```bash
-cd frontend-svelt
+cd frontend
 
 # Development server (loads .env, .env.local, .env.development)
 bun run dev
@@ -192,7 +192,7 @@ bun run build
 ### Testing
 
 ```bash
-cd frontend-svelt
+cd frontend
 
 # Run all tests
 bun run test
@@ -210,7 +210,7 @@ bun run test src/lib/components/ui/Button.test.ts
 ### Code Quality
 
 ```bash
-cd frontend-svelt
+cd frontend
 
 # Type check
 bun run typecheck
@@ -233,7 +233,7 @@ bun run fmt
 ### Building
 
 ```bash
-cd frontend-svelt
+cd frontend
 
 # Production build
 bun run build
@@ -257,7 +257,7 @@ uv run python main.py --env local
 ### Terminal 2 - Frontend
 
 ```bash
-cd frontend-svelt
+cd frontend
 bun run dev
 # http://localhost:5173
 ```
@@ -410,7 +410,7 @@ uv run alembic history
 1. **Check Node/Bun version**: `node --version` or `bun --version`
 2. **Try fresh install**:
    ```bash
-   cd frontend-svelt
+   cd frontend
    rm -rf node_modules bun.lockb
    bun install
    ```

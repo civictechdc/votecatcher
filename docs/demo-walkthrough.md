@@ -17,12 +17,12 @@ Before starting the demo:
    cd backend && uv run python main.py --env local
 
    # Terminal 2: Frontend
-   cd frontend-svelt && bun run dev
+   cd frontend && bun run dev
    ```
 
 2. **Enable demo mode:**
    ```bash
-   # In frontend-svelt/.env
+   # In frontend/.env
    DEMO_MODE=true
    DEMO_RESET=true
    ```

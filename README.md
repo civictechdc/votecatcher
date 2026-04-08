@@ -59,7 +59,7 @@ uv run alembic upgrade head
 ### 3. Frontend Setup
 
 ```bash
-cd frontend-svelt
+cd frontend
 
 # Install dependencies
 bun install
@@ -84,7 +84,7 @@ uv run python main.py --env local
 
 **Terminal 2 - Frontend:**
 ```bash
-cd frontend-svelt
+cd frontend
 bun run dev
 # Frontend runs at http://localhost:5173
 ```
@@ -137,7 +137,7 @@ votecatcher/
 │   ├── tests/               # Test suites
 │   └── openapi.yaml         # API specification
 │
-├── frontend-svelt/          # SvelteKit frontend
+├── frontend/                # SvelteKit frontend
 │   ├── src/
 │   │   ├── routes/          # Page routes
 │   │   ├── lib/
@@ -205,7 +205,7 @@ uv run pytest tests/integration/ -v
 ### Frontend Tests
 
 ```bash
-cd frontend-svelt
+cd frontend
 
 # Unit tests
 bun run test
@@ -261,7 +261,7 @@ uv run alembic revision --autogenerate -m "description"
 ### Frontend
 
 ```bash
-cd frontend-svelt
+cd frontend
 
 # Type check
 bun run typecheck

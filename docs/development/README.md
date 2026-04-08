@@ -24,13 +24,13 @@ cp .env.example .env.local
 # Edit .env.local with your API keys
 
 # 3. Frontend setup
-cd ../frontend-svelt
+cd ../frontend
 bun install
 cp .env.example .env.local
 
 # 4. Run development servers
 # Terminal 1: cd backend && uv run python main.py --env local
-# Terminal 2: cd frontend-svelt && bun run dev
+# Terminal 2: cd frontend && bun run dev
 
 # 5. Access
 # Frontend: http://localhost:5173
@@ -70,9 +70,9 @@ uv run ruff format app/     # Format
 uv run pytest tests/ -v     # Tests
 ```
 
-**Frontend (SvelteKit — `frontend-svelt/`):**
+**Frontend (SvelteKit — `frontend/`):**
 ```bash
-cd frontend-svelt
+cd frontend
 bun run typecheck           # Type check
 bun run lint               # Lint
 bun run lint:fix           # Format
@@ -122,7 +122,7 @@ votecatcher/
 │   │   └── ...
 │   └── tests/           # Test suites
 │
-├── frontend-svelt/       # SvelteKit frontend
+├── frontend/       # SvelteKit frontend
 │   ├── src/
 │   │   ├── routes/      # Pages
 │   │   ├── lib/         # Shared code
@@ -165,10 +165,10 @@ votecatcher/
 
 ### Frontend Static Analysis (fallow)
 
-[Fallow](https://github.com/fallow-rs/fallow) is a Rust-based static analyzer for TypeScript/JavaScript that finds unused code, duplication, and complexity hotspots. It runs in the `frontend-svelt/` directory.
+[Fallow](https://github.com/fallow-rs/fallow) is a Rust-based static analyzer for TypeScript/JavaScript that finds unused code, duplication, and complexity hotspots. It runs in the `frontend/` directory.
 
 ```bash
-cd frontend-svelt
+cd frontend
 npx fallow                  # Full analysis (dead code + dupes + complexity)
 npx fallow dead-code        # Unused files, exports, dependencies
 npx fallow dupes            # Code duplication detection
@@ -176,7 +176,7 @@ npx fallow health --score   # Complexity analysis with project health score
 npx fallow audit --base main  # PR quality gate (pass/warn/fail)
 ```
 
-Configuration: `frontend-svelt/.fallowrc.json` (see [fallow config docs](https://docs.fallow.tools/configuration/overview))
+Configuration: `frontend/.fallowrc.json` (see [fallow config docs](https://docs.fallow.tools/configuration/overview))
 
 ### Backend Quality (Python)
 

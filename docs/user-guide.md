@@ -28,7 +28,7 @@ uv run alembic upgrade head
 uv run python main.py --env local
 
 # Frontend setup (in another terminal)
-cd frontend-svelt
+cd frontend
 bun install
 cp .env.example .env.local
 bun run dev
@@ -48,7 +48,7 @@ uv sync --dev
 uv run python main.py --env local
 
 # Frontend (in another terminal)
-cd frontend-svelt
+cd frontend
 cp .env.example .env.local
 bun install
 bun run dev
