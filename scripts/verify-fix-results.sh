@@ -61,7 +61,7 @@ fi
 echo ""
 echo "=== Frontend Checks ==="
 
-cd ../frontend-svelt
+cd ../frontend
 
 echo "5. Frontend type check..."
 if bun run check >/dev/null 2>&1; then
@@ -105,28 +105,28 @@ else
 fi
 
 echo "10. Pagination component exists..."
-if test -f frontend-svelt/src/lib/components/Pagination.svelte; then
+if test -f frontend/src/lib/components/Pagination.svelte; then
 	pass "Pagination component found"
 else
 	fail "Pagination component not found"
 fi
 
 echo "11. Design tokens exist..."
-if test -f frontend-svelt/src/lib/styles/tokens.css; then
+if test -f frontend/src/lib/styles/tokens.css; then
 	pass "Design tokens found"
 else
 	fail "Design tokens not found"
 fi
 
 echo "12. CN utility exists..."
-if test -f frontend-svelt/src/lib/utils/cn.ts; then
+if test -f frontend/src/lib/utils/cn.ts; then
 	pass "CN utility found"
 else
 	fail "CN utility not found"
 fi
 
 echo "13. Feature flag store exists..."
-if test -f frontend-svelt/src/lib/stores/featureFlags.ts; then
+if test -f frontend/src/lib/stores/featureFlags.ts; then
 	pass "Feature flag store found"
 else
 	fail "Feature flag store not found"
@@ -140,7 +140,7 @@ else
 fi
 
 echo "15. No incomplete code..."
-if ! grep -q "^matchResults =$" frontend-svelt/src/routes/workspace/\[id\]/+page.svelte 2>/dev/null; then
+if ! grep -q "^matchResults =$" frontend/src/routes/workspace/\[id\]/+page.svelte 2>/dev/null; then
 	pass "No incomplete code found"
 else
 	fail "Incomplete code still present"

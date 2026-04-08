@@ -24,14 +24,14 @@ services:
 
   frontend:
     build:
-      context: ./frontend-svelt
+      context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "5173:5173"
     environment:
       - VITE_API_URL=http://localhost:8080
     volumes:
-      - ./frontend-svelt:/app
+      - ./frontend:/app
       - /app/node_modules
     depends_on:
       backend:
