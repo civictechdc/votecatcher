@@ -27,6 +27,11 @@ from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.schema import Campaign
 from app.data.database.session import engine
 from app.events import JobProgressEvent, JobStatusEvent, MetricsUpdatedEvent, event_bus
+from app.matching.match_repository import MatchingStatus, is_terminal_matching_status
+from app.ocr.clients.open_ai import OpenAiOcrClient
+from app.ocr.data.data_models import EncodedPetitionPage
+from app.ocr.ocr_client_factory import resolve_provider_config
+from app.ocr.ocr_manager import OcrRequest
 from app.services.metrics import MetricsService
 from app.settings import get_settings
 
@@ -575,11 +580,6 @@ class JobWorker:
 			ocr_job: OcrJob for this phase
 			crops: List of PetitionCrop records to process
 		"""
-		from app.ocr.batching.batch_ocr_client import JobStatus
-		from app.ocr.batching.openai_ocr_batch import OpenAiBatchClient
-		from app.ocr.batching.request_types import BatchRequestPayload, Payload
-		from app.settings.settings_repo import OpenAiConfig
-
 		logger.info(
 			"Starting batch OCR",
 			job_id=job.id,
@@ -587,16 +587,9 @@ class JobWorker:
 		)
 
 		try:
-			api_key = self._get_provider_api_key("openai")
-			if not api_key:
-				raise ValueError("OpenAI API key not configured")
+			config = resolve_provider_config()
 
-			config = OpenAiConfig(
-				api_key=api_key,
-				model=job.provider_model or "gpt-4o",
-			)
-
-			batch_payloads = []
+			encoded_pages: list[EncodedPetitionPage] = []
 			for idx, crop in enumerate(crops):
 				crop_path = Path(crop.stored_path)
 				if not crop_path.exists():
@@ -610,100 +603,87 @@ class JobWorker:
 				img_bytes = crop_path.read_bytes()
 				base64_image = base64.b64encode(img_bytes).decode("utf-8")
 
-				batch_payloads.append(
-					Payload(
-						role="user",
-						messages=[
-							{
-								"type": "image_url",
-								"image_url": {
-									"url": f"data:image/jpeg;base64,{base64_image}"
-								},
-							}
-						],
-						page=idx,
-						file_name=crop.stored_path,
+				encoded_pages.append(
+					EncodedPetitionPage(
+						page_num=idx,
+						encoded_page=base64_image,
+						image_path=crop.stored_path,
+						petition_file_name=crop.stored_path,
+						petition_file_page_total=len(crops),
+						scan_id=str(crop.scan_id),
 					)
 				)
 
-			if not batch_payloads:
+			if not encoded_pages:
 				logger.warning("No valid crops to process in batch", job_id=job.id)
 				return
-
-			class NoOpResultRepository:
-				async def save_results(self, campaign_id, results):
-					return results
-
-				async def fetch_results(self, campaign_id):
-					return []
-
-			result_store = NoOpResultRepository()
-			client = OpenAiBatchClient(config, result_store)
-
-			request_data = BatchRequestPayload(
-				campaign_id=str(job.campaign_id),
-				batch_payloads=batch_payloads,
-			)
 
 			batch_dir = Path("batch_temp") / f"job_{job.id}"
 			batch_dir.mkdir(parents=True, exist_ok=True)
 
-			batch_status = await client.create_batch_job(request_data, batch_dir)
+			client = OpenAiOcrClient(config, batch_dir)
+
+			request_data = OcrRequest(
+				campaign_id=str(job.campaign_id),
+				provider_id=config.provider,
+				task_id=str(ocr_job.id),
+				encoded_pages=encoded_pages,
+			)
+
+			batch_status = await client.create_batch_job(request_data)
 			logger.info(
 				"Batch job created",
 				job_id=job.id,
-				batch_job_id=batch_status.job_id,
-				status=batch_status.status,
+				batch_job_id=batch_status.ocr_job_id,
+				status=batch_status.task_status,
 			)
 
 			poll_interval = 60
 			max_wait_minutes = 30
 			elapsed = 0
 
+			ocr_status = batch_status
 			while elapsed < max_wait_minutes * 60:
-				batch_status = await client.get_job_status(batch_status.job_id)
-
-				if batch_status.status in [
-					JobStatus.COMPLETED,
-					JobStatus.FAILED,
-					JobStatus.CANCELLED,
-					JobStatus.EXPIRED,
-				]:
+				if is_terminal_matching_status(ocr_status.task_status):
 					break
 
 				logger.info(
 					"Batch job in progress",
 					job_id=job.id,
-					batch_job_id=batch_status.job_id,
-					status=batch_status.status,
+					batch_job_id=ocr_status.ocr_job_id,
+					status=ocr_status.task_status,
 					elapsed_seconds=elapsed,
 				)
 
 				await asyncio.sleep(poll_interval)
 				elapsed += poll_interval
+				ocr_status = await client.fetch_job_status(ocr_status.ocr_job_id)
 
-			if batch_status.status != JobStatus.COMPLETED:
+			if ocr_status.task_status != MatchingStatus.OCR_COMPLETED:
 				raise RuntimeError(
-					f"Batch job did not complete: {batch_status.status}, "
-					f"error: {batch_status.error}"
+					f"Batch job did not complete: {ocr_status.task_status}, "
+					f"error: {ocr_status.failure_message}"
 				)
 
 			crop_entry_counts: dict[int, int] = {}
-			async for result_item in client.get_ocr_results(batch_status.job_id):
-				entry = result_item.ocr_entry
-				crop_idx = result_item.row_num
+			async for result in client.get_ocr_results(batch_status.ocr_job_id):
+				crop_idx = result.page_num
 				crop_id = crops[crop_idx].id
 
 				entry_idx = crop_entry_counts.get(crop_id, 0)
 				crop_entry_counts[crop_id] = entry_idx + 1
+
+				field_map = {
+					part["field_name"]: part["value"] for part in result.result_parts
+				}
 
 				ocr_result = OcrResult(
 					crop_id=crop_id,
 					ocr_job_id=ocr_job.id,
 					ocr_index=entry_idx,
 					extracted_text={
-						"name": entry.Name,
-						"address": entry.Address,
+						"name": field_map.get("Name", ""),
+						"address": field_map.get("Address", ""),
 					},
 					confidence_score=0.85,
 				)
@@ -713,7 +693,7 @@ class JobWorker:
 			logger.info(
 				"Batch OCR completed",
 				job_id=job.id,
-				batch_job_id=batch_status.job_id,
+				batch_job_id=batch_status.ocr_job_id,
 			)
 
 		except Exception as e:

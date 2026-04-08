@@ -8,9 +8,9 @@ from app.data.database.model.ocr_model import (
 	ReadOcrJobStatus,
 	UpdateOcrJobStatus,
 )
-from app.matching.match_repository import MatchingTask
-from app.ocr.batching.batch_ocr_client import BatchOcrClient, JobStatus
+from app.matching.match_repository import MatchingStatus, MatchingTask
 from app.ocr.data.data_models import OcrResultItem
+from app.ocr.ocr_manager import OcrClient
 
 
 class OcrResultRepository(Protocol):
@@ -43,14 +43,14 @@ class RegisterOcrJob:
 @dataclass
 class UpdateOcrJob:
 	job_id: str
-	status: JobStatus
+	status: MatchingStatus
 	error_message: str | None = None
 	status_message: str | None = None
 
 
 class OcrManager(Protocol):
 	async def start_ocr_job(
-		self, ocr_client: BatchOcrClient, ocr_data: RegisterOcrJob
+		self, ocr_client: OcrClient, ocr_data: RegisterOcrJob
 	) -> MatchingTask: ...
 
 	async def update_status(self, ocr_status: UpdateOcrJob) -> MatchingTask: ...

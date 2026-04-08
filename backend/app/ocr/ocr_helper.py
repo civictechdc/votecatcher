@@ -9,13 +9,10 @@ from logging import Formatter
 from pathlib import Path
 from typing import Any
 
-import fitz  # Add this import at the top with other imports
+import fitz
 import pandas as pd
 from dotenv import load_dotenv
-
-# TODO explore migrating to PyMuPDF imports
 from fitz import Page, Pixmap, Rect
-from pandas.core.frame import DataFrame
 from tqdm.notebook import tqdm
 
 from app.campaign.campaign_repository import ReadCampaign
@@ -28,12 +25,6 @@ from app.files.file_repository import (
 from app.logger_config.app_logger import AppLogger
 from app.matching.match_repository import MatchingTask, is_terminal_matching_status
 from app.ocr import extract_from_encoding_async
-from app.ocr.batching.batch_handler import (
-	create_batch_payload,
-	observe_batch_job_status,
-)
-from app.ocr.batching.batch_ocr_client import JobStatus
-from app.ocr.batching.request_types import BatchOcrRequestInput
 from app.ocr.data.data_models import EncodedPetitionDocuments, EncodedPetitionPage
 from app.ocr.ocr_config import CropConfig, get_current_crop_config
 from app.ocr.ocr_manager import OcrHandler, OcrRequest
@@ -41,7 +32,6 @@ from app.ocr.response_types import (
 	MatchingJobStatusProgress,
 	adapt_ocr_batch_status_to_progress_response,
 )
-from app.settings import load_settings
 
 load_dotenv()
 
@@ -285,11 +275,7 @@ async def collect_ocr_data(
 				text=f"Processing pages {i + 1} to {i + batch_size} (of {total_pages})",
 			)
 
-		# create_batch_payload()
-
-		# Run async batch processing using the event loop
 		batch_results = await process_text_extraction(batch)
-		# batch_results = loop.run_until_complete(process_text_extraction(batch))
 
 		# Add metadata for each result in the batch
 		for page_idx, result in enumerate(batch_results):
@@ -352,16 +338,6 @@ async def create_batched_ocr_job(
 		campaign_id=campaign_data.unique_name, encoded_pages=pages
 	)
 
-	BatchOcrRequestInput(
-		campaign_id=campaign_data.unique_name, encoded_petition_pages=all_encoded_pages
-	)
-
-	"""
-    ocr_status: BatchJobStatus = await create_batch_payload(
-        load_settings(enable_env_override=True).selected_config, request_data
-    )
-    """
-
 	request: OcrRequest = OcrRequest(
 		campaign_id=campaign_data.unique_name,
 		task_id=task_id,
@@ -391,100 +367,6 @@ async def emit_matching_job_status(
 	except Exception as e:
 		logger.error(f"Error monitoring matching job {task_id}: {e}")
 		raise e
-
-
-async def emit_batch_job_status(
-	job_id: str,
-) -> AsyncGenerator[str, JobStatus]:
-	async for job in observe_batch_job_status(job_id):
-		logger.debug(f"Job {job.job_id} ended with status: {job.status}")
-		match job.status:
-			case (
-				JobStatus.COMPLETED
-				| JobStatus.CANCELLED
-				| JobStatus.EXPIRED
-				| JobStatus.FAILED
-			):
-				yield MatchingJobStatusProgress(
-					campaign_id=job.campaign_id,
-					started_at=job.started_at,
-					task_id=job.job_id,
-					job_status=job.status,
-					last_updated_at=job.last_updated_at,
-					failure_reason=job.error if job.error else None,
-					ended_at=job.completed_at if job.completed_at else None,
-				).model_dump_json()
-				break
-			case _:
-				yield MatchingJobStatusProgress(
-					campaign_id=job.campaign_id,
-					started_at=job.started_at,
-					task_id=job.job_id,
-					last_updated_at=job.last_updated_at,
-					job_status=job.status,
-				).model_dump_json()
-		_ = await asyncio.sleep(5)  # 5 seconds poll rate
-
-
-async def create_ocr_results(
-	files: list[Path],
-) -> list[pd.DataFrame]:
-	total_pages = 0
-	ocr_dfs: list[pd.DataFrame] = []
-	encoded_batches: list[EncodedPetitionPage] = []
-	with ProcessPoolExecutor() as executor:
-		for res in executor.map(encode_document_pages, files):
-			total_pages += len(res)
-			encoded_batches.extend(res)
-
-	logger.debug("Files Successfully Converted to Bytes")
-	logger.debug("Performing OCR to read Names and Addresses")
-
-	pages = len(encoded_batches)
-
-	logger.info(f"Processing {total_pages} pages in {pages} groups")
-	encoded: list[str] = []
-	for encoded_page in encoded_batches:
-		encoded.append(encoded_page.encoded_page)
-
-	await create_batch_payload(
-		config=load_settings(enable_env_override=True).selected_config,
-		request_data=encoded,
-	)
-	return ocr_dfs
-
-	idx = 0
-	for file_path, batch in encoded_batches.items():
-		full_data = []
-		batch_results = await process_text_extraction(encodings=batch)
-		# batch_results = loop.run_until_complete(process_text_extraction(batch))
-
-		# Add metadata for each result in the batch
-		for page_idx, result in enumerate(batch_results):
-			current_page = idx + page_idx
-			ocr_data = add_metadata(result, current_page, Path(file_path).name)
-			full_data.extend(ocr_data)
-
-		logger.info(
-			f"Batch {idx // pages + 1} complete. Processed {len(batch_results)} pages"
-		)
-
-		logger.info(f"OCR collection complete. Total entries: {len(full_data)}")
-		df: DataFrame = pd.DataFrame(data=full_data)
-		logger.info(f"Created DataFrame with shape: {df.shape}")
-		# renaming columns
-		df.rename(
-			columns={"Name": "OCR Name", "Address": "OCR Address", "Ward": "OCR Ward"},
-			inplace=True,
-		)
-		# converting all caps names to title format
-		df["OCR Name"] = df["OCR Name"].apply(lambda row: row.title())
-
-		logger.info("OCR DataFrame creation complete")
-		ocr_dfs.append(df)
-		idx += idx
-
-	return ocr_dfs
 
 
 async def create_ocr_df(

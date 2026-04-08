@@ -37,3 +37,10 @@ repos:
         language: system
         pass_filenames: false
         files: ^(justfile|Makefile)$
+
+      - id: docs-validation
+        name: Validate documentation accuracy
+        entry: bash scripts/validate-docs.sh
+        language: system
+        files: ^docs/
+        pass_filenames: false
