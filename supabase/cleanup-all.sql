@@ -27,4 +27,4 @@ DROP TYPE IF EXISTS campaign_status;
 DROP TYPE IF EXISTS provider_enum;
 
 -- Note: This script will completely clean up the database schema and storage
--- Run this only when you want to start fresh with a clean slate 
+-- Run this only when you want to start fresh with a clean slate

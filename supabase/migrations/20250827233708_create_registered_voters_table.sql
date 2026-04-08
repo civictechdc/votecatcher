@@ -27,8 +27,8 @@ create policy "Allow user to insert own registration data"
 on registration_data for insert
 with check (
   exists (
-    select 1 from campaign 
-    where campaign.id = registration_data.campaign_id 
+    select 1 from campaign
+    where campaign.id = registration_data.campaign_id
     and campaign.user_id = auth.uid()
   )
 );
@@ -37,8 +37,8 @@ create policy "Allow user to select own registration data"
 on registration_data for select
 using (
   exists (
-    select 1 from campaign 
-    where campaign.id = registration_data.campaign_id 
+    select 1 from campaign
+    where campaign.id = registration_data.campaign_id
     and campaign.user_id = auth.uid()
   )
 );
@@ -47,8 +47,8 @@ create policy "Allow user to update own registration data"
 on registration_data for update
 using (
   exists (
-    select 1 from campaign 
-    where campaign.id = registration_data.campaign_id 
+    select 1 from campaign
+    where campaign.id = registration_data.campaign_id
     and campaign.user_id = auth.uid()
   )
 );
@@ -57,8 +57,8 @@ create policy "Allow user to delete own registration data"
 on registration_data for delete
 using (
   exists (
-    select 1 from campaign 
-    where campaign.id = registration_data.campaign_id 
+    select 1 from campaign
+    where campaign.id = registration_data.campaign_id
     and campaign.user_id = auth.uid()
   )
 );
@@ -69,12 +69,12 @@ values ('petitions', 'petitions', false)
 on conflict (id) do nothing;
 
 -- Create storage policies for petitions (create if they don't exist)
-DO $$ 
+DO $$
 BEGIN
     -- Upload policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'objects'
         AND schemaname = 'storage'
         AND policyname = 'Allow authenticated users to upload petition files'
     ) THEN
@@ -85,8 +85,8 @@ BEGIN
 
     -- Select policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'objects'
         AND schemaname = 'storage'
         AND policyname = 'Allow users to view their own petition files'
     ) THEN
@@ -97,8 +97,8 @@ BEGIN
 
     -- Update policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'objects'
         AND schemaname = 'storage'
         AND policyname = 'Allow users to update their own petition files'
     ) THEN
@@ -109,8 +109,8 @@ BEGIN
 
     -- Delete policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'objects'
         AND schemaname = 'storage'
         AND policyname = 'Allow users to delete their own petition files'
     ) THEN
