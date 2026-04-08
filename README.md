@@ -1,5 +1,10 @@
 # VoteCatcher
 
+[![CI](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml)
+[![Security](https://github.com/civictechdc/votecatcher/actions/workflows/security.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/security.yml)
+[![Code Quality](https://github.com/civictechdc/votecatcher/actions/workflows/code-quality.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/code-quality.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 **Open Source Campaign Infrastructure**
 
 Automate ballot signature recognition and validation. Put powerful organizing tools in the hands of grassroots campaigns. Democracy should be accessible to everyone.
