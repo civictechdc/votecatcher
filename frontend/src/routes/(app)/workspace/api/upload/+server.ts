@@ -2,36 +2,36 @@
 // Accepts multipart/form-data with "files" and "kind".
 // Demo behavior when DEMO_MODE=true, otherwise returns minimal success response.
 
-import type { RequestHandler } from '@sveltejs/kit';
-import { json } from '@sveltejs/kit';
-import { randomUUID } from 'crypto';
-import { api, type ApiResult } from '$lib/api/client';
-import { DEMO_MODE } from '$env/static/private';
+import type { RequestHandler } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
+import { randomUUID } from "crypto";
+import { api, type ApiResult } from "$lib/api/client";
+import { DEMO_MODE } from "$env/static/private";
 
-const SERVER_DEMO = DEMO_MODE === 'true';
+const SERVER_DEMO = DEMO_MODE === "true";
 
 function getErrorMessage(result: ApiResult<unknown>): string {
-	return !result.ok ? result.error : 'Unknown error';
+	return !result.ok ? result.error : "Unknown error";
 }
 
 async function uploadPetitions(formData: FormData) {
-	const petitions = formData.getAll('petition');
+	const petitions = formData.getAll("petition");
 	if (petitions.length === 0) {
 		return new Response(
 			JSON.stringify({
 				detail: `File to upload is null.`,
 			}),
-			{ status: 500 }
+			{ status: 500 },
 		);
 	}
 
 	if (SERVER_DEMO) {
 		const fd = new FormData();
 		petitions.forEach((file) => {
-			fd.append('files', file);
+			fd.append("files", file);
 		});
 
-		console.log(`Petition file lists: ${fd.getAll('files').length}`);
+		console.log(`Petition file lists: ${fd.getAll("files").length}`);
 		const response = await api.demoUploadPetitions(fd);
 
 		console.log(`File upload response status: ${response.ok}}`);
@@ -43,7 +43,7 @@ async function uploadPetitions(formData: FormData) {
 				JSON.stringify({
 					detail: `Server error: ${getErrorMessage(response)}`,
 				}),
-				{ status: 500 }
+				{ status: 500 },
 			);
 		}
 	}
@@ -53,7 +53,7 @@ async function uploadPetitions(formData: FormData) {
 		JSON.stringify({
 			detail: `Client server error uploading ${petitions.length} petitions.`,
 		}),
-		{ status: 500 }
+		{ status: 500 },
 	);
 }
 
@@ -70,7 +70,7 @@ async function uploadVoterList(formData: FormData) {
 				JSON.stringify({
 					detail: `Server error: ${getErrorMessage(response)}`,
 				}),
-				{ status: 500 }
+				{ status: 500 },
 			);
 		}
 	}
@@ -79,9 +79,9 @@ async function uploadVoterList(formData: FormData) {
 
 	return new Response(
 		JSON.stringify({
-			detail: `Client server error uploading ${formData.getAll('file')}}.`,
+			detail: `Client server error uploading ${formData.getAll("file")}}.`,
 		}),
-		{ status: 500 }
+		{ status: 500 },
 	);
 }
 
@@ -99,9 +99,9 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	await new Promise((r) => setTimeout(r, 400));
 
-	console.log(`Get all petitions: ${form.getAll('petition').length}`);
+	console.log(`Get all petitions: ${form.getAll("petition").length}`);
 
-	if (form.getAll('petition').length > 0) {
+	if (form.getAll("petition").length > 0) {
 		return await uploadPetitions(form);
 	} else {
 		return await uploadVoterList(form);

@@ -74,7 +74,7 @@ jobs:
           curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz -C /usr/local/bin
 
       - name: Run gitleaks
-        run: gitleaks git detect --source . --verbose
+        run: gitleaks git detect . --verbose
 
   sast:
     runs-on: ubuntu-latest
@@ -125,7 +125,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd backend && uv sync --dev
-          cd frontend && bun install --frozen-lockfile
+          cd "${GITHUB_WORKSPACE}" && cd frontend && bun install --frozen-lockfile
 
       - name: Run SCA scan
         run: just sca

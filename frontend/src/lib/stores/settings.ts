@@ -1,7 +1,7 @@
-import { writable } from 'svelte/store';
-import { PUBLIC_API_URL } from '$env/static/public';
+import { writable } from "svelte/store";
+import { PUBLIC_API_URL } from "$env/static/public";
 
-const BASE_URL = PUBLIC_API_URL ?? 'http://localhost:8000/api';
+const BASE_URL = PUBLIC_API_URL ?? "http://localhost:8000/api";
 
 export interface FeatureFlags {
 	simulationMode: boolean;
@@ -43,7 +43,7 @@ function createSettingsStore() {
 			const settings: Settings = await response.json();
 			update((s) => ({ ...s, initialized: true, loading: false, settings }));
 		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Unknown error';
+			const message = error instanceof Error ? error.message : "Unknown error";
 			update((s) => ({ ...s, initialized: true, error: message, loading: false }));
 		}
 	}

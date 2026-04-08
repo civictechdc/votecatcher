@@ -1,7 +1,7 @@
-import { writable } from 'svelte/store';
-import { CampaignsApi } from '$lib/api/generated';
-import { getApiClient } from './api-client';
-import type { CampaignResponse } from '$lib/api/generated';
+import { writable } from "svelte/store";
+import { CampaignsApi } from "$lib/api/generated";
+import { getApiClient } from "./api-client";
+import type { CampaignResponse } from "$lib/api/generated";
 
 interface CampaignsState {
 	campaigns: CampaignResponse[];
@@ -38,7 +38,7 @@ function createCampaignsStore() {
 				const result = await api.listCampaignsCampaignsGet({});
 				update((s) => ({ ...s, campaigns: result.campaigns, loading: false, loaded: true }));
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false, campaigns: [] }));
 			}
 		},
@@ -65,7 +65,7 @@ function createCampaignsStore() {
 				}));
 				return newCampaign;
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false }));
 				throw error;
 			}
@@ -84,7 +84,7 @@ function createCampaignsStore() {
 					loading: false,
 				}));
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false }));
 				throw error;
 			}

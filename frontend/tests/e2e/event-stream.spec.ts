@@ -1,16 +1,16 @@
-import { expect } from '@playwright/test';
+import { expect } from "@playwright/test";
 
-import { test } from './fixtures';
+import { test } from "./fixtures";
 
-test.describe('Event Stream Integration', () => {
-	test('campaign page establishes SSE connection', async ({ page, seededCampaign }) => {
+test.describe("Event Stream Integration", () => {
+	test("campaign page establishes SSE connection", async ({ page, seededCampaign }) => {
 		await page.goto(`/workspace/${seededCampaign.id}`);
-		await page.waitForLoadState('domcontentloaded');
+		await page.waitForLoadState("domcontentloaded");
 
 		let eventSourceConnected = false;
 
-		page.on('request', (request) => {
-			if (request.url().includes('/events/campaigns/') && request.url().includes('/stream')) {
+		page.on("request", (request) => {
+			if (request.url().includes("/events/campaigns/") && request.url().includes("/stream")) {
 				eventSourceConnected = true;
 			}
 		});
@@ -21,9 +21,9 @@ test.describe('Event Stream Integration', () => {
 		expect(eventSourceConnected).toBeTruthy();
 	});
 
-	test('event store handles connection status', async ({ page, seededCampaign }) => {
+	test("event store handles connection status", async ({ page, seededCampaign }) => {
 		await page.goto(`/workspace/${seededCampaign.id}`);
-		await page.waitForLoadState('domcontentloaded');
+		await page.waitForLoadState("domcontentloaded");
 
 		await page.waitForTimeout(2000);
 
@@ -31,8 +31,8 @@ test.describe('Event Stream Integration', () => {
 			.evaluate(() => {
 				return new Promise<boolean>((resolve) => {
 					const checkInterval = setInterval(() => {
-						const statusEl = document.querySelector('[data-event-status]');
-						if (statusEl?.textContent === 'connected') {
+						const statusEl = document.querySelector("[data-event-status]");
+						if (statusEl?.textContent === "connected") {
 							clearInterval(checkInterval);
 							resolve(true);
 						}
@@ -45,20 +45,20 @@ test.describe('Event Stream Integration', () => {
 			})
 			.catch(() => false);
 
-		expect(typeof eventsConnected).toBe('boolean');
+		expect(typeof eventsConnected).toBe("boolean");
 	});
 });
 
-test.describe('Job Event Stream', () => {
-	test('job status updates via SSE trigger UI refresh', async ({ page, seededCampaign }) => {
+test.describe("Job Event Stream", () => {
+	test("job status updates via SSE trigger UI refresh", async ({ page, seededCampaign }) => {
 		await page.goto(`/workspace/${seededCampaign.id}/jobs`);
-		await page.waitForLoadState('domcontentloaded');
+		await page.waitForLoadState("domcontentloaded");
 
 		const eventSourceConnected = await page.evaluate(() => {
 			return new Promise<boolean>((resolve) => {
 				const checkInterval = setInterval(() => {
-					const statusEl = document.querySelector('[data-event-status]');
-					if (statusEl?.textContent === 'connected') {
+					const statusEl = document.querySelector("[data-event-status]");
+					if (statusEl?.textContent === "connected") {
 						clearInterval(checkInterval);
 						resolve(true);
 					}
@@ -70,32 +70,32 @@ test.describe('Job Event Stream', () => {
 			});
 		});
 
-		expect(typeof eventSourceConnected).toBe('boolean');
+		expect(typeof eventSourceConnected).toBe("boolean");
 	});
 
-	test('job progress events update job details', async ({ page, seededCampaign }) => {
+	test("job progress events update job details", async ({ page, seededCampaign }) => {
 		await page.goto(`/workspace/${seededCampaign.id}/jobs`);
-		await page.waitForLoadState('domcontentloaded');
+		await page.waitForLoadState("domcontentloaded");
 
-		await expect(page.locator('h1')).toContainText('Jobs');
+		await expect(page.locator("h1")).toContainText("Jobs");
 
 		const hasEventHandlers = await page.evaluate(() => {
-			return typeof window !== 'undefined';
+			return typeof window !== "undefined";
 		});
 
 		expect(hasEventHandlers).toBeTruthy();
 	});
 });
 
-test.describe('Job Status Event UI Update', () => {
-	test('CustomEvent votecatcher:job:status is handled without error', async ({
+test.describe("Job Status Event UI Update", () => {
+	test("CustomEvent votecatcher:job:status is handled without error", async ({
 		page,
 		seededCampaign,
 	}) => {
 		await page.goto(`/workspace/${seededCampaign.id}/jobs`);
-		await page.waitForLoadState('domcontentloaded');
+		await page.waitForLoadState("domcontentloaded");
 
-		await expect(page.locator('h1')).toContainText('Jobs');
+		await expect(page.locator("h1")).toContainText("Jobs");
 
 		const handlerResult = await page.evaluate(
 			({ campaignId }) => {
@@ -106,46 +106,46 @@ test.describe('Job Status Event UI Update', () => {
 					const errorHandler = (e: ErrorEvent) => {
 						error = e.message;
 					};
-					window.addEventListener('error', errorHandler);
+					window.addEventListener("error", errorHandler);
 
 					document.dispatchEvent(
-						new CustomEvent('votecatcher:job:status', {
+						new CustomEvent("votecatcher:job:status", {
 							detail: {
-								event_id: 'test-event-1',
-								event_type: 'job:status_changed',
+								event_id: "test-event-1",
+								event_type: "job:status_changed",
 								timestamp: new Date().toISOString(),
 								trace_id: null,
-								source: 'test',
+								source: "test",
 								campaign_id: campaignId,
 								job_id: 99999,
-								status: 'OCR_STARTED',
-								previous_status: 'NOT_STARTED',
+								status: "OCR_STARTED",
+								previous_status: "NOT_STARTED",
 							},
-						})
+						}),
 					);
 
 					setTimeout(() => {
-						window.removeEventListener('error', errorHandler);
+						window.removeEventListener("error", errorHandler);
 						handled = error === null;
 						resolve({ handled, error });
 					}, 200);
 				});
 			},
-			{ campaignId: seededCampaign.id }
+			{ campaignId: seededCampaign.id },
 		);
 
 		expect(handlerResult.error).toBeNull();
 		expect(handlerResult.handled).toBeTruthy();
 	});
 
-	test('CustomEvent votecatcher:job:progress is handled without error', async ({
+	test("CustomEvent votecatcher:job:progress is handled without error", async ({
 		page,
 		seededCampaign,
 	}) => {
 		await page.goto(`/workspace/${seededCampaign.id}/jobs`);
-		await page.waitForLoadState('domcontentloaded');
+		await page.waitForLoadState("domcontentloaded");
 
-		await expect(page.locator('h1')).toContainText('Jobs');
+		await expect(page.locator("h1")).toContainText("Jobs");
 
 		const handlerResult = await page.evaluate(
 			({ campaignId }) => {
@@ -155,51 +155,51 @@ test.describe('Job Status Event UI Update', () => {
 					const errorHandler = (e: ErrorEvent) => {
 						error = e.message;
 					};
-					window.addEventListener('error', errorHandler);
+					window.addEventListener("error", errorHandler);
 
 					document.dispatchEvent(
-						new CustomEvent('votecatcher:job:progress', {
+						new CustomEvent("votecatcher:job:progress", {
 							detail: {
-								event_id: 'test-event-2',
-								event_type: 'job:progress',
+								event_id: "test-event-2",
+								event_type: "job:progress",
 								timestamp: new Date().toISOString(),
 								trace_id: null,
-								source: 'test',
+								source: "test",
 								campaign_id: campaignId,
 								job_id: 12345,
 								processed: 50,
 								total: 100,
 								percentage: 50,
 							},
-						})
+						}),
 					);
 
 					setTimeout(() => {
-						window.removeEventListener('error', errorHandler);
+						window.removeEventListener("error", errorHandler);
 						resolve({ handled: error === null, error });
 					}, 200);
 				});
 			},
-			{ campaignId: seededCampaign.id }
+			{ campaignId: seededCampaign.id },
 		);
 
 		expect(handlerResult.error).toBeNull();
 		expect(handlerResult.handled).toBeTruthy();
 	});
 
-	test('SSE job status change updates job list in real-time', async ({
+	test("SSE job status change updates job list in real-time", async ({
 		page,
 		apiContext,
 		seededCampaign,
 	}) => {
 		await page.goto(`/workspace/${seededCampaign.id}/jobs`);
-		await page.waitForLoadState('domcontentloaded');
+		await page.waitForLoadState("domcontentloaded");
 
-		const createResponse = await apiContext.post('/api/jobs', {
+		const createResponse = await apiContext.post("/api/jobs", {
 			data: {
 				campaign_id: seededCampaign.id,
-				provider_name: 'test-provider',
-				provider_model: 'test-model',
+				provider_name: "test-provider",
+				provider_model: "test-model",
 				force_reprocess: false,
 			},
 		});
@@ -221,22 +221,22 @@ test.describe('Job Status Event UI Update', () => {
 							eventReceived = true;
 							receivedStatus = event.detail.status;
 							document.removeEventListener(
-								'votecatcher:job:status',
-								eventListener as EventListener
+								"votecatcher:job:status",
+								eventListener as EventListener,
 							);
 							resolve({ received: eventReceived, status: receivedStatus });
 						}
 					};
 
-					document.addEventListener('votecatcher:job:status', eventListener as EventListener);
+					document.addEventListener("votecatcher:job:status", eventListener as EventListener);
 
 					setTimeout(() => {
-						document.removeEventListener('votecatcher:job:status', eventListener as EventListener);
+						document.removeEventListener("votecatcher:job:status", eventListener as EventListener);
 						resolve({ received: eventReceived, status: receivedStatus });
 					}, 5000);
 				});
 			},
-			{ testJobId: jobId }
+			{ testJobId: jobId },
 		);
 
 		expect(eventReceived.received).toBeTruthy();

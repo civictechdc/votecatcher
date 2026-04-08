@@ -8,128 +8,128 @@ Compound components share implicit state while allowing flexible composition.
 
 ```tsx
 import {
-	createContext,
-	useContext,
-	useState,
-	useCallback,
-	type ReactNode,
-	type Dispatch,
-	type SetStateAction,
-} from 'react';
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  type ReactNode,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 
 // Types
 interface TabsContextValue {
-	activeTab: string;
-	setActiveTab: Dispatch<SetStateAction<string>>;
+  activeTab: string;
+  setActiveTab: Dispatch<SetStateAction<string>>;
 }
 
 interface TabsProps {
-	defaultValue: string;
-	children: ReactNode;
-	onChange?: (value: string) => void;
+  defaultValue: string;
+  children: ReactNode;
+  onChange?: (value: string) => void;
 }
 
 interface TabListProps {
-	children: ReactNode;
-	className?: string;
+  children: ReactNode;
+  className?: string;
 }
 
 interface TabProps {
-	value: string;
-	children: ReactNode;
-	disabled?: boolean;
+  value: string;
+  children: ReactNode;
+  disabled?: boolean;
 }
 
 interface TabPanelProps {
-	value: string;
-	children: ReactNode;
+  value: string;
+  children: ReactNode;
 }
 
 // Context
 const TabsContext = createContext<TabsContextValue | null>(null);
 
 function useTabs() {
-	const context = useContext(TabsContext);
-	if (!context) {
-		throw new Error('Tabs components must be used within <Tabs>');
-	}
-	return context;
+  const context = useContext(TabsContext);
+  if (!context) {
+    throw new Error("Tabs components must be used within <Tabs>");
+  }
+  return context;
 }
 
 // Root Component
 export function Tabs({ defaultValue, children, onChange }: TabsProps) {
-	const [activeTab, setActiveTab] = useState(defaultValue);
+  const [activeTab, setActiveTab] = useState(defaultValue);
 
-	const handleChange: Dispatch<SetStateAction<string>> = useCallback(
-		(value) => {
-			const newValue = typeof value === 'function' ? value(activeTab) : value;
-			setActiveTab(newValue);
-			onChange?.(newValue);
-		},
-		[activeTab, onChange]
-	);
+  const handleChange: Dispatch<SetStateAction<string>> = useCallback(
+    (value) => {
+      const newValue = typeof value === "function" ? value(activeTab) : value;
+      setActiveTab(newValue);
+      onChange?.(newValue);
+    },
+    [activeTab, onChange],
+  );
 
-	return (
-		<TabsContext.Provider value={{ activeTab, setActiveTab: handleChange }}>
-			<div className="tabs">{children}</div>
-		</TabsContext.Provider>
-	);
+  return (
+    <TabsContext.Provider value={{ activeTab, setActiveTab: handleChange }}>
+      <div className="tabs">{children}</div>
+    </TabsContext.Provider>
+  );
 }
 
 // Tab List (container for tab triggers)
 Tabs.List = function TabList({ children, className }: TabListProps) {
-	return (
-		<div role="tablist" className={`flex border-b ${className}`}>
-			{children}
-		</div>
-	);
+  return (
+    <div role="tablist" className={`flex border-b ${className}`}>
+      {children}
+    </div>
+  );
 };
 
 // Individual Tab (trigger)
 Tabs.Tab = function Tab({ value, children, disabled }: TabProps) {
-	const { activeTab, setActiveTab } = useTabs();
-	const isActive = activeTab === value;
+  const { activeTab, setActiveTab } = useTabs();
+  const isActive = activeTab === value;
 
-	return (
-		<button
-			role="tab"
-			aria-selected={isActive}
-			aria-controls={`panel-${value}`}
-			tabIndex={isActive ? 0 : -1}
-			disabled={disabled}
-			onClick={() => setActiveTab(value)}
-			className={`
+  return (
+    <button
+      role="tab"
+      aria-selected={isActive}
+      aria-controls={`panel-${value}`}
+      tabIndex={isActive ? 0 : -1}
+      disabled={disabled}
+      onClick={() => setActiveTab(value)}
+      className={`
         px-4 py-2 font-medium transition-colors
         ${
-					isActive
-						? 'border-b-2 border-blue-600 text-blue-600'
-						: 'text-gray-600 hover:text-gray-900'
-				}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+          isActive
+            ? "border-b-2 border-blue-600 text-blue-600"
+            : "text-gray-600 hover:text-gray-900"
+        }
+        ${disabled ? "opacity-50 cursor-not-allowed" : ""}
       `}
-		>
-			{children}
-		</button>
-	);
+    >
+      {children}
+    </button>
+  );
 };
 
 // Tab Panel (content)
 Tabs.Panel = function TabPanel({ value, children }: TabPanelProps) {
-	const { activeTab } = useTabs();
+  const { activeTab } = useTabs();
 
-	if (activeTab !== value) return null;
+  if (activeTab !== value) return null;
 
-	return (
-		<div
-			role="tabpanel"
-			id={`panel-${value}`}
-			aria-labelledby={`tab-${value}`}
-			tabIndex={0}
-			className="py-4"
-		>
-			{children}
-		</div>
-	);
+  return (
+    <div
+      role="tabpanel"
+      id={`panel-${value}`}
+      aria-labelledby={`tab-${value}`}
+      tabIndex={0}
+      className="py-4"
+    >
+      {children}
+    </div>
+  );
 };
 ```
 
@@ -137,21 +137,21 @@ Tabs.Panel = function TabPanel({ value, children }: TabPanelProps) {
 
 ```tsx
 <Tabs defaultValue="overview" onChange={console.log}>
-	<Tabs.List>
-		<Tabs.Tab value="overview">Overview</Tabs.Tab>
-		<Tabs.Tab value="features">Features</Tabs.Tab>
-		<Tabs.Tab value="pricing" disabled>
-			Pricing
-		</Tabs.Tab>
-	</Tabs.List>
-	<Tabs.Panel value="overview">
-		<h2>Product Overview</h2>
-		<p>Description here...</p>
-	</Tabs.Panel>
-	<Tabs.Panel value="features">
-		<h2>Key Features</h2>
-		<ul>...</ul>
-	</Tabs.Panel>
+  <Tabs.List>
+    <Tabs.Tab value="overview">Overview</Tabs.Tab>
+    <Tabs.Tab value="features">Features</Tabs.Tab>
+    <Tabs.Tab value="pricing" disabled>
+      Pricing
+    </Tabs.Tab>
+  </Tabs.List>
+  <Tabs.Panel value="overview">
+    <h2>Product Overview</h2>
+    <p>Description here...</p>
+  </Tabs.Panel>
+  <Tabs.Panel value="features">
+    <h2>Key Features</h2>
+    <ul>...</ul>
+  </Tabs.Panel>
 </Tabs>
 ```
 
@@ -161,54 +161,54 @@ Delegate rendering control to the consumer while providing state and helpers.
 
 ```tsx
 interface DataLoaderRenderProps<T> {
-	data: T | null;
-	loading: boolean;
-	error: Error | null;
-	refetch: () => void;
+  data: T | null;
+  loading: boolean;
+  error: Error | null;
+  refetch: () => void;
 }
 
 interface DataLoaderProps<T> {
-	url: string;
-	children: (props: DataLoaderRenderProps<T>) => ReactNode;
+  url: string;
+  children: (props: DataLoaderRenderProps<T>) => ReactNode;
 }
 
 function DataLoader<T>({ url, children }: DataLoaderProps<T>) {
-	const [state, setState] = useState<{
-		data: T | null;
-		loading: boolean;
-		error: Error | null;
-	}>({
-		data: null,
-		loading: true,
-		error: null,
-	});
+  const [state, setState] = useState<{
+    data: T | null;
+    loading: boolean;
+    error: Error | null;
+  }>({
+    data: null,
+    loading: true,
+    error: null,
+  });
 
-	const fetchData = useCallback(async () => {
-		setState((prev) => ({ ...prev, loading: true, error: null }));
-		try {
-			const response = await fetch(url);
-			if (!response.ok) throw new Error('Fetch failed');
-			const data = await response.json();
-			setState({ data, loading: false, error: null });
-		} catch (error) {
-			setState((prev) => ({ ...prev, loading: false, error: error as Error }));
-		}
-	}, [url]);
+  const fetchData = useCallback(async () => {
+    setState((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Fetch failed");
+      const data = await response.json();
+      setState({ data, loading: false, error: null });
+    } catch (error) {
+      setState((prev) => ({ ...prev, loading: false, error: error as Error }));
+    }
+  }, [url]);
 
-	useEffect(() => {
-		fetchData();
-	}, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-	return <>{children({ ...state, refetch: fetchData })}</>;
+  return <>{children({ ...state, refetch: fetchData })}</>;
 }
 
 // Usage
 <DataLoader<User[]> url="/api/users">
-	{({ data, loading, error, refetch }) => {
-		if (loading) return <Spinner />;
-		if (error) return <ErrorMessage error={error} onRetry={refetch} />;
-		return <UserList users={data!} />;
-	}}
+  {({ data, loading, error, refetch }) => {
+    if (loading) return <Spinner />;
+    if (error) return <ErrorMessage error={error} onRetry={refetch} />;
+    return <UserList users={data!} />;
+  }}
 </DataLoader>;
 ```
 
@@ -337,30 +337,30 @@ Allow consumers to replace internal parts.
 
 ```tsx
 interface CardProps {
-	children: ReactNode;
-	header?: ReactNode;
-	footer?: ReactNode;
-	media?: ReactNode;
+  children: ReactNode;
+  header?: ReactNode;
+  footer?: ReactNode;
+  media?: ReactNode;
 }
 
 function Card({ children, header, footer, media }: CardProps) {
-	return (
-		<article className="rounded-lg border bg-white shadow-sm">
-			{media && <div className="aspect-video overflow-hidden rounded-t-lg">{media}</div>}
-			{header && <header className="border-b px-4 py-3">{header}</header>}
-			<div className="px-4 py-4">{children}</div>
-			{footer && <footer className="border-t px-4 py-3 bg-gray-50 rounded-b-lg">{footer}</footer>}
-		</article>
-	);
+  return (
+    <article className="rounded-lg border bg-white shadow-sm">
+      {media && <div className="aspect-video overflow-hidden rounded-t-lg">{media}</div>}
+      {header && <header className="border-b px-4 py-3">{header}</header>}
+      <div className="px-4 py-4">{children}</div>
+      {footer && <footer className="border-t px-4 py-3 bg-gray-50 rounded-b-lg">{footer}</footer>}
+    </article>
+  );
 }
 
 // Usage with slots
 <Card
-	media={<img src="/image.jpg" alt="" />}
-	header={<h2 className="font-semibold">Card Title</h2>}
-	footer={<Button>Action</Button>}
+  media={<img src="/image.jpg" alt="" />}
+  header={<h2 className="font-semibold">Card Title</h2>}
+  footer={<Button>Action</Button>}
 >
-	<p>Card content goes here.</p>
+  <p>Card content goes here.</p>
 </Card>;
 ```
 
@@ -369,61 +369,61 @@ function Card({ children, header, footer, media }: CardProps) {
 Allow parent components to access the underlying DOM node.
 
 ```tsx
-import { forwardRef, useRef, useImperativeHandle } from 'react';
+import { forwardRef, useRef, useImperativeHandle } from "react";
 
 interface InputHandle {
-	focus: () => void;
-	clear: () => void;
-	getValue: () => string;
+  focus: () => void;
+  clear: () => void;
+  getValue: () => string;
 }
 
 interface FancyInputProps {
-	label: string;
-	placeholder?: string;
+  label: string;
+  placeholder?: string;
 }
 
 const FancyInput = forwardRef<InputHandle, FancyInputProps>(({ label, placeholder }, ref) => {
-	const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-	useImperativeHandle(ref, () => ({
-		focus: () => inputRef.current?.focus(),
-		clear: () => {
-			if (inputRef.current) inputRef.current.value = '';
-		},
-		getValue: () => inputRef.current?.value ?? '',
-	}));
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+    clear: () => {
+      if (inputRef.current) inputRef.current.value = "";
+    },
+    getValue: () => inputRef.current?.value ?? "",
+  }));
 
-	return (
-		<div>
-			<label className="block text-sm font-medium mb-1">{label}</label>
-			<input
-				ref={inputRef}
-				type="text"
-				placeholder={placeholder}
-				className="w-full px-3 py-2 border rounded-md"
-			/>
-		</div>
-	);
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1">{label}</label>
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder={placeholder}
+        className="w-full px-3 py-2 border rounded-md"
+      />
+    </div>
+  );
 });
 
-FancyInput.displayName = 'FancyInput';
+FancyInput.displayName = "FancyInput";
 
 // Usage
 function Form() {
-	const inputRef = useRef<InputHandle>(null);
+  const inputRef = useRef<InputHandle>(null);
 
-	const handleSubmit = () => {
-		console.log(inputRef.current?.getValue());
-		inputRef.current?.clear();
-	};
+  const handleSubmit = () => {
+    console.log(inputRef.current?.getValue());
+    inputRef.current?.clear();
+  };
 
-	return (
-		<form onSubmit={handleSubmit}>
-			<FancyInput ref={inputRef} label="Name" />
-			<button type="button" onClick={() => inputRef.current?.focus()}>
-				Focus Input
-			</button>
-		</form>
-	);
+  return (
+    <form onSubmit={handleSubmit}>
+      <FancyInput ref={inputRef} label="Name" />
+      <button type="button" onClick={() => inputRef.current?.focus()}>
+        Focus Input
+      </button>
+    </form>
+  );
 }
 ```

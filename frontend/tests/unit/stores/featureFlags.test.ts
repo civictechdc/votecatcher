@@ -1,18 +1,18 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { get } from 'svelte/store';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { get } from "svelte/store";
 
-vi.mock('$env/static/public', () => ({
-	PUBLIC_API_URL: 'http://localhost:8000/api',
+vi.mock("$env/static/public", () => ({
+	PUBLIC_API_URL: "http://localhost:8000/api",
 }));
 
-vi.mock('$app/environment', () => ({
+vi.mock("$app/environment", () => ({
 	browser: false,
 }));
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-describe('featureFlags store', () => {
+describe("featureFlags store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
@@ -21,10 +21,10 @@ describe('featureFlags store', () => {
 		vi.restoreAllMocks();
 	});
 
-	describe('URL construction', () => {
-		it('should not double /api/api/ in URL', async () => {
+	describe("URL construction", () => {
+		it("should not double /api/api/ in URL", async () => {
 			vi.resetModules();
-			const { featureFlags } = await import('$lib/stores/featureFlags');
+			const { featureFlags } = await import("$lib/stores/featureFlags");
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
@@ -41,13 +41,13 @@ describe('featureFlags store', () => {
 			const fetchCall = mockFetch.mock.calls[0];
 			const urlUsed = fetchCall[0];
 
-			expect(urlUsed).not.toContain('/api/api/');
-			expect(urlUsed).toBe('http://localhost:8000/api/config/features');
+			expect(urlUsed).not.toContain("/api/api/");
+			expect(urlUsed).toBe("http://localhost:8000/api/config/features");
 		});
 
-		it('should construct URL correctly from PUBLIC_API_URL', async () => {
+		it("should construct URL correctly from PUBLIC_API_URL", async () => {
 			vi.resetModules();
-			const { featureFlags } = await import('$lib/stores/featureFlags');
+			const { featureFlags } = await import("$lib/stores/featureFlags");
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
@@ -61,14 +61,14 @@ describe('featureFlags store', () => {
 
 			await featureFlags.load();
 
-			expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/api/config/features');
+			expect(mockFetch).toHaveBeenCalledWith("http://localhost:8000/api/config/features");
 		});
 	});
 
-	describe('load', () => {
-		it('should update store with server flags on successful fetch', async () => {
+	describe("load", () => {
+		it("should update store with server flags on successful fetch", async () => {
 			vi.resetModules();
-			const { featureFlags } = await import('$lib/stores/featureFlags');
+			const { featureFlags } = await import("$lib/stores/featureFlags");
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
@@ -88,11 +88,11 @@ describe('featureFlags store', () => {
 			expect(state.debugMode).toBe(false);
 		});
 
-		it('should use default flags on fetch error', async () => {
+		it("should use default flags on fetch error", async () => {
 			vi.resetModules();
-			const { featureFlags } = await import('$lib/stores/featureFlags');
+			const { featureFlags } = await import("$lib/stores/featureFlags");
 
-			mockFetch.mockRejectedValueOnce(new Error('Network error'));
+			mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
 			await featureFlags.load();
 
@@ -102,9 +102,9 @@ describe('featureFlags store', () => {
 			expect(state.debugMode).toBe(false);
 		});
 
-		it('should use default flags on HTTP error', async () => {
+		it("should use default flags on HTTP error", async () => {
 			vi.resetModules();
-			const { featureFlags } = await import('$lib/stores/featureFlags');
+			const { featureFlags } = await import("$lib/stores/featureFlags");
 
 			mockFetch.mockResolvedValueOnce({
 				ok: false,

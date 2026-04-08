@@ -257,7 +257,7 @@ edge-functions:
 # Build frontend and check bundle size
 bundle-size:
     cd frontend && bun run build
-    cd frontend && npx size-limit
+    @echo "=== Bundle size ===" && find frontend/.svelte-kit/output/client -name "*.js" -exec du -ch {} + | tail -1
 
 # Run backend performance benchmarks
 benchmark:

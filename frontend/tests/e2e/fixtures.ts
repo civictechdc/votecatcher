@@ -1,12 +1,12 @@
-import { test as base } from '@playwright/test';
-import type { APIRequestContext } from '@playwright/test';
+import { test as base } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
 
 type TestFixtures = {
 	apiContext: APIRequestContext;
 	seededCampaign: { id: string; name: string };
 };
 
-const API_URL = process.env.PUBLIC_API_URL || 'http://localhost:8080';
+const API_URL = process.env.PUBLIC_API_URL || "http://localhost:8080";
 
 export const test = base.extend<TestFixtures>({
 	apiContext: async ({ playwright }, use) => {
@@ -19,11 +19,11 @@ export const test = base.extend<TestFixtures>({
 
 	seededCampaign: async ({ apiContext }, use) => {
 		const uniqueName = `test-campaign-${Date.now()}`;
-		const response = await apiContext.post('/api/campaigns', {
+		const response = await apiContext.post("/api/campaigns", {
 			data: {
 				name: uniqueName,
 				year: 2024,
-				region: 'DC',
+				region: "DC",
 			},
 		});
 

@@ -1,6 +1,6 @@
-import { browser } from '$app/environment';
-import { writable, derived } from 'svelte/store';
-import { PUBLIC_API_URL } from '$env/static/public';
+import { browser } from "$app/environment";
+import { writable, derived } from "svelte/store";
+import { PUBLIC_API_URL } from "$env/static/public";
 
 export interface FeatureFlags {
 	simulationMode: boolean;
@@ -18,9 +18,9 @@ const DEFAULT_FLAGS: FeatureFlags = {
 	debugMode: false,
 };
 
-const STORAGE_KEY = 'featureFlags_overrides';
+const STORAGE_KEY = "featureFlags_overrides";
 
-const BASE_URL = (PUBLIC_API_URL ?? '').replace(/\/$/, '');
+const BASE_URL = (PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
 function loadOverrides(): FeatureFlagOverrides {
 	if (!browser) return {};
@@ -39,7 +39,7 @@ function saveOverrides(overrides: FeatureFlagOverrides): void {
 	try {
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
 	} catch (error) {
-		console.error('Failed to save feature flag overrides:', error);
+		console.error("Failed to save feature flag overrides:", error);
 	}
 }
 
@@ -69,7 +69,7 @@ function createFeatureFlagStore() {
 					set(merged);
 				}
 			} catch (error) {
-				console.error('Failed to load feature flags:', error);
+				console.error("Failed to load feature flags:", error);
 				set(mergeFlags(DEFAULT_FLAGS, overrides));
 			}
 		},

@@ -26,15 +26,15 @@ Build cohesive, accessible visual systems using typography, color, spacing, and 
 
 ```css
 :root {
-	--font-size-xs: 0.75rem; /* 12px */
-	--font-size-sm: 0.875rem; /* 14px */
-	--font-size-base: 1rem; /* 16px */
-	--font-size-lg: 1.125rem; /* 18px */
-	--font-size-xl: 1.25rem; /* 20px */
-	--font-size-2xl: 1.5rem; /* 24px */
-	--font-size-3xl: 1.875rem; /* 30px */
-	--font-size-4xl: 2.25rem; /* 36px */
-	--font-size-5xl: 3rem; /* 48px */
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem; /* 36px */
+  --font-size-5xl: 3rem; /* 48px */
 }
 ```
 
@@ -51,16 +51,16 @@ Build cohesive, accessible visual systems using typography, color, spacing, and 
 
 ```css
 :root {
-	--space-1: 0.25rem; /* 4px */
-	--space-2: 0.5rem; /* 8px */
-	--space-3: 0.75rem; /* 12px */
-	--space-4: 1rem; /* 16px */
-	--space-5: 1.25rem; /* 20px */
-	--space-6: 1.5rem; /* 24px */
-	--space-8: 2rem; /* 32px */
-	--space-10: 2.5rem; /* 40px */
-	--space-12: 3rem; /* 48px */
-	--space-16: 4rem; /* 64px */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
 }
 ```
 
@@ -70,28 +70,28 @@ Build cohesive, accessible visual systems using typography, color, spacing, and 
 
 ```css
 :root {
-	/* Brand */
-	--color-primary: #2563eb;
-	--color-primary-hover: #1d4ed8;
-	--color-primary-active: #1e40af;
+  /* Brand */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-active: #1e40af;
 
-	/* Semantic */
-	--color-success: #16a34a;
-	--color-warning: #ca8a04;
-	--color-error: #dc2626;
-	--color-info: #0891b2;
+  /* Semantic */
+  --color-success: #16a34a;
+  --color-warning: #ca8a04;
+  --color-error: #dc2626;
+  --color-info: #0891b2;
 
-	/* Neutral */
-	--color-gray-50: #f9fafb;
-	--color-gray-100: #f3f4f6;
-	--color-gray-200: #e5e7eb;
-	--color-gray-300: #d1d5db;
-	--color-gray-400: #9ca3af;
-	--color-gray-500: #6b7280;
-	--color-gray-600: #4b5563;
-	--color-gray-700: #374151;
-	--color-gray-800: #1f2937;
-	--color-gray-900: #111827;
+  /* Neutral */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
 }
 ```
 
@@ -100,35 +100,35 @@ Build cohesive, accessible visual systems using typography, color, spacing, and 
 ```js
 // tailwind.config.js
 module.exports = {
-	theme: {
-		extend: {
-			fontFamily: {
-				sans: ['Inter', 'system-ui', 'sans-serif'],
-				mono: ['JetBrains Mono', 'monospace'],
-			},
-			fontSize: {
-				xs: ['0.75rem', { lineHeight: '1rem' }],
-				sm: ['0.875rem', { lineHeight: '1.25rem' }],
-				base: ['1rem', { lineHeight: '1.5rem' }],
-				lg: ['1.125rem', { lineHeight: '1.75rem' }],
-				xl: ['1.25rem', { lineHeight: '1.75rem' }],
-				'2xl': ['1.5rem', { lineHeight: '2rem' }],
-			},
-			colors: {
-				brand: {
-					50: '#eff6ff',
-					500: '#3b82f6',
-					600: '#2563eb',
-					700: '#1d4ed8',
-				},
-			},
-			spacing: {
-				// Extends default with custom values
-				18: '4.5rem',
-				88: '22rem',
-			},
-		},
-	},
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
+      },
+      fontSize: {
+        xs: ["0.75rem", { lineHeight: "1rem" }],
+        sm: ["0.875rem", { lineHeight: "1.25rem" }],
+        base: ["1rem", { lineHeight: "1.5rem" }],
+        lg: ["1.125rem", { lineHeight: "1.75rem" }],
+        xl: ["1.25rem", { lineHeight: "1.75rem" }],
+        "2xl": ["1.5rem", { lineHeight: "2rem" }],
+      },
+      colors: {
+        brand: {
+          50: "#eff6ff",
+          500: "#3b82f6",
+          600: "#2563eb",
+          700: "#1d4ed8",
+        },
+      },
+      spacing: {
+        // Extends default with custom values
+        18: "4.5rem",
+        88: "22rem",
+      },
+    },
+  },
 };
 ```
 
@@ -147,14 +147,14 @@ module.exports = {
 ```css
 /* Fluid typography using clamp() */
 h1 {
-	font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
-	line-height: 1.1;
+  font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+  line-height: 1.1;
 }
 
 p {
-	font-size: clamp(1rem, 2vw + 0.5rem, 1.125rem);
-	line-height: 1.6;
-	max-width: 65ch; /* Optimal reading width */
+  font-size: clamp(1rem, 2vw + 0.5rem, 1.125rem);
+  line-height: 1.6;
+  max-width: 65ch; /* Optimal reading width */
 }
 ```
 
@@ -163,10 +163,10 @@ p {
 ```css
 /* Prevent layout shift */
 @font-face {
-	font-family: 'Inter';
-	src: url('/fonts/Inter.woff2') format('woff2');
-	font-display: swap;
-	font-weight: 400 700;
+  font-family: "Inter";
+  src: url("/fonts/Inter.woff2") format("woff2");
+  font-display: swap;
+  font-weight: 400 700;
 }
 ```
 
@@ -185,19 +185,19 @@ p {
 
 ```css
 :root {
-	--bg-primary: #ffffff;
-	--bg-secondary: #f9fafb;
-	--text-primary: #111827;
-	--text-secondary: #6b7280;
-	--border: #e5e7eb;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --border: #e5e7eb;
 }
 
-[data-theme='dark'] {
-	--bg-primary: #111827;
-	--bg-secondary: #1f2937;
-	--text-primary: #f9fafb;
-	--text-secondary: #9ca3af;
-	--border: #374151;
+[data-theme="dark"] {
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --border: #374151;
 }
 ```
 
@@ -206,21 +206,21 @@ p {
 ```tsx
 // Check contrast programmatically
 function getContrastRatio(foreground: string, background: string): number {
-	const getLuminance = (hex: string) => {
-		const rgb = hexToRgb(hex);
-		const [r, g, b] = rgb.map((c) => {
-			c = c / 255;
-			return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-		});
-		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-	};
+  const getLuminance = (hex: string) => {
+    const rgb = hexToRgb(hex);
+    const [r, g, b] = rgb.map((c) => {
+      c = c / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
 
-	const l1 = getLuminance(foreground);
-	const l2 = getLuminance(background);
-	const lighter = Math.max(l1, l2);
-	const darker = Math.min(l1, l2);
+  const l1 = getLuminance(foreground);
+  const l2 = getLuminance(background);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
 
-	return (lighter + 0.05) / (darker + 0.05);
+  return (lighter + 0.05) / (darker + 0.05);
 }
 ```
 
@@ -241,15 +241,15 @@ Icon-text gap:     8px (--space-2)
 ```css
 /* Consistent vertical rhythm */
 .prose > * + * {
-	margin-top: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 .prose > h2 + * {
-	margin-top: var(--space-2);
+  margin-top: var(--space-2);
 }
 
 .prose > * + h2 {
-	margin-top: var(--space-8);
+  margin-top: var(--space-8);
 }
 ```
 
@@ -259,11 +259,11 @@ Icon-text gap:     8px (--space-2)
 
 ```css
 :root {
-	--icon-xs: 12px;
-	--icon-sm: 16px;
-	--icon-md: 20px;
-	--icon-lg: 24px;
-	--icon-xl: 32px;
+  --icon-xs: 12px;
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-xl: 32px;
 }
 ```
 
@@ -271,30 +271,30 @@ Icon-text gap:     8px (--space-2)
 
 ```tsx
 interface IconProps {
-	name: string;
-	size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-	className?: string;
+  name: string;
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  className?: string;
 }
 
 const sizeMap = {
-	xs: 12,
-	sm: 16,
-	md: 20,
-	lg: 24,
-	xl: 32,
+  xs: 12,
+  sm: 16,
+  md: 20,
+  lg: 24,
+  xl: 32,
 };
 
-export function Icon({ name, size = 'md', className }: IconProps) {
-	return (
-		<svg
-			width={sizeMap[size]}
-			height={sizeMap[size]}
-			className={cn('inline-block flex-shrink-0', className)}
-			aria-hidden="true"
-		>
-			<use href={`/icons.svg#${name}`} />
-		</svg>
-	);
+export function Icon({ name, size = "md", className }: IconProps) {
+  return (
+    <svg
+      width={sizeMap[size]}
+      height={sizeMap[size]}
+      className={cn("inline-block flex-shrink-0", className)}
+      aria-hidden="true"
+    >
+      <use href={`/icons.svg#${name}`} />
+    </svg>
+  );
 }
 ```
 

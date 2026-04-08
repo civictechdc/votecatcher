@@ -1,4 +1,4 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from "@sveltejs/kit";
 
 /**
  * Mock session endpoint.
@@ -6,9 +6,9 @@ import type { RequestHandler } from '@sveltejs/kit';
  * - Return a stable mock user for development; replace with FastAPI-backed session check later.
  */
 export const GET: RequestHandler = async () => {
-	const user = { id: 'user_123', email: 'dev@example.com' };
+	const user = { id: "user_123", email: "dev@example.com" };
 	return new Response(JSON.stringify({ user }), {
 		status: 200,
-		headers: { 'Content-Type': 'application/json' },
+		headers: { "Content-Type": "application/json" },
 	});
 };

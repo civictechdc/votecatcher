@@ -1,6 +1,6 @@
-import { writable } from 'svelte/store';
-import { getApiClient } from './api-client';
-import { PUBLIC_DEMO_MODE } from '$env/static/public';
+import { writable } from "svelte/store";
+import { getApiClient } from "./api-client";
+import { PUBLIC_DEMO_MODE } from "$env/static/public";
 
 export interface PrebakedSession {
 	id: string;
@@ -27,7 +27,7 @@ interface DemoState {
 	loadedSession: LoadedSessionInfo | null;
 }
 
-let _demoModeEnabled = PUBLIC_DEMO_MODE === 'true';
+let _demoModeEnabled = PUBLIC_DEMO_MODE === "true";
 
 export function setDemoMode(enabled: boolean): void {
 	_demoModeEnabled = enabled;
@@ -54,12 +54,12 @@ function createDemoStore() {
 		const response = await fetch(`${baseUrl}${url}`, {
 			...options,
 			headers: {
-				'Content-Type': 'application/json',
+				"Content-Type": "application/json",
 				...options?.headers,
 			},
 		});
 		if (!response.ok) {
-			const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+			const error = await response.json().catch(() => ({ detail: "Unknown error" }));
 			throw new Error(error.detail || `HTTP ${response.status}`);
 		}
 		return response;
@@ -80,14 +80,14 @@ function createDemoStore() {
 			update((s) => ({ ...s, resetting: true, error: null }));
 
 			try {
-				await fetchWithAuth('/demo/reset', { method: 'POST' });
+				await fetchWithAuth("/demo/reset", { method: "POST" });
 				update((s) => ({
 					...s,
 					resetting: false,
 					showResetConfirmation: false,
 				}));
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, resetting: false }));
 			}
 		},
@@ -97,13 +97,13 @@ function createDemoStore() {
 
 			try {
 				const response = await fetchWithAuth(`/demo/sessions/${sessionId}/load`, {
-					method: 'POST',
+					method: "POST",
 				});
 				const session: LoadedSessionInfo = await response.json();
 				update((s) => ({ ...s, loading: false, loadedSession: session }));
 				return session;
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false }));
 				throw error;
 			}
@@ -113,7 +113,7 @@ function createDemoStore() {
 			update((s) => ({ ...s, loading: true, error: null }));
 
 			try {
-				const response = await fetchWithAuth('/demo/sessions');
+				const response = await fetchWithAuth("/demo/sessions");
 				const data = await response.json();
 				update((s) => ({
 					...s,
@@ -122,7 +122,7 @@ function createDemoStore() {
 					loading: false,
 				}));
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({
 					...s,
 					initialized: true,

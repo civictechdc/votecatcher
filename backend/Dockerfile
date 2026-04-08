@@ -5,7 +5,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir uv==0.11.2
 
 COPY pyproject.toml ./
-
+RUN mkdir -p app && touch app/__init__.py
 RUN uv sync --dev
 
 COPY . .

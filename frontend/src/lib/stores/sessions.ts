@@ -1,11 +1,11 @@
-import { writable } from 'svelte/store';
-import { getApiClient } from './api-client';
+import { writable } from "svelte/store";
+import { getApiClient } from "./api-client";
 
 export interface Session {
 	id: number;
 	name: string;
 	campaign_id: string | null;
-	session_type: 'REAL' | 'DEMO';
+	session_type: "REAL" | "DEMO";
 	snapshot_data: Record<string, unknown>;
 	created_at: string;
 	updated_at: string;
@@ -34,12 +34,12 @@ function createSessionsStore() {
 		const response = await fetch(`${baseUrl}${url}`, {
 			...options,
 			headers: {
-				'Content-Type': 'application/json',
+				"Content-Type": "application/json",
 				...options?.headers,
 			},
 		});
 		if (!response.ok) {
-			const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+			const error = await response.json().catch(() => ({ detail: "Unknown error" }));
 			throw new Error(error.detail || `HTTP ${response.status}`);
 		}
 		return response;
@@ -52,11 +52,11 @@ function createSessionsStore() {
 			update((s) => ({ ...s, loading: true, error: null }));
 
 			try {
-				const response = await fetchWithAuth('/sessions');
+				const response = await fetchWithAuth("/sessions");
 				const data = await response.json();
 				update((s) => ({ ...s, sessions: data.sessions, loading: false }));
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false, sessions: [] }));
 			}
 		},
@@ -64,18 +64,18 @@ function createSessionsStore() {
 		async save(
 			name: string,
 			snapshotData: Record<string, unknown>,
-			campaignId?: string
+			campaignId?: string,
 		): Promise<Session> {
 			update((s) => ({ ...s, saving: true, error: null }));
 
 			try {
-				const response = await fetchWithAuth('/sessions', {
-					method: 'POST',
+				const response = await fetchWithAuth("/sessions", {
+					method: "POST",
 					body: JSON.stringify({
 						name,
 						campaign_id: campaignId || null,
 						snapshot_data: snapshotData,
-						session_type: 'REAL',
+						session_type: "REAL",
 					}),
 				});
 				const newSession = await response.json();
@@ -87,7 +87,7 @@ function createSessionsStore() {
 				}));
 				return newSession;
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, saving: false }));
 				throw error;
 			}
@@ -102,7 +102,7 @@ function createSessionsStore() {
 				update((s) => ({ ...s, currentSession: session, loading: false }));
 				return session;
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false }));
 				throw error;
 			}
@@ -112,7 +112,7 @@ function createSessionsStore() {
 			update((s) => ({ ...s, loading: true, error: null }));
 
 			try {
-				await fetchWithAuth(`/sessions/${sessionId}`, { method: 'DELETE' });
+				await fetchWithAuth(`/sessions/${sessionId}`, { method: "DELETE" });
 				update((s) => ({
 					...s,
 					sessions: s.sessions.filter((s) => s.id !== sessionId),
@@ -120,7 +120,7 @@ function createSessionsStore() {
 					loading: false,
 				}));
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false }));
 				throw error;
 			}
@@ -133,16 +133,16 @@ function createSessionsStore() {
 				const response = await fetch(`${baseUrl}/sessions/${sessionId}/export`);
 
 				if (!response.ok) {
-					throw new Error('Export failed');
+					throw new Error("Export failed");
 				}
 
 				const blob = await response.blob();
-				const contentDisposition = response.headers.get('Content-Disposition');
+				const contentDisposition = response.headers.get("Content-Disposition");
 				const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
 				const filename = filenameMatch?.[1] || `session_${sessionId}.zip`;
 
 				const url = URL.createObjectURL(blob);
-				const a = document.createElement('a');
+				const a = document.createElement("a");
 				a.href = url;
 				a.download = filename;
 				document.body.appendChild(a);
@@ -150,7 +150,7 @@ function createSessionsStore() {
 				document.body.removeChild(a);
 				URL.revokeObjectURL(url);
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Export failed';
+				const message = error instanceof Error ? error.message : "Export failed";
 				update((s) => ({ ...s, error: message }));
 				throw error;
 			}

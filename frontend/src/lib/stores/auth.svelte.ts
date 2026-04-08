@@ -1,7 +1,7 @@
-import { browser } from '$app/environment';
+import { browser } from "$app/environment";
 
-import { PUBLIC_API_URL } from '$env/static/public';
-const _BASE_URL = PUBLIC_API_URL ?? '';
+import { PUBLIC_API_URL } from "$env/static/public";
+const _BASE_URL = PUBLIC_API_URL ?? "";
 
 export interface UserSession {
 	accessToken: string;
@@ -12,11 +12,11 @@ export interface UserSession {
 }
 
 const defaultUnauthenticatedSession: UserSession = {
-	accessToken: '',
-	refreshToken: '',
+	accessToken: "",
+	refreshToken: "",
 	isAuthenticated: false,
-	email: '',
-	id: '',
+	email: "",
+	id: "",
 };
 
 export let authStore: UserSession = $state(defaultUnauthenticatedSession);
@@ -30,7 +30,7 @@ export async function logout() {
  */
 export async function authenticatedFetch(
 	url: string | URL,
-	options: RequestInit & { headers?: Record<string, string> } = {}
+	options: RequestInit & { headers?: Record<string, string> } = {},
 ) {
 	const currentToken = authStore.accessToken;
 
@@ -40,7 +40,7 @@ export async function authenticatedFetch(
 
 	// 1. Inject the current access token
 	if (currentToken) {
-		headers['Authorization'] = `Bearer ${currentToken}`;
+		headers["Authorization"] = `Bearer ${currentToken}`;
 	}
 
 	// 2. Make the original request
@@ -48,12 +48,12 @@ export async function authenticatedFetch(
 
 	// 3. Handle 401 Unauthorized (expired access token)
 	if (response.status === 401 && browser) {
-		console.log('Access token expired. Attempting to refresh...');
+		console.log("Access token expired. Attempting to refresh...");
 
 		// Ensure the refresh call includes credentials to send the HttpOnly cookie
-		const refreshResponse = await fetch('http://localhost:8000/api/refresh-token', {
-			method: 'POST',
-			credentials: 'include',
+		const refreshResponse = await fetch("http://localhost:8000/api/refresh-token", {
+			method: "POST",
+			credentials: "include",
 		});
 
 		if (refreshResponse.ok) {
@@ -64,15 +64,15 @@ export async function authenticatedFetch(
 			authStore.accessToken = newAccessToken;
 
 			// 4. Retry the original failed request with the new token
-			headers['Authorization'] = `Bearer ${newAccessToken}`;
+			headers["Authorization"] = `Bearer ${newAccessToken}`;
 			response = await fetch(url, { ...options, headers });
 
 			return response; // Return the successfully retried response
 		} else {
 			// Refresh failed (maybe refresh token expired too). Force logout.
-			console.error('Refresh token failed. Logging out.');
+			console.error("Refresh token failed. Logging out.");
 			await logout();
-			throw new Error('Session expired, please log in again.');
+			throw new Error("Session expired, please log in again.");
 		}
 	}
 

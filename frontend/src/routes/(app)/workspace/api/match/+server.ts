@@ -2,56 +2,56 @@
 // Accepts JSON { demo?: boolean }, returns mocked matches.
 // Replace implementation with FastAPI backend later.
 
-import type { RequestHandler } from '@sveltejs/kit';
-import { json } from '@sveltejs/kit';
-import type { MatchRow, ConfidenceThresholds, MatchResults } from '$lib/workspace-types';
-import { MatchColumn } from '$lib/workspace-types';
-import { faker } from '@faker-js/faker';
-import { api, type ApiResult } from '$lib/api/client';
-import { OCR_PROVIDER_API_KEY, OCR_PROVIDER_NAME, OCR_PROVIDER_MODEL } from '$env/static/private';
-import { DEMO_MODE } from '$env/static/private';
-import type { MatchingProgressResponse } from '$lib/api/response-types';
+import type { RequestHandler } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
+import type { MatchRow, ConfidenceThresholds, MatchResults } from "$lib/workspace-types";
+import { MatchColumn } from "$lib/workspace-types";
+import { faker } from "@faker-js/faker";
+import { api, type ApiResult } from "$lib/api/client";
+import { OCR_PROVIDER_API_KEY, OCR_PROVIDER_NAME, OCR_PROVIDER_MODEL } from "$env/static/private";
+import { DEMO_MODE } from "$env/static/private";
+import type { MatchingProgressResponse } from "$lib/api/response-types";
 
-const SERVER_DEMO = DEMO_MODE === 'true';
+const SERVER_DEMO = DEMO_MODE === "true";
 
 const MATCH_TABLE_COLUMNS: MatchColumn[] = [
-	new MatchColumn('Registration Name', function (first: MatchRow, second: MatchRow) {
-		return String(first.registeredName ?? '').localeCompare(String(second.registeredName ?? ''));
+	new MatchColumn("Registration Name", function (first: MatchRow, second: MatchRow) {
+		return String(first.registeredName ?? "").localeCompare(String(second.registeredName ?? ""));
 	}),
-	new MatchColumn('Matched Name'),
-	new MatchColumn('Confidence', function (first, second) {
+	new MatchColumn("Matched Name"),
+	new MatchColumn("Confidence", function (first, second) {
 		const a = first.predictionScore ?? 0;
 		const b = second.predictionScore ?? 0;
 		if (a > b) return 1;
 		if (a < b) return -1;
 		return 0;
 	}),
-	new MatchColumn('Name distance'),
-	new MatchColumn('Registered Address'),
-	new MatchColumn('Address Distance'),
-	new MatchColumn('Matched Address', function (first, second) {
-		return String(first.predictedAddress ?? '').localeCompare(
-			String(second.predictedAddress ?? '')
+	new MatchColumn("Name distance"),
+	new MatchColumn("Registered Address"),
+	new MatchColumn("Address Distance"),
+	new MatchColumn("Matched Address", function (first, second) {
+		return String(first.predictedAddress ?? "").localeCompare(
+			String(second.predictedAddress ?? ""),
 		);
 	}),
-	new MatchColumn('Ward', function (first, second) {
-		return String(first.ward ?? '').localeCompare(String(second.ward ?? ''));
+	new MatchColumn("Ward", function (first, second) {
+		return String(first.ward ?? "").localeCompare(String(second.ward ?? ""));
 	}),
-	new MatchColumn('Page', function (first, second) {
+	new MatchColumn("Page", function (first, second) {
 		const a = first.petitionPageNumber ?? 0;
 		const b = second.petitionPageNumber ?? 0;
 		if (a > b) return 1;
 		if (a < b) return -1;
 		return 0;
 	}),
-	new MatchColumn('Row', function (first, second) {
+	new MatchColumn("Row", function (first, second) {
 		const a = first.petitionRowNumber ?? 0;
 		const b = second.petitionRowNumber ?? 0;
 		if (a > b) return 1;
 		if (a < b) return -1;
 		return 0;
 	}),
-	new MatchColumn('Match Rank', function (first, second) {
+	new MatchColumn("Match Rank", function (first, second) {
 		const a = first.matchRank ?? 0;
 		const b = second.matchRank ?? 0;
 		if (a > b) return 1;
@@ -71,13 +71,13 @@ function createRandomMatch(thresholds: ConfidenceThresholds, rowIdx: number): Ma
 	const middleName = person.middleName();
 	const lastName = person.lastName();
 
-	let fullName = '';
-	let fullAddress = '';
+	let fullName = "";
+	let fullAddress = "";
 	if (randomScore >= thresholds.high) {
-		fullName = firstName + ' ' + lastName;
+		fullName = firstName + " " + lastName;
 		fullAddress = registeredAddress;
 	} else if (randomScore >= thresholds.medium) {
-		fullName = firstName + ' ' + middleName.charAt(0) + '. ' + lastName;
+		fullName = firstName + " " + middleName.charAt(0) + ". " + lastName;
 		fullAddress = registeredAddress;
 	} else {
 		const randomMix = Math.floor(Math.random() * 3);
@@ -99,7 +99,7 @@ function createRandomMatch(thresholds: ConfidenceThresholds, rowIdx: number): Ma
 	return {
 		row_idx: rowIdx,
 		voterId: faker.string.uuid(),
-		registeredName: firstName + ' ' + lastName,
+		registeredName: firstName + " " + lastName,
 		ocrPredictedName: fullName,
 		predictionScore: randomScore,
 		registeredAddress: registeredAddress,

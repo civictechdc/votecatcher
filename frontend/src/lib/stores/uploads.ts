@@ -1,5 +1,5 @@
-import { writable } from 'svelte/store';
-import { PUBLIC_API_URL } from '$env/static/public';
+import { writable } from "svelte/store";
+import { PUBLIC_API_URL } from "$env/static/public";
 
 export interface UploadResult {
 	scan_id: string;
@@ -38,14 +38,14 @@ function createUploadsStore() {
 
 			try {
 				const formData = new FormData();
-				formData.append('file', file);
+				formData.append("file", file);
 
 				const response = await fetch(
-					`${PUBLIC_API_URL || 'http://localhost:8000'}/api/upload/voter-list`,
+					`${PUBLIC_API_URL || "http://localhost:8000"}/api/upload/voter-list`,
 					{
-						method: 'POST',
+						method: "POST",
 						body: formData,
-					}
+					},
 				);
 
 				if (!response.ok) {
@@ -59,7 +59,7 @@ function createUploadsStore() {
 					voterListSuccess: true,
 				}));
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({
 					...s,
 					voterListUploading: false,
@@ -77,15 +77,15 @@ function createUploadsStore() {
 
 			try {
 				const formData = new FormData();
-				formData.append('file', file);
-				formData.append('campaign_id', campaignId);
+				formData.append("file", file);
+				formData.append("campaign_id", campaignId);
 
 				const response = await fetch(
-					`${PUBLIC_API_URL || 'http://localhost:8000'}/api/upload/petition`,
+					`${PUBLIC_API_URL || "http://localhost:8000"}/api/upload/petition`,
 					{
-						method: 'POST',
+						method: "POST",
 						body: formData,
-					}
+					},
 				);
 
 				if (!response.ok) {
@@ -103,7 +103,7 @@ function createUploadsStore() {
 
 				return result;
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({
 					...s,
 					petitionUploading: false,

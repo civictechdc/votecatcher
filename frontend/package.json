@@ -1,12 +1,8 @@
 {
 	"name": "frontend",
-	"private": true,
 	"version": "0.0.1",
+	"private": true,
 	"type": "module",
-	"packageManager": "bun@1.3.9",
-	"engines": {
-		"node": ">=20"
-	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -27,12 +23,14 @@
 		"build-storybook": "storybook build",
 		"lint": "oxlint",
 		"lint:fix": "oxlint --fix",
-		"fmt": "oxfmt --ignore src/app.html",
+		"fmt": "oxfmt --ignore-path .oxfmtignore",
 		"fmt:check": "oxfmt --check --ignore-path .oxfmtignore"
 	},
-	"lint-staged": {
-		"*.{js,jsx,ts,tsx,mjs,cjs}": "oxlint",
-		"*": "oxfmt --no-error-on-unmatched-pattern"
+	"dependencies": {
+		"clsx": "^2.1.1",
+		"lucide-svelte": "^0.576.0",
+		"postgres": "^3.4.8",
+		"tailwind-merge": "^3.5.0"
 	},
 	"devDependencies": {
 		"@axe-core/playwright": "^4.11.1",
@@ -42,7 +40,6 @@
 		"@faker-js/faker": "^10.3.0",
 		"@openapitools/openapi-generator-cli": "^2.30.2",
 		"@playwright/test": "^1.58.2",
-		"@size-limit/file": "^12.0.1",
 		"@storybook/addon-a11y": "^10.2.8",
 		"@storybook/addon-docs": "^10.2.8",
 		"@storybook/addon-svelte-csf": "^5.0.11",
@@ -51,8 +48,6 @@
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/kit": "^2.50.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
-		"@tailwindcss/forms": "^0.5.11",
-		"@tailwindcss/typography": "^0.5.19",
 		"@tailwindcss/vite": "^4.1.18",
 		"@testing-library/svelte": "^5.3.1",
 		"@types/jsdom": "^28.0.0",
@@ -64,19 +59,16 @@
 		"drizzle-kit": "^0.31.8",
 		"drizzle-orm": "^0.45.1",
 		"eslint": "^9.39.2",
-		"fallow": "^2.11.0",
 		"eslint-plugin-storybook": "^10.2.8",
 		"eslint-plugin-svelte": "^3.14.0",
+		"fallow": "^2.11.0",
 		"globals": "^17.3.0",
 		"jsdom": "^28.1.0",
 		"msw": "^2.12.10",
-		"nock": "^14.0.11",
 		"oxfmt": "^0.33.0",
 		"oxlint": "^1.48.0",
-		"vite-plugin-oxlint": "^1.1.0",
 		"playwright": "^1.58.1",
 		"rollup-plugin-visualizer": "^7.0.1",
-		"size-limit": "^12.0.1",
 		"storybook": "^10.2.8",
 		"svelte": "^5.49.2",
 		"svelte-check": "^4.3.6",
@@ -84,21 +76,16 @@
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.54.0",
 		"vite": "^7.3.1",
-		"vitest": "^4.0.18",
-		"vitest-browser-svelte": "^2.0.2"
+		"vite-plugin-oxlint": "^1.1.0",
+		"vitest": "^4.0.18"
 	},
-	"dependencies": {
-		"ajv": "^8.18.0",
-		"clsx": "^2.1.1",
-		"lucide-svelte": "^0.576.0",
-		"postgres": "^3.4.8",
-		"tailwind-merge": "^3.5.0"
+	"lint-staged": {
+		"*.{js,jsx,ts,tsx,mjs,cjs}": "oxlint",
+		"*": "oxfmt --no-error-on-unmatched-pattern"
 	},
-	"trustedDependencies": [],
-	"size-limit": [
-		{
-			"path": ".svelte-kit/output/client/**/*.js",
-			"limit": "300 kB"
-		}
-	]
+	"engines": {
+		"node": ">=20"
+	},
+	"packageManager": "bun@1.3.9",
+	"trustedDependencies": []
 }

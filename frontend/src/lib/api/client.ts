@@ -1,21 +1,21 @@
 // Lightweight API client wrapper used by onboarding UI.
 // All direct Supabase calls in your previous app are replaced with REST endpoint calls.
 // For now endpoints are mocked under src/routes/api/*.
-import { PUBLIC_API_URL } from '$env/static/public';
-import type { MatchResponse, MatchingProgressResponse } from '$lib/api/response-types';
+import { PUBLIC_API_URL } from "$env/static/public";
+import type { MatchResponse, MatchingProgressResponse } from "$lib/api/response-types";
 import type {
 	DatabaseStatus,
 	SupabaseCredentials,
 	ConnectionTestResult,
 	ProvisionResult,
-} from '$lib/api/database-types';
+} from "$lib/api/database-types";
 
-const BASE_URL = (PUBLIC_API_URL ?? '').replace(/\/$/, '');
+const BASE_URL = (PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
 export type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
 
 // Extended options that allows plain objects as body (will be JSON stringified by fetchRaw)
-export type RequestOptions = Omit<RequestInit, 'body'> & { body?: unknown };
+export type RequestOptions = Omit<RequestInit, "body"> & { body?: unknown };
 
 // Options for the new-style request call
 export type RequestOptionsObject = {
@@ -28,7 +28,7 @@ export type RequestOptionsObject = {
 // Middleware types
 export type RequestMiddleware = (
 	input: string,
-	init: RequestInit
+	init: RequestInit,
 ) => Promise<RequestInit> | RequestInit;
 export type ResponseMiddleware = (res: Response) => Promise<Response> | Response;
 
@@ -64,7 +64,7 @@ async function fetchWithRetry(
 	input: string,
 	init: RequestInit,
 	retries = 1,
-	backoffMs = 250
+	backoffMs = 250,
 ): Promise<Response> {
 	let attempt = 0;
 	while (true) {
@@ -86,15 +86,15 @@ async function fetchWithRetry(
 export async function fetchRaw(
 	path: string,
 	opts: RequestOptions = {},
-	optsOverride?: { retries?: number }
+	optsOverride?: { retries?: number },
 ) {
-	const resolved = path.startsWith('http')
+	const resolved = path.startsWith("http")
 		? path
-		: `${BASE_URL}${path.startsWith('/') ? path : '/' + path}`;
+		: `${BASE_URL}${path.startsWith("/") ? path : "/" + path}`;
 
 	// normalize init - cast body since we handle stringifying below
 	let init: RequestInit = {
-		credentials: 'include',
+		credentials: "include",
 		...opts,
 		body: opts.body as BodyInit | null | undefined,
 	};
@@ -103,18 +103,18 @@ export async function fetchRaw(
 	init = await runRequestMiddlewares(resolved, init);
 
 	// If body is plain object and not FormData / string / URLSearchParams, stringify it
-	const isForm = typeof FormData !== 'undefined' && init.body instanceof FormData;
+	const isForm = typeof FormData !== "undefined" && init.body instanceof FormData;
 	if (
 		!isForm &&
 		init.body != null &&
-		typeof init.body !== 'string' &&
+		typeof init.body !== "string" &&
 		!(init.body instanceof URLSearchParams)
 	) {
 		init = {
 			...init,
 			body: JSON.stringify(init.body),
 			headers: {
-				'Content-Type': 'application/json',
+				"Content-Type": "application/json",
 				...(init.headers as Record<string, string> | undefined),
 			},
 		};
@@ -122,7 +122,7 @@ export async function fetchRaw(
 		// ensure Content-Type not set so browser adds boundary
 		if (init.headers) {
 			const headers = { ...(init.headers as Record<string, string>) };
-			delete headers['Content-Type'];
+			delete headers["Content-Type"];
 			init = { ...init, headers };
 		}
 	} else {
@@ -139,22 +139,22 @@ export async function fetchRaw(
 // 2. New: request<T>(RequestOptionsObject)
 export async function request<T = unknown>(
 	pathOrOpts: string | RequestOptionsObject,
-	opts?: RequestOptions
+	opts?: RequestOptions,
 ): Promise<ApiResult<T>> {
 	try {
 		let resolvedPath: string;
 		let requestOpts: RequestOptions;
 
-		if (typeof pathOrOpts === 'string') {
+		if (typeof pathOrOpts === "string") {
 			// Old calling convention: request(path, opts)
 			resolvedPath = pathOrOpts;
 			requestOpts = opts ?? {};
 		} else {
 			// New calling convention: request({ opts, path, query, base_url })
 			const { opts: reqOpts, path, query, base_url } = pathOrOpts;
-			const pathStr = path ? '/' + path.join('/') : '';
+			const pathStr = path ? "/" + path.join("/") : "";
 			const queryString =
-				query && Object.keys(query).length > 0 ? '?' + new URLSearchParams(query).toString() : '';
+				query && Object.keys(query).length > 0 ? "?" + new URLSearchParams(query).toString() : "";
 			resolvedPath = base_url
 				? `${base_url}${pathStr}${queryString}`
 				: `${BASE_URL}${pathStr}${queryString}`;
@@ -163,9 +163,9 @@ export async function request<T = unknown>(
 
 		const res = await fetchRaw(resolvedPath, requestOpts);
 		// try parse json, fall back to text
-		const contentType = res.headers.get('content-type') ?? '';
+		const contentType = res.headers.get("content-type") ?? "";
 		let parsed: unknown = undefined;
-		if (contentType.includes('application/json')) {
+		if (contentType.includes("application/json")) {
 			parsed = await res.json().catch(() => ({}));
 		} else {
 			parsed = await res.text().catch(() => ({}));
@@ -173,8 +173,8 @@ export async function request<T = unknown>(
 		if (!res.ok) {
 			const err =
 				(parsed &&
-					typeof parsed === 'object' &&
-					'error' in parsed &&
+					typeof parsed === "object" &&
+					"error" in parsed &&
 					(parsed as { error: string }).error) ||
 				res.statusText ||
 				`HTTP ${res.status}`;
@@ -189,38 +189,38 @@ export async function request<T = unknown>(
 
 // Convenience API surface
 export const api = {
-	getWorkspace: (id: string) => request(`${BASE_URL}/api/workspace/${id}`, { method: 'GET' }),
+	getWorkspace: (id: string) => request(`${BASE_URL}/api/workspace/${id}`, { method: "GET" }),
 	getSession: () =>
-		request<{ user?: { id: string; email?: string } }>('/api/session', { method: 'GET' }),
+		request<{ user?: { id: string; email?: string } }>("/api/session", { method: "GET" }),
 	storeApiKey: (provider: string, apiKey: string) =>
-		request('/api/store-ocr-provider', { method: 'POST', body: { provider, apiKey } }),
+		request("/api/store-ocr-provider", { method: "POST", body: { provider, apiKey } }),
 	createCampaign: (payload: { name: string; year: number; description?: string }) =>
-		request('/api/create-campaign', { method: 'POST', body: payload }),
+		request("/api/create-campaign", { method: "POST", body: payload }),
 	uploadFileMeta: (payload: { fileName: string; size: number; campaignId: string | null }) =>
-		request('/api/upload-file', { method: 'POST', body: payload }),
+		request("/api/upload-file", { method: "POST", body: payload }),
 
 	// high-level (returns ApiResult)
 	demoUploadVoters: (formData: FormData) =>
-		request(`${BASE_URL}/api/upload/voter-list`, { method: 'POST', body: formData }),
+		request(`${BASE_URL}/api/upload/voter-list`, { method: "POST", body: formData }),
 
 	// low-level raw fetch (useful in +server to forward response)
 	demoUploadVotersRaw: (formData: FormData) =>
-		fetchRaw(`${BASE_URL}/api/upload/voter-list`, { method: 'POST', body: formData }),
+		fetchRaw(`${BASE_URL}/api/upload/voter-list`, { method: "POST", body: formData }),
 
 	// high-level (returns ApiResult)
 	demoUploadPetitions: (formData: FormData) =>
-		request(`${BASE_URL}/api/upload/petition`, { method: 'POST', body: formData }),
+		request(`${BASE_URL}/api/upload/petition`, { method: "POST", body: formData }),
 
 	// low-level raw fetch (useful in +server to forward response)
 	demoUploadPetitionsRaw: (formData: FormData) =>
-		fetchRaw(`${BASE_URL}/api/upload/petition`, { method: 'POST', body: formData }),
+		fetchRaw(`${BASE_URL}/api/upload/petition`, { method: "POST", body: formData }),
 
 	triggerProcessFile: (payload: { filePath: string; campaignId: string }) =>
-		request('/api/process-voter-file', { method: 'POST', body: payload }),
+		request("/api/process-voter-file", { method: "POST", body: payload }),
 
 	fetchMatchFields: (id: string) =>
 		request(`${BASE_URL}/api/config/match-fields/${id}`, {
-			method: 'GET',
+			method: "GET",
 		}),
 
 	demoGetMatchResults: (payload: {
@@ -229,8 +229,8 @@ export const api = {
 		api_key: string;
 	}) =>
 		request(`${BASE_URL}/api/workspace/ocr/demo`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: payload,
 		}),
 
@@ -240,15 +240,15 @@ export const api = {
 		api_key: string;
 	}) =>
 		request<MatchingProgressResponse>(`${BASE_URL}/api/workspace/ocr/demo_batch`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: payload,
 		}),
 
 	demoGetOcrStatus: (job_id: string) =>
 		request<MatchingProgressResponse>(`${BASE_URL}/api/workspace/ocr/batch/${job_id}/status`, {
-			method: 'GET',
-			headers: { 'Content-Type': 'application/json' },
+			method: "GET",
+			headers: { "Content-Type": "application/json" },
 		}),
 	demoObserveOcrStatus: (job_id: string) => {
 		const url = `${BASE_URL}/workspace/api/match/status/id/${encodeURIComponent(job_id)}`;
@@ -258,24 +258,24 @@ export const api = {
 		request<MatchResponse>(
 			`${BASE_URL}/api/workspace/ocr/results/demo/${encodeURIComponent(job_id)}`,
 			{
-				method: 'GET',
-				headers: { 'Content-Type': 'application/json' },
-			}
+				method: "GET",
+				headers: { "Content-Type": "application/json" },
+			},
 		),
 
 	database: {
-		getStatus: () => request<DatabaseStatus>('/database/status', { method: 'GET' }),
+		getStatus: () => request<DatabaseStatus>("/database/status", { method: "GET" }),
 		testSupabase: (credentials: SupabaseCredentials) =>
-			request<ConnectionTestResult>('/database/supabase/test', {
-				method: 'POST',
+			request<ConnectionTestResult>("/database/supabase/test", {
+				method: "POST",
 				body: credentials,
 			}),
 		provisionSupabase: (credentials: SupabaseCredentials) =>
-			request<ProvisionResult>('/database/supabase/provision', {
-				method: 'POST',
+			request<ProvisionResult>("/database/supabase/provision", {
+				method: "POST",
 				body: credentials,
 			}),
 		disconnectSupabase: () =>
-			request<{ success: boolean }>('/database/supabase', { method: 'DELETE' }),
+			request<{ success: boolean }>("/database/supabase", { method: "DELETE" }),
 	},
 };

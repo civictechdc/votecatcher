@@ -11,20 +11,20 @@ Mobile accessibility ensures apps work for users with disabilities on iOS and An
 ```css
 /* WCAG 2.2 Level AA: 24x24px minimum */
 .interactive-element {
-	min-width: 24px;
-	min-height: 24px;
+  min-width: 24px;
+  min-height: 24px;
 }
 
 /* WCAG 2.2 Level AAA / Apple HIG / Material Design: 44x44dp */
 .touch-target {
-	min-width: 44px;
-	min-height: 44px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 /* Android Material Design: 48x48dp recommended */
 .android-touch-target {
-	min-width: 48px;
-	min-height: 48px;
+  min-width: 48px;
+  min-height: 48px;
 }
 ```
 
@@ -33,30 +33,30 @@ Mobile accessibility ensures apps work for users with disabilities on iOS and An
 ```tsx
 // Ensure adequate spacing between touch targets
 function ButtonGroup({ buttons }) {
-	return (
-		<div className="flex gap-3">
-			{' '}
-			{/* 12px minimum gap */}
-			{buttons.map((btn) => (
-				<button key={btn.id} className="min-w-[44px] min-h-[44px] px-4 py-2">
-					{btn.label}
-				</button>
-			))}
-		</div>
-	);
+  return (
+    <div className="flex gap-3">
+      {" "}
+      {/* 12px minimum gap */}
+      {buttons.map((btn) => (
+        <button key={btn.id} className="min-w-[44px] min-h-[44px] px-4 py-2">
+          {btn.label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 // Expanding hit area without changing visual size
 function IconButton({ icon, label, onClick }) {
-	return (
-		<button
-			onClick={onClick}
-			aria-label={label}
-			className="relative p-3" // Creates 44x44 touch area
-		>
-			<span className="block w-5 h-5">{icon}</span>
-		</button>
-	);
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      className="relative p-3" // Creates 44x44 touch area
+    >
+      <span className="block w-5 h-5">{icon}</span>
+    </button>
+  );
 }
 ```
 
@@ -65,75 +65,75 @@ function IconButton({ icon, label, onClick }) {
 ### React Native Accessibility Props
 
 ```tsx
-import { View, Text, TouchableOpacity, AccessibilityInfo } from 'react-native';
+import { View, Text, TouchableOpacity, AccessibilityInfo } from "react-native";
 
 // Basic accessible button
 function AccessibleButton({ onPress, title, hint }) {
-	return (
-		<TouchableOpacity
-			onPress={onPress}
-			accessible={true}
-			accessibilityLabel={title}
-			accessibilityHint={hint}
-			accessibilityRole="button"
-		>
-			<Text>{title}</Text>
-		</TouchableOpacity>
-	);
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      accessible={true}
+      accessibilityLabel={title}
+      accessibilityHint={hint}
+      accessibilityRole="button"
+    >
+      <Text>{title}</Text>
+    </TouchableOpacity>
+  );
 }
 
 // Complex component with grouped content
 function ProductCard({ product }) {
-	return (
-		<View
-			accessible={true}
-			accessibilityLabel={`${product.name}, ${product.price}, ${product.rating} stars`}
-			accessibilityRole="button"
-			accessibilityActions={[
-				{ name: 'activate', label: 'View details' },
-				{ name: 'addToCart', label: 'Add to cart' },
-			]}
-			onAccessibilityAction={(event) => {
-				switch (event.nativeEvent.actionName) {
-					case 'addToCart':
-						addToCart(product);
-						break;
-					case 'activate':
-						viewDetails(product);
-						break;
-				}
-			}}
-		>
-			<Image source={product.image} accessibilityIgnoresInvertColors />
-			<Text>{product.name}</Text>
-			<Text>{product.price}</Text>
-		</View>
-	);
+  return (
+    <View
+      accessible={true}
+      accessibilityLabel={`${product.name}, ${product.price}, ${product.rating} stars`}
+      accessibilityRole="button"
+      accessibilityActions={[
+        { name: "activate", label: "View details" },
+        { name: "addToCart", label: "Add to cart" },
+      ]}
+      onAccessibilityAction={(event) => {
+        switch (event.nativeEvent.actionName) {
+          case "addToCart":
+            addToCart(product);
+            break;
+          case "activate":
+            viewDetails(product);
+            break;
+        }
+      }}
+    >
+      <Image source={product.image} accessibilityIgnoresInvertColors />
+      <Text>{product.name}</Text>
+      <Text>{product.price}</Text>
+    </View>
+  );
 }
 
 // Announcing dynamic changes
 function Counter() {
-	const [count, setCount] = useState(0);
+  const [count, setCount] = useState(0);
 
-	const increment = () => {
-		setCount((prev) => prev + 1);
-		AccessibilityInfo.announceForAccessibility(`Count is now ${count + 1}`);
-	};
+  const increment = () => {
+    setCount((prev) => prev + 1);
+    AccessibilityInfo.announceForAccessibility(`Count is now ${count + 1}`);
+  };
 
-	return (
-		<View>
-			<Text accessibilityRole="text" accessibilityLiveRegion="polite">
-				Count: {count}
-			</Text>
-			<TouchableOpacity
-				onPress={increment}
-				accessibilityLabel="Increment"
-				accessibilityHint="Increases the counter by one"
-			>
-				<Text>+</Text>
-			</TouchableOpacity>
-		</View>
-	);
+  return (
+    <View>
+      <Text accessibilityRole="text" accessibilityLiveRegion="polite">
+        Count: {count}
+      </Text>
+      <TouchableOpacity
+        onPress={increment}
+        accessibilityLabel="Increment"
+        accessibilityHint="Increases the counter by one"
+      >
+        <Text>+</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 ```
 
@@ -350,38 +350,38 @@ binding.counter.announceForAccessibility("Count updated to $count")
 ```tsx
 // React Native: Provide alternatives to complex gestures
 function SwipeableCard({ item, onDelete }) {
-	const [showDelete, setShowDelete] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
 
-	return (
-		<View
-			accessible={true}
-			accessibilityActions={[{ name: 'delete', label: 'Delete item' }]}
-			onAccessibilityAction={(event) => {
-				if (event.nativeEvent.actionName === 'delete') {
-					onDelete(item);
-				}
-			}}
-		>
-			<Swipeable
-				renderRightActions={() => (
-					<TouchableOpacity onPress={() => onDelete(item)} accessibilityLabel="Delete">
-						<Text>Delete</Text>
-					</TouchableOpacity>
-				)}
-			>
-				<Text>{item.title}</Text>
-			</Swipeable>
+  return (
+    <View
+      accessible={true}
+      accessibilityActions={[{ name: "delete", label: "Delete item" }]}
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === "delete") {
+          onDelete(item);
+        }
+      }}
+    >
+      <Swipeable
+        renderRightActions={() => (
+          <TouchableOpacity onPress={() => onDelete(item)} accessibilityLabel="Delete">
+            <Text>Delete</Text>
+          </TouchableOpacity>
+        )}
+      >
+        <Text>{item.title}</Text>
+      </Swipeable>
 
-			{/* Alternative for screen reader users */}
-			<TouchableOpacity
-				accessibilityLabel={`Delete ${item.title}`}
-				onPress={() => onDelete(item)}
-				style={{ position: 'absolute', right: 0 }}
-			>
-				<Text>Delete</Text>
-			</TouchableOpacity>
-		</View>
-	);
+      {/* Alternative for screen reader users */}
+      <TouchableOpacity
+        accessibilityLabel={`Delete ${item.title}`}
+        onPress={() => onDelete(item)}
+        style={{ position: "absolute", right: 0 }}
+      >
+        <Text>Delete</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 ```
 
@@ -389,29 +389,29 @@ function SwipeableCard({ item, onDelete }) {
 
 ```tsx
 // Respect reduced motion preference
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo } from "react-native";
 
 function AnimatedComponent() {
-	const [reduceMotion, setReduceMotion] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
-	useEffect(() => {
-		AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
 
-		const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
 
-		return () => subscription.remove();
-	}, []);
+    return () => subscription.remove();
+  }, []);
 
-	return (
-		<Animated.View
-			style={{
-				transform: reduceMotion ? [] : [{ translateX: animatedValue }],
-				opacity: reduceMotion ? 1 : animatedOpacity,
-			}}
-		>
-			<Content />
-		</Animated.View>
-	);
+  return (
+    <Animated.View
+      style={{
+        transform: reduceMotion ? [] : [{ translateX: animatedValue }],
+        opacity: reduceMotion ? 1 : animatedOpacity,
+      }}
+    >
+      <Content />
+    </Animated.View>
+  );
 }
 ```
 

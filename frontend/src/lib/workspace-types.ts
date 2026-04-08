@@ -15,7 +15,7 @@ export interface UploadResult {
 }
 
 export enum MatchValueFormatKeys {
-	MATCH_SCORE = 'match_score',
+	MATCH_SCORE = "match_score",
 }
 
 export type MatchValueTypes = string | number | boolean | null;
@@ -40,7 +40,7 @@ export class MatchColumn {
 	constructor(name: string, sort?: (first: MatchRow, second: MatchRow) => number) {
 		this.name = name;
 		this.sort = sort;
-		this.isSortable = typeof sort !== 'undefined';
+		this.isSortable = typeof sort !== "undefined";
 	}
 }
 

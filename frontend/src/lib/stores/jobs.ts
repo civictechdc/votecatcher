@@ -11,11 +11,11 @@
  *
  * For campaign-wide updates (dashboard, jobs list), use events.ts instead.
  */
-import { writable } from 'svelte/store';
-import { getApiClient } from './api-client';
-import { JobsApi } from '$lib/api/generated';
-import type { JobResponse, CreateJobRequest } from '$lib/api/generated';
-import type { JobStatusEnum } from '$lib/api/generated/models/Job';
+import { writable } from "svelte/store";
+import { getApiClient } from "./api-client";
+import { JobsApi } from "$lib/api/generated";
+import type { JobResponse, CreateJobRequest } from "$lib/api/generated";
+import type { JobStatusEnum } from "$lib/api/generated/models/Job";
 
 interface SSEState {
 	connected: boolean;
@@ -47,14 +47,14 @@ function createJobsStore() {
 	function handleSSEEvent(data: { event: string; data: unknown }) {
 		const payload = data.data as Record<string, unknown>;
 		switch (data.event) {
-			case 'status_update':
+			case "status_update":
 				update((s) => ({
 					...s,
 					currentJob: { ...s.currentJob, ...payload } as JobResponse,
 				}));
 				break;
 
-			case 'matching_progress':
+			case "matching_progress":
 				update((s) => ({
 					...s,
 					currentJob: {
@@ -64,14 +64,14 @@ function createJobsStore() {
 				}));
 				break;
 
-			case 'job_complete':
+			case "job_complete":
 				update((s) => ({
 					...s,
-					currentJob: { ...s.currentJob, status: 'MATCHING_COMPLETED' } as JobResponse,
+					currentJob: { ...s.currentJob, status: "MATCHING_COMPLETED" } as JobResponse,
 				}));
 				break;
 
-			case 'job_error':
+			case "job_error":
 				update((s) => ({
 					...s,
 					currentJob: { ...s.currentJob, status: payload.status as string } as JobResponse,
@@ -93,7 +93,7 @@ function createJobsStore() {
 				const result = await api.listJobsJobsGet({});
 				update((s) => ({ ...s, jobs: result.jobs, loading: false }));
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false, jobs: [] }));
 			}
 		},
@@ -113,7 +113,7 @@ function createJobsStore() {
 				}));
 				return job;
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false }));
 				throw error;
 			}
@@ -129,7 +129,7 @@ function createJobsStore() {
 				update((s) => ({ ...s, currentJob: job, loading: false }));
 				return job;
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false }));
 				throw error;
 			}
@@ -149,7 +149,7 @@ function createJobsStore() {
 					loading: false,
 				}));
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false }));
 				throw error;
 			}
@@ -159,14 +159,14 @@ function createJobsStore() {
 			update((s) => ({ ...s, loading: true, error: null }));
 
 			try {
-				const baseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
+				const baseUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8080";
 				const response = await fetch(`${baseUrl}/api/jobs/${id}/start`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
 				});
 				if (!response.ok) {
 					const error = await response.json();
-					throw new Error(error.detail || 'Failed to start job');
+					throw new Error(error.detail || "Failed to start job");
 				}
 				const job = await response.json();
 				update((s) => ({
@@ -177,7 +177,7 @@ function createJobsStore() {
 				}));
 				return job;
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({ ...s, error: message, loading: false }));
 				throw error;
 			}
@@ -214,7 +214,7 @@ function createJobsStore() {
 			update((s) => ({
 				...s,
 				jobs: s.jobs.map((j) =>
-					j.jobId === event.job_id ? { ...j, progress: event.percentage } : j
+					j.jobId === event.job_id ? { ...j, progress: event.percentage } : j,
 				),
 				currentJob:
 					s.currentJob?.jobId === event.job_id
@@ -228,7 +228,7 @@ function createJobsStore() {
 				eventSource.close();
 			}
 
-			const baseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
+			const baseUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8080";
 			eventSource = new EventSource(`${baseUrl}/api/jobs/${jobId}/status`);
 
 			eventSource.onopen = () => {
@@ -243,7 +243,7 @@ function createJobsStore() {
 					const data = JSON.parse(event.data);
 					handleSSEEvent(data);
 				} catch (e) {
-					console.error('Failed to parse SSE message:', e);
+					console.error("Failed to parse SSE message:", e);
 				}
 			};
 
@@ -258,7 +258,7 @@ function createJobsStore() {
 					} else {
 						return {
 							...s,
-							sse: { connected: false, reconnectAttempts: attempts, error: 'Connection lost' },
+							sse: { connected: false, reconnectAttempts: attempts, error: "Connection lost" },
 						};
 					}
 				});

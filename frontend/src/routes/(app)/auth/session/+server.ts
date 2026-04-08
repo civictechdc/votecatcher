@@ -1,4 +1,4 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from "@sveltejs/kit";
 
 /**
  * Mock session endpoint.
@@ -9,9 +9,9 @@ export const GET: RequestHandler = async () => {
 	// Simple dev mock: return a user if a cookie or header indicates it,
 	// or always return a mocked user to enable local flows. Adjust as needed.
 	// For now return a mock user to allow dev flows to proceed.
-	const user = { id: 'user_dev_1', email: 'dev@example.com' };
+	const user = { id: "user_dev_1", email: "dev@example.com" };
 	return new Response(JSON.stringify({ user }), {
 		status: 200,
-		headers: { 'Content-Type': 'application/json' },
+		headers: { "Content-Type": "application/json" },
 	});
 };

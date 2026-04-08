@@ -1,7 +1,7 @@
-import { writable } from 'svelte/store';
-import { ResultsApi } from '$lib/api/generated';
-import { getApiClient } from './api-client';
-import type { ResultResponse } from '$lib/api/generated';
+import { writable } from "svelte/store";
+import { ResultsApi } from "$lib/api/generated";
+import { getApiClient } from "./api-client";
+import type { ResultResponse } from "$lib/api/generated";
 
 interface ResultsState {
 	results: ResultResponse[];
@@ -36,7 +36,7 @@ function createResultsStore() {
 		async fetchResults(jobId: number, options: FetchOptions = {}) {
 			const page = options.page ?? 1;
 			const pageSize = options.pageSize ?? 50;
-			const confidence = options.confidence as 'HIGH' | 'MEDIUM' | 'LOW' | undefined;
+			const confidence = options.confidence as "HIGH" | "MEDIUM" | "LOW" | undefined;
 
 			update((s) => ({
 				...s,
@@ -64,7 +64,7 @@ function createResultsStore() {
 					loading: false,
 				}));
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({
 					...s,
 					loading: false,
@@ -79,12 +79,12 @@ function createResultsStore() {
 
 			const response = await api.exportResultsCsvJobsJobIdResultsExportGet({
 				jobId,
-				confidence: (confidence as 'HIGH' | 'MEDIUM' | 'LOW' | null) ?? null,
+				confidence: (confidence as "HIGH" | "MEDIUM" | "LOW" | null) ?? null,
 			});
 
-			const blob = new Blob([response], { type: 'text/csv' });
+			const blob = new Blob([response], { type: "text/csv" });
 			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
+			const a = document.createElement("a");
 			a.href = url;
 			a.download = `results-job-${jobId}.csv`;
 			document.body.appendChild(a);

@@ -1,25 +1,25 @@
-import { browser } from '$app/environment';
-import { PUBLIC_DEMO_MODE } from '$env/static/public';
-import { get } from 'svelte/store';
-import { featureFlags } from '$lib/stores/featureFlags';
+import { browser } from "$app/environment";
+import { PUBLIC_DEMO_MODE } from "$env/static/public";
+import { get } from "svelte/store";
+import { featureFlags } from "$lib/stores/featureFlags";
 
-export type AppMode = 'production' | 'demo' | 'simulation' | 'dev';
+export type AppMode = "production" | "demo" | "simulation" | "dev";
 
 export function getAppMode(): AppMode {
 	if (browser && import.meta.env.DEV) {
-		return 'dev';
+		return "dev";
 	}
 	if (isDemoMode()) {
-		return 'demo';
+		return "demo";
 	}
 	if (isSimulationMode()) {
-		return 'simulation';
+		return "simulation";
 	}
-	return 'production';
+	return "production";
 }
 
 export function isDemoMode(): boolean {
-	return PUBLIC_DEMO_MODE === 'true';
+	return PUBLIC_DEMO_MODE === "true";
 }
 
 export function isSimulationMode(): boolean {
@@ -34,25 +34,25 @@ export function isDevMode(): boolean {
 export function getLogoDestination(): string {
 	const mode = getAppMode();
 	switch (mode) {
-		case 'demo':
-			return '/workspace/demo';
-		case 'simulation':
-		case 'dev':
-		case 'production':
+		case "demo":
+			return "/workspace/demo";
+		case "simulation":
+		case "dev":
+		case "production":
 		default:
-			return '/workspace/campaigns';
+			return "/workspace/campaigns";
 	}
 }
 
 export function getCTADestination(): string {
 	const mode = getAppMode();
 	switch (mode) {
-		case 'demo':
-			return '/workspace/demo';
-		case 'simulation':
-		case 'dev':
-		case 'production':
+		case "demo":
+			return "/workspace/demo";
+		case "simulation":
+		case "dev":
+		case "production":
 		default:
-			return '/workspace/campaigns';
+			return "/workspace/campaigns";
 	}
 }

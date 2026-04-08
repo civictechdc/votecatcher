@@ -1,7 +1,7 @@
-import { readable } from 'svelte/store';
+import { readable } from "svelte/store";
 
 export const page = readable({
-	url: new URL('http://localhost/workspace'),
+	url: new URL("http://localhost/workspace"),
 	params: {},
 	route: {},
 	status: 200,

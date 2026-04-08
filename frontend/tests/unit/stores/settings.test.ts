@@ -1,16 +1,16 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { get } from 'svelte/store';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { get } from "svelte/store";
 
 // Mock environment variables before importing
-vi.mock('$env/static/public', () => ({
-	PUBLIC_API_URL: 'http://localhost:8000/api',
+vi.mock("$env/static/public", () => ({
+	PUBLIC_API_URL: "http://localhost:8000/api",
 }));
 
 // Mock fetch globally
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-describe('settings store', () => {
+describe("settings store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
@@ -19,11 +19,11 @@ describe('settings store', () => {
 		vi.restoreAllMocks();
 	});
 
-	describe('initialized flag', () => {
-		it('starts with initialized as false', async () => {
+	describe("initialized flag", () => {
+		it("starts with initialized as false", async () => {
 			// Import fresh store instance
 			vi.resetModules();
-			const { settings } = await import('$lib/stores/settings');
+			const { settings } = await import("$lib/stores/settings");
 
 			// Reset to get initial state
 			settings.resetStore();
@@ -32,14 +32,14 @@ describe('settings store', () => {
 			expect(state.initialized).toBe(false);
 		});
 
-		it('sets initialized to true after successful fetch', async () => {
+		it("sets initialized to true after successful fetch", async () => {
 			vi.resetModules();
-			const { settings } = await import('$lib/stores/settings');
+			const { settings } = await import("$lib/stores/settings");
 			settings.resetStore();
 
 			const mockSettings = {
-				ocr_provider: 'open_ai',
-				ocr_model: 'gpt-4o-mini',
+				ocr_provider: "open_ai",
+				ocr_model: "gpt-4o-mini",
 				features: {
 					simulationMode: false,
 					betaFeatures: false,
@@ -63,24 +63,24 @@ describe('settings store', () => {
 			expect(state.error).toBeNull();
 		});
 
-		it('sets initialized to true even after network error', async () => {
+		it("sets initialized to true even after network error", async () => {
 			vi.resetModules();
-			const { settings } = await import('$lib/stores/settings');
+			const { settings } = await import("$lib/stores/settings");
 			settings.resetStore();
 
-			mockFetch.mockRejectedValueOnce(new Error('Network error'));
+			mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
 			await settings.fetchSettings();
 
 			const state = get(settings);
 			expect(state.initialized).toBe(true);
-			expect(state.error).toBe('Network error');
+			expect(state.error).toBe("Network error");
 			expect(state.loading).toBe(false);
 		});
 
-		it('sets initialized to true after HTTP error', async () => {
+		it("sets initialized to true after HTTP error", async () => {
 			vi.resetModules();
-			const { settings } = await import('$lib/stores/settings');
+			const { settings } = await import("$lib/stores/settings");
 			settings.resetStore();
 
 			mockFetch.mockResolvedValueOnce({
@@ -92,14 +92,14 @@ describe('settings store', () => {
 
 			const state = get(settings);
 			expect(state.initialized).toBe(true);
-			expect(state.error).toBe('HTTP 500');
+			expect(state.error).toBe("HTTP 500");
 		});
 	});
 
-	describe('loading state', () => {
-		it('sets loading to true during fetch', async () => {
+	describe("loading state", () => {
+		it("sets loading to true during fetch", async () => {
 			vi.resetModules();
-			const { settings } = await import('$lib/stores/settings');
+			const { settings } = await import("$lib/stores/settings");
 			settings.resetStore();
 
 			let resolveFetch: (value: unknown) => void;
@@ -128,17 +128,17 @@ describe('settings store', () => {
 		});
 	});
 
-	describe('clearError', () => {
-		it('clears error state', async () => {
+	describe("clearError", () => {
+		it("clears error state", async () => {
 			vi.resetModules();
-			const { settings } = await import('$lib/stores/settings');
+			const { settings } = await import("$lib/stores/settings");
 			settings.resetStore();
 
-			mockFetch.mockRejectedValueOnce(new Error('Test error'));
+			mockFetch.mockRejectedValueOnce(new Error("Test error"));
 			await settings.fetchSettings();
 
 			let state = get(settings);
-			expect(state.error).toBe('Test error');
+			expect(state.error).toBe("Test error");
 
 			settings.clearError();
 

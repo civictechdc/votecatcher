@@ -1,8 +1,8 @@
 // Centralized store for onboarding state.
 // This keeps state testable and modular. Components subscribe to this store.
 
-import { writable } from 'svelte/store';
-import type { OcrProvider } from '../../types/ocr';
+import { writable } from "svelte/store";
+import type { OcrProvider } from "../../types/ocr";
 export type OnboardAnswers = {
 	selectedOcrProvider?: OcrProvider | null;
 	ocrProviderApiKey?: string;

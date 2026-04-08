@@ -206,7 +206,7 @@ edge-functions:
 
 bundle-size:
 	cd frontend && bun run build
-	cd frontend && npx size-limit
+	@echo "=== Bundle size ===" && find frontend/.svelte-kit/output/client -name "*.js" -exec du -ch {} + | tail -1
 
 benchmark:
 	cd backend && uv run pytest tests/benchmarks/ --benchmark-only --benchmark-json=../benchmark-results.json

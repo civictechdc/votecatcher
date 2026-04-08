@@ -1,17 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { get } from 'svelte/store';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { get } from "svelte/store";
 
-vi.mock('./api-client', () => ({
+vi.mock("./api-client", () => ({
 	getApiClient: vi.fn(() => ({
-		basePath: 'http://localhost:8000/api',
+		basePath: "http://localhost:8000/api",
 	})),
 }));
 
-import { demo, resetDemoStore, isDemoModeEnabled, setDemoMode } from './demo';
+import { demo, resetDemoStore, isDemoModeEnabled, setDemoMode } from "./demo";
 
 global.fetch = vi.fn();
 
-describe('Demo Store', () => {
+describe("Demo Store", () => {
 	beforeEach(() => {
 		resetDemoStore();
 		setDemoMode(true);
@@ -22,8 +22,8 @@ describe('Demo Store', () => {
 		setDemoMode(false);
 	});
 
-	describe('initial state', () => {
-		it('should start with reset confirmation false', () => {
+	describe("initial state", () => {
+		it("should start with reset confirmation false", () => {
 			const state = get(demo);
 			expect(state.showResetConfirmation).toBe(false);
 			expect(state.resetting).toBe(false);
@@ -31,32 +31,32 @@ describe('Demo Store', () => {
 		});
 	});
 
-	describe('isDemoModeEnabled', () => {
-		it('should return a boolean', () => {
-			expect(typeof isDemoModeEnabled()).toBe('boolean');
+	describe("isDemoModeEnabled", () => {
+		it("should return a boolean", () => {
+			expect(typeof isDemoModeEnabled()).toBe("boolean");
 		});
 
-		it('should return true when set', () => {
+		it("should return true when set", () => {
 			setDemoMode(true);
 			expect(isDemoModeEnabled()).toBe(true);
 		});
 
-		it('should return false when not set', () => {
+		it("should return false when not set", () => {
 			setDemoMode(false);
 			expect(isDemoModeEnabled()).toBe(false);
 		});
 	});
 
-	describe('confirmReset', () => {
-		it('should show reset confirmation', () => {
+	describe("confirmReset", () => {
+		it("should show reset confirmation", () => {
 			demo.confirmReset();
 			const state = get(demo);
 			expect(state.showResetConfirmation).toBe(true);
 		});
 	});
 
-	describe('cancelReset', () => {
-		it('should hide reset confirmation', () => {
+	describe("cancelReset", () => {
+		it("should hide reset confirmation", () => {
 			demo.confirmReset();
 			demo.cancelReset();
 			const state = get(demo);
@@ -64,18 +64,18 @@ describe('Demo Store', () => {
 		});
 	});
 
-	describe('resetData', () => {
-		it('should call reset API and clear state', async () => {
+	describe("resetData", () => {
+		it("should call reset API and clear state", async () => {
 			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				ok: true,
-				json: async () => ({ success: true, message: 'Demo data reset' }),
+				json: async () => ({ success: true, message: "Demo data reset" }),
 			});
 
 			await demo.resetData();
 
 			expect(global.fetch).toHaveBeenCalledWith(
-				'http://localhost:8000/api/demo/reset',
-				expect.objectContaining({ method: 'POST' })
+				"http://localhost:8000/api/demo/reset",
+				expect.objectContaining({ method: "POST" }),
 			);
 
 			const state = get(demo);
@@ -83,27 +83,27 @@ describe('Demo Store', () => {
 			expect(state.showResetConfirmation).toBe(false);
 		});
 
-		it('should handle reset errors', async () => {
+		it("should handle reset errors", async () => {
 			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				ok: false,
-				json: async () => ({ detail: 'Reset not allowed' }),
+				json: async () => ({ detail: "Reset not allowed" }),
 			});
 
 			await demo.resetData();
 
 			const state = get(demo);
-			expect(state.error).toBe('Reset not allowed');
+			expect(state.error).toBe("Reset not allowed");
 			expect(state.resetting).toBe(false);
 		});
 	});
 
-	describe('loadPrebaked', () => {
-		it('should load pre-baked demo session', async () => {
+	describe("loadPrebaked", () => {
+		it("should load pre-baked demo session", async () => {
 			const mockSession = {
 				success: true,
-				session_id: 'dc-petition-2024',
-				message: 'Loaded demo session',
-				campaign_id: 'test-campaign-id',
+				session_id: "dc-petition-2024",
+				message: "Loaded demo session",
+				campaign_id: "test-campaign-id",
 				voters_count: 10,
 				match_results_count: 50,
 			};
@@ -113,21 +113,21 @@ describe('Demo Store', () => {
 				json: async () => mockSession,
 			});
 
-			const result = await demo.loadPrebaked('dc-petition-2024');
+			const result = await demo.loadPrebaked("dc-petition-2024");
 
 			expect(global.fetch).toHaveBeenCalledWith(
-				'http://localhost:8000/api/demo/sessions/dc-petition-2024/load',
-				expect.objectContaining({ method: 'POST' })
+				"http://localhost:8000/api/demo/sessions/dc-petition-2024/load",
+				expect.objectContaining({ method: "POST" }),
 			);
 			expect(result).toEqual(mockSession);
 		});
 
-		it('sets loadedSession state after successful load', async () => {
+		it("sets loadedSession state after successful load", async () => {
 			const mockSession = {
 				success: true,
-				session_id: 'dc-petition-2024',
-				message: 'Loaded demo session',
-				campaign_id: 'test-campaign-id',
+				session_id: "dc-petition-2024",
+				message: "Loaded demo session",
+				campaign_id: "test-campaign-id",
 				voters_count: 10,
 				match_results_count: 50,
 			};
@@ -137,39 +137,39 @@ describe('Demo Store', () => {
 				json: async () => mockSession,
 			});
 
-			await demo.loadPrebaked('dc-petition-2024');
+			await demo.loadPrebaked("dc-petition-2024");
 
 			const state = get(demo);
 			expect(state.loadedSession).toEqual({
 				success: true,
-				session_id: 'dc-petition-2024',
-				message: 'Loaded demo session',
-				campaign_id: 'test-campaign-id',
+				session_id: "dc-petition-2024",
+				message: "Loaded demo session",
+				campaign_id: "test-campaign-id",
 				voters_count: 10,
 				match_results_count: 50,
 			});
 		});
 
-		it('should handle load errors', async () => {
+		it("should handle load errors", async () => {
 			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				ok: false,
-				json: async () => ({ detail: 'Session not found' }),
+				json: async () => ({ detail: "Session not found" }),
 			});
 
-			await expect(demo.loadPrebaked('invalid')).rejects.toThrow('Session not found');
+			await expect(demo.loadPrebaked("invalid")).rejects.toThrow("Session not found");
 		});
 	});
 
-	describe('clearError', () => {
-		it('should clear error state', () => {
+	describe("clearError", () => {
+		it("should clear error state", () => {
 			demo.clearError();
 			const state = get(demo);
 			expect(state.error).toBeNull();
 		});
 	});
 
-	describe('resetDemoStore', () => {
-		it('should reset store to initial state', () => {
+	describe("resetDemoStore", () => {
+		it("should reset store to initial state", () => {
 			demo.confirmReset();
 			resetDemoStore();
 			const state = get(demo);

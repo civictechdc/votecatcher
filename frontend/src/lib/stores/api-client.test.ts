@@ -1,34 +1,34 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
-describe('API Client', () => {
+describe("API Client", () => {
 	beforeEach(() => {
 		vi.resetModules();
 	});
 
-	it('creates client with default base URL', async () => {
-		const { getApiClient } = await import('./api-client');
+	it("creates client with default base URL", async () => {
+		const { getApiClient } = await import("./api-client");
 		const client = getApiClient();
 		expect(client).toBeDefined();
 		expect(client.basePath).toBeDefined();
-		expect(typeof client.basePath).toBe('string');
+		expect(typeof client.basePath).toBe("string");
 	});
 
-	it('uses PUBLIC_API_URL when available', async () => {
-		const { getApiClient } = await import('./api-client');
+	it("uses PUBLIC_API_URL when available", async () => {
+		const { getApiClient } = await import("./api-client");
 		const client = getApiClient();
 		expect(client).toBeDefined();
-		expect(client.basePath).toBe('http://localhost:8000');
+		expect(client.basePath).toBe("http://localhost:8000");
 	});
 
-	it('returns singleton instance', async () => {
-		const { getApiClient } = await import('./api-client');
+	it("returns singleton instance", async () => {
+		const { getApiClient } = await import("./api-client");
 		const client1 = getApiClient();
 		const client2 = getApiClient();
 		expect(client1).toBe(client2);
 	});
 
-	it('resetApiClient creates new instance on next call', async () => {
-		const { getApiClient, resetApiClient } = await import('./api-client');
+	it("resetApiClient creates new instance on next call", async () => {
+		const { getApiClient, resetApiClient } = await import("./api-client");
 		const client1 = getApiClient();
 		resetApiClient();
 		const client2 = getApiClient();

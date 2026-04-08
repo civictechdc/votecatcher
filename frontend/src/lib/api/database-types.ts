@@ -1,4 +1,4 @@
-export type DatabaseType = 'sqlite' | 'postgres' | 'supabase';
+export type DatabaseType = "sqlite" | "postgres" | "supabase";
 
 export interface DatabaseStatus {
 	configured: boolean;

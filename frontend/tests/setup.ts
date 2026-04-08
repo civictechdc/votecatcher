@@ -1,10 +1,10 @@
-import { vi } from 'vitest';
-import { JSDOM } from 'jsdom';
-import { readable } from 'svelte/store';
+import { vi } from "vitest";
+import { JSDOM } from "jsdom";
+import { readable } from "svelte/store";
 
 // Set up jsdom environment
-const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
-	url: 'http://localhost',
+const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>", {
+	url: "http://localhost",
 	pretendToBeVisual: true,
 });
 
@@ -35,23 +35,23 @@ const localStorageMock = (() => {
 		key: (i: number) => Object.keys(store)[i] || null,
 	};
 })();
-vi.stubGlobal('localStorage', localStorageMock);
+vi.stubGlobal("localStorage", localStorageMock);
 
-vi.mock('$app/environment', () => ({
+vi.mock("$app/environment", () => ({
 	browser: false,
 	dev: true,
 	prerendering: false,
 	SSR: true,
 }));
 
-vi.mock('$env/static/public', () => ({
-	PUBLIC_API_URL: 'http://localhost:8000',
+vi.mock("$env/static/public", () => ({
+	PUBLIC_API_URL: "http://localhost:8000",
 }));
 
-vi.mock('$app/stores', () => {
+vi.mock("$app/stores", () => {
 	return {
 		page: readable({
-			url: new URL('http://localhost'),
+			url: new URL("http://localhost"),
 			params: {},
 			route: {},
 			status: 200,

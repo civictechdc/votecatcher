@@ -1,7 +1,7 @@
-import { writable } from 'svelte/store';
-import { PUBLIC_API_URL } from '$env/static/public';
+import { writable } from "svelte/store";
+import { PUBLIC_API_URL } from "$env/static/public";
 
-export type EventType = 'job:status_changed' | 'job:progress' | 'metrics:updated';
+export type EventType = "job:status_changed" | "job:progress" | "metrics:updated";
 
 export interface BaseEvent {
 	event_id: string;
@@ -14,20 +14,20 @@ export interface BaseEvent {
 }
 
 export interface JobStatusEvent extends BaseEvent {
-	event_type: 'job:status_changed';
+	event_type: "job:status_changed";
 	status: string;
 	previous_status: string | null;
 }
 
 export interface JobProgressEvent extends BaseEvent {
-	event_type: 'job:progress';
+	event_type: "job:progress";
 	processed: number;
 	total: number;
 	percentage: number;
 }
 
 export interface MetricsUpdatedEvent extends BaseEvent {
-	event_type: 'metrics:updated';
+	event_type: "metrics:updated";
 	total_signatures: number;
 	processed: number;
 	high_confidence: number;
@@ -36,15 +36,15 @@ export interface MetricsUpdatedEvent extends BaseEvent {
 export type AppEvent = JobStatusEvent | JobProgressEvent | MetricsUpdatedEvent;
 
 function isValidEvent(data: unknown): data is AppEvent {
-	if (typeof data !== 'object' || data === null) return false;
+	if (typeof data !== "object" || data === null) return false;
 	const evt = data as Record<string, unknown>;
-	if (typeof evt['event_type'] !== 'string') return false;
-	if (typeof evt['event_id'] !== 'string') return false;
-	const validTypes: EventType[] = ['job:status_changed', 'job:progress', 'metrics:updated'];
-	return validTypes.includes(evt['event_type'] as EventType);
+	if (typeof evt["event_type"] !== "string") return false;
+	if (typeof evt["event_id"] !== "string") return false;
+	const validTypes: EventType[] = ["job:status_changed", "job:progress", "metrics:updated"];
+	return validTypes.includes(evt["event_type"] as EventType);
 }
 
-type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
+type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
 
 interface EventStoreState {
 	status: ConnectionStatus;
@@ -61,7 +61,7 @@ function createEventStore() {
 	const BASE_DELAY = 1000;
 
 	const { subscribe, set, update } = writable<EventStoreState>({
-		status: 'disconnected',
+		status: "disconnected",
 		lastEvent: null,
 		reconnectAttempts: 0,
 	});
@@ -70,14 +70,14 @@ function createEventStore() {
 		update((s) => ({ ...s, lastEvent: event }));
 
 		switch (event.event_type) {
-			case 'job:status_changed':
-				document.dispatchEvent(new CustomEvent('votecatcher:job:status', { detail: event }));
+			case "job:status_changed":
+				document.dispatchEvent(new CustomEvent("votecatcher:job:status", { detail: event }));
 				break;
-			case 'job:progress':
-				document.dispatchEvent(new CustomEvent('votecatcher:job:progress', { detail: event }));
+			case "job:progress":
+				document.dispatchEvent(new CustomEvent("votecatcher:job:progress", { detail: event }));
 				break;
-			case 'metrics:updated':
-				document.dispatchEvent(new CustomEvent('votecatcher:metrics:updated', { detail: event }));
+			case "metrics:updated":
+				document.dispatchEvent(new CustomEvent("votecatcher:metrics:updated", { detail: event }));
 				break;
 		}
 	}
@@ -93,30 +93,30 @@ function createEventStore() {
 
 		currentCampaignId = campaignId;
 		update((s) => ({
-			status: 'connecting',
+			status: "connecting",
 			lastEvent: null,
 			reconnectAttempts: isReconnect ? s.reconnectAttempts : 0,
 		}));
 
-		const baseUrl = PUBLIC_API_URL || 'http://localhost:8080';
+		const baseUrl = PUBLIC_API_URL || "http://localhost:8080";
 		const url = `${baseUrl}/events/campaigns/${campaignId}/stream`;
 
 		eventSource = new EventSource(url);
 
 		eventSource.onopen = () => {
-			console.debug('[SSE] Connected to campaign event stream');
-			set({ status: 'connected', lastEvent: null, reconnectAttempts: 0 });
+			console.debug("[SSE] Connected to campaign event stream");
+			set({ status: "connected", lastEvent: null, reconnectAttempts: 0 });
 		};
 
 		eventSource.onerror = () => {
-			console.debug('[SSE] Connection error, attempting reconnect');
+			console.debug("[SSE] Connection error, attempting reconnect");
 			if (eventSource) {
 				eventSource.close();
 				eventSource = null;
 			}
 			update((s) => {
 				if (s.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-					return { ...s, status: 'error' as ConnectionStatus };
+					return { ...s, status: "error" as ConnectionStatus };
 				}
 
 				const delay = BASE_DELAY * Math.pow(2, s.reconnectAttempts);
@@ -127,24 +127,24 @@ function createEventStore() {
 					}
 				}, delay);
 
-				return { ...s, status: 'error', reconnectAttempts: s.reconnectAttempts + 1 };
+				return { ...s, status: "error", reconnectAttempts: s.reconnectAttempts + 1 };
 			});
 		};
 
 		eventSource.onmessage = (event) => {
-			if (!event.data || event.data === '') {
-				console.debug('[SSE] Heartbeat received');
+			if (!event.data || event.data === "") {
+				console.debug("[SSE] Heartbeat received");
 				return;
 			}
 			try {
 				const data = JSON.parse(event.data);
 				if (!isValidEvent(data)) {
-					console.error('[SSE] Invalid event shape:', data);
+					console.error("[SSE] Invalid event shape:", data);
 					return;
 				}
 				handleEvent(data);
 			} catch (e) {
-				console.error('[SSE] Failed to parse event:', e);
+				console.error("[SSE] Failed to parse event:", e);
 			}
 		};
 	}
@@ -166,7 +166,7 @@ function createEventStore() {
 				eventSource = null;
 			}
 			currentCampaignId = null;
-			set({ status: 'disconnected', lastEvent: null, reconnectAttempts: 0 });
+			set({ status: "disconnected", lastEvent: null, reconnectAttempts: 0 });
 		},
 
 		reset() {

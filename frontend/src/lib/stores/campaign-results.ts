@@ -1,5 +1,5 @@
-import { writable } from 'svelte/store';
-import { PUBLIC_API_URL } from '$env/static/public';
+import { writable } from "svelte/store";
+import { PUBLIC_API_URL } from "$env/static/public";
 
 interface CampaignMatchPrediction {
 	rank: number;
@@ -36,7 +36,7 @@ interface FetchOptions {
 }
 
 function getBaseUrl(): string {
-	return (PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+	return (PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
 }
 
 function createCampaignResultsStore() {
@@ -74,11 +74,11 @@ function createCampaignResultsStore() {
 					page_size: String(pageSize),
 				});
 				if (confidence) {
-					params.append('confidence', confidence);
+					params.append("confidence", confidence);
 				}
 
 				const response = await fetch(
-					`${getBaseUrl()}/api/campaigns/${campaignId}/results?${params.toString()}`
+					`${getBaseUrl()}/api/campaigns/${campaignId}/results?${params.toString()}`,
 				);
 
 				if (!response.ok) {
@@ -95,7 +95,7 @@ function createCampaignResultsStore() {
 					initialized: true,
 				}));
 			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = error instanceof Error ? error.message : "Unknown error";
 				update((s) => ({
 					...s,
 					loading: false,

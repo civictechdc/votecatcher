@@ -51,20 +51,20 @@ Motion should communicate, not decorate:
 ## Quick Start: Button Microinteraction
 
 ```tsx
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 export function InteractiveButton({ children, onClick }) {
-	return (
-		<motion.button
-			onClick={onClick}
-			whileHover={{ scale: 1.02 }}
-			whileTap={{ scale: 0.98 }}
-			transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-			className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-		>
-			{children}
-		</motion.button>
-	);
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+    >
+      {children}
+    </motion.button>
+  );
 }
 ```
 
@@ -76,13 +76,13 @@ export function InteractiveButton({ children, onClick }) {
 
 ```tsx
 function CardSkeleton() {
-	return (
-		<div className="animate-pulse">
-			<div className="h-48 bg-gray-200 rounded-lg" />
-			<div className="mt-4 h-4 bg-gray-200 rounded w-3/4" />
-			<div className="mt-2 h-4 bg-gray-200 rounded w-1/2" />
-		</div>
-	);
+  return (
+    <div className="animate-pulse">
+      <div className="h-48 bg-gray-200 rounded-lg" />
+      <div className="mt-4 h-4 bg-gray-200 rounded w-3/4" />
+      <div className="mt-2 h-4 bg-gray-200 rounded w-1/2" />
+    </div>
+  );
 }
 ```
 
@@ -90,16 +90,16 @@ function CardSkeleton() {
 
 ```tsx
 function ProgressBar({ progress }: { progress: number }) {
-	return (
-		<div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-			<motion.div
-				className="h-full bg-blue-600"
-				initial={{ width: 0 }}
-				animate={{ width: `${progress}%` }}
-				transition={{ ease: 'easeOut' }}
-			/>
-		</div>
-	);
+  return (
+    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+      <motion.div
+        className="h-full bg-blue-600"
+        initial={{ width: 0 }}
+        animate={{ width: `${progress}%` }}
+        transition={{ ease: "easeOut" }}
+      />
+    </div>
+  );
 }
 ```
 
@@ -109,23 +109,23 @@ function ProgressBar({ progress }: { progress: number }) {
 
 ```tsx
 function Toggle({ checked, onChange }) {
-	return (
-		<button
-			role="switch"
-			aria-checked={checked}
-			onClick={() => onChange(!checked)}
-			className={`
+  return (
+    <button
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`
         relative w-12 h-6 rounded-full transition-colors duration-200
-        ${checked ? 'bg-blue-600' : 'bg-gray-300'}
+        ${checked ? "bg-blue-600" : "bg-gray-300"}
       `}
-		>
-			<motion.span
-				className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow"
-				animate={{ x: checked ? 24 : 0 }}
-				transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-			/>
-		</button>
-	);
+    >
+      <motion.span
+        className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow"
+        animate={{ x: checked ? 24 : 0 }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+      />
+    </button>
+  );
 }
 ```
 
@@ -134,22 +134,22 @@ function Toggle({ checked, onChange }) {
 **Framer Motion layout animations**:
 
 ```tsx
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from "framer-motion";
 
 function PageTransition({ children, key }) {
-	return (
-		<AnimatePresence mode="wait">
-			<motion.div
-				key={key}
-				initial={{ opacity: 0, y: 20 }}
-				animate={{ opacity: 1, y: 0 }}
-				exit={{ opacity: 0, y: -20 }}
-				transition={{ duration: 0.3 }}
-			>
-				{children}
-			</motion.div>
-		</AnimatePresence>
-	);
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={key}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
 }
 ```
 
@@ -159,34 +159,34 @@ function PageTransition({ children, key }) {
 
 ```tsx
 function RippleButton({ children, onClick }) {
-	const [ripples, setRipples] = useState([]);
+  const [ripples, setRipples] = useState([]);
 
-	const handleClick = (e) => {
-		const rect = e.currentTarget.getBoundingClientRect();
-		const ripple = {
-			x: e.clientX - rect.left,
-			y: e.clientY - rect.top,
-			id: Date.now(),
-		};
-		setRipples((prev) => [...prev, ripple]);
-		setTimeout(() => {
-			setRipples((prev) => prev.filter((r) => r.id !== ripple.id));
-		}, 600);
-		onClick?.(e);
-	};
+  const handleClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ripple = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+      id: Date.now(),
+    };
+    setRipples((prev) => [...prev, ripple]);
+    setTimeout(() => {
+      setRipples((prev) => prev.filter((r) => r.id !== ripple.id));
+    }, 600);
+    onClick?.(e);
+  };
 
-	return (
-		<button onClick={handleClick} className="relative overflow-hidden">
-			{children}
-			{ripples.map((ripple) => (
-				<span
-					key={ripple.id}
-					className="absolute bg-white/30 rounded-full animate-ripple"
-					style={{ left: ripple.x, top: ripple.y }}
-				/>
-			))}
-		</button>
-	);
+  return (
+    <button onClick={handleClick} className="relative overflow-hidden">
+      {children}
+      {ripples.map((ripple) => (
+        <span
+          key={ripple.id}
+          className="absolute bg-white/30 rounded-full animate-ripple"
+          style={{ left: ripple.x, top: ripple.y }}
+        />
+      ))}
+    </button>
+  );
 }
 ```
 
@@ -196,20 +196,20 @@ function RippleButton({ children, onClick }) {
 
 ```tsx
 function SwipeCard({ children, onDismiss }) {
-	return (
-		<motion.div
-			drag="x"
-			dragConstraints={{ left: 0, right: 0 }}
-			onDragEnd={(_, info) => {
-				if (Math.abs(info.offset.x) > 100) {
-					onDismiss();
-				}
-			}}
-			className="cursor-grab active:cursor-grabbing"
-		>
-			{children}
-		</motion.div>
-	);
+  return (
+    <motion.div
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      onDragEnd={(_, info) => {
+        if (Math.abs(info.offset.x) > 100) {
+          onDismiss();
+        }
+      }}
+      className="cursor-grab active:cursor-grabbing"
+    >
+      {children}
+    </motion.div>
+  );
 }
 ```
 
@@ -219,40 +219,40 @@ function SwipeCard({ children, onDismiss }) {
 
 ```css
 @keyframes fadeIn {
-	from {
-		opacity: 0;
-		transform: translateY(10px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse {
-	0%,
-	100% {
-		opacity: 1;
-	}
-	50% {
-		opacity: 0.5;
-	}
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes spin {
-	to {
-		transform: rotate(360deg);
-	}
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-fadeIn {
-	animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 .animate-pulse {
-	animation: pulse 2s ease-in-out infinite;
+  animation: pulse 2s ease-in-out infinite;
 }
 .animate-spin {
-	animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
 }
 ```
 
@@ -260,14 +260,14 @@ function SwipeCard({ children, onDismiss }) {
 
 ```css
 .card {
-	transition:
-		transform 0.2s ease-out,
-		box-shadow 0.2s ease-out;
+  transition:
+    transform 0.2s ease-out,
+    box-shadow 0.2s ease-out;
 }
 
 .card:hover {
-	transform: translateY(-4px);
-	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 ```
 
@@ -276,26 +276,26 @@ function SwipeCard({ children, onDismiss }) {
 ```css
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
-	*,
-	*::before,
-	*::after {
-		animation-duration: 0.01ms !important;
-		animation-iteration-count: 1 !important;
-		transition-duration: 0.01ms !important;
-	}
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 ```
 
 ```tsx
 function AnimatedComponent() {
-	const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-	return (
-		<motion.div
-			animate={{ opacity: 1 }}
-			transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
-		/>
-	);
+  return (
+    <motion.div
+      animate={{ opacity: 1 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
+    />
+  );
 }
 ```
 

@@ -49,6 +49,7 @@ dev = [
     "basedpyright>=1.28.0",
     "pytest-benchmark>=5.1.0",
     "ruff>=0.11.4",
+    "bandit>=1.9.0",
 ]
 
 [build-system]

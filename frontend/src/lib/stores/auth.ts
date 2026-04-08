@@ -1,8 +1,8 @@
 // Centralized auth store for UI and tests.
 // Methods are thin wrappers around authApi, and state updates are deterministic for tests.
 
-import { writable } from 'svelte/store';
-import { authApi } from '$lib/api/auth';
+import { writable } from "svelte/store";
+import { authApi } from "$lib/api/auth";
 
 export type User = { id: string; email?: string } | null;
 

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { get } from 'svelte/store';
-import { events } from './events';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { get } from "svelte/store";
+import { events } from "./events";
 
 interface MockEventSourceInstance {
 	close: ReturnType<typeof vi.fn>;
@@ -9,7 +9,7 @@ interface MockEventSourceInstance {
 	onerror: ((this: EventSource, ev: Event) => void) | null;
 }
 
-describe('Events Store', () => {
+describe("Events Store", () => {
 	const originalEventSource = globalThis.EventSource;
 	let instances: MockEventSourceInstance[] = [];
 
@@ -49,65 +49,65 @@ describe('Events Store', () => {
 		globalThis.EventSource = originalEventSource;
 	});
 
-	describe('connect', () => {
-		it('starts in disconnected state', () => {
+	describe("connect", () => {
+		it("starts in disconnected state", () => {
 			const state = get(events);
-			expect(state.status).toBe('disconnected');
+			expect(state.status).toBe("disconnected");
 		});
 
-		it('connects to campaign event stream', () => {
+		it("connects to campaign event stream", () => {
 			mockEventSource();
 
-			events.connect('campaign-123');
+			events.connect("campaign-123");
 
-			expect(get(events).status).toBe('connecting');
+			expect(get(events).status).toBe("connecting");
 			expect(instances.length).toBe(1);
 		});
 
-		it('sets status to connected on open', () => {
+		it("sets status to connected on open", () => {
 			mockEventSource();
 
-			events.connect('campaign-123');
-			expect(get(events).status).toBe('connecting');
+			events.connect("campaign-123");
+			expect(get(events).status).toBe("connecting");
 
 			instances[0].onopen!.call({} as EventSource, {} as Event);
 
-			expect(get(events).status).toBe('connected');
+			expect(get(events).status).toBe("connected");
 		});
 	});
 
-	describe('disconnect', () => {
-		it('closes event source and resets state', () => {
+	describe("disconnect", () => {
+		it("closes event source and resets state", () => {
 			mockEventSource();
 
-			events.connect('campaign-123');
+			events.connect("campaign-123");
 			instances[0].onopen!.call({} as EventSource, {} as Event);
 
 			events.disconnect();
 
 			expect(instances[0].close).toHaveBeenCalled();
-			expect(get(events).status).toBe('disconnected');
+			expect(get(events).status).toBe("disconnected");
 		});
 
-		it('clears reconnect timeout when disconnecting', async () => {
+		it("clears reconnect timeout when disconnecting", async () => {
 			mockEventSource();
 
-			events.connect('campaign-123');
+			events.connect("campaign-123");
 			instances[0].onerror!.call({} as EventSource, {} as Event);
 
 			events.disconnect();
 
 			vi.advanceTimersByTime(5000);
 
-			expect(get(events).status).toBe('disconnected');
+			expect(get(events).status).toBe("disconnected");
 		});
 	});
 
-	describe('race condition prevention', () => {
-		it('does not reconnect when disconnect closes the event source (onerror triggered by close)', async () => {
+	describe("race condition prevention", () => {
+		it("does not reconnect when disconnect closes the event source (onerror triggered by close)", async () => {
 			mockEventSource();
 
-			events.connect('campaign-123');
+			events.connect("campaign-123");
 			expect(instances.length).toBe(1);
 
 			// When disconnect() closes eventSource, it triggers onerror.
@@ -123,13 +123,13 @@ describe('Events Store', () => {
 
 			// Still only 1 instance - no reconnection happened.
 			expect(instances.length).toBe(1);
-			expect(get(events).status).toBe('disconnected');
+			expect(get(events).status).toBe("disconnected");
 		});
 
-		it('does not reconnect when onerror fires concurrently with disconnect', async () => {
+		it("does not reconnect when onerror fires concurrently with disconnect", async () => {
 			mockEventSource();
 
-			events.connect('campaign-123');
+			events.connect("campaign-123");
 			expect(instances.length).toBe(1);
 
 			// Simulate onerror firing at the same moment as disconnect.
@@ -144,15 +144,15 @@ describe('Events Store', () => {
 
 			// No new EventSource should be created.
 			expect(instances.length).toBe(1);
-			expect(get(events).status).toBe('disconnected');
+			expect(get(events).status).toBe("disconnected");
 		});
 	});
 
-	describe('reconnection', () => {
-		it('reconnects with exponential backoff on error', async () => {
+	describe("reconnection", () => {
+		it("reconnects with exponential backoff on error", async () => {
 			mockEventSource();
 
-			events.connect('campaign-123');
+			events.connect("campaign-123");
 
 			expect(instances.length).toBe(1);
 
@@ -165,10 +165,10 @@ describe('Events Store', () => {
 			expect(instances.length).toBe(2);
 		});
 
-		it('stops reconnecting after max attempts', async () => {
+		it("stops reconnecting after max attempts", async () => {
 			mockEventSource();
 
-			events.connect('campaign-123');
+			events.connect("campaign-123");
 			expect(instances.length).toBe(1);
 
 			// Simulate 5 reconnection cycles: error → reconnect → error → ...
@@ -203,7 +203,7 @@ describe('Events Store', () => {
 
 			// After 5 attempts, status should be 'error' and no more reconnects.
 			expect(get(events).reconnectAttempts).toBe(5);
-			expect(get(events).status).toBe('error');
+			expect(get(events).status).toBe("error");
 		});
 	});
 });
