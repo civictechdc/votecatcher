@@ -541,7 +541,6 @@ location.reload();
 
 - [Running Locally](running-locally.md) - Detailed setup guide
 - [Demo Walkthrough](demo-walkthrough.md) - Demo script and checklist
-- [SPEC.md](../openspec/SPEC.md#appendix-b-configuration) - Technical specification
 
 ---
 

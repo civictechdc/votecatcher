@@ -192,17 +192,65 @@ dast:
 
 # Run code duplication analysis
 duplication:
-    jscpd backend/app/ frontend-svelt/src/ --min-lines 5 --min-tokens 50 --threshold 5 --reporters html
+    jscpd backend/app/ --min-lines 5 --min-tokens 50 --threshold 5 --reporters html
+
+duplication-svelte:
+    cd frontend-svelt && npx fallow dupes
+
+duplication-all:
+    just duplication
+    just duplication-svelte
 
 # Run complexity analysis
 complexity:
-    cd backend && uv run radon cc app/ -a -nb
-    cd backend && uv run radon mi app/ -nb
+    cd backend && uv run radon cc app/ -a -nb --total-average
+    cd backend && uv run radon mi app/ -s -nc
+
+complexity-check:
+    cd backend && uv run radon cc app/ -nc -n B
 
 # Run dead code analysis
 dead-code:
-    cd backend && uv run vulture app/ --min-confidence 80 --format json > vulture-report.json
-    cd frontend-svelt && bunx ts-prune --json > ts-prune-report.json
+    cd backend && uv run vulture app/ vulture-whitelist.py --format json > vulture-report.json
+
+dead-code-svelte:
+    cd frontend-svelt && npx fallow dead-code
+
+# Run fallow analysis on frontend (Next.js)
+fallow:
+    cd frontend && npx fallow
+
+# Run fallow dead-code only (frontend — Next.js)
+fallow-dead-code:
+    cd frontend && npx fallow dead-code
+
+# Run fallow duplication only (frontend — Next.js)
+fallow-dupes:
+    cd frontend && npx fallow dupes
+
+# Run fallow complexity only (frontend — Next.js)
+fallow-health:
+    cd frontend && npx fallow health
+
+# Run fallow audit for PRs (frontend — Next.js)
+fallow-audit:
+    cd frontend && npx fallow audit --base main
+
+# Run fallow analysis on frontend-svelt (SvelteKit)
+fallow-svelte:
+    cd frontend-svelt && npx fallow
+
+fallow-svelte-dead-code:
+    cd frontend-svelt && npx fallow dead-code
+
+fallow-svelte-dupes:
+    cd frontend-svelt && npx fallow dupes
+
+fallow-svelte-health:
+    cd frontend-svelt && npx fallow health
+
+fallow-svelte-audit:
+    cd frontend-svelt && npx fallow audit --base main
 
 # Run frontend tests
 test-frontend:
@@ -258,6 +306,8 @@ ci-sim:
     just security-scan
     @echo "=== Docker Lint ==="
     just docker-lint
+    @echo "=== Docs Validation ==="
+    just validate-docs
     @echo "=== CI Simulation Complete ==="
 
 # Install CI/security tools (idempotent — skips if already installed)
@@ -277,6 +327,10 @@ install-tools:
 install-hooks:
     pre-commit install
     pre-commit install --hook-type pre-push
+
+# Validate documentation accuracy
+validate-docs:
+    @bash scripts/validate-docs.sh
 
 # Sync Makefile from justfile (for Unix users)
 sync-makefile:

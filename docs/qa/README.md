@@ -23,7 +23,7 @@ Quality baseline data and tech debt tracking for VoteCatcher.
 
 ## Current Thresholds
 
-- Backend `--cov-fail-under`: 64%
+- Backend `--cov-fail-under`: 36% (enforced minimum; baseline measurement is 64%)
 - Frontend coverage: blocked (needs `@vitest/coverage-v8`)
 - Code duplication threshold: 4%
 - SAST: baseline mode (flag new findings only)

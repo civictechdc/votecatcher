@@ -64,6 +64,7 @@
 		"drizzle-kit": "^0.31.8",
 		"drizzle-orm": "^0.45.1",
 		"eslint": "^9.39.2",
+		"fallow": "^2.11.0",
 		"eslint-plugin-storybook": "^10.2.8",
 		"eslint-plugin-svelte": "^3.14.0",
 		"globals": "^17.3.0",

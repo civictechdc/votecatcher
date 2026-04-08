@@ -4,8 +4,6 @@
 
 Automate ballot signature recognition and validation. Put powerful organizing tools in the hands of grassroots campaigns. Democracy should be accessible to everyone.
 
-> 📖 **For detailed operations and development workflows, see [OPERATIONS.md](OPERATIONS.md)**
-
 ## Features
 
 - **Signature Validation**: High-accuracy signature triaging using multimodal LLMs integrated with voter files
@@ -149,14 +147,25 @@ votecatcher/
 │   │   └── app.html         # HTML template
 │   └── tests/               # Test suites
 │
+├── app/                     # Root-level API assets
+│   └── api/
+│       └── voter_spec.json  # Voter data field specification
+│
+├── scripts/                 # Build and maintenance scripts
+│   ├── just-to-make.py      # Generate Makefile from justfile
+│   ├── validate-docs.sh     # Documentation accuracy validation
+│   └── init-dev-db.sql      # Initialize development database
+│
+├── supabase/                # Supabase configuration
+│   ├── functions/           # Edge Functions (Deno)
+│   └── migrations/          # Database migrations
+│
+├── sqlite/                  # SQLite database files (development)
+│
 ├── docs/                    # Documentation
 │   ├── architecture/        # C4 diagrams & ADRs
 │   ├── development/         # Dev guides
 │   └── running-locally.md   # Detailed setup
-│
-└── openspec/               # Technical specification
-    ├── SPEC.md             # Implementation blueprint
-    └── PROGRESS.md         # Implementation progress
 ```
 
 ## Documentation
@@ -166,7 +175,7 @@ votecatcher/
 - **[Configuration Modes](docs/configuration-modes.md)** - All configuration options (production, dev, simulation, demo)
 - **[Running Locally](docs/running-locally.md)** - Detailed setup and configuration
 - **[Demo Walkthrough](docs/demo-walkthrough.md)** - Demo script for presentations
-- **[Deployment Guide](docs/deployment/)** - Production deployment (coming soon)
+- **[Deployment Guide](docs/deployment/docker-compose-deployment.md)** - Production deployment with Docker Compose
 
 ### For Developers
 
@@ -174,11 +183,6 @@ votecatcher/
 - **[C4 Diagrams](docs/architecture/)** - Context, containers, components
 - **[Architecture Decisions](docs/architecture/decisions/)** - ADRs
 - **[API Specification](backend/openapi.yaml)** - OpenAPI 3.1 spec
-
-### Technical Specification
-
-- **[SPEC.md](openspec/SPEC.md)** - Complete technical specification
-- **[PROGRESS.md](openspec/PROGRESS.md)** - Implementation status
 
 ## Testing
 
@@ -280,8 +284,6 @@ bun run build
 - **CORS Protection**: Configured for production origins
 - **Input Validation**: All inputs validated via Pydantic
 
-See [Security Scanning](openspec/SPEC.md#appendix-c-security-scanning) for details on automated security checks.
-
 ## Roadmap
 
 - [x] Phase 1: Stability - Worker tests, metrics API, error handling
@@ -304,9 +306,7 @@ The core MVP is feature-complete with:
 - Enhanced DevContainer with Bun and Go support
 - Docker Compose override with development database
 - Security test recipe in justfile
-- Comprehensive OPERATIONS.md documentation
-
-See [OPERATIONS.md](OPERATIONS.md) for complete operational guidance and current status.
+- Documentation accuracy validation with pre-commit hooks
 
 ## Contributing
 

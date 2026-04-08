@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api/client';
-	import { Navbar } from '$lib/components/layout';
 	import { LoadingSpinner } from '$lib/components/ui';
 
 	const STATUS_TIMEOUT_MS = 5000;
@@ -51,7 +50,6 @@
 			Could not reach the backend. Some features may be unavailable.
 		</div>
 	{/if}
-	<Navbar user={null} />
 	<main>
 		{@render children()}
 	</main>

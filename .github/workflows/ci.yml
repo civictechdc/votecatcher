@@ -26,11 +26,20 @@ jobs:
       - name: Check JS lockfile
         run: cd frontend-svelt && bun install --frozen-lockfile
 
+  docs-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate documentation accuracy
+        run: bash scripts/validate-docs.sh
+
   changes:
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
+      frontend-next: ${{ steps.filter.outputs.frontend-next }}
+      frontend-svelt: ${{ steps.filter.outputs.frontend-svelt }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -43,6 +52,10 @@ jobs:
             frontend:
               - 'frontend-svelt/**'
               - 'justfile'
+            frontend-next:
+              - 'frontend/**'
+            frontend-svelt:
+              - 'frontend-svelt/**'
 
   backend-lint:
     needs: [changes]
@@ -212,9 +225,43 @@ jobs:
       - name: Run frontend tests
         run: just test-frontend
 
+  frontend-fallow:
+    needs: [changes]
+    if: needs.changes.outputs.frontend-next == 'true' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Run fallow audit
+        run: cd frontend && npx fallow audit --base origin/main --format compact
+
+  frontend-svelt-fallow:
+    needs: [changes]
+    if: needs.changes.outputs.frontend-svelt == 'true' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: cd frontend-svelt && bun install --frozen-lockfile
+
+      - name: Run fallow audit
+        run: cd frontend-svelt && npx fallow audit --base origin/main --format compact
+
   docker-build:
-    needs: [backend-test, frontend-test, security-test-backend, dast-smoke]
-    if: (needs.backend-test.result == 'success' && needs.frontend-test.result == 'success' && needs.dast-smoke.result == 'success') || github.ref == 'refs/heads/main'
+    needs: [backend-test, frontend-test, frontend-fallow, frontend-svelt-fallow, security-test-backend, dast-smoke]
+    if: (needs.backend-test.result == 'success' && needs.frontend-test.result == 'success' && needs.frontend-fallow.result == 'success' && needs.frontend-svelt-fallow.result == 'success' && needs.dast-smoke.result == 'success') || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

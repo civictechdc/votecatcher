@@ -13,9 +13,10 @@ Before starting the demo:
 
 1. **Start the application:**
    ```bash
-   docker-compose up -d
-   # OR
-   cd backend && uv run fastapi dev &
+   # Terminal 1: Backend
+   cd backend && uv run python main.py --env local
+
+   # Terminal 2: Frontend
    cd frontend-svelt && bun run dev
    ```
 
@@ -27,7 +28,7 @@ Before starting the demo:
    ```
 
 3. **Verify services are running:**
-   - Backend: http://localhost:8000/health
+   - Backend: http://localhost:8080/health
    - Frontend: http://localhost:5173
 
 4. **Reset to clean state:**

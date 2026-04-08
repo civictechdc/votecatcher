@@ -1,10 +1,7 @@
 <script lang="ts">
-	import { Navbar } from '$lib/components/layout';
 	import { ArrowRight, Users, Shield, Flag } from 'lucide-svelte';
 	import DevFlags from '$lib/components/DevFlags.svelte';
 	import { getCTADestination } from '$lib/utils/mode';
-
-	let user = $state(null);
 
 	interface Props {
 		isDemoMode: boolean;
@@ -16,7 +13,6 @@
 </script>
 
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50">
-	<Navbar {user} />
 	<div class="container mx-auto px-4 py-16">
 		<div class="mx-auto max-w-4xl text-center">
 			<div class="mb-6 flex items-center justify-center gap-3">

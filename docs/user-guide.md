@@ -16,19 +16,22 @@ Votecatcher automates petition signature verification using LLM-based OCR and fu
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/votecatcher.git
+git clone https://github.com/civictechdc/votecatcher.git
 cd votecatcher
 
-# Copy environment template
-cp .env.example .env
+# Backend setup
+cd backend
+uv sync --dev
+cp .env.example .env.local
+# Edit .env.local — add your API key or enable simulation mode
+uv run alembic upgrade head
+uv run python main.py --env local
 
-# Edit .env and add your API keys
-# OPENAI_API_KEY=sk-...
-# GEMINI_API_KEY=...
-# MISTRAL_API_KEY=...
-
-# Start all services
-docker-compose up -d
+# Frontend setup (in another terminal)
+cd frontend-svelt
+bun install
+cp .env.example .env.local
+bun run dev
 
 # Access the application
 open http://localhost:5173
@@ -39,14 +42,14 @@ open http://localhost:5173
 ```bash
 # Backend
 cd backend
-cp .env.example .env
-# Edit .env with your settings
-uv sync
-uv run fastapi dev
+cp .env.example .env.local
+# Edit .env.local with your settings (see Configuration Modes doc)
+uv sync --dev
+uv run python main.py --env local
 
 # Frontend (in another terminal)
 cd frontend-svelt
-cp .env.example .env
+cp .env.example .env.local
 bun install
 bun run dev
 
@@ -221,10 +224,10 @@ uv run alembic upgrade head
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `sqlite:///./votecatcher.db` |
-| `OPENAI_API_KEY` | OpenAI API key | Required for OpenAI OCR |
-| `GEMINI_API_KEY` | Google Gemini API key | Required for Gemini OCR |
-| `MISTRAL_API_KEY` | Mistral API key | Required for Mistral OCR |
+| `DATABASE_URL` | Database connection string | `sqlite+aiosqlite:///./dev.db` |
+| `OCR_PROVIDER_NAME` | OCR service provider (`open_ai`, `gemini_ai`, `mistral_ai`) | `open_ai` |
+| `OCR_PROVIDER_MODEL` | Model to use | `gpt-4o-mini` |
+| `OCR_PROVIDER_API_KEY` | API key for provider | Required (unless simulation mode) |
 | `DEMO_MODE` | Enable demo features | `false` |
 | `DEMO_RESET` | Allow demo data reset | `false` |
 
@@ -232,16 +235,16 @@ uv run alembic upgrade head
 
 | Flag | Description |
 |------|-------------|
-| `demo_mode` | Enable demo mode features |
-| `demo_reset` | Allow resetting demo data |
-| `load_prebaked_results` | Skip OCR/matching, load pre-computed results |
-| `debug_logging` | Enable verbose logging |
+| `FEATURE_ENABLE_SIMULATION` | Enable simulation mode (mock OCR, no API key needed) |
+| `FEATURE_ENABLE_DEBUG_MODE` | Enable verbose debug logging |
+| `FEATURE_DEMO_MODE` | Enable demo mode features |
+| `FEATURE_DEMO_RESET` | Allow resetting demo data |
 
 ## Support
 
 - **Documentation:** [docs/](../docs/)
 - **Issues:** [GitHub Issues](https://github.com/your-org/votecatcher/issues)
-- **API Reference:** [http://localhost:8000/docs](http://localhost:8000/docs) (when running locally)
+- **API Reference:** [http://localhost:8080/docs](http://localhost:8080/docs) (when running locally)
 
 ## License
 

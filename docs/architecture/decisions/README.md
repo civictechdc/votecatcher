@@ -13,8 +13,8 @@ An ADR is a document that captures an important architectural decision along wit
 | 0001 | [Record Architecture Decisions](./0001-record-architecture-decisions.md) | Accepted | 2026-03-08 |
 | 0002 | [Use FastAPI BackgroundTasks for Job Orchestration](./0002-use-fastapi-background-tasks.md) | Accepted | 2026-03-08 |
 | 0003 | [Use SSE for Real-time Updates](./0003-use-sse-for-realtime-updates.md) | Accepted | 2026-03-08 |
-| 0004 | [Hybrid Matching Strategy](./0004-hybrid-matching-strategy.md) | Accepted | 2026-03-08 |
-| 0005 | [OpenAPI-Generated TypeScript Client](./0005-openapi-generated-client.md) | Accepted | 2026-03-08 |
+| 0004 | [Python Linting and Type Checking Configuration](./0004-python-linting-and-type-checking.md) | Accepted | 2026-03-08 |
+| 0005 | [Dual SSE Architecture](./0005-dual-sse-architecture.md) | Accepted | 2026-03-25 |
 
 ## Creating a New ADR
 

@@ -29,12 +29,12 @@ bun install
 cp .env.example .env.local
 
 # 4. Run development servers
-# Terminal 1: cd backend && uv run fastapi dev app/api.py
+# Terminal 1: cd backend && uv run python main.py --env local
 # Terminal 2: cd frontend-svelt && bun run dev
 
 # 5. Access
 # Frontend: http://localhost:5173
-# Backend API: http://localhost:8000/docs
+# Backend API: http://localhost:8080/docs
 ```
 
 ## Prerequisites
@@ -77,18 +77,6 @@ bun run typecheck           # Type check
 bun run lint               # Lint
 bun run lint:fix           # Format
 bun run test               # Tests
-```
-
-**Frontend (Next.js — `frontend/`):**
-```bash
-cd frontend
-npx next lint              # Lint
-npx next build             # Type check + build
-npx fallow                 # Dead code, duplication, complexity
-npx fallow dead-code       # Unused files, exports, dependencies
-npx fallow dupes           # Code duplication analysis
-npx fallow health          # Complexity hotspots
-npx fallow audit --base main  # PR quality gate
 ```
 
 ### 4. Commit and Push
@@ -134,12 +122,6 @@ votecatcher/
 │   │   └── ...
 │   └── tests/           # Test suites
 │
-├── frontend/             # Next.js frontend (React)
-│   ├── app/             # Pages and API routes
-│   ├── components/      # UI components (shadcn/ui)
-│   ├── lib/             # Shared utilities
-│   └── ...
-│
 ├── frontend-svelt/       # SvelteKit frontend
 │   ├── src/
 │   │   ├── routes/      # Pages
@@ -147,13 +129,28 @@ votecatcher/
 │   │   └── ...
 │   └── tests/           # Test suites
 │
-└── docs/                # Documentation
+├── app/                  # Root-level API assets
+│   └── api/
+│       └── voter_spec.json  # Voter data field specification
+│
+├── scripts/              # Build and maintenance scripts
+│   ├── just-to-make.py      # Generate Makefile from justfile
+│   ├── validate-docs.sh     # Documentation accuracy validation
+│   ├── verify-fix-results.sh # Verify match result fixes
+│   └── init-dev-db.sql      # Initialize development database
+│
+├── supabase/             # Supabase configuration
+│   ├── functions/        # Edge Functions (Deno)
+│   └── migrations/       # Database migrations
+│
+├── sqlite/               # SQLite database files (development)
+│
+└── docs/                 # Documentation
 ```
 
 ## Getting Help
 
-- Check [PROGRESS.md](../../openspec/PROGRESS.md) for current status
-- Review [SPEC.md](../../openspec/SPEC.md) for architecture details
+- Review [Architecture](../architecture/README.md) for system design
 - Check existing tests for patterns
 - Open an issue for bugs or questions
 
@@ -168,10 +165,10 @@ votecatcher/
 
 ### Frontend Static Analysis (fallow)
 
-[Fallow](https://github.com/fallow-rs/fallow) is a Rust-based static analyzer for TypeScript/JavaScript that finds unused code, duplication, and complexity hotspots. It runs in the `frontend/` (Next.js) directory.
+[Fallow](https://github.com/fallow-rs/fallow) is a Rust-based static analyzer for TypeScript/JavaScript that finds unused code, duplication, and complexity hotspots. It runs in the `frontend-svelt/` directory.
 
 ```bash
-cd frontend
+cd frontend-svelt
 npx fallow                  # Full analysis (dead code + dupes + complexity)
 npx fallow dead-code        # Unused files, exports, dependencies
 npx fallow dupes            # Code duplication detection
@@ -179,7 +176,7 @@ npx fallow health --score   # Complexity analysis with project health score
 npx fallow audit --base main  # PR quality gate (pass/warn/fail)
 ```
 
-Configuration: `frontend/.fallowrc.json` (see [fallow config docs](https://docs.fallow.tools/configuration/overview))
+Configuration: `frontend-svelt/.fallowrc.json` (see [fallow config docs](https://docs.fallow.tools/configuration/overview))
 
 ### Backend Quality (Python)
 

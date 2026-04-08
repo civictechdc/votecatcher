@@ -14,6 +14,7 @@ Legacy issues discovered during baseline capture. Tracked separately from active
 | `dependencies.md` | osv-scanner, Trivy, license scan | Phase 0 + Renovate |
 | `dockerfile.md` | hadolint, checkov | Phase 0 + infra changes |
 | `sast-findings.md` | semgrep, bandit | Phase 0 + PR reviews |
+| `frontend-type-errors.md` | svelte-check, vitest | Phase 13 + review |
 
 ## Cleanup Priority
 

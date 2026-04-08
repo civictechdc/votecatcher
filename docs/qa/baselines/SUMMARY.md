@@ -44,7 +44,7 @@
 
 ## Initial Thresholds (for Phase 1)
 
-- Backend `--cov-fail-under`: 64%
+- Backend `--cov-fail-under`: 36% (enforced minimum in pyproject.toml; baseline measurement was 64%)
 - Frontend coverage: BLOCKED (needs `@vitest/coverage-v8`)
 - jscpd threshold: 4% (current 3.37% + buffer)
 - semgrep: Use `--baseline-commit` mode to only flag new findings

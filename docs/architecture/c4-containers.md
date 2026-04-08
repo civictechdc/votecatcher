@@ -16,7 +16,7 @@ graph TB
         end
 
         subgraph Backend Container
-            FastAPI[FastAPI Application<br/>Python 3.12+]
+            FastAPI[FastAPI Application<br/>Python 3.13]
             BGTask[Background Tasks<br/>OCR Polling, Matching]
         end
 
@@ -55,10 +55,10 @@ graph TB
 
 | Container | Technology | Description |
 |-----------|------------|-------------|
-| **SvelteKit Application** | SvelteKit, TypeScript, Tailwind CSS | Single-page application providing UI for campaign management, file upload, job monitoring, and results visualization |
-| **FastAPI Application** | Python 3.12+, FastAPI, SQLModel | REST API server handling all business logic, file processing, job orchestration |
+| **SvelteKit Application** | SvelteKit, TypeScript, Tailwind CSS | Frontend providing UI for campaign management, file upload, job monitoring, and results visualization |
+| **FastAPI Application** | Python 3.13, FastAPI, SQLModel | REST API server handling all business logic, file processing, job orchestration |
 | **Background Tasks** | FastAPI BackgroundTasks | Async polling of LLM batch APIs, fuzzy matching execution |
-| **PostgreSQL Database** | PostgreSQL (or SQLite for dev) | Persistent storage for campaigns, jobs, OCR results, match results, sessions |
+| **PostgreSQL Database** | PostgreSQL 16 (or SQLite for dev) | Persistent storage for campaigns, jobs, OCR results, match results, sessions |
 | **File Storage** | Local filesystem | Storage for uploaded petitions, cropped images, voter lists |
 
 ## Communication Protocols
@@ -73,24 +73,26 @@ graph TB
 
 ## Deployment
 
-All containers run on a single VPS:
+All containers run on a single VPS via Docker Compose:
 
 ```
 ┌─────────────────────────────────────────┐
-│  VPS (Ubuntu 22.04, $5-20/mo)          │
+│  VPS (Ubuntu 22.04+, $5-20/mo)         │
 │                                         │
 │  ┌─────────────┐  ┌─────────────────┐  │
-│  │ Caddy       │  │ PostgreSQL      │  │
-│  │ (Reverse    │  │ (Database)      │  │
-│  │  Proxy)     │  └─────────────────┘  │
-│  └──────┬──────┘                       │
+│  │ Backend     │  │ Frontend        │  │
+│  │ (FastAPI    │  │ (SvelteKit)     │  │
+│  │  :8080)     │  │  :5173          │  │
+│  └──────┬──────┘  └─────────────────┘  │
 │         │                               │
 │  ┌──────┴──────────────────────────┐   │
-│  │ Docker Compose                  │   │
-│  │  ├── Frontend (static files)    │   │
-│  │  ├── Backend (uvicorn)          │   │
-│  │  └── Volumes (file storage)     │   │
+│  │ PostgreSQL (:5432)              │   │
+│  │ Data volume: postgres_data      │   │
 │  └─────────────────────────────────┘   │
+│                                         │
+│  No reverse proxy in development mode.  │
+│  For production, add Caddy or Nginx     │
+│  for TLS termination.                   │
 └─────────────────────────────────────────┘
 ```
 

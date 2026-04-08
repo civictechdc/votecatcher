@@ -1,7 +1,7 @@
 # DO NOT EDIT - Generated from justfile by scripts/just-to-make.py
 # To update: python scripts/just-to-make.py > Makefile
 
-.PHONY: default install dev dev-backend dev-frontend test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration security-test dast duplication complexity dead-code test-frontend sbom license-check edge-functions bundle-size benchmark ci-sim install-tools install-hooks sync-makefile
+.PHONY: default install dev dev-backend dev-frontend test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration security-test dast duplication duplication-svelte duplication-all complexity complexity-check dead-code dead-code-svelte fallow fallow-dead-code fallow-dupes fallow-health fallow-audit fallow-svelte fallow-svelte-dead-code fallow-svelte-dupes fallow-svelte-health fallow-svelte-audit test-frontend sbom license-check edge-functions bundle-size benchmark ci-sim install-tools install-hooks validate-docs sync-makefile
 
 default:
 	@just --list
@@ -149,15 +149,57 @@ dast:
 	nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -json -o nuclei-results.json
 
 duplication:
-	jscpd backend/app/ frontend-svelt/src/ --min-lines 5 --min-tokens 50 --threshold 5 --reporters html
+	jscpd backend/app/ --min-lines 5 --min-tokens 50 --threshold 5 --reporters html
+
+duplication-svelte:
+	cd frontend-svelt && npx fallow dupes
+
+duplication-all:
+	just duplication
+	just duplication-svelte
 
 complexity:
-	cd backend && uv run radon cc app/ -a -nb
-	cd backend && uv run radon mi app/ -nb
+	cd backend && uv run radon cc app/ -a -nb --total-average
+	cd backend && uv run radon mi app/ -s -nc
+
+complexity-check:
+	cd backend && uv run radon cc app/ -nc -n B
 
 dead-code:
-	cd backend && uv run vulture app/ --min-confidence 80 --format json > vulture-report.json
-	cd frontend-svelt && bunx ts-prune --json > ts-prune-report.json
+	cd backend && uv run vulture app/ vulture-whitelist.py --format json > vulture-report.json
+
+dead-code-svelte:
+	cd frontend-svelt && npx fallow dead-code
+
+fallow:
+	cd frontend && npx fallow
+
+fallow-dead-code:
+	cd frontend && npx fallow dead-code
+
+fallow-dupes:
+	cd frontend && npx fallow dupes
+
+fallow-health:
+	cd frontend && npx fallow health
+
+fallow-audit:
+	cd frontend && npx fallow audit --base main
+
+fallow-svelte:
+	cd frontend-svelt && npx fallow
+
+fallow-svelte-dead-code:
+	cd frontend-svelt && npx fallow dead-code
+
+fallow-svelte-dupes:
+	cd frontend-svelt && npx fallow dupes
+
+fallow-svelte-health:
+	cd frontend-svelt && npx fallow health
+
+fallow-svelte-audit:
+	cd frontend-svelt && npx fallow audit --base main
 
 test-frontend:
 	cd frontend-svelt && bun run test:unit
@@ -206,6 +248,8 @@ ci-sim:
 	just security-scan
 	@echo "=== Docker Lint ==="
 	just docker-lint
+	@echo "=== Docs Validation ==="
+	just validate-docs
 	@echo "=== CI Simulation Complete ==="
 
 install-tools:
@@ -223,6 +267,9 @@ install-tools:
 install-hooks:
 	pre-commit install
 	pre-commit install --hook-type pre-push
+
+validate-docs:
+	@bash scripts/validate-docs.sh
 
 sync-makefile:
 	@python scripts/just-to-make.py > Makefile
