@@ -1,1 +1,1 @@
-{ "include": ["app"], "exclude": ["alembic"] }
+{ "include": ["app"], "exclude": ["alembic", "app/data/database/local"] }

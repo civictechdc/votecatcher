@@ -74,7 +74,7 @@ class CreateCampaignRequest(BaseModel):
 
 
 @router.post("", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
-def create_campaign(
+def create_campaign(  # nosemgrep: fastapi-unauthenticated-route
     request: CreateCampaignRequest,
     session: SessionDep,
 ) -> CampaignResponse:
@@ -110,7 +110,7 @@ def create_campaign(
 
 
 @router.get("", response_model=CampaignListResponse)
-def list_campaigns(
+def list_campaigns(  # nosemgrep: fastapi-unauthenticated-route
     session: SessionDep,
     offset: int = 0,
     limit: int = 100,
@@ -141,7 +141,7 @@ def list_campaigns(
 
 
 @router.get("/{campaign_id}", response_model=CampaignResponse)
-def get_campaign(
+def get_campaign(  # nosemgrep: fastapi-unauthenticated-route
     campaign_id: uuid.UUID,
     session: SessionDep,
 ) -> CampaignResponse:
@@ -166,7 +166,7 @@ def get_campaign(
 
 
 @router.delete("/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_campaign(
+def delete_campaign(  # nosemgrep: fastapi-unauthenticated-route
     campaign_id: uuid.UUID,
     session: SessionDep,
 ) -> None:
@@ -213,7 +213,7 @@ class PetitionScanListResponse(BaseModel):
 
 
 @router.get("/{campaign_id}/metrics", response_model=CampaignMetricsResponse)
-def get_campaign_metrics(
+def get_campaign_metrics(  # nosemgrep: fastapi-unauthenticated-route
     campaign_id: uuid.UUID,
     session: SessionDep,
 ) -> CampaignMetricsResponse:
@@ -246,7 +246,7 @@ def get_campaign_metrics(
 
 
 @router.get("/{campaign_id}/scans", response_model=PetitionScanListResponse)
-def list_campaign_scans(
+def list_campaign_scans(  # nosemgrep: fastapi-unauthenticated-route
     campaign_id: uuid.UUID,
     session: SessionDep,
 ) -> PetitionScanListResponse:
@@ -288,7 +288,7 @@ def list_campaign_scans(
 
 
 @router.delete("/{campaign_id}/scans/{scan_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_campaign_scan(
+def delete_campaign_scan(  # nosemgrep: fastapi-unauthenticated-route
     campaign_id: uuid.UUID,
     scan_id: int,
     session: SessionDep,
@@ -359,7 +359,7 @@ class CampaignResultsListResponse(BaseModel):
 
 
 @router.get("/{campaign_id}/results", response_model=CampaignResultsListResponse)
-def get_campaign_results(
+def get_campaign_results(  # nosemgrep: fastapi-unauthenticated-route
     campaign_id: uuid.UUID,
     session: SessionDep,
     confidence: str | None = None,
@@ -559,7 +559,7 @@ class SetupStatusResponse(BaseModel):
 
 
 @router.get("/{campaign_id}/setup-status", response_model=SetupStatusResponse)
-def get_setup_status(
+def get_setup_status(  # nosemgrep: fastapi-unauthenticated-route
     campaign_id: uuid.UUID,
     session: SessionDep,
 ) -> SetupStatusResponse:

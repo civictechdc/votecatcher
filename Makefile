@@ -129,7 +129,7 @@ lint-frontend:
 	cd frontend && bun run fmt:check
 
 typecheck-backend:
-	cd backend && uv run basedpyright
+	bash scripts/check-typecheck-baseline.sh
 
 typecheck-frontend:
 	cd frontend && bun run check

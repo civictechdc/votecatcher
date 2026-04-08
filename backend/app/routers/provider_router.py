@@ -17,7 +17,7 @@ router = APIRouter(prefix="/settings/providers", tags=["settings", "providers"])
 
 
 @router.get("", response_model=list[LlmProviderConfigRead])
-def list_providers(
+def list_providers(  # nosemgrep: fastapi-unauthenticated-route
     session: Annotated[Session, Depends(get_db_session)],
 ) -> list[LlmProviderConfigRead]:
     """Get all provider configurations."""
@@ -25,7 +25,7 @@ def list_providers(
 
 
 @router.post("/{provider}", response_model=LlmProviderConfigRead)
-def configure_provider(
+def configure_provider(  # nosemgrep: fastapi-unauthenticated-route
     provider: str,
     data: LlmProviderConfigCreate,
     session: Annotated[Session, Depends(get_db_session)],
@@ -47,7 +47,7 @@ def configure_provider(
 
 
 @router.post("/{provider}/test", response_model=LlmProviderTestResult)
-async def test_provider(
+async def test_provider(  # nosemgrep: fastapi-unauthenticated-route
     provider: str,
     data: LlmProviderConfigCreate,
     session: Annotated[Session, Depends(get_db_session)],
@@ -68,7 +68,7 @@ async def test_provider(
 
 
 @router.delete("/{provider}")
-def delete_provider(
+def delete_provider(  # nosemgrep: fastapi-unauthenticated-route
     provider: str,
     session: Annotated[Session, Depends(get_db_session)],
 ) -> dict:

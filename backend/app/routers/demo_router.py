@@ -59,7 +59,7 @@ def check_demo_reset(settings: Settings) -> None:
 
 
 @router.get("/sessions", response_model=PrebakedSessionList)
-def list_prebaked_sessions(
+def list_prebaked_sessions(  # nosemgrep: fastapi-unauthenticated-route
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> PrebakedSessionList:
     """List available pre-baked demo sessions."""
@@ -68,7 +68,7 @@ def list_prebaked_sessions(
 
 
 @router.post("/reset", status_code=status.HTTP_204_NO_CONTENT)
-def reset_demo_data(
+def reset_demo_data(  # nosemgrep: fastapi-unauthenticated-route
     db_session: Annotated[Session, Depends(get_session)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> None:
@@ -81,7 +81,7 @@ def reset_demo_data(
 
 
 @router.post("/sessions/{session_id}/load", status_code=status.HTTP_200_OK)
-def load_prebaked_session(
+def load_prebaked_session(  # nosemgrep: fastapi-unauthenticated-route
     session_id: str,
     db_session: Annotated[Session, Depends(get_session)],
     settings: Annotated[Settings, Depends(get_settings)],

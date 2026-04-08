@@ -30,3 +30,4 @@ storybook-static
 # Generated API client
 src/lib/api/generated/
 playwright-report/
+.fallow/

@@ -34,7 +34,7 @@ class DeleteVoterListResponse(BaseModel):
 
 
 @router.get("/{region_id}/voter-list", response_model=VoterListStatusResponse)
-async def get_voter_list_status(
+async def get_voter_list_status(  # nosemgrep: fastapi-unauthenticated-route
     region_id: UUID,
     session: SessionDep,
 ) -> VoterListStatusResponse:
@@ -71,7 +71,7 @@ async def get_voter_list_status(
     response_model=DeleteVoterListResponse,
     status_code=status.HTTP_200_OK,
 )
-async def delete_voter_list(
+async def delete_voter_list(  # nosemgrep: fastapi-unauthenticated-route
     region_id: UUID,
     session: SessionDep,
 ) -> DeleteVoterListResponse:

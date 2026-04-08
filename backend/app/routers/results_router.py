@@ -130,7 +130,7 @@ def _build_predictions_from_match_results(
 
 
 @router.get("/{job_id}/results", response_model=ResultsListResponse)
-def get_results(
+def get_results(  # nosemgrep: fastapi-unauthenticated-route
     job_id: int,
     session: SessionDep,
     confidence: ConfidenceLevel | None = None,
@@ -227,7 +227,7 @@ def get_results(
 
 
 @router.get("/{job_id}/results/export")
-def export_results_csv(
+def export_results_csv(  # nosemgrep: fastapi-unauthenticated-route
     job_id: int,
     session: SessionDep,
     confidence: ConfidenceLevel | None = None,

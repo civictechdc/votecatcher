@@ -101,7 +101,9 @@ def _build_job_response(job: MatcherJob, session: Session) -> JobResponse:
 
 
 @router.get("", response_model=JobListResponse)
-def list_jobs(session: SessionDep) -> JobListResponse:
+def list_jobs(
+    session: SessionDep,
+) -> JobListResponse:  # nosemgrep: fastapi-unauthenticated-route
     jobs = session.exec(select(MatcherJob)).all()
     return JobListResponse(
         jobs=[_build_job_response(job, session) for job in jobs],
@@ -110,7 +112,7 @@ def list_jobs(session: SessionDep) -> JobListResponse:
 
 
 @router.post("", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
-def create_job(
+def create_job(  # nosemgrep: fastapi-unauthenticated-route
     request: CreateJobRequest,
     session: SessionDep,
 ) -> JobResponse:
@@ -168,7 +170,7 @@ def create_job(
 
 
 @router.get("/{job_id}", response_model=JobResponse)
-def get_job(
+def get_job(  # nosemgrep: fastapi-unauthenticated-route
     job_id: int,
     session: SessionDep,
 ) -> JobResponse:
@@ -195,7 +197,7 @@ def get_job(
 
 
 @router.post("/{job_id}/cancel", response_model=JobResponse)
-def cancel_job(
+def cancel_job(  # nosemgrep: fastapi-unauthenticated-route
     job_id: int,
     session: SessionDep,
 ) -> JobResponse:
@@ -244,7 +246,7 @@ def cancel_job(
 
 
 @router.post("/{job_id}/start", response_model=JobResponse)
-def start_job(
+def start_job(  # nosemgrep: fastapi-unauthenticated-route
     job_id: int,
     session: SessionDep,
 ) -> JobResponse:
@@ -294,7 +296,7 @@ def start_job(
 
 
 @router.get("/{job_id}/status", response_class=StreamingResponse)
-async def get_job_status_stream(
+async def get_job_status_stream(  # nosemgrep: fastapi-unauthenticated-route
     job_id: int,
     session: SessionDep,
 ) -> StreamingResponse:

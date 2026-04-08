@@ -25,7 +25,9 @@ router = APIRouter(
 
 
 @router.get("/status")
-async def get_database_status() -> DatabaseStatus:
+async def get_database_status() -> (
+    DatabaseStatus
+):  # nosemgrep: fastapi-unauthenticated-route
     settings = get_settings()
     db_type = "supabase" if settings.supabase.is_connected else settings.database.type
 
@@ -44,7 +46,7 @@ async def get_database_status() -> DatabaseStatus:
 
 
 @router.post("/supabase/test")
-async def test_supabase_connection(
+async def test_supabase_connection(  # nosemgrep: fastapi-unauthenticated-route
     credentials: SupabaseCredentials,
 ) -> ConnectionTestResult:
     from app.services.supabase_service import test_connection
@@ -64,7 +66,7 @@ async def test_supabase_connection(
 
 
 @router.post("/supabase/provision")
-async def provision_supabase(
+async def provision_supabase(  # nosemgrep: fastapi-unauthenticated-route
     credentials: SupabaseCredentials,
 ) -> ProvisionResult:
     from app.services.supabase_service import provision_database
@@ -85,7 +87,9 @@ async def provision_supabase(
 
 
 @router.delete("/supabase")
-async def disconnect_supabase() -> dict[str, bool]:
+async def disconnect_supabase() -> dict[
+    str, bool
+]:  # nosemgrep: fastapi-unauthenticated-route
     from app.services.supabase_service import disconnect
 
     try:

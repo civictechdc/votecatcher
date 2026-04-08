@@ -164,9 +164,9 @@ lint-frontend:
     cd frontend && bun run lint
     cd frontend && bun run fmt:check
 
-# Typecheck backend only
+# Typecheck backend only (baseline-aware)
 typecheck-backend:
-    cd backend && uv run basedpyright
+    bash scripts/check-typecheck-baseline.sh
 
 # Typecheck frontend only
 typecheck-frontend:

@@ -166,6 +166,8 @@ supabase/.env
 !.zed/settings.json
 !.vscode/settings.json
 !.vscode/extensions.json
+!backend/typecheck-baseline.json
+!frontend/.fallowrc.json
 
 # Upload directories
 uploads/

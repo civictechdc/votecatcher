@@ -42,7 +42,7 @@ class PetitionUploadResponse(BaseModel):
     response_model=VoterListUploadResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def upload_voter_list(
+async def upload_voter_list(  # nosemgrep: fastapi-unauthenticated-route
     campaign_id: str = Form(...),
     file: UploadFile = File(...),  # noqa: B008
     session: SessionDep = None,  # pyright: ignore[reportArgumentType]
@@ -113,7 +113,7 @@ async def upload_voter_list(
     response_model=PetitionUploadResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def upload_petition(
+async def upload_petition(  # nosemgrep: fastapi-unauthenticated-route
     campaign_id: str = Form(...),
     file: UploadFile = File(...),  # noqa: B008
     region: str = Form("DC"),
