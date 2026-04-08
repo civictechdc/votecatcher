@@ -121,7 +121,7 @@ async def disconnect() -> None:
         {
             "SUPABASE_URL": "",
             "SUPABASE_SERVICE_KEY": "",
-            "SUPABASE_DB_PASSWORD": "",
+            "SUPABASE_DB_PASSWORD": "",  # nosec B105
         },
         remove_empty=True,
     )

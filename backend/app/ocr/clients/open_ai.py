@@ -186,8 +186,10 @@ class OpenAiOcrClient:
         campaign_id: str = batch.metadata["campaign_id"]
         task_id: str = batch.metadata["task_id"]
 
-        assert campaign_id, "No campaign has been associated with this batch"
-        assert task_id, "No task has been associated with this batch"
+        if not campaign_id:
+            raise ValueError("No campaign has been associated with this batch")
+        if not task_id:
+            raise ValueError("No task has been associated with this batch")
 
         completed_at: int | None = (
             batch.cancelled_at

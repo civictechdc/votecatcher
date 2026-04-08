@@ -27,6 +27,7 @@
 		"fmt:check": "oxfmt --check --ignore-path .oxfmtignore"
 	},
 	"dependencies": {
+		"@tailwindcss/forms": "^0.5.11",
 		"clsx": "^2.1.1",
 		"lucide-svelte": "^0.576.0",
 		"postgres": "^3.4.9",
