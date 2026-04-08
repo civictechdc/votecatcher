@@ -1,7 +1,7 @@
 # DO NOT EDIT - Generated from justfile by scripts/just-to-make.py
 # To update: python scripts/just-to-make.py > Makefile
 
-.PHONY: default install dev dev-backend dev-frontend test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration security-test dast duplication duplication-svelte duplication-all complexity complexity-check dead-code dead-code-svelte fallow fallow-dead-code fallow-dupes fallow-health fallow-audit fallow-svelte fallow-svelte-dead-code fallow-svelte-dupes fallow-svelte-health fallow-svelte-audit test-frontend sbom license-check edge-functions bundle-size benchmark ci-sim install-tools install-hooks validate-docs sync-makefile
+.PHONY: default install dev dev-backend dev-frontend test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration security-test dast duplication duplication-svelte duplication-all complexity complexity-check dead-code dead-code-svelte fallow-svelte fallow-svelte-dead-code fallow-svelte-dupes fallow-svelte-health fallow-svelte-audit test-frontend sbom license-check edge-functions bundle-size benchmark ci-sim install-tools install-hooks validate-docs sync-makefile
 
 default:
 	@just --list
@@ -170,21 +170,6 @@ dead-code:
 
 dead-code-svelte:
 	cd frontend-svelt && npx fallow dead-code
-
-fallow:
-	cd frontend && npx fallow
-
-fallow-dead-code:
-	cd frontend && npx fallow dead-code
-
-fallow-dupes:
-	cd frontend && npx fallow dupes
-
-fallow-health:
-	cd frontend && npx fallow health
-
-fallow-audit:
-	cd frontend && npx fallow audit --base main
 
 fallow-svelte:
 	cd frontend-svelt && npx fallow

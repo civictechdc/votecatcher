@@ -216,26 +216,6 @@ dead-code:
 dead-code-svelte:
     cd frontend-svelt && npx fallow dead-code
 
-# Run fallow analysis on frontend (Next.js)
-fallow:
-    cd frontend && npx fallow
-
-# Run fallow dead-code only (frontend — Next.js)
-fallow-dead-code:
-    cd frontend && npx fallow dead-code
-
-# Run fallow duplication only (frontend — Next.js)
-fallow-dupes:
-    cd frontend && npx fallow dupes
-
-# Run fallow complexity only (frontend — Next.js)
-fallow-health:
-    cd frontend && npx fallow health
-
-# Run fallow audit for PRs (frontend — Next.js)
-fallow-audit:
-    cd frontend && npx fallow audit --base main
-
 # Run fallow analysis on frontend-svelt (SvelteKit)
 fallow-svelte:
     cd frontend-svelt && npx fallow

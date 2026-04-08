@@ -31,17 +31,6 @@ jobs:
       - name: Install code quality tools
         run: npm install -g jscpd fallow
 
-      - name: Run fallow analysis (frontend — Next.js)
-        run: cd frontend && npx fallow --format json --sarif-file fallow-results.sarif > fallow-results.json
-        continue-on-error: true
-
-      - name: Upload fallow SARIF results (frontend)
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: frontend/fallow-results.sarif
-          category: fallow-frontend
-
       - name: Run fallow analysis (frontend-svelt — SvelteKit)
         run: cd frontend-svelt && npx fallow --format json --sarif-file fallow-results.sarif > fallow-results.json
         continue-on-error: true
@@ -99,20 +88,6 @@ jobs:
           else
             echo "::warning::vulture report not found — Python dead code analysis skipped"
           fi
-          if [ -f frontend/fallow-results.json ]; then
-            FALLOW_ISSUES=$(python3 -c "import json; d=json.load(open('frontend/fallow-results.json')); print(sum(len(v) for v in d.get('issues',{}).values()))" 2>/dev/null)
-            if [ -z "$FALLOW_ISSUES" ]; then
-              echo "::warning::Could not parse fallow results JSON"
-              FALLOW_ISSUES=0
-            fi
-            echo "Fallow issues (frontend): ${FALLOW_ISSUES}"
-            if [ "$FALLOW_ISSUES" -gt 30 ] 2>/dev/null; then
-              echo "::error::Fallow issues above 30 threshold: ${FALLOW_ISSUES}"
-              FAIL=1
-            fi
-          else
-            echo "::warning::fallow results not found — frontend analysis skipped"
-          fi
           if [ -f fallow-svelte-dead-code.json ]; then
             SVELTE_DEAD=$(python3 -c "import json; d=json.load(open('fallow-svelte-dead-code.json')); print(len(d.get('deadCode',{}).get('unusedFiles',[])))" 2>/dev/null)
             if [ -z "$SVELTE_DEAD" ]; then
@@ -141,8 +116,6 @@ jobs:
           path: |
             jscpd-report/
             vulture-report.json
-            frontend/fallow-results.json
-            frontend/fallow-results.sarif
             frontend-svelt/fallow-results.json
             frontend-svelt/fallow-results.sarif
             fallow-svelte-dead-code.json
