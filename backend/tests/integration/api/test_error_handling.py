@@ -8,7 +8,10 @@ class TestErrorHandlingCORS:
 
     def test_404_error_includes_cors_headers(self, client: TestClient):
         """Should include CORS headers on 404 errors."""
-        response = client.get("/api/campaigns/00000000-0000-0000-0000-000000000000")
+        response = client.get(
+            "/api/campaigns/00000000-0000-0000-0000-000000000000",
+            headers={"Origin": "http://localhost"},
+        )
 
         assert response.status_code == 404
         assert "access-control-allow-origin" in response.headers
@@ -20,7 +23,9 @@ class TestErrorHandlingCORS:
 
     def test_422_validation_error_includes_cors_headers(self, client: TestClient):
         """Should include CORS headers on validation errors."""
-        response = client.post("/api/campaigns", json={})
+        response = client.post(
+            "/api/campaigns", json={}, headers={"Origin": "http://localhost"}
+        )
 
         assert response.status_code == 422
         assert "access-control-allow-origin" in response.headers

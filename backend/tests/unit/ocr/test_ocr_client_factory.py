@@ -13,6 +13,15 @@ from app.ocr.ocr_client_factory import (
     _extract_openai,
     resolve_provider_config,
 )
+from app.settings import get_settings
+
+
+@pytest.fixture(autouse=True)
+def _clear_settings_cache():
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
 
 FAKE_BASE64 = "iVBORw0KGgo="
 
@@ -214,7 +223,7 @@ class TestExtractOpenAI:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = json.dumps(MOCK_OCR_RESPONSE)
 
-        with patch("app.ocr.ocr_client_factory.AsyncOpenAI") as mock_client_cls:
+        with patch("openai.AsyncOpenAI") as mock_client_cls:
             mock_client = MagicMock()
             mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
             mock_client_cls.return_value = mock_client
@@ -234,7 +243,7 @@ class TestExtractOpenAI:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = None
 
-        with patch("app.ocr.ocr_client_factory.AsyncOpenAI") as mock_client_cls:
+        with patch("openai.AsyncOpenAI") as mock_client_cls:
             mock_client = MagicMock()
             mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
             mock_client_cls.return_value = mock_client
@@ -300,7 +309,7 @@ class TestExtractMistral:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = json.dumps(MOCK_OCR_RESPONSE)
 
-        with patch("mistralai.Mistral") as mock_mistral_cls:
+        with patch("mistralai.client.Mistral") as mock_mistral_cls:
             mock_client = MagicMock()
             mock_client.chat.complete_async = AsyncMock(return_value=mock_response)
             mock_mistral_cls.return_value = mock_client
@@ -320,7 +329,7 @@ class TestExtractMistral:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = None
 
-        with patch("mistralai.Mistral") as mock_mistral_cls:
+        with patch("mistralai.client.Mistral") as mock_mistral_cls:
             mock_client = MagicMock()
             mock_client.chat.complete_async = AsyncMock(return_value=mock_response)
             mock_mistral_cls.return_value = mock_client
@@ -340,7 +349,7 @@ class TestExtractMistral:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = ["not", "a", "string"]
 
-        with patch("mistralai.Mistral") as mock_mistral_cls:
+        with patch("mistralai.client.Mistral") as mock_mistral_cls:
             mock_client = MagicMock()
             mock_client.chat.complete_async = AsyncMock(return_value=mock_response)
             mock_mistral_cls.return_value = mock_client

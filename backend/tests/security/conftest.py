@@ -1,7 +1,6 @@
 import asyncio
 import uuid
 from collections.abc import Generator
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -37,12 +36,7 @@ def client(session: Session) -> Generator[TestClient]:
     async def _noop():
         await asyncio.sleep(0)
 
-    with (
-        patch("app.api.init_db"),
-        patch("app.api.job_worker.start_worker", return_value=_noop()),
-        patch("app.api.job_worker.stop_worker", new_callable=AsyncMock),
-        TestClient(app) as test_client,
-    ):
+    with TestClient(app) as test_client:
         yield test_client
 
     app.dependency_overrides.clear()

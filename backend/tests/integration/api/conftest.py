@@ -49,7 +49,6 @@ def client(session: Session):
 
     clear_engine_cache()
     with (
-        patch("app.api.init_db"),
         patch("app.persistence.session.get_engine", return_value=test_engine),
         TestClient(app) as test_client,
     ):
