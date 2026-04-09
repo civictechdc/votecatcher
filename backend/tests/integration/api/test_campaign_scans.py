@@ -36,7 +36,7 @@ class TestListCampaignScansPhase11:
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 1
-        assert data["scans"][0]["file_size"] == 1024
+        assert data["scans"][0]["fileSize"] == 1024
 
     def test_list_scans_file_size_null_when_missing(
         self, client: TestClient, test_campaign: Campaign, session: Session
@@ -55,7 +55,7 @@ class TestListCampaignScansPhase11:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["scans"][0]["file_size"] is None
+        assert data["scans"][0]["fileSize"] is None
 
 
 class TestDeleteCampaignScan:

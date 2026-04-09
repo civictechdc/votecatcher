@@ -89,7 +89,7 @@ class TestResetDataEndpoint:
             response = client.post("/config/reset-data")
             assert response.status_code == 200
             data = response.json()
-            assert "deleted_counts" in data
+            assert "deletedCounts" in data
         finally:
             app.dependency_overrides.clear()
 

@@ -47,13 +47,13 @@ class TestCreateJob:
         assert response.status_code == 201
         data = response.json()
 
-        assert "job_id" in data
+        assert "jobId" in data
         assert data["status"] == "NOT_STARTED"
-        assert data["provider_name"] == "openai"
-        assert data["provider_model"] == "gpt-4o"
-        assert "created_at" in data
+        assert data["providerName"] == "openai"
+        assert data["providerModel"] == "gpt-4o"
+        assert "createdAt" in data
 
-        job = session.get(MatcherJob, data["job_id"])
+        job = session.get(MatcherJob, data["jobId"])
         assert job is not None
         assert job.campaign_id == test_campaign.id
         assert job.provider_name == "openai"
@@ -83,8 +83,8 @@ class TestCreateJob:
         assert response.status_code == 201
         data = response.json()
 
-        assert data["provider_name"] is None
-        assert data["provider_model"] is None
+        assert data["providerName"] is None
+        assert data["providerModel"] is None
 
     def test_create_job_no_petition_scans(
         self, client: TestClient, test_campaign: Campaign, session: Session
@@ -122,9 +122,9 @@ class TestGetJob:
         assert response.status_code == 200
         data = response.json()
 
-        assert data["job_id"] == job.id
+        assert data["jobId"] == job.id
         assert data["status"] == "NOT_STARTED"
-        assert "created_at" in data
+        assert "createdAt" in data
 
     def test_get_job_not_found(self, client: TestClient):
         """Should return 404 for non-existent job."""
@@ -274,7 +274,7 @@ class TestListCampaignScans:
 
         assert "scans" in data
         assert data["total"] == 2
-        filenames = [s["original_filename"] for s in data["scans"]]
+        filenames = [s["originalFilename"] for s in data["scans"]]
         assert "petition1.pdf" in filenames
         assert "petition2.pdf" in filenames
 
@@ -384,7 +384,7 @@ class TestJobOrphanStatus:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["is_orphaned"] is False
+        assert data["isOrphaned"] is False
 
     def test_job_orphaned_in_ocr_started(
         self, client: TestClient, test_campaign: Campaign, session: Session
@@ -402,7 +402,7 @@ class TestJobOrphanStatus:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["is_orphaned"] is True
+        assert data["isOrphaned"] is True
 
     def test_job_orphaned_in_matching(
         self, client: TestClient, test_campaign: Campaign, session: Session
@@ -420,7 +420,7 @@ class TestJobOrphanStatus:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["is_orphaned"] is True
+        assert data["isOrphaned"] is True
 
     def test_job_not_orphaned_in_completed(
         self, client: TestClient, test_campaign: Campaign, session: Session
@@ -438,4 +438,4 @@ class TestJobOrphanStatus:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["is_orphaned"] is False
+        assert data["isOrphaned"] is False

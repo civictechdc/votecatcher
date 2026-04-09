@@ -20,7 +20,7 @@ class TestSetupStatusAPI:
         assert response.status_code == 200
         data = response.json()
 
-        assert data["voter_list"]["exists"] is False
+        assert data["voterList"]["exists"] is False
         assert data["petitions"]["exists"] is False
         assert data["jobs"]["total"] == 0
         assert data["state"] == "empty"
@@ -56,10 +56,10 @@ class TestSetupStatusAPI:
         assert status_response.status_code == 200
         status_data = status_response.json()
 
-        assert status_data["voter_list"]["exists"] is True, (
-            "voter_list.exists should be True after upload"
+        assert status_data["voterList"]["exists"] is True, (
+            "voterList.exists should be True after upload"
         )
-        assert status_data["voter_list"]["row_count"] == 1
+        assert status_data["voterList"]["rowCount"] == 1
         assert status_data["state"] == "voter_only"
 
     def test_setup_status_after_petition_upload(
@@ -81,5 +81,5 @@ class TestSetupStatusAPI:
         status_data = status_response.json()
 
         assert status_data["petitions"]["exists"] is True
-        assert status_data["petitions"]["file_count"] == 1
+        assert status_data["petitions"]["fileCount"] == 1
         assert status_data["state"] == "petitions_only"

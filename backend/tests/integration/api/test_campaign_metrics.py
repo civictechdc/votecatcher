@@ -26,13 +26,13 @@ class TestCampaignMetricsAPI:
         assert response.status_code == 200
         data = response.json()
 
-        assert data["total_signatures"] == 0
+        assert data["totalSignatures"] == 0
         assert data["processed"] == 0
-        assert data["high_confidence"] == 0
-        assert data["medium_confidence"] == 0
-        assert data["low_confidence"] == 0
-        assert data["progress_percentage"] == 0.0
-        assert data["last_job"] is None
+        assert data["highConfidence"] == 0
+        assert data["mediumConfidence"] == 0
+        assert data["lowConfidence"] == 0
+        assert data["progressPercentage"] == 0.0
+        assert data["lastJob"] is None
 
     def test_metrics_campaign_not_found(self, client: TestClient):
         """Should return 404 for non-existent campaign."""
@@ -128,14 +128,14 @@ class TestCampaignMetricsAPI:
         assert response.status_code == 200
         data = response.json()
         # 8 OCR results exist, 6 have matches
-        assert data["total_signatures"] == 8
+        assert data["totalSignatures"] == 8
         assert data["processed"] == 6
-        assert data["high_confidence"] == 3
-        assert data["medium_confidence"] == 2
-        assert data["low_confidence"] == 1
-        assert data["progress_percentage"] == 75.0  # 6/8 = 75%
-        assert data["last_job"]["id"] == job.id
-        assert data["last_job"]["status"] == "MATCHING_COMPLETED"
+        assert data["highConfidence"] == 3
+        assert data["mediumConfidence"] == 2
+        assert data["lowConfidence"] == 1
+        assert data["progressPercentage"] == 75.0  # 6/8 = 75%
+        assert data["lastJob"]["id"] == job.id
+        assert data["lastJob"]["status"] == "MATCHING_COMPLETED"
 
     def test_metrics_deduplicated_by_ocr_result_with_multi_entry_ocr(
         self,
@@ -218,12 +218,12 @@ class TestCampaignMetricsAPI:
         assert response.status_code == 200
         data = response.json()
         # 6 OCR results (individual signatures), all 6 have matches
-        assert data["total_signatures"] == 6
+        assert data["totalSignatures"] == 6
         assert data["processed"] == 6
-        assert data["high_confidence"] == 4
-        assert data["medium_confidence"] == 2
-        assert data["low_confidence"] == 0
-        assert data["progress_percentage"] == 100.0  # 6/6 = 100%
+        assert data["highConfidence"] == 4
+        assert data["mediumConfidence"] == 2
+        assert data["lowConfidence"] == 0
+        assert data["progressPercentage"] == 100.0  # 6/6 = 100%
 
     def test_metrics_deduplicated_with_duplicate_match_results(
         self,
@@ -295,9 +295,9 @@ class TestCampaignMetricsAPI:
         assert response.status_code == 200
         data = response.json()
         # 1 OCR result = 1 unique match
-        assert data["total_signatures"] == 1
+        assert data["totalSignatures"] == 1
         assert data["processed"] == 1
-        assert data["high_confidence"] == 1
+        assert data["highConfidence"] == 1
 
     def test_metrics_voter_list_count(
         self, client: TestClient, test_campaign: Campaign, session: Session
@@ -308,8 +308,8 @@ class TestCampaignMetricsAPI:
         data = response.json()
 
         # Initially no voter list uploaded
-        assert "voter_list_count" in data
-        assert data["voter_list_count"] is None
+        assert "voterListCount" in data
+        assert data["voterListCount"] is None
 
         # Add registered voters for the campaign's region
         for i in range(100):
@@ -325,7 +325,7 @@ class TestCampaignMetricsAPI:
         response = client.get(f"/api/campaigns/{test_campaign.id}/metrics")
         assert response.status_code == 200
         data = response.json()
-        assert data["voter_list_count"] == 100
+        assert data["voterListCount"] == 100
 
     def test_metrics_voter_list_count_different_region(
         self, client: TestClient, test_campaign: Campaign, session: Session, test_region
@@ -366,4 +366,4 @@ class TestCampaignMetricsAPI:
         response = client.get(f"/api/campaigns/{test_campaign.id}/metrics")
         assert response.status_code == 200
         data = response.json()
-        assert data["voter_list_count"] == 50
+        assert data["voterListCount"] == 50

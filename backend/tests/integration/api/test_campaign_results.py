@@ -29,7 +29,7 @@ class TestCampaignResultsAPI:
         assert data["results"] == []
         assert data["total"] == 0
         assert data["page"] == 1
-        assert data["page_size"] == 50
+        assert data["pageSize"] == 50
 
     def test_results_campaign_not_found(self, client: TestClient):
         """Should return 404 for non-existent campaign."""
@@ -121,14 +121,14 @@ class TestCampaignResultsAPI:
         assert len(data["results"]) == 1
 
         result = data["results"][0]
-        assert result["extracted_name"] == "John Smith"
-        assert result["extracted_address"] == "123 Main St"
-        assert result["job_id"] == job.id
+        assert result["extractedName"] == "John Smith"
+        assert result["extractedAddress"] == "123 Main St"
+        assert result["jobId"] == job.id
 
         assert len(result["predictions"]) == 1
         prediction = result["predictions"][0]
-        assert prediction["voter_name"] == "John Small"
-        assert prediction["voter_address"] == "456 Oak Ave, DC, DC, 20001"
+        assert prediction["voterName"] == "John Small"
+        assert prediction["voterAddress"] == "456 Oak Ave, DC, DC, 20001"
         assert prediction["confidence"] == "HIGH"
 
     def test_results_pagination(
@@ -201,7 +201,7 @@ class TestCampaignResultsAPI:
         assert data["total"] == 5
         assert len(data["results"]) == 2
         assert data["page"] == 1
-        assert data["page_size"] == 2
+        assert data["pageSize"] == 2
 
         response2 = client.get(
             f"/api/campaigns/{test_campaign.id}/results",

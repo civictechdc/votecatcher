@@ -37,11 +37,11 @@ def test_create_session_success(client: TestClient, test_campaign):
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "Test Session"
-    assert data["campaign_id"] == str(test_campaign.id)
-    assert data["session_type"] == "REAL"
-    assert data["snapshot_data"] == {"job_ids": [1, 2], "crop_ids": [3, 4]}
+    assert data["campaignId"] == str(test_campaign.id)
+    assert data["sessionType"] == "REAL"
+    assert data["snapshotData"] == {"job_ids": [1, 2], "crop_ids": [3, 4]}
     assert "id" in data
-    assert "created_at" in data
+    assert "createdAt" in data
 
 
 def test_create_demo_session(client: TestClient):
@@ -57,7 +57,7 @@ def test_create_demo_session(client: TestClient):
 
     assert response.status_code == 201
     data = response.json()
-    assert data["session_type"] == "DEMO"
+    assert data["sessionType"] == "DEMO"
 
 
 def test_list_sessions(client: TestClient, session: Session):
@@ -103,7 +103,7 @@ def test_list_sessions_filter_by_type(client: TestClient, session: Session):
     data = response.json()
     assert data["total"] >= 1
     for s in data["sessions"]:
-        assert s["session_type"] == "DEMO"
+        assert s["sessionType"] == "DEMO"
     session_names = [s["name"] for s in data["sessions"]]
     assert "Unique Demo Session Filter Test" in session_names
 
@@ -125,7 +125,7 @@ def test_get_session_success(client: TestClient, session: Session):
     data = response.json()
     assert data["id"] == new_session.id
     assert data["name"] == "Get Test Session"
-    assert data["snapshot_data"] == {"key": "value"}
+    assert data["snapshotData"] == {"key": "value"}
 
 
 def test_get_session_not_found(client: TestClient):

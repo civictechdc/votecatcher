@@ -24,32 +24,32 @@ class TestBatchThresholdAndFeatureFlag:
         assert settings.always_batch_ocr is True, "Default value should be True"
 
     def test_config_router_includes_always_batch_flag(self):
-        """Verify FeatureFlagsResponse includes alwaysBatchOcr field."""
+        """Verify FeatureFlagsResponse includes always_batch_ocr field."""
         from app.routers.config_router import FeatureFlagsResponse
 
         field_names = FeatureFlagsResponse.model_fields.keys()
-        assert "alwaysBatchOcr" in field_names, (
-            "FeatureFlagsResponse should include alwaysBatchOcr"
+        assert "always_batch_ocr" in field_names, (
+            "FeatureFlagsResponse should include always_batch_ocr"
         )
 
     def test_config_endpoint_returns_always_batch_flag(self):
-        """Verify /config/features endpoint returns alwaysBatchOcr value."""
+        """Verify /config/features endpoint returns always_batch_ocr value."""
         from app.routers.config_router import get_features
         from app.settings import get_settings
 
         settings = get_settings()
         response = get_features(settings)
 
-        assert hasattr(response, "alwaysBatchOcr")
-        assert response.alwaysBatchOcr == settings.always_batch_ocr
+        assert hasattr(response, "always_batch_ocr")
+        assert response.always_batch_ocr == settings.always_batch_ocr
 
     def test_settings_endpoint_returns_always_batch_flag(self):
-        """Verify /config/settings endpoint returns alwaysBatchOcr in features."""
+        """Verify /config/settings endpoint returns always_batch_ocr in features."""
         from app.routers.config_router import get_settings_endpoint
         from app.settings import get_settings
 
         settings = get_settings()
         response = get_settings_endpoint(settings)
 
-        assert hasattr(response.features, "alwaysBatchOcr")
-        assert response.features.alwaysBatchOcr == settings.always_batch_ocr
+        assert hasattr(response.features, "always_batch_ocr")
+        assert response.features.always_batch_ocr == settings.always_batch_ocr
