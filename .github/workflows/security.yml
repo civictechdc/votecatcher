@@ -133,7 +133,9 @@ jobs:
           cd "${GITHUB_WORKSPACE}" && cd frontend && bun install --frozen-lockfile
 
       - name: Install osv-scanner
-        run: go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+        run: |
+          go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
       - name: Run SCA scan
         run: just sca

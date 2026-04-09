@@ -107,7 +107,7 @@ sast-pr:
 	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --baseline-commit origin/main --json -o semgrep-pr.json backend/ frontend/src/
 
 sca:
-	osv-scanner scan --lockfile=backend/uv.lock --lockfile=frontend/bun.lock
+	osv-scanner scan --lockfile=uv:backend/uv.lock --lockfile=frontend/bun.lock
 	trivy fs --severity CRITICAL,HIGH --scanners vuln,license --format json --output trivy-results.json .
 
 container-scan:
@@ -205,6 +205,7 @@ edge-functions:
 	cd supabase/functions && deno check */index.ts
 
 bundle-size:
+	cd frontend && test -f .env || cp .env.example .env
 	cd frontend && bun run build
 	@echo "=== Bundle size ===" && find frontend/.svelte-kit/output/client -name "*.js" -exec du -ch {} + | tail -1
 
