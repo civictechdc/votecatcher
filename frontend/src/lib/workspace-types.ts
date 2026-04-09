@@ -14,9 +14,10 @@ export interface UploadResult {
 	files?: UploadFileMeta[];
 }
 
-export enum MatchValueFormatKeys {
-	MATCH_SCORE = "match_score",
-}
+export const MatchValueFormatKeys = {
+	MATCH_SCORE: "match_score",
+} as const;
+export type MatchValueFormatKeys = (typeof MatchValueFormatKeys)[keyof typeof MatchValueFormatKeys];
 
 export type MatchValueTypes = string | number | boolean | null;
 export interface MatchRow {

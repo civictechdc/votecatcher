@@ -15,9 +15,9 @@ export class ResultsApi {
 		confidence?: string | null;
 	}): Promise<ResultListResponse> {
 		const query: Record<string, unknown> = {};
-		if (params.page !== undefined) query.page = params.page;
-		if (params.pageSize !== undefined) query.page_size = params.pageSize;
-		if (params.confidence) query.confidence = params.confidence;
+		if (params.page !== undefined) query["page"] = params.page;
+		if (params.pageSize !== undefined) query["page_size"] = params.pageSize;
+		if (params.confidence) query["confidence"] = params.confidence;
 		const qs = new URLSearchParams(
 			Object.entries(query).map(([k, v]) => [k, String(v)]),
 		).toString();
@@ -33,7 +33,7 @@ export class ResultsApi {
 		confidence?: string | null;
 	}): Promise<Blob> {
 		const query: Record<string, unknown> = {};
-		if (params.confidence) query.confidence = params.confidence;
+		if (params.confidence) query["confidence"] = params.confidence;
 		const qs = new URLSearchParams(
 			Object.entries(query).map(([k, v]) => [k, String(v)]),
 		).toString();

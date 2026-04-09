@@ -3,10 +3,9 @@
 type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
 
 const BASE =
-	(import.meta as unknown as Record<string, Record<string, string>>).env?.PUBLIC_API_URL?.replace(
-		/\/$/,
-		"",
-	) ?? "";
+	(import.meta as unknown as Record<string, Record<string, string>>)["env"]?.[
+		"PUBLIC_API_URL"
+	]?.replace(/\/$/, "") ?? "";
 
 async function post<T = unknown>(path: string, body: unknown): Promise<ApiResult<T>> {
 	const url = BASE ? `${BASE}${path}` : path;

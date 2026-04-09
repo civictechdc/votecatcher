@@ -10,8 +10,8 @@ export class JobsApi {
 
 	async listJobsJobsGet(params: { offset?: number; limit?: number }): Promise<JobListResponse> {
 		const query: Record<string, unknown> = {};
-		if (params.offset !== undefined) query.offset = params.offset;
-		if (params.limit !== undefined) query.limit = params.limit;
+		if (params.offset !== undefined) query["offset"] = params.offset;
+		if (params.limit !== undefined) query["limit"] = params.limit;
 		const qs = new URLSearchParams(
 			Object.entries(query).map(([k, v]) => [k, String(v)]),
 		).toString();

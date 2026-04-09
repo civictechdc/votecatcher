@@ -1,5 +1,5 @@
 {
-  "count": 288,
+  "count": 314,
   "errors": {
     "/Users/kurian/01 - Projects/votecatcher/backend/app/common/data/supabase_client.py:4:5": "Import \"supabase\" could not be resolved",
     "/Users/kurian/01 - Projects/votecatcher/backend/app/data/database/model/jobs.py:7:5": "Import \"sqlalchemy\" could not be resolved",
