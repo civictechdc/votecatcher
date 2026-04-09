@@ -1,31 +1,32 @@
 from typing import Any
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import EmailStr, Field
 
+from app.api_models import ApiModel
 from app.matching.response_adapter import OcrMatchResults
 
 
-class Cookies(BaseModel):
+class Cookies(ApiModel):
     session_id: str
 
 
-class WorkspaceResponse(BaseModel):
+class WorkspaceResponse(ApiModel):
     id: str
     campaign_id: str
     campaign_name: str
 
 
-class NewUser(BaseModel):
+class NewUser(ApiModel):
     email: EmailStr
     password: str
 
 
-class Login(BaseModel):
+class Login(ApiModel):
     email: EmailStr
     password: str
 
 
-class SessionTokenResponse(BaseModel):
+class SessionTokenResponse(ApiModel):
     access_token: str
     token_type: str
     refresh_token: str
@@ -33,36 +34,36 @@ class SessionTokenResponse(BaseModel):
     expires_at: int | None
 
 
-class AuthUser(BaseModel):
+class AuthUser(ApiModel):
     id: str
     email: EmailStr | None
 
 
-class SuccessResponse(BaseModel):
+class SuccessResponse(ApiModel):
     message: str
 
 
-class VoterRecordsUploadResponse(BaseModel):
+class VoterRecordsUploadResponse(ApiModel):
     file_name: str
     message: str
 
 
-class PetitionFileUploadResponse(BaseModel):
+class PetitionFileUploadResponse(ApiModel):
     file_name: str
     message: str
 
 
-class OcrMatchResponse(BaseModel):
+class OcrMatchResponse(ApiModel):
     results: OcrMatchResults | dict[str, str] = Field(default_factory=dict)
     stats: dict[str, Any] = Field(default_factory=dict)
 
 
-class OcrProviderPayload(BaseModel):
+class OcrProviderPayload(ApiModel):
     provider_name: str
     provider_model: str
     api_key: str
 
 
-class MatchFieldsResponse(BaseModel):
+class MatchFieldsResponse(ApiModel):
     id: str
     field_names: list[str]

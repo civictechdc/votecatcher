@@ -10,9 +10,9 @@ from typing import Annotated
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from app.api_models import ApiModel
 from app.data.database.model.session import Session as SessionModel
 from app.data.database.model.session import SessionType
 from app.dependencies import get_session
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/sessions", tags=["sessions"])
 SessionDep = Annotated[Session, Depends(get_session)]
 
 
-class CreateSessionRequest(BaseModel):
+class CreateSessionRequest(ApiModel):
     """Request schema for saving a session."""
 
     name: str
@@ -33,7 +33,7 @@ class CreateSessionRequest(BaseModel):
     session_type: str = "REAL"
 
 
-class SessionResponse(BaseModel):
+class SessionResponse(ApiModel):
     """Response schema for session."""
 
     id: int
@@ -45,7 +45,7 @@ class SessionResponse(BaseModel):
     updated_at: datetime
 
 
-class SessionListResponse(BaseModel):
+class SessionListResponse(ApiModel):
     """Response schema for listing sessions."""
 
     sessions: list[SessionResponse]

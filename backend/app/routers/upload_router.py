@@ -5,9 +5,9 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-from pydantic import BaseModel
 from sqlmodel import Session
 
+from app.api_models import ApiModel
 from app.data.database.model.schema import Region
 from app.dependencies import get_session
 from app.files.file_service import FileService, FileValidationError
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/upload", tags=["upload"])
 SessionDep = Annotated[Session, Depends(get_session)]
 
 
-class VoterListUploadResponse(BaseModel):
+class VoterListUploadResponse(ApiModel):
     """Response schema for voter list upload."""
 
     message: str
@@ -29,7 +29,7 @@ class VoterListUploadResponse(BaseModel):
     imported_count: int | None = None
 
 
-class PetitionUploadResponse(BaseModel):
+class PetitionUploadResponse(ApiModel):
     """Response schema for petition upload."""
 
     message: str

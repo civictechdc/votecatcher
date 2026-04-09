@@ -6,9 +6,10 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import Field
 from sqlmodel import Session, select
 
+from app.api_models import ApiModel
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign, Region
 from app.dependencies import get_session
@@ -38,7 +39,7 @@ def _ensure_default_region(session: Session) -> uuid.UUID:
     return region.id
 
 
-class CampaignResponse(BaseModel):
+class CampaignResponse(ApiModel):
     """Response schema for campaign."""
 
     id: uuid.UUID | None
@@ -58,14 +59,14 @@ def _get_region_key(session: Session, region_id: uuid.UUID | None) -> str | None
     return region.region_key if region else None
 
 
-class CampaignListResponse(BaseModel):
+class CampaignListResponse(ApiModel):
     """Response schema for campaign list."""
 
     campaigns: list[CampaignResponse]
     total: int
 
 
-class CreateCampaignRequest(BaseModel):
+class CreateCampaignRequest(ApiModel):
     """Request schema for creating campaign."""
 
     name: str = Field(min_length=1, max_length=255, pattern=r"^[^<>\"';&]+$")
@@ -182,7 +183,7 @@ def delete_campaign(  # nosemgrep: fastapi-unauthenticated-route
     logger.info("Campaign deleted", campaign_id=campaign_id)
 
 
-class CampaignMetricsResponse(BaseModel):
+class CampaignMetricsResponse(ApiModel):
     """Response schema for campaign metrics."""
 
     total_signatures: int
@@ -195,7 +196,7 @@ class CampaignMetricsResponse(BaseModel):
     voter_list_count: int | None
 
 
-class PetitionScanResponse(BaseModel):
+class PetitionScanResponse(ApiModel):
     """Response schema for a petition scan."""
 
     id: int
@@ -205,7 +206,7 @@ class PetitionScanResponse(BaseModel):
     uploaded_at: datetime
 
 
-class PetitionScanListResponse(BaseModel):
+class PetitionScanListResponse(ApiModel):
     """Response schema for listing petition scans."""
 
     scans: list[PetitionScanResponse]
@@ -328,7 +329,7 @@ def delete_campaign_scan(  # nosemgrep: fastapi-unauthenticated-route
     logger.info("Petition scan deleted", scan_id=scan_id, campaign_id=campaign_id)
 
 
-class CampaignMatchPrediction(BaseModel):
+class CampaignMatchPrediction(ApiModel):
     """Schema for a single match prediction."""
 
     rank: int
@@ -338,7 +339,7 @@ class CampaignMatchPrediction(BaseModel):
     confidence: str
 
 
-class CampaignResultResponse(BaseModel):
+class CampaignResultResponse(ApiModel):
     """Response schema for a single result."""
 
     ocr_result_id: int
@@ -349,7 +350,7 @@ class CampaignResultResponse(BaseModel):
     predictions: list[CampaignMatchPrediction]
 
 
-class CampaignResultsListResponse(BaseModel):
+class CampaignResultsListResponse(ApiModel):
     """Response schema for paginated campaign results."""
 
     results: list[CampaignResultResponse]
@@ -549,12 +550,36 @@ def get_campaign_results(  # nosemgrep: fastapi-unauthenticated-route
     )
 
 
-class SetupStatusResponse(BaseModel):
+class VoterListStatus(ApiModel):
+    """Voter list status sub-object."""
+
+    exists: bool
+    row_count: int | None
+    uploaded_at: str | None
+    region_name: str | None
+
+
+class PetitionsStatus(ApiModel):
+    """Petitions status sub-object."""
+
+    exists: bool
+    file_count: int
+    signature_count: int
+
+
+class JobsStatus(ApiModel):
+    """Jobs status sub-object."""
+
+    total: int
+    active: int
+
+
+class SetupStatusResponse(ApiModel):
     """Response schema for campaign setup status."""
 
-    voter_list: dict
-    petitions: dict
-    jobs: dict
+    voter_list: VoterListStatus
+    petitions: PetitionsStatus
+    jobs: JobsStatus
     state: str
 
 
@@ -613,22 +638,20 @@ def get_setup_status(  # nosemgrep: fastapi-unauthenticated-route
         state = "has_jobs"
 
     return SetupStatusResponse(
-        voter_list={
-            "exists": has_voter_list,
-            "row_count": voter_upload.row_count if voter_upload else None,
-            "uploaded_at": voter_upload.uploaded_at.isoformat()
-            if voter_upload
-            else None,
-            "region_name": _get_region_key(session, campaign.region_id),
-        },
-        petitions={
-            "exists": has_petitions,
-            "file_count": len(scans),
-            "signature_count": sum(s.page_count or 0 for s in scans),
-        },
-        jobs={
-            "total": len(jobs),
-            "active": len(
+        voter_list=VoterListStatus(
+            exists=has_voter_list,
+            row_count=voter_upload.row_count if voter_upload else None,
+            uploaded_at=voter_upload.uploaded_at.isoformat() if voter_upload else None,
+            region_name=_get_region_key(session, campaign.region_id),
+        ),
+        petitions=PetitionsStatus(
+            exists=has_petitions,
+            file_count=len(scans),
+            signature_count=sum(s.page_count or 0 for s in scans),
+        ),
+        jobs=JobsStatus(
+            total=len(jobs),
+            active=len(
                 [
                     j
                     for j in jobs
@@ -636,6 +659,6 @@ def get_setup_status(  # nosemgrep: fastapi-unauthenticated-route
                     in ["NOT_STARTED", "OCR_PENDING", "OCR_STARTED", "MATCHING"]
                 ]
             ),
-        },
+        ),
         state=state,
     )

@@ -4,9 +4,9 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
 from sqlmodel import Session
 
+from app.api_models import ApiModel
 from app.demo.demo_service import DemoDataService
 from app.dependencies import get_session
 from app.settings import Settings, get_settings
@@ -16,7 +16,7 @@ logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/demo", tags=["demo"])
 
 
-class PrebakedSession(BaseModel):
+class PrebakedSession(ApiModel):
     """Pre-baked demo session metadata."""
 
     id: str
@@ -24,7 +24,7 @@ class PrebakedSession(BaseModel):
     description: str
 
 
-class PrebakedSessionList(BaseModel):
+class PrebakedSessionList(ApiModel):
     """List of pre-baked sessions."""
 
     sessions: list[PrebakedSession]

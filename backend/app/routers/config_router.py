@@ -4,10 +4,10 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
 from sqlalchemy import text
 from sqlmodel import Session
 
+from app.api_models import ApiModel
 from app.dependencies import get_session
 from app.settings import Settings, get_settings
 
@@ -16,18 +16,18 @@ logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/config", tags=["config"])
 
 
-class FeatureFlagsResponse(BaseModel):
-    """Feature flags response - camelCase for API contract."""
+class FeatureFlagsResponse(ApiModel):
+    """Feature flags response."""
 
-    simulationMode: bool  # noqa: N815
-    betaFeatures: bool  # noqa: N815
-    debugMode: bool  # noqa: N815
-    demoMode: bool  # noqa: N815
-    demoReset: bool  # noqa: N815
-    alwaysBatchOcr: bool  # noqa: N815
+    simulation_mode: bool
+    beta_features: bool
+    debug_mode: bool
+    demo_mode: bool
+    demo_reset: bool
+    always_batch_ocr: bool
 
 
-class SettingsResponse(BaseModel):
+class SettingsResponse(ApiModel):
     """Settings response."""
 
     ocr_provider: str | None
@@ -41,12 +41,12 @@ def get_features(  # nosemgrep: fastapi-unauthenticated-route
 ) -> FeatureFlagsResponse:
     """Get feature flags."""
     return FeatureFlagsResponse(
-        simulationMode=settings.feature_simulation,
-        betaFeatures=settings.feature_beta,
-        debugMode=settings.feature_debug,
-        demoMode=settings.feature_demo,
-        demoReset=settings.demo_reset,
-        alwaysBatchOcr=settings.always_batch_ocr,
+        simulation_mode=settings.feature_simulation,
+        beta_features=settings.feature_beta,
+        debug_mode=settings.feature_debug,
+        demo_mode=settings.feature_demo,
+        demo_reset=settings.demo_reset,
+        always_batch_ocr=settings.always_batch_ocr,
     )
 
 
@@ -59,17 +59,17 @@ def get_settings_endpoint(  # nosemgrep: fastapi-unauthenticated-route
         ocr_provider=settings.ocr_provider_name,
         ocr_model=settings.ocr_model,
         features=FeatureFlagsResponse(
-            simulationMode=settings.feature_simulation,
-            betaFeatures=settings.feature_beta,
-            debugMode=settings.feature_debug,
-            demoMode=settings.feature_demo,
-            demoReset=settings.demo_reset,
-            alwaysBatchOcr=settings.always_batch_ocr,
+            simulation_mode=settings.feature_simulation,
+            beta_features=settings.feature_beta,
+            debug_mode=settings.feature_debug,
+            demo_mode=settings.feature_demo,
+            demo_reset=settings.demo_reset,
+            always_batch_ocr=settings.always_batch_ocr,
         ),
     )
 
 
-class ResetDataResponse(BaseModel):
+class ResetDataResponse(ApiModel):
     """Response for data reset operation."""
 
     deleted_counts: dict[str, int]

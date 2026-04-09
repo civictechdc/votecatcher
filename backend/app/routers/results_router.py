@@ -7,9 +7,9 @@ from typing import Annotated
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from app.api_models import ApiModel
 from app.data.database.model.jobs import MatcherJob
 from app.data.database.model.match_result import ConfidenceLevel, MatchResult
 from app.data.database.model.ocr_result import OcrResult
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/jobs", tags=["results"])
 SessionDep = Annotated[Session, Depends(get_session)]
 
 
-class MatchPrediction(BaseModel):
+class MatchPrediction(ApiModel):
     """Schema for a single match prediction."""
 
     rank: int
@@ -34,7 +34,7 @@ class MatchPrediction(BaseModel):
     confidence: str
 
 
-class ResultResponse(BaseModel):
+class ResultResponse(ApiModel):
     """Response schema for a single result."""
 
     ocr_result_id: int
@@ -43,7 +43,7 @@ class ResultResponse(BaseModel):
     predictions: list[MatchPrediction]
 
 
-class ResultsListResponse(BaseModel):
+class ResultsListResponse(ApiModel):
     """Response schema for paginated results."""
 
     results: list[ResultResponse]

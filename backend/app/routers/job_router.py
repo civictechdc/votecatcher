@@ -9,9 +9,9 @@ from typing import Annotated
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from app.api_models import ApiModel
 from app.data.database.model.jobs import JobStatus, MatcherJob
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
@@ -26,7 +26,7 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 SessionDep = Annotated[Session, Depends(get_session)]
 
 
-class CreateJobRequest(BaseModel):
+class CreateJobRequest(ApiModel):
     """Request schema for creating a matcher job."""
 
     campaign_id: uuid.UUID
@@ -36,7 +36,7 @@ class CreateJobRequest(BaseModel):
     force_reprocess: bool = False
 
 
-class JobResponse(BaseModel):
+class JobResponse(ApiModel):
     """Response schema for job status."""
 
     job_id: int
@@ -58,7 +58,7 @@ class JobResponse(BaseModel):
     is_orphaned: bool = False
 
 
-class JobListResponse(BaseModel):
+class JobListResponse(ApiModel):
     """Response schema for listing jobs."""
 
     jobs: list[JobResponse]

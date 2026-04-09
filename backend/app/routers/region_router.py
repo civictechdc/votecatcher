@@ -5,9 +5,9 @@ from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from app.api_models import ApiModel
 from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
 from app.dependencies import get_session
 from app.services.voter_list_service import VoterListService
@@ -19,14 +19,14 @@ router = APIRouter(prefix="/regions", tags=["regions"])
 SessionDep = Annotated[Session, Depends(get_session)]
 
 
-class VoterListStatusResponse(BaseModel):
+class VoterListStatusResponse(ApiModel):
     """Response schema for voter list status."""
 
     exists: bool
     upload: dict | None = None
 
 
-class DeleteVoterListResponse(BaseModel):
+class DeleteVoterListResponse(ApiModel):
     """Response schema for deleting voter list."""
 
     deleted_count: int

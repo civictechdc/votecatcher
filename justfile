@@ -14,6 +14,18 @@
 default:
     @just --list
 
+# Stop all votecatcher-related processes (backend uvicorn, frontend vite)
+stop:
+    @echo "Stopping votecatcher processes..."
+    @pkill -f "uvicorn.*app\.api:app" 2>/dev/null; true
+    @pkill -f "uvicorn.*app\.main:app" 2>/dev/null; true
+    @pkill -f "votecatcher/backend.*main\.py" 2>/dev/null; true
+    @pkill -f "votecatcher/backend/\.venv.*python" 2>/dev/null; true
+    @pkill -f "votecatcher/frontend.*vite" 2>/dev/null; true
+    @lsof -ti :8080 2>/dev/null | xargs kill 2>/dev/null; true
+    @lsof -ti :5173 2>/dev/null | xargs kill 2>/dev/null; true
+    @echo "All votecatcher processes stopped."
+
 # Install all dependencies (backend + frontend)
 install:
     cd backend && uv sync
