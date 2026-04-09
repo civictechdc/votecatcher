@@ -11,7 +11,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import structlog
-from dotenv import load_dotenv
 from numpy import vectorize
 from pandas import DataFrame
 from rapidfuzz import fuzz
@@ -20,14 +19,6 @@ from app.matching.match_columns import MatchColumns
 from app.ocr.data.data_models import OCREntry, OcrResultItem
 from app.ocr.ocr_config import get_current_crop_config
 from app.ocr.ocr_manager import ReadOcrResult
-
-# local environment storage
-# repo_name = "Ballot-Initiative"
-# REPODIR = os.getcwd()
-# load_dotenv(os.path.join(REPODIR, ".env"), override=True)
-
-load_dotenv()
-# Set up logging after imports
 
 logger = structlog.get_logger(__name__)
 

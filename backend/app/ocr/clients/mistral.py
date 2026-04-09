@@ -41,7 +41,7 @@ class MistralOcrClient(OcrClient):
 
     def _get_client(self):
         """Get or create Mistral client (lazy initialization for testing)."""
-        from mistralai import Mistral
+        from mistralai.client import Mistral
 
         return Mistral(api_key=self.config.api_key)
 

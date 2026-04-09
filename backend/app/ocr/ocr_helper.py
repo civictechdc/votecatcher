@@ -11,7 +11,6 @@ from typing import Any
 
 import fitz
 import pandas as pd
-from dotenv import load_dotenv
 from fitz import Page, Pixmap, Rect
 from tqdm.notebook import tqdm
 
@@ -32,10 +31,6 @@ from app.ocr.response_types import (
     MatchingJobStatusProgress,
     adapt_ocr_batch_status_to_progress_response,
 )
-
-load_dotenv()
-
-# Set up logging after imports
 
 logger = AppLogger.get_logger(
     log_name=__name__,

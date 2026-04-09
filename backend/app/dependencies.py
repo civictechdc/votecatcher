@@ -4,19 +4,16 @@ from collections.abc import Generator
 from pathlib import Path
 
 import structlog
-from dotenv import load_dotenv
 from fastapi import Header, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session
 
-from app.data.database.session import engine
-
-load_dotenv()
+from app.data.database.session import get_db_session as _get_db_session
 
 logger = structlog.get_logger(__name__)
 
 oauth2_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
-    tokenUrl="/api/token", scheme_name="JWT", refreshUrl=""
+    tokenUrl="/api/token", scheme_name="JWT"
 )
 
 demo_petition_path: Path = Path("temp")
@@ -35,8 +32,12 @@ def warn_database_api_key_missing() -> None:
 
 def get_session() -> Generator[Session]:
     """Get database session for API endpoints."""
-    with Session(engine) as session:
-        yield session
+    yield from _get_db_session()
+
+
+def get_engine_dependency() -> Generator[Session]:
+    """Get database session — alias for FastAPI Depends injection."""
+    yield from _get_db_session()
 
 
 async def verify_database_api_key(

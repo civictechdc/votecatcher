@@ -1,6 +1,5 @@
 import os
 
-from dotenv import load_dotenv
 from postgrest import AsyncRequestBuilder
 from supabase import AsyncClient, acreate_client
 from supabase_auth import (
@@ -11,7 +10,9 @@ from supabase_auth import (
     UserResponse,
 )
 
-load_dotenv()
+from app.settings.env_loader import load_env
+
+load_env()
 
 
 async def _get_supabase_client() -> AsyncClient:
