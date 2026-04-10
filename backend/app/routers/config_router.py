@@ -4,11 +4,11 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import text
 from sqlmodel import Session
 
 from app.api_models import ApiModel
 from app.dependencies import get_session
+from app.services.config_service import ConfigService
 from app.settings import Settings, get_settings
 
 logger = structlog.get_logger(__name__)
@@ -69,10 +69,22 @@ def get_settings_endpoint(  # nosemgrep: fastapi-unauthenticated-route
     )
 
 
+class DeletedTableCounts(ApiModel):
+    """Typed sub-model for table deletion counts."""
+
+    match_results: int = 0
+    ocr_results: int = 0
+    ocr_jobs: int = 0
+    matcher_jobs: int = 0
+    petition_crops: int = 0
+    petition_scans: int = 0
+    campaigns: int = 0
+
+
 class ResetDataResponse(ApiModel):
     """Response for data reset operation."""
 
-    deleted_counts: dict[str, int]
+    deleted_counts: DeletedTableCounts
     message: str
 
 
@@ -95,46 +107,26 @@ def reset_all_data(  # nosemgrep: fastapi-unauthenticated-route
     This is a destructive operation and should only be enabled in
     non-production environments.
     """
-    if settings.feature_demo or settings.feature_debug or settings.feature_simulation:
-        conn = db_session.connection()
-        deleted_counts = {}
-
-        deleted_counts["match_results"] = conn.execute(
-            text("DELETE FROM match_results")
-        ).rowcount
-
-        deleted_counts["ocr_results"] = conn.execute(
-            text("DELETE FROM ocr_results")
-        ).rowcount
-
-        deleted_counts["ocr_jobs"] = conn.execute(text("DELETE FROM ocr_jobs")).rowcount
-
-        deleted_counts["matcher_jobs"] = conn.execute(
-            text("DELETE FROM matcher_jobs")
-        ).rowcount
-
-        deleted_counts["petition_crops"] = conn.execute(
-            text("DELETE FROM petition_crops")
-        ).rowcount
-
-        deleted_counts["petition_scans"] = conn.execute(
-            text("DELETE FROM petition_scans")
-        ).rowcount
-
-        deleted_counts["campaigns"] = conn.execute(
-            text("DELETE FROM campaigns")
-        ).rowcount
-
-        db_session.commit()
-
-        logger.info("All data reset complete", deleted_counts=deleted_counts)
-
-        return ResetDataResponse(
-            deleted_counts=deleted_counts,
-            message="All data has been reset successfully",
+    if not (
+        settings.feature_demo or settings.feature_debug or settings.feature_simulation
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Data reset is only available in non-production modes",
         )
 
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Data reset is only available in non-production modes",
+    service = ConfigService(db_session)
+    deleted_counts = service.reset_all_data()
+
+    return ResetDataResponse(
+        deleted_counts=DeletedTableCounts(
+            match_results=deleted_counts.get("match_results", 0),
+            ocr_results=deleted_counts.get("ocr_results", 0),
+            ocr_jobs=deleted_counts.get("ocr_jobs", 0),
+            matcher_jobs=deleted_counts.get("matcher_jobs", 0),
+            petition_crops=deleted_counts.get("petition_crops", 0),
+            petition_scans=deleted_counts.get("petition_scans", 0),
+            campaigns=deleted_counts.get("campaigns", 0),
+        ),
+        message="All data has been reset successfully",
     )
