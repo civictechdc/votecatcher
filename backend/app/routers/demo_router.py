@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
 
 from app.api_models import ApiModel
-from app.demo.demo_service import DemoDataService
 from app.dependencies import get_session
+from app.services.demo_orchestration_service import DemoOrchestrationService
 from app.settings import Settings, get_settings
 
 logger = structlog.get_logger(__name__)
@@ -30,41 +30,24 @@ class PrebakedSessionList(ApiModel):
     sessions: list[PrebakedSession]
 
 
-PREBAKED_SESSIONS = [
-    PrebakedSession(
-        id="dc-petition-2024",
-        name="DC Petition Demo 2024",
-        description="Minimal demo session with 10 entries",
-    ),
-]
-
-
-def check_demo_mode(settings: Settings) -> None:
-    """Check if demo mode is enabled."""
-    if not settings.feature_demo:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Demo mode not enabled",
-        )
-
-
-def check_demo_reset(settings: Settings) -> None:
-    """Check if demo mode and reset are enabled."""
-    check_demo_mode(settings)
-    if not settings.demo_reset:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Demo reset not enabled",
-        )
-
-
 @router.get("/sessions", response_model=PrebakedSessionList)
 def list_prebaked_sessions(  # nosemgrep: fastapi-unauthenticated-route
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> PrebakedSessionList:
     """List available pre-baked demo sessions."""
-    check_demo_mode(settings)
-    return PrebakedSessionList(sessions=PREBAKED_SESSIONS)
+    service = DemoOrchestrationService(settings=settings)
+    try:
+        service.require_demo_mode()
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+
+    sessions = service.list_prebaked_sessions()
+    return PrebakedSessionList(
+        sessions=[
+            PrebakedSession(id=s.id, name=s.name, description=s.description)
+            for s in sessions
+        ]
+    )
 
 
 @router.post("/reset", status_code=status.HTTP_204_NO_CONTENT)
@@ -73,10 +56,16 @@ def reset_demo_data(  # nosemgrep: fastapi-unauthenticated-route
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> None:
     """Reset all demo data to initial state."""
-    check_demo_reset(settings)
+    service = DemoOrchestrationService(settings=settings, db_session=db_session)
+    try:
+        service.require_demo_reset()
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
-    service = DemoDataService(db_session)
-    service.reset()
+    from app.demo.demo_service import DemoDataService
+
+    demo_service = DemoDataService(db_session)
+    demo_service.reset()
     logger.info("Demo data reset complete")
 
 
@@ -87,31 +76,13 @@ def load_prebaked_session(  # nosemgrep: fastapi-unauthenticated-route
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> dict:
     """Load a pre-baked demo session."""
-    check_demo_mode(settings)
+    service = DemoOrchestrationService(settings=settings, db_session=db_session)
+    try:
+        service.require_demo_mode()
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
-    session_metadata = next(
-        (s for s in PREBAKED_SESSIONS if s.id == session_id),
-        None,
-    )
-
-    if not session_metadata:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Pre-baked session '{session_id}' not found",
-        )
-
-    service = DemoDataService(db_session)
-    result = service.load_minimal_session()
-
-    logger.info(
-        "Loaded pre-baked session",
-        session_id=session_id,
-        campaign_id=result.get("campaign_id"),
-    )
-
-    return {
-        "success": True,
-        "session_id": session_id,
-        "message": f"Loaded demo session: {session_metadata.name}",
-        **result,
-    }
+    try:
+        return service.load_prebaked_session(session_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
