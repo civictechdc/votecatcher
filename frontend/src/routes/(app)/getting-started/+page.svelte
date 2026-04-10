@@ -1,12 +1,14 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 	import { Progress } from '$lib/components/ui';
 	import { Navbar } from '$lib/components/layout';
-	import { onboard } from '$lib/stores/onboarding';
+	import { onboard, initialState } from '$lib/stores/onboarding';
 	import { api } from '$lib/api/client';
 	import { initMocks } from '$lib/mocks/init';
 	import { OCR_PROVIDER_SELECTION } from '$lib/constants/ocr';
+
+	type OnboardState = typeof initialState;
 
 	// Data injected by the server-side load (+page.server.ts)
 	let { data } = $props<{
@@ -17,16 +19,18 @@
 		};
 	}>();
 
-	// Local reactive copies for template use
-	let state = get(onboard);
-	const unsubscribe = onboard.subscribe((s) => (state = s));
+	let onboardState: OnboardState = $state(get(onboard));
+	onMount(() => {
+		const unsubscribe = onboard.subscribe((s) => (onboardState = s));
+		return unsubscribe;
+	});
 
-	const steps = data.steps;
-	const years = data.years;
-	let user = data.user;
-	let errorMsg = '';
-	let selectedProvider = '';
-	let onboardingProgress = $derived(Math.round(state.currentStep + 1 / steps.length) * 100);
+	const steps = $derived(data.steps);
+	const years = $derived(data.years);
+	const user = $derived(data.user);
+	let errorMsg = $state('');
+	let selectedProvider = $state('');
+	let onboardingProgress = $derived(Math.round(onboardState.currentStep + 1 / steps.length) * 100);
 
 	// Start client mocks early so api.* calls on user interaction can be intercepted.
 	onMount(async () => {
@@ -35,17 +39,17 @@
 
 	// Helpers used by the UI
 	const canProceed = () => {
-		const stepId = steps[state.currentStep].id;
+		const stepId = steps[onboardState.currentStep].id;
 		if (stepId === 'provider') {
-			return !!state.answers.selectedOcrProvider && !!state.answers.ocrProviderApiKey;
+			return !!onboardState.answers.selectedOcrProvider && !!onboardState.answers.ocrProviderApiKey;
 		} else if (stepId === 'campaign') {
 			return (
-				!!state.answers.campaign_name &&
-				!!state.answers.campaign_year &&
-				state.answers.campaign_name.length >= 3
+				!!onboardState.answers.campaign_name &&
+				!!onboardState.answers.campaign_year &&
+				onboardState.answers.campaign_name.length >= 3
 			);
 		} else {
-			return !!state.uploadedFile;
+			return !!onboardState.uploadedFile;
 		}
 	};
 
@@ -57,7 +61,7 @@
 		} else {
 			onboard.setAnswer(
 				'selectedOcrProvider',
-				OCR_PROVIDER_SELECTION[(e.target as HTMLSelectElement).selectedIndex - 1]
+				OCR_PROVIDER_SELECTION[(e.target as HTMLSelectElement).selectedIndex - 1] ?? null
 			);
 		}
 		//Clear the api key field on each change
@@ -66,11 +70,11 @@
 
 	const next = async () => {
 		errorMsg = '';
-		const stepId = steps[state.currentStep].id;
+		const stepId = steps[onboardState.currentStep].id;
 
 		if (stepId === 'provider') {
-			const ocrProvider = state.answers.selectedOcrProvider;
-			const ocrProviderApiKey = state.answers.ocrProviderApiKey;
+			const ocrProvider = onboardState.answers.selectedOcrProvider;
+			const ocrProviderApiKey = onboardState.answers.ocrProviderApiKey;
 			if (ocrProvider && ocrProviderApiKey) {
 				onboard.setLoading(true);
 				const res = await api.storeApiKey(ocrProvider.apiKeyId, ocrProviderApiKey);
@@ -83,12 +87,12 @@
 		}
 
 		if (stepId === 'campaign') {
-			if (state.answers.campaign_name && state.answers.campaign_year) {
+			if (onboardState.answers.campaign_name && onboardState.answers.campaign_year) {
 				onboard.setLoading(true);
 				const payload = {
-					name: state.answers.campaign_name,
-					year: parseInt(state.answers.campaign_year),
-					description: state.answers.campaign_description || undefined
+					name: onboardState.answers.campaign_name,
+					year: parseInt(onboardState.answers.campaign_year),
+					description: onboardState.answers.campaign_description || undefined
 				};
 				const res = await api.createCampaign(payload);
 				onboard.setLoading(false);
@@ -104,7 +108,7 @@
 			}
 		}
 
-		if (state.currentStep < steps.length - 1) {
+		if (onboardState.currentStep < steps.length - 1) {
 			onboard.next();
 			const el = document.getElementById('step-title');
 			el?.focus();
@@ -118,11 +122,11 @@
 	const complete = async () => {
 		if (!user) return;
 		onboard.setLoading(true);
-		if (state.uploadedFile) {
+		if (onboardState.uploadedFile) {
 			const meta = {
-				fileName: state.uploadedFile.name,
-				size: state.uploadedFile.size,
-				campaignId: state.answers.campaign_id || null
+				fileName: onboardState.uploadedFile.name,
+				size: onboardState.uploadedFile.size,
+				campaignId: onboardState.answers.campaign_id || null
 			};
 			const uploadRes = await api.uploadFileMeta(meta);
 			if (!uploadRes.ok) {
@@ -131,8 +135,8 @@
 				return;
 			}
 			const proc = await api.triggerProcessFile({
-				filePath: `${user?.id ?? 'unknown'}/${state.answers.campaign_id || 'no-campaign'}/${state.uploadedFile?.name ?? 'unknown'}`,
-				campaignId: state.answers.campaign_id ?? ''
+				filePath: `${user?.id ?? 'unknown'}/${onboardState.answers.campaign_id || 'no-campaign'}/${onboardState.uploadedFile?.name ?? 'unknown'}`,
+				campaignId: onboardState.answers.campaign_id ?? ''
 			});
 			onboard.setLoading(false);
 			if (!proc.ok) {
@@ -161,8 +165,6 @@
 		onboard.setUploadedFile(file);
 		onboard.setAnswer('registration_data', file.name);
 	};
-
-	onDestroy(() => unsubscribe());
 </script>
 
 <svelte:head>
@@ -173,19 +175,19 @@
 	<Navbar {user} />
 	<div class="card" style="margin-top:1rem;">
 		<div class="space-y-4">
-			<div aria-live="polite" class="sr-only">Step {state.currentStep + 1} of {steps.length}</div>
+			<div aria-live="polite" class="sr-only">Step {onboardState.currentStep + 1} of {steps.length}</div>
 			<Progress value={onboardingProgress} />
-			<h2 id="step-title" tabindex="-1">{steps[state.currentStep].title}</h2>
-			<p class="text-muted">{steps[state.currentStep].description}</p>
+			<h2 id="step-title" tabindex="-1">{steps[onboardState.currentStep].title}</h2>
+			<p class="text-muted">{steps[onboardState.currentStep].description}</p>
 
-			{#if steps[state.currentStep].id === 'provider'}
+			{#if steps[onboardState.currentStep].id === 'provider'}
 				<div class="space-y-4">
 					<label class="label" for="provider">AI Provider</label>
 					<select
 						id="provider"
 						class="select"
 						bind:value={selectedProvider}
-						on:change={onOcrProviderSelected}
+						onchange={onOcrProviderSelected}
 					>
 						<option value="" selected>Select OCR provider...</option>
 						{#each OCR_PROVIDER_SELECTION as provider}
@@ -193,15 +195,15 @@
 						{/each}
 					</select>
 
-					{#if state.answers.selectedOcrProvider}
+					{#if onboardState.answers.selectedOcrProvider}
 						<label class="label" for="api-key">API Key</label>
 						<p class="text-muted">
 							To obtain an API key, visit <a
 								class="text-muted provider-api-key-guide-link"
-								href={state.answers.selectedOcrProvider.apiKeyDocs}
+								href={onboardState.answers.selectedOcrProvider.apiKeyDocs}
 								target="_blank"
-								title={state.answers.selectedOcrProvider.apiKeyDocs}
-								>{state.answers.selectedOcrProvider.name}'s page</a
+								title={onboardState.answers.selectedOcrProvider.apiKeyDocs}
+								>{onboardState.answers.selectedOcrProvider.name}'s page</a
 							> for more information.
 						</p>
 						<input
@@ -209,8 +211,8 @@
 							class="input"
 							type="password"
 							placeholder="sk-..."
-							bind:value={state.answers.ocrProviderApiKey}
-							on:input={(e) =>
+							bind:value={onboardState.answers.ocrProviderApiKey}
+							oninput={(e) =>
 								onboard.setAnswer('ocrProviderApiKey', (e.target as HTMLInputElement).value)}
 							aria-describedby="api-hint"
 						/>
@@ -221,15 +223,15 @@
 				</div>
 			{/if}
 
-			{#if steps[state.currentStep].id === 'campaign'}
+			{#if steps[onboardState.currentStep].id === 'campaign'}
 				<div class="space-y-4">
 					<label class="label" for="campaign-name">Campaign Name</label>
 					<input
 						id="campaign-name"
 						class="input"
 						placeholder="e.g., Smith for Mayor"
-						bind:value={state.answers.campaign_name}
-						on:input={(e) =>
+						bind:value={onboardState.answers.campaign_name}
+						oninput={(e) =>
 							onboard.setAnswer('campaign_name', (e.target as HTMLInputElement).value)}
 					/>
 					<div class="small text-muted">Name must be at least 3 characters.</div>
@@ -238,8 +240,8 @@
 					<select
 						id="campaign-year"
 						class="select"
-						bind:value={state.answers.campaign_year}
-						on:change={(e) =>
+						bind:value={onboardState.answers.campaign_year}
+						onchange={(e) =>
 							onboard.setAnswer('campaign_year', (e.target as HTMLSelectElement).value)}
 					>
 						<option value="">Select year</option>
@@ -254,14 +256,14 @@
 						class="textarea"
 						rows="3"
 						placeholder="Describe your campaign"
-						bind:value={state.answers.campaign_description}
-						on:input={(e) =>
+						bind:value={onboardState.answers.campaign_description}
+						oninput={(e) =>
 							onboard.setAnswer('campaign_description', (e.target as HTMLTextAreaElement).value)}
 					></textarea>
 				</div>
 			{/if}
 
-			{#if steps[state.currentStep].id === 'upload'}
+			{#if steps[onboardState.currentStep].id === 'upload'}
 				<div class="space-y-4">
 					<label class="label" for="file-input">Registration file</label>
 					<input
@@ -269,17 +271,17 @@
 						class="sr-only"
 						type="file"
 						accept=".csv,.xlsx,.xls,.json"
-						on:change={onFileChange}
+						onchange={onFileChange}
 					/>
 					<div class="row">
 						<button
 							class="button"
-							on:click={() => document.getElementById('file-input')?.click()}
-							disabled={state.loading}>Choose file</button
+							onclick={() => document.getElementById('file-input')?.click()}
+							disabled={onboardState.loading}>Choose file</button
 						>
-						{#if state.uploadedFile}
+						{#if onboardState.uploadedFile}
 							<div class="small text-muted">
-								{state.uploadedFile.name} — {state.uploadedFile.size} bytes
+								{onboardState.uploadedFile.name} — {onboardState.uploadedFile.size} bytes
 							</div>
 						{/if}
 					</div>
@@ -292,22 +294,22 @@
 			{/if}
 
 			<div class="row" style="justify-content:space-between;">
-				{#if state.currentStep !== 0}
-					<button class="button-outline" on:click={back} disabled={state.currentStep === 0}
+				{#if onboardState.currentStep !== 0}
+					<button class="button-outline" onclick={back} disabled={onboardState.currentStep === 0}
 						>Back</button
 					>
 				{/if}
 				<div style="display:flex; gap:0.5rem;">
 					<button
 						class="button-outline"
-						on:click={() => {
+						onclick={() => {
 							onboard.reset();
 							location.href = '/';
 						}}>Cancel</button
 					>
-					<button class="button" on:click={next} disabled={!canProceed() || state.loading}>
-						{state.currentStep === steps.length - 1
-							? state.loading
+					<button class="button" onclick={next} disabled={!canProceed() || onboardState.loading}>
+						{onboardState.currentStep === steps.length - 1
+							? onboardState.loading
 								? 'Processing...'
 								: 'Complete'
 							: 'Next'}

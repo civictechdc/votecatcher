@@ -10,11 +10,11 @@ export class UploadApi {
 
 	async uploadVoterListUploadVoterListPost(params: {
 		file: File;
-		region_id: number;
+		campaign_id: string;
 	}): Promise<VoterListUploadResponse> {
 		const formData = new FormData();
 		formData.append("file", params.file);
-		formData.append("region_id", String(params.region_id));
+		formData.append("campaign_id", String(params.campaign_id));
 		const fetchApi = this.config.fetchApi || fetch;
 		const response = await fetchApi(`${this.config.basePath}/upload/voter-list`, {
 			method: "POST",

@@ -2,8 +2,8 @@ import { writable } from "svelte/store";
 import { PUBLIC_API_URL } from "$env/static/public";
 
 export interface UploadResult {
-	scan_id: string;
-	crop_count: number;
+	scanId: string;
+	cropCount: number;
 }
 
 export interface UploadsState {
@@ -28,7 +28,7 @@ function createUploadsStore() {
 	return {
 		subscribe,
 
-		async uploadVoterList(file: File): Promise<void> {
+		async uploadVoterList(file: File, campaignId: string): Promise<void> {
 			update((s) => ({
 				...s,
 				voterListUploading: true,
@@ -39,6 +39,7 @@ function createUploadsStore() {
 			try {
 				const formData = new FormData();
 				formData.append("file", file);
+				formData.append("campaign_id", campaignId);
 
 				const response = await fetch(
 					`${PUBLIC_API_URL || "http://localhost:8000"}/api/upload/voter-list`,
