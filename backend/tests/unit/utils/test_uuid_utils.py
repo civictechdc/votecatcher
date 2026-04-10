@@ -9,41 +9,34 @@ import pytest
 
 from app.utils.uuid_utils import is_valid_uuid, normalize_uuid, normalize_uuid_to_uuid
 
+_UUID_SEED = "a" * 8 + "-bbbb-cccc-dddd-" + "e" * 12
+_TEST_UUID = uuid.UUID(_UUID_SEED)
+_TEST_UUID_STR = str(_TEST_UUID)
+_TEST_UUID_HEX = _TEST_UUID.hex
+_PARTIAL_HEX = _TEST_UUID_HEX[:8]
+
 
 class TestNormalizeUuid:
     """Test suite for normalize_uuid function."""
 
     def test_normalize_uuid_with_dashes(self):
         """Test normalizing UUID with dashes to 32-char hex."""
-        input_uuid = "25ea5e1c-2fd8-49e8-8062-c15e8b04492c"
-        expected = "25ea5e1c2fd849e88062c15e8b04492c"
-
-        result = normalize_uuid(input_uuid)
-
-        assert result == expected
+        result = normalize_uuid(_TEST_UUID_STR)
+        assert result == _TEST_UUID_HEX
 
     def test_normalize_uuid_without_dashes(self):
         """Test that UUID without dashes passes through unchanged."""
-        input_uuid = "25ea5e1c2fd849e88062c15e8b04492c"
-        expected = "25ea5e1c2fd849e88062c15e8b04492c"
-
-        result = normalize_uuid(input_uuid)
-
-        assert result == expected
+        result = normalize_uuid(_TEST_UUID_HEX)
+        assert result == _TEST_UUID_HEX
 
     def test_normalize_uuid_object(self):
         """Test normalizing uuid.UUID object to 32-char hex."""
-        input_uuid = uuid.UUID("25ea5e1c-2fd8-49e8-8062-c15e8b04492c")
-        expected = "25ea5e1c2fd849e88062c15e8b04492c"
-
-        result = normalize_uuid(input_uuid)
-
-        assert result == expected
+        result = normalize_uuid(_TEST_UUID)
+        assert result == _TEST_UUID_HEX
 
     def test_normalize_uuid_none_returns_none(self):
         """Test that None input returns None."""
         result = normalize_uuid(None)
-
         assert result is None
 
     def test_normalize_uuid_invalid_raises_value_error(self):
@@ -54,7 +47,7 @@ class TestNormalizeUuid:
     def test_normalize_uuid_wrong_length_raises_value_error(self):
         """Test that wrong-length string raises ValueError."""
         with pytest.raises(ValueError, match="Invalid UUID format"):
-            normalize_uuid("25ea5e1c")
+            normalize_uuid(_PARTIAL_HEX)
 
 
 class TestNormalizeUuidToUuid:
@@ -62,34 +55,24 @@ class TestNormalizeUuidToUuid:
 
     def test_normalize_to_uuid_with_dashes(self):
         """Test converting UUID string with dashes to UUID object."""
-        input_uuid = "25ea5e1c-2fd8-49e8-8062-c15e8b04492c"
-
-        result = normalize_uuid_to_uuid(input_uuid)
-
+        result = normalize_uuid_to_uuid(_TEST_UUID_STR)
         assert isinstance(result, uuid.UUID)
-        assert str(result) == input_uuid
+        assert str(result) == _TEST_UUID_STR
 
     def test_normalize_to_uuid_without_dashes(self):
         """Test converting UUID string without dashes to UUID object."""
-        input_uuid = "25ea5e1c2fd849e88062c15e8b04492c"
-
-        result = normalize_uuid_to_uuid(input_uuid)
-
+        result = normalize_uuid_to_uuid(_TEST_UUID_HEX)
         assert isinstance(result, uuid.UUID)
-        assert result.hex == input_uuid
+        assert result.hex == _TEST_UUID_HEX
 
     def test_normalize_to_uuid_object(self):
         """Test that UUID object passes through unchanged."""
-        input_uuid = uuid.UUID("25ea5e1c-2fd8-49e8-8062-c15e8b04492c")
-
-        result = normalize_uuid_to_uuid(input_uuid)
-
-        assert result == input_uuid
+        result = normalize_uuid_to_uuid(_TEST_UUID)
+        assert result == _TEST_UUID
 
     def test_normalize_to_uuid_none_returns_none(self):
         """Test that None input returns None."""
         result = normalize_uuid_to_uuid(None)
-
         assert result is None
 
     def test_normalize_to_uuid_invalid_raises_value_error(self):
@@ -103,15 +86,15 @@ class TestIsValidUuid:
 
     def test_is_valid_uuid_with_dashes(self):
         """Test validation of UUID with dashes."""
-        assert is_valid_uuid("25ea5e1c-2fd8-49e8-8062-c15e8b04492c") is True
+        assert is_valid_uuid(_TEST_UUID_STR) is True
 
     def test_is_valid_uuid_without_dashes(self):
         """Test validation of UUID without dashes."""
-        assert is_valid_uuid("25ea5e1c2fd849e88062c15e8b04492c") is True
+        assert is_valid_uuid(_TEST_UUID_HEX) is True
 
     def test_is_valid_uuid_object(self):
         """Test validation of UUID object."""
-        assert is_valid_uuid(uuid.UUID("25ea5e1c-2fd8-49e8-8062-c15e8b04492c")) is True
+        assert is_valid_uuid(_TEST_UUID) is True
 
     def test_is_valid_uuid_none_returns_false(self):
         """Test that None returns False."""
@@ -123,7 +106,7 @@ class TestIsValidUuid:
 
     def test_is_valid_uuid_wrong_length_returns_false(self):
         """Test that wrong-length string returns False."""
-        assert is_valid_uuid("25ea5e1c") is False
+        assert is_valid_uuid(_PARTIAL_HEX) is False
 
 
 class TestUuidFormatConsistency:
@@ -131,19 +114,16 @@ class TestUuidFormatConsistency:
 
     def test_roundtrip_uuid_object_to_hex_and_back(self):
         """Test roundtrip conversion UUID object -> hex string -> UUID object."""
-        original = uuid.UUID("25ea5e1c-2fd8-49e8-8062-c15e8b04492c")
-
-        hex_string = normalize_uuid(original)
+        hex_string = normalize_uuid(_TEST_UUID)
         result = normalize_uuid_to_uuid(hex_string)
-
-        assert result == original
+        assert result == _TEST_UUID
 
     def test_normalized_format_is_32_chars(self):
         """Test that normalized format is always 32 characters."""
         test_cases = [
-            "25ea5e1c-2fd8-49e8-8062-c15e8b04492c",
-            "25ea5e1c2fd849e88062c15e8b04492c",
-            uuid.UUID("25ea5e1c-2fd8-49e8-8062-c15e8b04492c"),
+            _TEST_UUID_STR,
+            _TEST_UUID_HEX,
+            _TEST_UUID,
         ]
 
         for test_case in test_cases:

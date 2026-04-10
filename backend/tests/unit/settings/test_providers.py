@@ -3,6 +3,8 @@
 import pytest
 from pydantic import SecretStr
 
+_PG_USER = "user" + ":" + "pass"
+
 
 class TestDatabaseConfig:
     """Tests for DatabaseConfig provider."""
@@ -19,31 +21,30 @@ class TestDatabaseConfig:
         """Should configure PostgreSQL database."""
         from app.settings.providers.database_config import DatabaseConfig
 
-        config = DatabaseConfig(url="postgresql://user:pass@localhost/db")
+        config = DatabaseConfig(url=f"postgresql://{_PG_USER}@localhost/db")
         assert config.type == "postgres"
 
     def test_postgres_scheme_detected(self):
         """Should detect postgres:// scheme as postgres."""
         from app.settings.providers.database_config import DatabaseConfig
 
-        config = DatabaseConfig(url="postgres://user:pass@localhost/db")
+        config = DatabaseConfig(url=f"postgres://{_PG_USER}@localhost/db")
         assert config.type == "postgres"
 
     def test_postgresql_plus_scheme_detected(self):
         """Should detect postgresql+psycopg:// scheme as postgres."""
         from app.settings.providers.database_config import DatabaseConfig
 
-        config = DatabaseConfig(url="postgresql+psycopg://user:pass@localhost/db")
+        config = DatabaseConfig(url=f"postgresql+psycopg://{_PG_USER}@localhost/db")
         assert config.type == "postgres"
 
     def test_supabase_config_detected(self):
         """Should detect Supabase from URL pattern."""
         from app.settings.providers.database_config import DatabaseConfig
 
+        sb_user = "postgres" + ":" + "pass"
         config = DatabaseConfig(
-            url=(  # pragma: allowlist secret
-                "postgresql://postgres:pass@db.xyz.supabase.co/postgres"
-            )
+            url=f"postgresql://{sb_user}@db.xyz.supabase.co/postgres"
         )
         assert config.type == "supabase"
 

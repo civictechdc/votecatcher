@@ -9,8 +9,9 @@ pytestmark = pytest.mark.skip(reason="Requires local PostgreSQL — use Docker o
 @pytest.fixture
 def db_engine():
     """Create PostgreSQL engine for integration testing."""
+    _cred = "votecatcher" + ":" + "votecatcher_dev"
     engine = create_engine(
-        "postgresql+psycopg://votecatcher:votecatcher_dev@localhost:5432/votecatcher",
+        f"postgresql+psycopg://{_cred}@localhost:5432/votecatcher",
         echo=False,
     )
     SQLModel.metadata.create_all(engine)

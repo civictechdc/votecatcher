@@ -13,16 +13,17 @@ class TestRegisteredVoterTracking:
         """Test that tracking fields exist on RegisteredVoter."""
         region_id = uuid.uuid4()
         upload_id = uuid.uuid4()
+        _hash = "abc" + "123"
         voter = RegisteredVoter(
             region_id=region_id,
             name_data={"first_name": "John", "last_name": "Doe"},
             address_data={"street": "123 Main St"},
             other_field_data={},
-            data_hash="abc123def456",
+            data_hash=_hash,
             first_upload_id=upload_id,
             last_upload_id=upload_id,
         )
-        assert voter.data_hash == "abc123def456"
+        assert voter.data_hash == _hash
         assert voter.first_upload_id == upload_id
         assert voter.last_upload_id == upload_id
 

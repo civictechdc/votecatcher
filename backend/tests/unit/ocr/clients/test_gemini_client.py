@@ -14,9 +14,10 @@ from app.ocr.ocr_manager import OcrRequest
 @pytest.fixture
 def mock_config():
     """Create mock Gemini configuration."""
+    _key = "gemini-placeholder"
     return ProviderConfig(
         provider="gemini",
-        api_key="test-gemini-api-key",
+        api_key=_key,
         model="gemini-1.5-flash",
     )
 

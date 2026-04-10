@@ -19,11 +19,22 @@ router = APIRouter(prefix="/regions", tags=["regions"])
 SessionDep = Annotated[Session, Depends(get_session)]
 
 
+class UploadDetail(ApiModel):
+    """Typed upload details for voter list status."""
+
+    id: str
+    original_filename: str
+    file_size: int | None
+    row_count: int | None
+    uploaded_at: str
+    status: str
+
+
 class VoterListStatusResponse(ApiModel):
     """Response schema for voter list status."""
 
     exists: bool
-    upload: dict | None = None
+    upload: UploadDetail | None = None
 
 
 class DeleteVoterListResponse(ApiModel):
@@ -55,14 +66,14 @@ async def get_voter_list_status(  # nosemgrep: fastapi-unauthenticated-route
 
     return VoterListStatusResponse(
         exists=True,
-        upload={
-            "id": str(upload.id),
-            "original_filename": upload.original_filename,
-            "file_size": upload.file_size,
-            "row_count": upload.row_count,
-            "uploaded_at": upload.uploaded_at.isoformat(),
-            "status": upload.status.value,
-        },
+        upload=UploadDetail(
+            id=str(upload.id),
+            original_filename=upload.original_filename,
+            file_size=upload.file_size,
+            row_count=upload.row_count,
+            uploaded_at=upload.uploaded_at.isoformat(),
+            status=upload.status.value,
+        ),
     )
 
 

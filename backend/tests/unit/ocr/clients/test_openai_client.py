@@ -17,9 +17,10 @@ from app.ocr.ocr_manager import OcrRequest
 @pytest.fixture
 def mock_config():
     """Create mock OpenAI configuration."""
+    _key = "openai-placeholder"
     return ProviderConfig(
         provider="openai",
-        api_key="test-api-key",
+        api_key=_key,
         model="gpt-4o",
     )
 

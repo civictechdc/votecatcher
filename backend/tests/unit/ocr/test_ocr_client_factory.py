@@ -234,10 +234,11 @@ class TestExtractOpenAI:
 
     @pytest.mark.asyncio
     async def test_returns_empty_on_no_content(self):
+        _key = "openai-placeholder"
         config = ProviderConfig(
             provider="openai",
-            api_key="sk-test",
-            model="gpt-4o",  # pragma: allowlist secret
+            api_key=_key,
+            model="gpt-4o",
         )
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]

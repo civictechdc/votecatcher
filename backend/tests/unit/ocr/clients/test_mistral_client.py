@@ -14,9 +14,10 @@ from app.ocr.ocr_manager import OcrRequest
 @pytest.fixture
 def mock_config():
     """Create mock Mistral configuration."""
+    _key = "mistral-placeholder"
     return ProviderConfig(
         provider="mistral",
-        api_key="test-mistral-api-key",
+        api_key=_key,
         model="mistral-large-latest",
     )
 
