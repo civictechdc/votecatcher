@@ -31,23 +31,23 @@ describe("Campaigns List Page", () => {
 			const testCampaigns: CampaignResponse[] = [
 				{
 					id: "1",
-					unique_name: "c1",
+					uniqueName: "c1",
 					title: "Campaign 1",
 					year: "2024",
 					region: "Region 1",
-					region_id: "1",
-					created_at: new Date(),
-					updated_at: null,
+					regionId: "1",
+					createdAt: new Date(),
+					updatedAt: null,
 				},
 				{
 					id: "2",
-					unique_name: "c2",
+					uniqueName: "c2",
 					title: "Campaign 2",
 					year: "2024",
 					region: "Region 2",
-					region_id: "2",
-					created_at: new Date(),
-					updated_at: null,
+					regionId: "2",
+					createdAt: new Date(),
+					updatedAt: null,
 				},
 			];
 
@@ -131,13 +131,13 @@ describe("Campaigns List Page", () => {
 			const testCampaigns: CampaignResponse[] = [
 				{
 					id: "1",
-					unique_name: "c1",
+					uniqueName: "c1",
 					title: "Campaign 1",
 					year: "2024",
 					region: "Region 1",
-					region_id: "1",
-					created_at: new Date(),
-					updated_at: null,
+					regionId: "1",
+					createdAt: new Date(),
+					updatedAt: null,
 				},
 			];
 
@@ -160,13 +160,13 @@ describe("Campaigns List Page", () => {
 			const testCampaigns: CampaignResponse[] = [
 				{
 					id: "1",
-					unique_name: "c1",
+					uniqueName: "c1",
 					title: "Campaign 1",
 					year: "2024",
 					region: "Region 1",
-					region_id: "1",
-					created_at: new Date(),
-					updated_at: null,
+					regionId: "1",
+					createdAt: new Date(),
+					updatedAt: null,
 				},
 			];
 

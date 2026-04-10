@@ -25,14 +25,14 @@
 	interface SetupStatus {
 		voter_list: {
 			exists: boolean;
-			row_count?: number;
-			uploaded_at?: string;
-			region_name?: string;
+			rowCount: number | null;
+			uploadedAt: string | null;
+			regionName: string | null;
 		};
 		petitions: {
 			exists: boolean;
-			file_count?: number;
-			signature_count?: number;
+			fileCount: number;
+			signatureCount: number;
 		};
 		jobs: {
 			total: number;
@@ -48,7 +48,22 @@
 		try {
 			const response = await fetch(`${API_BASE}/api/campaigns/${campaignId}/setup-status`);
 			if (response.ok) {
-				setupStatus = await response.json();
+				const data = await response.json();
+				setupStatus = {
+					voter_list: {
+						exists: data.voter_list?.exists ?? false,
+						rowCount: data.voter_list?.rowCount ?? null,
+						uploadedAt: data.voter_list?.uploadedAt ?? null,
+						regionName: data.voter_list?.regionName ?? null,
+					},
+					petitions: {
+						exists: data.petitions?.exists ?? false,
+						fileCount: data.petitions?.fileCount ?? 0,
+						signatureCount: data.petitions?.signatureCount ?? 0,
+					},
+					jobs: data.jobs ?? { total: 0, active: 0 },
+					state: data.state ?? "empty",
+				};
 			}
 		} catch (error) {
 			console.error('Failed to fetch setup status:', error);
@@ -67,7 +82,6 @@
 				return bTime - aTime;
 			})
 	);
-	const highPercentage = $derived(metrics.totalSignatures > 0 ? (metrics.highConfidence / metrics.totalSignatures) * 100 : 0);
 	const hasCrops = $derived(metrics.totalSignatures > 0);
 	const hasMatchResults = $derived(metrics.processed > 0);
 
@@ -81,13 +95,13 @@
 			if (response.ok) {
 				const data = await response.json();
 				metrics = {
-					totalSignatures: data.total_signatures ?? 0,
+					totalSignatures: data.totalSignatures ?? 0,
 					processed: data.processed ?? 0,
-					highConfidence: data.high_confidence ?? 0,
-					mediumConfidence: data.medium_confidence ?? 0,
-					lowConfidence: data.low_confidence ?? 0,
-					progressPercentage: data.progress_percentage ?? 0,
-					voterListCount: data.voter_list_count ?? null
+					highConfidence: data.highConfidence ?? 0,
+					mediumConfidence: data.mediumConfidence ?? 0,
+					lowConfidence: data.lowConfidence ?? 0,
+					progressPercentage: data.progressPercentage ?? 0,
+					voterListCount: data.voterListCount ?? null
 				};
 			}
 		} catch (error) {
@@ -112,7 +126,7 @@
 </script>
 
 <svelte:head>
-	<title>{campaign?.unique_name || campaign?.title || 'Campaign'} — Votecatcher</title>
+	<title>{campaign?.uniqueName || campaign?.title || 'Campaign'} — Votecatcher</title>
 	<meta name="description" content="Campaign dashboard for signature verification." />
 </svelte:head>
 
@@ -122,7 +136,7 @@
 	<div class="space-y-6">
 		<div class="flex items-center justify-between">
 			<div>
-				<h1 class="text-3xl font-bold text-slate-900">{campaign?.unique_name || campaign?.title || 'Campaign'}</h1>
+				<h1 class="text-3xl font-bold text-slate-900">{campaign?.uniqueName || campaign?.title || 'Campaign'}</h1>
 				<p class="mt-1 text-slate-600">{campaign?.region || ''} • {campaign?.year || ''}</p>
 			</div>
 			<div class="flex gap-3">

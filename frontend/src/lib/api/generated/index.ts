@@ -13,7 +13,7 @@ export type {
 
 export type { JobResponse, JobListResponse, CreateJobRequest, JobStatusEnum } from "./models/Job";
 
-export type { ResultResponse, ResultListResponse, MatchPrediction } from "./models/Result";
+export type { ResultResponse, ResultsListResponse, MatchPrediction } from "./models/Result";
 
 export type { VoterListUploadResponse, PetitionUploadResponse } from "./models/Upload";
 

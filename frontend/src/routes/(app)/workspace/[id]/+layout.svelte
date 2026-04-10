@@ -6,15 +6,14 @@
 	import { jobs } from '$lib/stores/jobs';
 	import { CampaignSidebar } from '$lib/components/layout';
 
-	let { children, data } = $props();
+	let { children } = $props();
 
 	const campaignId = $derived($page.params.id ?? '');
-	const campaign = $derived($campaigns.campaigns.find(c => c.id === campaignId));
 	const campaignName = $derived(
 	 $campaigns.loading
-        ? ''
-        : $campaigns.campaigns.find(c => c.id === campaignId)?.unique_name || $campaigns.campaigns.find(c => c.id === campaignId)?.title || 'Campaign'
-    );
+         ? ''
+         : $campaigns.campaigns.find(c => c.id === campaignId)?.uniqueName || $campaigns.campaigns.find(c => c.id === campaignId)?.title || 'Campaign'
+     );
 
 	function handleJobStatusEvent(e: CustomEvent) {
 		jobs.handleStatusEvent(e.detail);

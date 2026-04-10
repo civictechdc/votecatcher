@@ -85,16 +85,6 @@
 		await loadProviders();
 	}
 
-	function handleClearError() {
-		settings.clearError();
-	}
-
-	function maskApiKey(key: string | null): string {
-		if (!key) return 'Not configured';
-		if (key.length <= 8) return '••••••••';
-		return key.substring(0, 4) + '••••••••' + key.substring(key.length - 4);
-	}
-
 	function getProviderConfig(providerKey: string): ProviderConfig | undefined {
 		return providers.find(p => p.provider === providerKey);
 	}

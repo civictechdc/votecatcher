@@ -54,13 +54,14 @@ export const handlers = [
 	// store API key endpoint (onboarding provider step)
 	http.post("/api/store-api-key", async ({ request }) => {
 		const body = await jsonSafe(request);
+		const bodyRecord = body as Record<string, unknown>;
 		const provider =
-			(body as Record<string, unknown>)?.provider ??
-			(body as Record<string, unknown>)?.name ??
+			bodyRecord["provider"] ??
+			bodyRecord["name"] ??
 			null;
 		const apiKey =
-			(body as Record<string, unknown>)?.apiKey ??
-			(body as Record<string, unknown>)?.api_key ??
+			bodyRecord["apiKey"] ??
+			bodyRecord["api_key"] ??
 			null;
 
 		if (!provider || !apiKey) {
@@ -106,10 +107,10 @@ export const handlers = [
 
 		// Normal validation to mirror your server real behavior
 		if (
-			!(body as Record<string, unknown>)?.name ||
+			!(body as Record<string, unknown>)["name"] ||
 			!("year" in (body as Record<string, unknown>)) ||
-			(body as Record<string, unknown>)?.year === null ||
-			(body as Record<string, unknown>)?.year === undefined
+			(body as Record<string, unknown>)["year"] === null ||
+			(body as Record<string, unknown>)["year"] === undefined
 		) {
 			return new HttpResponse(JSON.stringify({ error: "Missing name or year" }), {
 				status: 400,
@@ -128,7 +129,7 @@ export const handlers = [
 	http.post("/api/upload-file", async ({ request }) => {
 		const body = await jsonSafe(request);
 		if (
-			!(body as Record<string, unknown>)?.fileName ||
+			!(body as Record<string, unknown>)["fileName"] ||
 			!("size" in (body as Record<string, unknown>))
 		) {
 			return new HttpResponse(JSON.stringify({ error: "Missing file metadata" }), {
@@ -145,7 +146,7 @@ export const handlers = [
 	// trigger file processing
 	http.post("/api/process-voter-file", async ({ request }) => {
 		const body = await jsonSafe(request);
-		if (!(body as Record<string, unknown>)?.filePath) {
+		if (!(body as Record<string, unknown>)["filePath"]) {
 			return new HttpResponse(JSON.stringify({ error: "Missing filePath" }), {
 				status: 400,
 				headers: { "Content-Type": "application/json" },

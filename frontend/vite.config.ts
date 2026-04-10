@@ -16,7 +16,7 @@ export default defineConfig({
 			gzipSize: true,
 			template: "treemap",
 		}),
-	],
+	] as any,
 	resolve: {
 		alias: {
 			$lib: path.resolve("./src/lib"),

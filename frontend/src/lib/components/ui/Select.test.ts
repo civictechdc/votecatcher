@@ -101,7 +101,7 @@ describe("Select Component", () => {
 			await fireEvent.click(combobox);
 
 			const options = getAllByRole("option");
-			await fireEvent.click(options[1]);
+			await fireEvent.click(options[1]!);
 
 			expect(onValueChange).toHaveBeenCalledWith("medium");
 		});
@@ -115,7 +115,7 @@ describe("Select Component", () => {
 			await fireEvent.click(combobox);
 
 			const options = getAllByRole("option");
-			await fireEvent.click(options[0]);
+			await fireEvent.click(options[0]!);
 
 			expect(queryByRole("listbox")).toBeNull();
 		});
@@ -129,7 +129,7 @@ describe("Select Component", () => {
 			await fireEvent.click(combobox);
 
 			const options = getAllByRole("option");
-			expect(options[0].getAttribute("aria-selected")).toBe("true");
+			expect(options[0]!.getAttribute("aria-selected")).toBe("true");
 		});
 	});
 
@@ -181,10 +181,10 @@ describe("Select Component", () => {
 
 			await fireEvent.keyDown(combobox, { key: "ArrowDown" });
 			const options = getAllByRole("option");
-			expect(options[0].getAttribute("data-highlighted")).toBe("true");
+			expect(options[0]!.getAttribute("data-highlighted")).toBe("true");
 
 			await fireEvent.keyDown(combobox, { key: "ArrowDown" });
-			expect(options[1].getAttribute("data-highlighted")).toBe("true");
+			expect(options[1]!.getAttribute("data-highlighted")).toBe("true");
 		});
 
 		it("selects highlighted option with Enter", async () => {
@@ -305,9 +305,9 @@ describe("Select Component", () => {
 			await fireEvent.click(combobox);
 
 			const options = getAllByRole("option");
-			expect(options[0].getAttribute("data-value")).toBe("high");
-			expect(options[1].getAttribute("data-value")).toBe("medium");
-			expect(options[2].getAttribute("data-value")).toBe("low");
+			expect(options[0]!.getAttribute("data-value")).toBe("high");
+			expect(options[1]!.getAttribute("data-value")).toBe("medium");
+			expect(options[2]!.getAttribute("data-value")).toBe("low");
 		});
 	});
 
@@ -325,7 +325,7 @@ describe("Select Component", () => {
 
 			const options = getAllByRole("option");
 			expect(options).toHaveLength(1);
-			expect(options[0].textContent).toContain("High");
+			expect(options[0]!.textContent).toContain("High");
 		});
 
 		it("shows no results message when filter has no matches", async () => {

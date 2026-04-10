@@ -5,7 +5,7 @@
 	import { page } from '$app/stores';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { jobs } from '$lib/stores/jobs';
-	import { Button, LoadingState, ErrorDisplay } from '$lib/components/ui';
+	import { Button } from '$lib/components/ui';
 	import { PUBLIC_API_URL } from '$env/static/public';
 
 	interface ProviderConfig {
@@ -17,9 +17,9 @@
 
 	interface PetitionScan {
 		id: number;
-		original_filename: string;
-		page_count: number | null;
-		uploaded_at: string;
+		originalFilename: string;
+		pageCount: number | null;
+		uploadedAt: string;
 	}
 
 	interface ScansResponse {
@@ -31,10 +31,8 @@
 	const API_BASE = (PUBLIC_API_URL || 'http://localhost:8080') + '/api';
 
 	let scans = $state<PetitionScan[]>([]);
-	let scansLoading = $state(false);
 	let providers = $state<ProviderConfig[]>([]);
-	let providersLoading = $state(false);
-	let selectedScans = new SvelteSet<number>();
+	let selectedScans = $state(new SvelteSet<number>());
 	let formData = $state({
 		providerName: '',
 		providerModel: '',
@@ -46,7 +44,6 @@
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
 
 	async function fetchScans() {
-		scansLoading = true;
 		try {
 			const response = await fetch(`${API_BASE}/campaigns/${campaignId}/scans`);
 			if (response.ok) {
@@ -58,13 +55,10 @@
 		} catch (e) {
 			error = 'Failed to load scans';
 			console.error(e);
-		} finally {
-			scansLoading = false;
 		}
 	}
 
 	async function fetchProviders() {
-		providersLoading = true;
 		try {
 			const response = await fetch(`${API_BASE}/settings/providers`);
 			if (response.ok) {
@@ -74,8 +68,8 @@
 					formData.providerName = configured.provider;
 					formData.providerModel = configured.model;
 				} else if (providers.length > 0) {
-					formData.providerName = providers[0].provider;
-					formData.providerModel = providers[0].model;
+					formData.providerName = providers[0]!.provider;
+					formData.providerModel = providers[0]!.model;
 				}
 			} else {
 				error = 'Failed to load providers';
@@ -83,19 +77,15 @@
 		} catch (e) {
 			error = 'Failed to load providers';
 			console.error(e);
-		} finally {
-			providersLoading = false;
 		}
 	}
 
 	function toggleScan(id: number) {
-		const newSet = new SvelteSet(selectedScans);
-		if (newSet.has(id)) {
-			newSet.delete(id);
+		if (selectedScans.has(id)) {
+			selectedScans.delete(id);
 		} else {
-			newSet.add(id);
+			selectedScans.add(id);
 		}
-		selectedScans = newSet;
 	}
 
 	function formatDate(date: string | null): string {
@@ -171,42 +161,24 @@
 </script>
 
 <svelte:head>
-	<title>Create New Job — {campaign?.unique_name || campaign?.title || 'Campaign'} — Votecatcher</title>
-	<meta name="description" content="Create a new job for this campaign." />
+	<title>Create New Job — {campaign?.uniqueName || campaign?.title || 'Campaign'} — Votecatcher</title>
+	<meta name="description" content="Create a new signature matching job." />
 </svelte:head>
 
-{#if scansLoading || providersLoading}
-	<LoadingState loading={true} />
-{:else if error && scans.length === 0}
-	<ErrorDisplay message={error} onRetry={() => { error = null; fetchScans(); fetchProviders(); }} />
-{:else if providers.length === 0}
-	<div class="max-w-2xl mx-auto">
-		<div class="rounded-md bg-amber-50 p-4 text-amber-800">
-			<svg class="inline-block h-5 w-5 text-amber-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-				<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 2v2m-2 2a2 2 0 002 4h3m6v10H7l5 4m0 3-4m4 4m6 1v3m0-4V4" />
-			</svg>
-			<div>
-				<p class="font-medium">No LLM Providers Configured</p>
-				<p class="mt-1 text-sm">
-					Configure an LLM provider first to create jobs.
-					<a href="/workspace/settings" class="text-blue-600 hover:text-blue-800 underline">Go to Settings</a>
-				</p>
-			</div>
-		</div>
+<div class="space-y-6">
+	<div>
+		<nav class="mb-2 text-sm text-slate-500">
+			<a href="/workspace/{campaignId}" class="hover:text-slate-700">Dashboard</a>
+			<span class="mx-2">/</span>
+			<a href="/workspace/{campaignId}/jobs" class="hover:text-slate-700">Jobs</a>
+			<span class="mx-2">/</span>
+			<span class="text-slate-900">New Job</span>
+		</nav>
+		<h1 class="text-3xl font-bold text-slate-900">Create New Job</h1>
+		<p class="mt-1 text-slate-600">{campaign?.uniqueName || campaign?.title || 'Campaign'}</p>
 	</div>
-{:else}
-	<div class="space-y-6">
-		<div>
-			<div class="flex items-center justify-between mb-4">
-				<h1 class="text-2xl font-bold text-slate-900">Create New Job</h1>
-				<p class="text-slate-600">{campaign?.unique_name || campaign?.title || 'Campaign'}</p>
-			</div>
-			<a href="/workspace/{campaignId}/jobs" class="text-slate-500 hover:text-slate-700 text-sm">
-				Back to Jobs
-			</a>
-		</div>
 
-		{#if error}
+	{#if error}
 			<div class="rounded-md bg-red-50 p-4 text-red-800">
 				{error}
 			</div>
@@ -233,9 +205,9 @@
 								class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
 							/>
 							<div class="flex-1">
-								<p class="font-medium text-slate-900">{scan.original_filename}</p>
+								<p class="font-medium text-slate-900">{scan.originalFilename}</p>
 								<p class="text-sm text-slate-500">
-									{scan.page_count ?? '?'} pages - Uploaded {formatDate(scan.uploaded_at)}
+									{scan.pageCount ?? '?'} pages - Uploaded {formatDate(scan.uploadedAt)}
 								</p>
 							</div>
 						</label>
@@ -309,5 +281,4 @@
 			<Button variant="secondary" text="Save" onclick={handleSave} disabled={submitting || selectedScans.size === 0} type="button" />
 			<Button variant="primary" text="Run" onclick={handleRun} disabled={submitting || selectedScans.size === 0} type="button" />
 		</div>
-	</div>
-{/if}
+</div>

@@ -25,15 +25,15 @@
 		return resultList.map((result) => {
 			const topPrediction = result.predictions[0];
 			return {
-				id: result.ocr_result_id,
+				id: result.ocrResultId,
 				confidence: topPrediction?.confidence
 					? `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(topPrediction.confidence)}">${topPrediction.confidence}</span>`
 					: '-',
-				extracted_name: result.extracted_name || '-',
-				extracted_address: result.extracted_address || '-',
-				matched_name: topPrediction?.voter_name || '-',
-				matched_address: topPrediction?.voter_address || '-',
-				score: topPrediction?.similarity_score ? `${(topPrediction.similarity_score * 100).toFixed(1)}%` : '-'
+				extracted_name: result.extractedName || '-',
+				extracted_address: result.extractedAddress || '-',
+				matched_name: topPrediction?.voterName || '-',
+				matched_address: topPrediction?.voterAddress || '-',
+				score: topPrediction?.similarityScore ? `${(topPrediction.similarityScore * 100).toFixed(1)}%` : '-'
 			};
 		});
 	}
@@ -69,7 +69,7 @@
 </script>
 
 <svelte:head>
-	<title>Results — {campaign?.unique_name || campaign?.title || 'Campaign'} — Votecatcher</title>
+	<title>Results — {campaign?.uniqueName || campaign?.title || 'Campaign'} — Votecatcher</title>
 	<meta name="description" content="View signature matching results for this campaign." />
 </svelte:head>
 
@@ -77,7 +77,7 @@
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="text-3xl font-bold text-slate-900">Results</h1>
-			<p class="mt-1 text-slate-600">{campaign?.unique_name || campaign?.title || 'Campaign'}</p>
+			<p class="mt-1 text-slate-600">{campaign?.uniqueName || campaign?.title || 'Campaign'}</p>
 		</div>
 	</div>
 

@@ -20,12 +20,11 @@
 	let {
 		rows = [],
 		columns = [],
-		pageSize = PAGE_SIZE_OPTIONS[0],
 		confidenceThreshold = { high: 95, medium: 90 } as ConfidenceThresholds
 	}: Props = $props();
 
 	let currentPage = $state(0);
-	let pageSizeState = $state(pageSize);
+	let pageSizeState = $state(PAGE_SIZE_OPTIONS[0]);
 
 	let pageCount = $derived(Math.max(1, Math.ceil(rows.length / pageSizeState)));
 	let start = $derived(currentPage * pageSizeState);

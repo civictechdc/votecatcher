@@ -28,7 +28,10 @@
 
 	let isExpanded = $state(false);
 	let apiKey = $state('');
-	let selectedModel = $state(configuredModel || models[0] || '');
+	let selectedModel = $state('');
+	$effect(() => {
+		selectedModel = configuredModel || models[0] || '';
+	});
 	let isSaving = $state(false);
 	let isTesting = $state(false);
 	let isDeleting = $state(false);

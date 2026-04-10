@@ -19,20 +19,20 @@
 
 	interface PetitionScan {
 		id: number;
-		original_filename: string;
-		file_size: number | null;
-		page_count: number | null;
-		uploaded_at: string;
+		originalFilename: string;
+		fileSize: number | null;
+		pageCount: number | null;
+		uploadedAt: string;
 	}
 
 	interface VoterListStatus {
 		exists: boolean;
 		upload?: {
 			id: string;
-			original_filename: string;
-			file_size: number;
-			row_count: number;
-			uploaded_at: string;
+			originalFilename: string;
+			fileSize: number;
+			rowCount: number;
+			uploadedAt: string;
 		};
 	}
 
@@ -78,10 +78,10 @@
 	}
 
 	async function fetchVoterListStatus() {
-		if (!campaign?.region_id) return;
+		if (!campaign?.regionId) return;
 		loadingVoterList = true;
 		try {
-			const response = await fetch(`${API_BASE}/api/regions/${campaign.region_id}/voter-list`);
+			const response = await fetch(`${API_BASE}/api/regions/${campaign.regionId}/voter-list`);
 			if (response.ok) {
 				voterListStatus = await response.json();
 			}
@@ -93,9 +93,9 @@
 	}
 
 	async function deleteVoterList() {
-		if (!campaign?.region_id) return;
+		if (!campaign?.regionId) return;
 		try {
-			const response = await fetch(`${API_BASE}/api/regions/${campaign.region_id}/voter-list`, {
+			const response = await fetch(`${API_BASE}/api/regions/${campaign.regionId}/voter-list`, {
 				method: 'DELETE'
 			});
 			if (response.ok) {
@@ -134,7 +134,7 @@
 	}
 
 	function checkForDuplicates(files: File[]): File[] {
-		const existingNames = new Set(existingScans.map(s => s.original_filename));
+		const existingNames = new Set(existingScans.map(s => s.originalFilename));
 		return files.filter(f => existingNames.has(f.name));
 	}
 
@@ -142,6 +142,7 @@
 		if (!voterFiles || voterFiles.length === 0) return;
 
 		const file = voterFiles[0];
+		if (!file) return;
 		const formData = new FormData();
 		formData.append('campaign_id', campaignId);
 		formData.append('file', file);
@@ -156,7 +157,7 @@
 			});
 			if (response.ok) {
 				const data = await response.json();
-				messages = `Voter list uploaded successfully! ${data.row_count?.toLocaleString() || 0} records imported.`;
+				messages = `Voter list uploaded successfully! ${data.rowCount?.toLocaleString() || 0} records imported.`;
 				messageType = 'success';
 				voterFiles = null;
 				await fetchVoterListStatus();
@@ -241,7 +242,7 @@
 
 			if (response.ok) {
 				existingScans = existingScans.filter(s => s.id !== toDelete.id);
-				messages = `"${toDelete.original_filename}" deleted.`;
+				messages = `"${toDelete.originalFilename}" deleted.`;
 				messageType = 'success';
 			} else {
 				const errorData = await response.json();
@@ -280,10 +281,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Upload — {campaign?.unique_name || campaign?.title || 'Campaign'} — Votecatcher</title>
-	<meta name="description" content="Upload voter lists and petitions for this campaign." />
-</svelte:head>
+	<svelte:head>
+		<title>Upload — {campaign?.uniqueName || campaign?.title || 'Campaign'} — Votecatcher</title>
+		<meta name="description" content="Upload voter lists and petitions for this campaign." />
+	</svelte:head>
 
 	<div class="space-y-6">
 		<h1 class="text-3xl font-bold text-slate-900">Upload</h1>
@@ -291,7 +292,7 @@
 			{#if $campaigns.loading}
 				<span class="animate-pulse bg-slate-200 rounded h-4 w-16 inline-block"></span>
 			{:else}
-				{campaign?.unique_name || campaign?.title || 'Campaign'}
+				{campaign?.uniqueName || campaign?.title || 'Campaign'}
 			{/if}
 		</p>
 	</div>
@@ -337,13 +338,13 @@
 												<text x="8" y="18" font-size="6" fill="white" font-weight="bold">PDF</text>
 											</svg>
 											<div>
-												<p class="font-medium text-slate-900">{scan.original_filename}</p>
+												<p class="font-medium text-slate-900">{scan.originalFilename}</p>
 												<p class="text-xs text-slate-500">
-													{formatFileSize(scan.file_size)}
-													{#if scan.page_count}
-														· {scan.page_count} page{scan.page_count !== 1 ? 's' : ''}
+													{formatFileSize(scan.fileSize)}
+													{#if scan.pageCount}
+														· {scan.pageCount} page{scan.pageCount !== 1 ? 's' : ''}
 													{/if}
-													· {formatDate(scan.uploaded_at)}
+													· {formatDate(scan.uploadedAt)}
 												</p>
 											</div>
 										</div>
@@ -392,6 +393,7 @@
 										<button
 											onclick={() => petitionFiles = null}
 											class="rounded p-1 text-slate-400 hover:text-slate-600"
+											aria-label="Remove file"
 										>
 											<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -449,11 +451,11 @@
 										<text x="7" y="18" font-size="6" fill="white" font-weight="bold">CSV</text>
 									</svg>
 									<div>
-										<p class="font-medium text-slate-900">{voterListStatus.upload.original_filename}</p>
+										<p class="font-medium text-slate-900">{voterListStatus.upload.originalFilename}</p>
 										<p class="text-xs text-slate-500">
-											{voterListStatus.upload.row_count.toLocaleString()} voters
-											· {formatFileSize(voterListStatus.upload.file_size)}
-											· {formatDate(voterListStatus.upload.uploaded_at)}
+											{voterListStatus.upload.rowCount.toLocaleString()} voters
+											· {formatFileSize(voterListStatus.upload.fileSize)}
+											· {formatDate(voterListStatus.upload.uploadedAt)}
 										</p>
 									</div>
 								</div>
@@ -492,10 +494,11 @@
 											</svg>
 											<span class="text-sm text-slate-700">{file.name}</span>
 										</div>
-										<button
-											onclick={() => voterFiles = null}
-											class="rounded p-1 text-slate-400 hover:text-slate-600"
-										>
+									<button
+										onclick={() => voterFiles = null}
+										class="rounded p-1 text-slate-400 hover:text-slate-600"
+										aria-label="Remove file"
+									>
 											<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 											</svg>
@@ -551,13 +554,13 @@
 {#if showDeleteConfirm}
 	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="dialog" aria-modal="true">
 		<div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-			<h3 class="text-lg font-semibold text-slate-900 mb-2">
-				{#if scanToDelete}
-					Remove "{scanToDelete.original_filename}"?
-				{:else}
-					Remove all petition files?
-				{/if}
-			</h3>
+		<h3 class="text-lg font-semibold text-slate-900 mb-2">
+			{#if scanToDelete}
+				Remove "{scanToDelete.originalFilename}"?
+			{:else}
+				Remove all petition files?
+			{/if}
+		</h3>
 			<p class="text-sm text-slate-600 mb-4">
 				{#if scanToDelete}
 					This action cannot be undone. The file will be permanently removed from this campaign.
@@ -617,7 +620,7 @@
 		<div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
 			<h3 class="text-lg font-semibold text-slate-900 mb-2">Delete Voter List?</h3>
 			<p class="text-sm text-slate-600 mb-4">
-				This will permanently delete all {voterListStatus?.upload?.row_count?.toLocaleString() || 'registered'} voters for this region.
+				This will permanently delete all {voterListStatus?.upload?.rowCount?.toLocaleString() || 'registered'} voters for this region.
 				This action cannot be undone.
 			</p>
 			<div class="flex justify-end space-x-3">

@@ -51,8 +51,8 @@ test.describe("Campaign-Scoped Navigation", () => {
 			.all();
 
 		if (campaignLinks.length >= 2) {
-			const firstHref = (await campaignLinks[0].getAttribute("href")) || "";
-			await campaignLinks[0].click();
+			const firstHref = (await campaignLinks[0]!.getAttribute("href")) || "";
+			await campaignLinks[0]!.click();
 			await expect(page).toHaveURL(new RegExp(firstHref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), {
 				timeout: 5000,
 			});
@@ -68,8 +68,8 @@ test.describe("Campaign-Scoped Navigation", () => {
 					hasNotText: "Campaigns",
 				})
 				.all();
-			const secondHref = (await newLinks[1].getAttribute("href")) || "";
-			await newLinks[1].click();
+			const secondHref = (await newLinks[1]!.getAttribute("href")) || "";
+			await newLinks[1]!.click();
 			await expect(page).toHaveURL(new RegExp(secondHref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), {
 				timeout: 5000,
 			});

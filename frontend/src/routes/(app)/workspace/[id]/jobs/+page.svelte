@@ -3,7 +3,7 @@
 	import { page } from '$app/stores';
 	import { jobs } from '$lib/stores/jobs';
 	import { campaigns } from '$lib/stores/campaigns';
-	import { Button, Table, LoadingState, Modal, ErrorDisplay } from '$lib/components/ui';
+	import { Button, Table, Modal } from '$lib/components/ui';
 	import type { JobResponse } from '$lib/api/generated';
 	import type { SortConfig } from '$lib/components/ui/Table.svelte';
 	import { PUBLIC_API_URL } from '$env/static/public';
@@ -128,8 +128,8 @@
 					formData.providerName = configured.provider;
 					formData.providerModel = configured.model;
 				} else if (providers.length > 0) {
-					formData.providerName = providers[0].provider;
-					formData.providerModel = providers[0].model;
+					formData.providerName = providers[0]!.provider;
+					formData.providerModel = providers[0]!.model;
 				}
 			}
 		} catch (error) {
@@ -190,19 +190,7 @@
 		});
 	}
 
-	function handleCancelClick(event: Event) {
-		const target = event.target as HTMLElement;
-		if (target.classList.contains('cancel-btn')) {
-			const id = target.dataset.jobId;
-			const status = target.dataset.jobStatus || '';
-			if (id) {
-				jobToCancel = { id: parseInt(id), status };
-				showCancelModal = true;
-			}
-		}
-	}
-
-		async function confirmCancel() {
+	async function confirmCancel() {
 		if (jobToCancel) {
 			try {
 				await jobs.cancel(jobToCancel.id);
@@ -235,88 +223,84 @@
 		showCreateModal = true;
 	}
 
-	function handleRetry() {
-		jobs.fetchAll();
-	}
-
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
 </script>
 
 <svelte:head>
-	<title>Jobs — {campaign?.unique_name || campaign?.title || 'Campaign'} — Votecatcher</title>
-	<meta name="description" content="View and manage OCR and matching jobs for this campaign." />
+	<title>Jobs — {campaign?.uniqueName || campaign?.title || 'Campaign'} — Votecatcher</title>
+	<meta name="description" content="Manage jobs for this campaign." />
 </svelte:head>
 
-{#if $jobs.loading && $jobs.jobs.length === 0}
-	<LoadingState loading={true} />
-{:else if $jobs.error}
-	<ErrorDisplay message={$jobs.error} onRetry={handleRetry} />
-{:else}
-	<div class="space-y-6" onclick={handleCancelClick} role="region" aria-label="Jobs list">
-		<div class="flex items-center justify-between">
-			<div>
-				<h1 class="text-3xl font-bold text-slate-900">Jobs</h1>
-				<p class="mt-1 text-slate-600">{campaign?.unique_name || campaign?.title || 'Campaign'}</p>
-			</div>
-			<Button variant="primary" text="Create Job" onclick={openCreateModal} disabled={hasScans === false} />
-		</div>
-
-		{#if hasScans === false}
-			<div class="rounded-md bg-amber-50 p-4">
-				<div class="flex">
-					<svg class="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
-						<path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-					</svg>
-					<div class="ml-3">
-						<h3 class="text-sm font-medium text-amber-800">No uploads yet</h3>
-						<p class="mt-1 text-sm text-amber-700">
-							Upload petition files before creating jobs.
-							<a href="/workspace/{campaignId}/upload" class="font-medium underline">Go to Upload</a>
-						</p>
-					</div>
-				</div>
-			</div>
-		{/if}
-
-		<div class="flex items-center gap-4">
-			<div class="flex-1">
-				<label for="status-filter" class="sr-only">Filter by status</label>
-				<div class="relative inline-block">
-					<select
-						id="status-filter"
-						bind:value={statusFilter}
-						class="min-w-40 appearance-none rounded-md border border-slate-300 bg-white px-3 py-2 pr-10 text-sm shadow-sm hover:border-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-					>
-						<option value="all">All Statuses</option>
-						<option value="not_started">Not Started</option>
-						<option value="running">Running</option>
-						<option value="completed">Completed</option>
-						<option value="failed">Failed</option>
-					</select>
-					<span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500">
-						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-						</svg>
-					</span>
-				</div>
-			</div>
-			{#if statusFilter !== 'all'}
-				<span class="text-sm text-slate-500">
-					{filteredJobs.length} of {campaignJobs.length} jobs
-				</span>
-			{/if}
-		</div>
-
-		<Table
-			columns={columns}
-			rows={getTableRows(sortedJobs)}
-			sortable={true}
-			sortConfig={sortConfig}
-			onSortChange={(config) => (sortConfig = config)}
-			emptyMessage={statusFilter !== 'all' ? 'No jobs match the selected filter.' : 'No jobs yet for this campaign. Create your first job to get started.'}
-		/>
+<div class="space-y-6">
+	<div>
+		<nav class="mb-2 text-sm text-slate-500">
+			<a href="/workspace/{campaignId}" class="hover:text-slate-700">Dashboard</a>
+			<span class="mx-2">/</span>
+			<span class="text-slate-900">Jobs</span>
+		</nav>
+		<h1 class="text-3xl font-bold text-slate-900">Jobs</h1>
+		<p class="mt-1 text-slate-600">{campaign?.uniqueName || campaign?.title || 'Campaign'}</p>
 	</div>
-{/if}
+
+	<div class="flex items-center justify-between">
+		<Button variant="primary" text="Create Job" onclick={openCreateModal} disabled={hasScans === false} />
+	</div>
+
+	{#if hasScans === false}
+		<div class="rounded-md bg-amber-50 p-4">
+			<div class="flex">
+				<svg class="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+					<path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+				</svg>
+				<div class="ml-3">
+					<h3 class="text-sm font-medium text-amber-800">No uploads yet</h3>
+					<p class="mt-1 text-sm text-amber-700">
+						Upload petition files before creating jobs.
+						<a href="/workspace/{campaignId}/upload" class="font-medium underline">Go to Upload</a>
+					</p>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	<div class="flex items-center gap-4">
+		<div class="flex-1">
+			<label for="status-filter" class="sr-only">Filter by status</label>
+			<div class="relative inline-block">
+				<select
+					id="status-filter"
+					bind:value={statusFilter}
+					class="min-w-40 appearance-none rounded-md border border-slate-300 bg-white px-3 py-2 pr-10 text-sm shadow-sm hover:border-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+				>
+					<option value="all">All Statuses</option>
+					<option value="not_started">Not Started</option>
+					<option value="running">Running</option>
+					<option value="completed">Completed</option>
+					<option value="failed">Failed</option>
+				</select>
+				<span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500">
+					<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+					</svg>
+				</span>
+			</div>
+		</div>
+		{#if statusFilter !== 'all'}
+			<span class="text-sm text-slate-500">
+				{filteredJobs.length} of {campaignJobs.length} jobs
+			</span>
+		{/if}
+	</div>
+
+	<Table
+		columns={columns}
+		rows={getTableRows(sortedJobs)}
+		sortable={true}
+		sortConfig={sortConfig}
+		onSortChange={(config) => (sortConfig = config)}
+		emptyMessage={statusFilter !== 'all' ? 'No jobs match the selected filter.' : 'No jobs yet for this campaign. Create your first job to get started.'}
+	/>
+</div>
 
 <Modal open={showCreateModal} onClose={() => (showCreateModal = false)} title="Create Job">
 	<form onsubmit={(e) => { e.preventDefault(); handleCreate(); }} class="space-y-4">

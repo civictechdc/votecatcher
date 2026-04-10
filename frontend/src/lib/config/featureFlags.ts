@@ -4,9 +4,9 @@
 // - Keep logic minimal and synchronous so it's safe in both server and client contexts.
 const env =
 	typeof import.meta !== "undefined"
-		? ((import.meta as unknown as Record<string, Record<string, string>>).env ?? {})
+		? ((import.meta as unknown as Record<string, Record<string, string>>)['env'] ?? {})
 		: {};
-const raw = (env.VITE_FEATURES as string) || "";
+const raw = (env['VITE_FEATURES'] as string) || "";
 const envFlags = new Set(
 	raw
 		.split(",")

@@ -105,7 +105,7 @@ describe("featureFlags store", () => {
 			featureFlags.reset("betaFeatures");
 
 			const overrides = featureFlags.getOverrides();
-			expect(overrides.betaFeatures).toBeUndefined();
+			expect(overrides["betaFeatures"]).toBeUndefined();
 		});
 	});
 
@@ -180,8 +180,8 @@ describe("featureFlags store", () => {
 			featureFlags.setFlag("betaFeatures", true);
 
 			const overrides = featureFlags.getOverrides();
-			expect(overrides.simulationMode).toBe(true);
-			expect(overrides.betaFeatures).toBe(true);
+			expect(overrides["simulationMode"]).toBe(true);
+			expect(overrides["betaFeatures"]).toBe(true);
 		});
 	});
 });

@@ -3,12 +3,6 @@
 	import DevFlags from '$lib/components/DevFlags.svelte';
 	import { getCTADestination } from '$lib/utils/mode';
 
-	interface Props {
-		isDemoMode: boolean;
-	}
-
-	let { data } = $props();
-
 	const homeLink = $derived(getCTADestination());
 </script>
 

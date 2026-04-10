@@ -1,6 +1,5 @@
 import { Configuration, request, requestBlob } from "./runtime";
-import type { ResultResponse, ResultListResponse } from "./models/Result";
-
+import type { ResultsListResponse } from "./models/Result";
 export class ResultsApi {
 	private config: Configuration;
 
@@ -13,7 +12,7 @@ export class ResultsApi {
 		page?: number;
 		pageSize?: number;
 		confidence?: string | null;
-	}): Promise<ResultListResponse> {
+	}): Promise<ResultsListResponse> {
 		const query: Record<string, unknown> = {};
 		if (params.page !== undefined) query["page"] = params.page;
 		if (params.pageSize !== undefined) query["page_size"] = params.pageSize;
@@ -21,7 +20,7 @@ export class ResultsApi {
 		const qs = new URLSearchParams(
 			Object.entries(query).map(([k, v]) => [k, String(v)]),
 		).toString();
-		return request<ResultListResponse>(
+		return request<ResultsListResponse>(
 			this.config,
 			"GET",
 			`/jobs/${params.jobId}/results${qs ? `?${qs}` : ""}`,

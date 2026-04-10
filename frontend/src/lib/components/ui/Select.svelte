@@ -112,8 +112,8 @@
 				e.preventDefault();
 				if (!open) {
 					toggleDropdown();
-				} else if (highlightedIndex >= 0 && filteredOptions[highlightedIndex]) {
-					selectOption(filteredOptions[highlightedIndex].value);
+				} else if (highlightedIndex >= 0 && filteredOptions[highlightedIndex] !== undefined) {
+					selectOption(filteredOptions[highlightedIndex]!.value);
 				}
 				break;
 			case 'Escape':

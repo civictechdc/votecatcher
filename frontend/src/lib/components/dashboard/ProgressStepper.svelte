@@ -1,22 +1,10 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui';
-
-	interface VoterListStatus {
-		exists: boolean;
-		row_count?: number;
-		uploaded_at?: string;
-		region_name?: string;
-	}
-
-	interface PetitionStatus {
-		exists: boolean;
-		file_count?: number;
-		signature_count?: number;
-	}
+	import type { VoterListStatus, PetitionsStatus } from '$lib/api/generated/models/Campaign';
 
 	interface Props {
 		voterListStatus: VoterListStatus | null;
-		petitionStatus: PetitionStatus | null;
+		petitionStatus: PetitionsStatus | null;
 		hasJobs: boolean;
 		campaignId: string;
 	}
@@ -83,9 +71,9 @@
 					<div class="flex-1">
 						<span class="font-medium text-slate-900">Voter List</span>
 						<span class="text-sm text-slate-500 ml-2">
-							{formatCount(voterListStatus.row_count)} voters
-							{#if voterListStatus.region_name}• {voterListStatus.region_name}{/if}
-							{#if voterListStatus.uploaded_at}• Updated {formatDate(voterListStatus.uploaded_at)}{/if}
+							{formatCount(voterListStatus.rowCount ?? undefined)} voters
+							{#if voterListStatus.regionName}• {voterListStatus.regionName}{/if}
+							{#if voterListStatus.uploadedAt}• Updated {formatDate(voterListStatus.uploadedAt)}{/if}
 						</span>
 					</div>
 				{:else}
@@ -105,8 +93,8 @@
 					<div class="flex-1">
 						<span class="font-medium text-slate-900">Petitions</span>
 						<span class="text-sm text-slate-500 ml-2">
-							{petitionStatus.file_count ?? 0} files
-							{#if petitionStatus.signature_count}• {petitionStatus.signature_count} signatures{/if}
+							{petitionStatus.fileCount ?? 0} files
+							{#if petitionStatus.signatureCount}• {petitionStatus.signatureCount} signatures{/if}
 						</span>
 					</div>
 				{:else}

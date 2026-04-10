@@ -38,8 +38,8 @@ describe("featureFlags store", () => {
 
 			await featureFlags.load();
 
-			const fetchCall = mockFetch.mock.calls[0];
-			const urlUsed = fetchCall[0];
+			const fetchCall = mockFetch.mock.calls[0]!;
+			const urlUsed = fetchCall[0]!;
 
 			expect(urlUsed).not.toContain("/api/api/");
 			expect(urlUsed).toBe("http://localhost:8000/api/config/features");

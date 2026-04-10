@@ -1,22 +1,10 @@
 <script lang="ts">
-	import type { ConfidenceThresholds } from '$lib/workspace-types';
-
-	// use Svelte 5 runes-style props to match the rest of the codebase
-	let { matchScore, confidenceThreshold } = $props();
-
-	type ConfidenceDescription = 'High' | 'Medium' | 'Low' | 'No Score' | 'Invalid Score';
-	interface ConfidenceIndicator {
-		styleClasses: string;
-		score: number;
-		confidenceDescription: ConfidenceDescription;
-	}
-
-	// compute indicator as a derived reactive value
 	import { confidenceClass } from './matchConfidence';
+
+	let { matchScore, confidenceThreshold } = $props();
 
 	let indicator = $derived(() => confidenceClass(matchScore, confidenceThreshold));
 
-	// Debug logging (effect)
 	$effect(() => {
 		console.log('MatchConfidenceIndicator received:', {
 			matchScore,

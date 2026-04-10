@@ -29,7 +29,7 @@ export interface JobResponse {
 	endedAt?: string | Date | null;
 	errorMessage?: string | null;
 	isOrphaned?: boolean;
-	progress?: number;
+	progress?: number | null;
 }
 
 export interface JobListResponse {

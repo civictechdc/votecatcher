@@ -124,7 +124,7 @@
 			class="w-full text-sm text-left text-gray-700"
 		>
 			<thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
-				<tr role="row">
+				<tr>
 					{#each effectiveColumns as column}
 						<th
 							role="columnheader"
@@ -178,9 +178,9 @@
 					{/each}
 				</tr>
 			</thead>
-			<tbody role="rowgroup" class="bg-white divide-y divide-gray-200">
+			<tbody class="bg-white divide-y divide-gray-200">
 				{#if loading}
-					<tr role="row">
+					<tr>
 						<td colspan={effectiveColumns.length} class="px-4 py-8 text-center">
 							<div data-testid="table-loading" class="flex flex-col items-center gap-3">
 								<svg
@@ -198,7 +198,7 @@
 						</td>
 					</tr>
 				{:else if rows.length === 0}
-					<tr role="row">
+					<tr>
 						<td colspan={effectiveColumns.length} class="px-4 py-8 text-center text-gray-500">
 							{emptyMessage}
 						</td>
@@ -206,7 +206,7 @@
 				{:else}
 					{#each rows as row}
 						{@const rowId = row[rowKey] as string | number}
-						<tr role="row" class="hover:bg-gray-50 transition-colors">
+						<tr class="hover:bg-gray-50 transition-colors">
 							{#if selectable}
 								<td role="gridcell" class="px-4 py-3">
 									<input

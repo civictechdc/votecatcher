@@ -65,13 +65,13 @@ describe("Campaigns Store", () => {
 			const mockCampaigns: CampaignResponse[] = [
 				{
 					id: "1",
-					unique_name: "test-campaign",
+					uniqueName: "test-campaign",
 					title: "Test Campaign",
 					year: "2024",
 					region: "DC",
-					region_id: "1",
-					created_at: new Date("2024-01-01T00:00:00Z"),
-					updated_at: null,
+					regionId: "1",
+					createdAt: new Date("2024-01-01T00:00:00Z"),
+					updatedAt: null,
 				},
 			];
 
@@ -101,13 +101,13 @@ describe("Campaigns Store", () => {
 		it("creates a new campaign", async () => {
 			const newCampaign: CampaignResponse = {
 				id: "2",
-				unique_name: "new-campaign",
+				uniqueName: "new-campaign",
 				title: "New Campaign",
 				year: "2024",
 				region: "DC",
-				region_id: "1",
-				created_at: new Date("2024-01-01T00:00:00Z"),
-				updated_at: null,
+				regionId: "1",
+				createdAt: new Date("2024-01-01T00:00:00Z"),
+				updatedAt: null,
 			};
 
 			mockListCampaigns.mockResolvedValue({ campaigns: [] });
@@ -135,13 +135,13 @@ describe("Campaigns Store", () => {
 		it("removes campaign from store", async () => {
 			const existingCampaign: CampaignResponse = {
 				id: "1",
-				unique_name: "test",
+				uniqueName: "test",
 				title: "Test",
 				year: "2024",
 				region: "DC",
-				region_id: "1",
-				created_at: new Date("2024-01-01T00:00:00Z"),
-				updated_at: null,
+				regionId: "1",
+				createdAt: new Date("2024-01-01T00:00:00Z"),
+				updatedAt: null,
 			};
 
 			mockListCampaigns.mockResolvedValue({ campaigns: [existingCampaign] });
@@ -158,13 +158,13 @@ describe("Campaigns Store", () => {
 		it("handles delete when campaign does not exist", async () => {
 			const existingCampaign: CampaignResponse = {
 				id: "1",
-				unique_name: "test",
+				uniqueName: "test",
 				title: "Test",
 				year: "2024",
 				region: "DC",
-				region_id: "1",
-				created_at: new Date("2024-01-01T00:00:00Z"),
-				updated_at: null,
+				regionId: "1",
+				createdAt: new Date("2024-01-01T00:00:00Z"),
+				updatedAt: null,
 			};
 
 			mockListCampaigns.mockResolvedValue({ campaigns: [existingCampaign] });

@@ -13,15 +13,15 @@
 		year: 2024,
 		region: 'DC'
 	});
-	let sortConfig = $state<SortConfig | null>({ key: 'created_at', direction: 'desc' });
+	let sortConfig = $state<SortConfig | null>({ key: 'createdAt', direction: 'desc' });
 	let searchQuery = $state('');
 
 	const columns = [
 		{ key: 'name', label: 'Name', sortable: true },
 		{ key: 'year', label: 'Year', sortable: true },
 		{ key: 'region', label: 'Region', sortable: true },
-		{ key: 'created_at', label: 'Created', sortable: true },
-		{ key: 'updated_at', label: 'Last Updated', sortable: true },
+		{ key: 'createdAt', label: 'Created', sortable: true },
+		{ key: 'updatedAt', label: 'Last Updated', sortable: true },
 		{ key: 'actions', label: 'Actions', sortable: false }
 	];
 
@@ -29,7 +29,7 @@
 		campaigns.fetchAll();
 	});
 
-	function formatDate(date: Date | null | undefined): string {
+	function formatDate(date: string | Date | null | undefined): string {
 		if (!date) return '-';
 		return new Date(date).toLocaleDateString('en-US', {
 			year: 'numeric',
@@ -42,7 +42,7 @@
 		if (!query.trim()) return campaignList;
 		const lowerQuery = query.toLowerCase();
 		return campaignList.filter(c =>
-			(c.unique_name || c.title || '').toLowerCase().includes(lowerQuery) ||
+			(c.uniqueName || c.title || '').toLowerCase().includes(lowerQuery) ||
 			(c.region || '').toLowerCase().includes(lowerQuery) ||
 			String(c.year).includes(query)
 		);
@@ -57,8 +57,8 @@
 
 			switch (config.key) {
 				case 'name':
-					aVal = (a.unique_name || a.title || '').toLowerCase();
-					bVal = (b.unique_name || b.title || '').toLowerCase();
+					aVal = (a.uniqueName || a.title || '').toLowerCase();
+					bVal = (b.uniqueName || b.title || '').toLowerCase();
 					break;
 				case 'year':
 					aVal = parseInt(String(a.year)) || 0;
@@ -68,13 +68,13 @@
 					aVal = (a.region || '').toLowerCase();
 					bVal = (b.region || '').toLowerCase();
 					break;
-				case 'created_at':
-					aVal = a.created_at ? new Date(a.created_at).getTime() : 0;
-					bVal = b.created_at ? new Date(b.created_at).getTime() : 0;
+				case 'createdAt':
+					aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+					bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
 					break;
-				case 'updated_at':
-					aVal = a.updated_at ? new Date(a.updated_at).getTime() : 0;
-					bVal = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+				case 'updatedAt':
+					aVal = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+					bVal = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
 					break;
 				default:
 					return 0;
@@ -93,12 +93,12 @@
 	function getTableRows(campaignList: CampaignResponse[]) {
 		return campaignList.map((campaign) => ({
 			id: campaign.id,
-			name: `<a href="/workspace/${campaign.id}" class="text-blue-600 hover:text-blue-800 font-medium">${campaign.unique_name || campaign.title || ''}</a>`,
+			name: `<a href="/workspace/${campaign.id}" class="text-blue-600 hover:text-blue-800 font-medium">${campaign.uniqueName || campaign.title || ''}</a>`,
 			year: campaign.year,
 			region: campaign.region || '',
-			created_at: formatDate(campaign.created_at),
-			updated_at: formatDate(campaign.updated_at),
-			actions: `<button data-campaign-id="${campaign.id}" data-campaign-name="${campaign.unique_name || campaign.title || ''}" class="delete-btn text-red-600 hover:text-red-800 text-sm font-medium" aria-label="Delete ${campaign.unique_name || campaign.title}">Delete</button>`
+			createdAt: formatDate(campaign.createdAt),
+			updatedAt: formatDate(campaign.updatedAt),
+			actions: `<button data-campaign-id="${campaign.id}" data-campaign-name="${campaign.uniqueName || campaign.title || ''}" class="delete-btn text-red-600 hover:text-red-800 text-sm font-medium" aria-label="Delete ${campaign.uniqueName || campaign.title}">Delete</button>`
 		}));
 	}
 
@@ -115,8 +115,8 @@
 	function handleDeleteClick(event: Event) {
 		const target = event.target as HTMLElement;
 		if (target.classList.contains('delete-btn')) {
-			const id = target.dataset.campaignId;
-			const name = target.dataset.campaignName || 'this campaign';
+			const id = target.dataset['campaignId'];
+			const name = target.dataset['campaignName'] || 'this campaign';
 			if (id) {
 				campaignToDelete = { id, name };
 				showDeleteModal = true;
@@ -147,6 +147,8 @@
 {:else if $campaigns.error}
 	<ErrorDisplay message={$campaigns.error} onRetry={handleRetry} />
 {:else}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<div class="space-y-6" onclick={handleDeleteClick} role="region" aria-label="Campaigns list">
 		<div class="flex items-center justify-between">
 			<h1 class="text-3xl font-bold text-slate-900">Campaigns</h1>

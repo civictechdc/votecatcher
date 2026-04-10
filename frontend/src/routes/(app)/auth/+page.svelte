@@ -16,9 +16,6 @@
   let msg = ""
   let loading = false
 
-  // derived
-  $: st = get(auth)
-
   onMount(async () => {
     await auth.initSession()
   })

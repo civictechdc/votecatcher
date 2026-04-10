@@ -6,7 +6,7 @@ type TestFixtures = {
 	seededCampaign: { id: string; name: string };
 };
 
-const API_URL = process.env.PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = process.env["PUBLIC_API_URL"] || "http://localhost:8080";
 
 export const test = base.extend<TestFixtures>({
 	apiContext: async ({ playwright }, use) => {
@@ -33,7 +33,7 @@ export const test = base.extend<TestFixtures>({
 
 		const campaign = await response.json();
 
-		await use({ id: campaign.id, name: campaign.unique_name });
+		await use({ id: campaign.id, name: campaign.uniqueName });
 
 		await apiContext.delete(`/api/campaigns/${campaign.id}`).catch(() => {});
 	},

@@ -3,8 +3,6 @@
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Button, LoadingState } from '$lib/components/ui';
 
-	let { data } = $props();
-
 	onMount(() => {
 		campaigns.fetchAll();
 	});

@@ -16,12 +16,12 @@ const SERVER_DEMO = DEMO_MODE === "true";
 
 const MATCH_TABLE_COLUMNS: MatchColumn[] = [
 	new MatchColumn("Registration Name", function (first: MatchRow, second: MatchRow) {
-		return String(first.registeredName ?? "").localeCompare(String(second.registeredName ?? ""));
+		return String(first["registeredName"] ?? "").localeCompare(String(second["registeredName"] ?? ""));
 	}),
 	new MatchColumn("Matched Name"),
 	new MatchColumn("Confidence", function (first, second) {
-		const a = first.predictionScore ?? 0;
-		const b = second.predictionScore ?? 0;
+		const a = Number(first["predictionScore"]) || 0;
+		const b = Number(second["predictionScore"]) || 0;
 		if (a > b) return 1;
 		if (a < b) return -1;
 		return 0;
@@ -30,30 +30,30 @@ const MATCH_TABLE_COLUMNS: MatchColumn[] = [
 	new MatchColumn("Registered Address"),
 	new MatchColumn("Address Distance"),
 	new MatchColumn("Matched Address", function (first, second) {
-		return String(first.predictedAddress ?? "").localeCompare(
-			String(second.predictedAddress ?? ""),
+		return String(first["predictedAddress"] ?? "").localeCompare(
+			String(second["predictedAddress"] ?? ""),
 		);
 	}),
 	new MatchColumn("Ward", function (first, second) {
-		return String(first.ward ?? "").localeCompare(String(second.ward ?? ""));
+		return String(first["ward"] ?? "").localeCompare(String(second["ward"] ?? ""));
 	}),
 	new MatchColumn("Page", function (first, second) {
-		const a = first.petitionPageNumber ?? 0;
-		const b = second.petitionPageNumber ?? 0;
+		const a = Number(first["petitionPageNumber"]) || 0;
+		const b = Number(second["petitionPageNumber"]) || 0;
 		if (a > b) return 1;
 		if (a < b) return -1;
 		return 0;
 	}),
 	new MatchColumn("Row", function (first, second) {
-		const a = first.petitionRowNumber ?? 0;
-		const b = second.petitionRowNumber ?? 0;
+		const a = Number(first["petitionRowNumber"]) || 0;
+		const b = Number(second["petitionRowNumber"]) || 0;
 		if (a > b) return 1;
 		if (a < b) return -1;
 		return 0;
 	}),
 	new MatchColumn("Match Rank", function (first, second) {
-		const a = first.matchRank ?? 0;
-		const b = second.matchRank ?? 0;
+		const a = Number(first["matchRank"]) || 0;
+		const b = Number(second["matchRank"]) || 0;
 		if (a > b) return 1;
 		if (a < b) return -1;
 		return 0;
@@ -65,7 +65,6 @@ function createRandomMatch(thresholds: ConfidenceThresholds, rowIdx: number): Ma
 
 	const person = faker.person;
 	const location = faker.location;
-	const _registeredName = person.fullName();
 	const registeredAddress = location.streetAddress();
 	const firstName = person.firstName();
 	const middleName = person.middleName();

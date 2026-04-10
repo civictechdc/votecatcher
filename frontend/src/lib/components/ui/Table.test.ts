@@ -141,7 +141,7 @@ describe("Table Component", () => {
 			});
 
 			const checkboxes = getAllByRole("checkbox");
-			await fireEvent.click(checkboxes[1]);
+			await fireEvent.click(checkboxes[1]!);
 			expect(onSelectionChange).toHaveBeenCalled();
 		});
 
@@ -156,7 +156,7 @@ describe("Table Component", () => {
 				},
 			});
 
-			const selectAllCheckbox = getAllByRole("checkbox")[0];
+			const selectAllCheckbox = getAllByRole("checkbox")[0]!;
 			await fireEvent.click(selectAllCheckbox);
 			expect(onSelectionChange).toHaveBeenCalledWith(testRows.map((r) => r.id));
 		});

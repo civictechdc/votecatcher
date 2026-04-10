@@ -59,7 +59,7 @@ function createJobsStore() {
 					...s,
 					currentJob: {
 						...s.currentJob,
-						progress: ((payload.processed as number) / (payload.total as number)) * 100,
+						progress: ((payload["processed"] as number) / (payload["total"] as number)) * 100,
 					} as JobResponse,
 				}));
 				break;
@@ -74,8 +74,8 @@ function createJobsStore() {
 			case "job_error":
 				update((s) => ({
 					...s,
-					currentJob: { ...s.currentJob, status: payload.status as string } as JobResponse,
-					sse: { ...s.sse, error: payload.error as string | null },
+					currentJob: { ...s.currentJob, status: payload["status"] as string } as JobResponse,
+					sse: { ...s.sse, error: payload["error"] as string | null },
 				}));
 				break;
 		}
@@ -159,7 +159,7 @@ function createJobsStore() {
 			update((s) => ({ ...s, loading: true, error: null }));
 
 			try {
-				const baseUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8080";
+				const baseUrl = import.meta.env["PUBLIC_API_URL"] || "http://localhost:8080";
 				const response = await fetch(`${baseUrl}/api/jobs/${id}/start`, {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
@@ -228,7 +228,7 @@ function createJobsStore() {
 				eventSource.close();
 			}
 
-			const baseUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8080";
+			const baseUrl = import.meta.env["PUBLIC_API_URL"] || "http://localhost:8080";
 			eventSource = new EventSource(`${baseUrl}/api/jobs/${jobId}/status`);
 
 			eventSource.onopen = () => {

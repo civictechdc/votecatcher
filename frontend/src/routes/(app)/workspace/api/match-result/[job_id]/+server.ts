@@ -97,6 +97,7 @@ function flattenRow(cols: Array<MatchColumnsResponse>, row: MatchRowsResponse): 
 
 	row.values.forEach((item, idx) => {
 		const column = cols[idx];
+		if (!column) return;
 		const keyName = column.name;
 
 		const typedValue = processValueItem(column.data_type, item);

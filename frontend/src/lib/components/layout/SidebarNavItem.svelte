@@ -27,7 +27,7 @@
          upload: Upload
      };
 
-     const IconComponent = icon ? iconMap[icon] : null;
+     const IconComponent = $derived(icon ? iconMap[icon] : null);
 </script>
 
 <a

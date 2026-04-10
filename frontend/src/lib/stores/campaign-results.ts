@@ -3,18 +3,18 @@ import { PUBLIC_API_URL } from "$env/static/public";
 
 interface CampaignMatchPrediction {
 	rank: number;
-	voter_name: string;
-	voter_address: string;
-	similarity_score: number;
+	voterName: string;
+	voterAddress: string;
+	similarityScore: number;
 	confidence: string;
 }
 
 export interface CampaignResultResponse {
-	ocr_result_id: number;
-	extracted_name: string;
-	extracted_address: string;
-	crop_id: number;
-	job_id: number;
+	ocrResultId: number;
+	extractedName: string;
+	extractedAddress: string;
+	cropId: number;
+	jobId: number;
 	predictions: CampaignMatchPrediction[];
 }
 

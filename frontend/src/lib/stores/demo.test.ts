@@ -101,11 +101,11 @@ describe("Demo Store", () => {
 		it("should load pre-baked demo session", async () => {
 			const mockSession = {
 				success: true,
-				session_id: "dc-petition-2024",
+				sessionId: "dc-petition-2024",
 				message: "Loaded demo session",
-				campaign_id: "test-campaign-id",
-				voters_count: 10,
-				match_results_count: 50,
+				campaignId: "test-campaign-id",
+				votersCount: 10,
+				matchResultsCount: 50,
 			};
 
 			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -125,11 +125,11 @@ describe("Demo Store", () => {
 		it("sets loadedSession state after successful load", async () => {
 			const mockSession = {
 				success: true,
-				session_id: "dc-petition-2024",
+				sessionId: "dc-petition-2024",
 				message: "Loaded demo session",
-				campaign_id: "test-campaign-id",
-				voters_count: 10,
-				match_results_count: 50,
+				campaignId: "test-campaign-id",
+				votersCount: 10,
+				matchResultsCount: 50,
 			};
 
 			(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -142,11 +142,11 @@ describe("Demo Store", () => {
 			const state = get(demo);
 			expect(state.loadedSession).toEqual({
 				success: true,
-				session_id: "dc-petition-2024",
+				sessionId: "dc-petition-2024",
 				message: "Loaded demo session",
-				campaign_id: "test-campaign-id",
-				voters_count: 10,
-				match_results_count: 50,
+				campaignId: "test-campaign-id",
+				votersCount: 10,
+				matchResultsCount: 50,
 			});
 		});
 

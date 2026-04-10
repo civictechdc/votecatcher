@@ -70,7 +70,7 @@ describe("Events Store", () => {
 			events.connect("campaign-123");
 			expect(get(events).status).toBe("connecting");
 
-			instances[0].onopen!.call({} as EventSource, {} as Event);
+			instances[0]!.onopen!.call({} as EventSource, {} as Event);
 
 			expect(get(events).status).toBe("connected");
 		});
@@ -81,11 +81,11 @@ describe("Events Store", () => {
 			mockEventSource();
 
 			events.connect("campaign-123");
-			instances[0].onopen!.call({} as EventSource, {} as Event);
+			instances[0]!.onopen!.call({} as EventSource, {} as Event);
 
 			events.disconnect();
 
-			expect(instances[0].close).toHaveBeenCalled();
+			expect(instances[0]!.close).toHaveBeenCalled();
 			expect(get(events).status).toBe("disconnected");
 		});
 
@@ -93,7 +93,7 @@ describe("Events Store", () => {
 			mockEventSource();
 
 			events.connect("campaign-123");
-			instances[0].onerror!.call({} as EventSource, {} as Event);
+			instances[0]!.onerror!.call({} as EventSource, {} as Event);
 
 			events.disconnect();
 
@@ -132,9 +132,7 @@ describe("Events Store", () => {
 			events.connect("campaign-123");
 			expect(instances.length).toBe(1);
 
-			// Simulate onerror firing at the same moment as disconnect.
-			// This tests the race where onerror schedules reconnect AFTER disconnect clears timeout.
-			instances[0].onerror!.call({} as EventSource, {} as Event);
+			instances[0]!.onerror!.call({} as EventSource, {} as Event);
 
 			// Immediately disconnect (before reconnect timeout fires).
 			events.disconnect();
@@ -156,7 +154,7 @@ describe("Events Store", () => {
 
 			expect(instances.length).toBe(1);
 
-			instances[0].onerror!.call({} as EventSource, {} as Event);
+			instances[0]!.onerror!.call({} as EventSource, {} as Event);
 
 			vi.advanceTimersByTime(500);
 			expect(instances.length).toBe(1);
@@ -173,7 +171,7 @@ describe("Events Store", () => {
 
 			// Simulate 5 reconnection cycles: error → reconnect → error → ...
 			// The first onerror on instance 0 schedules reconnect.
-			instances[0].onerror!.call({} as EventSource, {} as Event);
+			instances[0]!.onerror!.call({} as EventSource, {} as Event);
 			expect(get(events).reconnectAttempts).toBe(1);
 
 			// Advance time to trigger reconnection (creates new instance).
@@ -181,25 +179,25 @@ describe("Events Store", () => {
 			expect(instances.length).toBe(2);
 
 			// Second error.
-			instances[1].onerror!.call({} as EventSource, {} as Event);
+			instances[1]!.onerror!.call({} as EventSource, {} as Event);
 			expect(get(events).reconnectAttempts).toBe(2);
 
 			// Third cycle.
 			vi.advanceTimersByTime(2000);
 			expect(instances.length).toBe(3);
-			instances[2].onerror!.call({} as EventSource, {} as Event);
+			instances[2]!.onerror!.call({} as EventSource, {} as Event);
 			expect(get(events).reconnectAttempts).toBe(3);
 
 			// Fourth cycle.
 			vi.advanceTimersByTime(4000);
 			expect(instances.length).toBe(4);
-			instances[3].onerror!.call({} as EventSource, {} as Event);
+			instances[3]!.onerror!.call({} as EventSource, {} as Event);
 			expect(get(events).reconnectAttempts).toBe(4);
 
 			// Fifth cycle.
 			vi.advanceTimersByTime(8000);
 			expect(instances.length).toBe(5);
-			instances[4].onerror!.call({} as EventSource, {} as Event);
+			instances[4]!.onerror!.call({} as EventSource, {} as Event);
 
 			// After 5 attempts, status should be 'error' and no more reconnects.
 			expect(get(events).reconnectAttempts).toBe(5);

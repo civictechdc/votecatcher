@@ -118,7 +118,7 @@
 </script>
 
 <svelte:head>
-	<title>Job #{jobId} — {campaign?.unique_name || campaign?.title || 'Campaign'} — Votecatcher</title>
+	<title>Job #{jobId} — {campaign?.uniqueName || campaign?.title || 'Campaign'} — Votecatcher</title>
 	<meta name="description" content="Job status and progress details." />
 </svelte:head>
 
@@ -132,7 +132,7 @@
 			<span class="text-slate-900">Job #{jobId}</span>
 		</nav>
 		<h1 class="text-3xl font-bold text-slate-900">Job Status</h1>
-		<p class="mt-1 text-slate-600">{campaign?.unique_name || campaign?.title || 'Campaign'}</p>
+		<p class="mt-1 text-slate-600">{campaign?.uniqueName || campaign?.title || 'Campaign'}</p>
 	</div>
 
 	{#if $jobs.error}

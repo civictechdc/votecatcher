@@ -71,11 +71,7 @@
 						</span>
 					</td>
 					<td class="border px-4 py-2 text-center">
-						{#if true}
-							<span class="text-green-600">✓</span>
-						{:else}
-							<span class="text-red-600">✗</span>
-						{/if}
+						<span class="text-green-600">✓</span>
 					</td>
 				</tr>
 			{/each}

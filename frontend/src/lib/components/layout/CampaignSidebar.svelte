@@ -104,7 +104,7 @@
 										onclick={() => campaign.id && switchCampaign(campaign.id)}
 										class="w-full px-3 py-2 text-left text-sm hover:bg-slate-100"
 									>
-										{campaign.unique_name || campaign.title || 'Untitled'}
+										{campaign.uniqueName || campaign.title || 'Untitled'}
 									</button>
 								</li>
 							{/if}
