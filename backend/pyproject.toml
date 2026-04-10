@@ -17,7 +17,7 @@ dependencies = [
     "aiofiles>=24.1.0",
     "alembic>=1.14.0",
     "asgi-correlation-id>=4.3.4",
-    "dotenv>=0.9.9",
+
     "fastapi[standard]>=0.115.12",
     "httpx>=0.28.1",
     "ipywidgets>=8.1.5",
@@ -59,6 +59,7 @@ dev = [
     "pytest-asyncio>=0.24.0",
     "ruff>=0.11.4",
     "bandit>=1.9.0",
+    "vulture>=2.16",
 ]
 
 [build-system]

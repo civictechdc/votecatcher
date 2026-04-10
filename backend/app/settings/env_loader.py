@@ -11,7 +11,7 @@ with lowest priority, overriding higher-priority env files.
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
+from app.settings.env_parser import load_env_into_os
 
 BACKEND_DIR = Path(__file__).parent.parent.parent
 
@@ -27,22 +27,22 @@ def load_env() -> None:
 
     override = os.environ.get("SETTINGS_ENV_FILE")
     if override:
-        load_dotenv(override, override=True)
+        load_env_into_os(Path(override), override=True)
         return
 
     env_file = os.environ.get("ENV_FILE")
     if env_file:
         path = BACKEND_DIR / env_file
         if path.exists():
-            load_dotenv(path, override=True)
+            load_env_into_os(path, override=True)
             return
 
     local_path = BACKEND_DIR / ".env.local"
     if local_path.exists():
-        load_dotenv(local_path, override=True)
+        load_env_into_os(local_path, override=True)
         return
 
     node_env = os.environ.get("NODE_ENV", "development")
     env_path = BACKEND_DIR / f".env.{node_env}"
     if env_path.exists():
-        load_dotenv(env_path, override=True)
+        load_env_into_os(env_path, override=True)

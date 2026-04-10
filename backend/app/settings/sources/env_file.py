@@ -4,7 +4,8 @@ import threading
 from pathlib import Path
 
 import structlog
-from dotenv import dotenv_values
+
+from app.settings.env_parser import parse_env_file
 
 logger = structlog.get_logger(__name__)
 
@@ -27,7 +28,7 @@ class EnvFileSource:
                 return
 
             if self._path.exists():
-                self._values = dict(dotenv_values(self._path))
+                self._values = parse_env_file(self._path)
                 logger.debug("Loaded env file", path=str(self._path))
             else:
                 logger.debug("Env file not found", path=str(self._path))
