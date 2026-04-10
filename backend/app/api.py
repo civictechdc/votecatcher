@@ -18,7 +18,7 @@ from app.routers import (
 
 
 @asynccontextmanager
-async def lifespan(application: FastAPI):
+async def lifespan(_application: FastAPI):
     warn_database_api_key_missing()
     yield
 
