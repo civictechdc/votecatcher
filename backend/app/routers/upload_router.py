@@ -1,18 +1,14 @@
 """File upload router for voter lists and petitions."""
 
-import uuid
 from typing import Annotated
 
-import structlog
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlmodel import Session
 
 from app.api_models import ApiModel
-from app.data.database.model.schema import Region
 from app.dependencies import get_session
-from app.files.file_service import FileService, FileValidationError
-
-logger = structlog.get_logger(__name__)
+from app.files.file_service import FileValidationError
+from app.services.upload_service import UploadService
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
@@ -62,46 +58,25 @@ async def upload_voter_list(  # nosemgrep: fastapi-unauthenticated-route
             HTTPException: 404 if campaign/region not found
     """
     try:
-        from app.data.database.model.schema import Campaign
-
-        campaign_uuid = uuid.UUID(campaign_id.replace("-", ""))
-        campaign = session.get(Campaign, campaign_uuid)
-        if not campaign:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Campaign {campaign_id} not found",
-            )
-
-        region = session.get(Region, campaign.region_id)
-        if not region:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Region for campaign not found",
-            )
-
-        file_service = FileService(session)
-        file_path, imported_count = await file_service.import_voter_list(
+        service = UploadService(session)
+        result = await service.process_voter_list_upload(
+            campaign_id=campaign_id,
             file=file,
-            region_id=region.id,
-        )
-
-        logger.info(
-            "Voter list uploaded and imported",
-            file_name=file.filename,
-            file_path=file_path,
-            region_id=str(region.id),
-            imported_count=imported_count,
         )
 
         return VoterListUploadResponse(
             message="Voter list uploaded and imported successfully",
-            file_path=file_path,
-            row_count=imported_count,
-            imported_count=imported_count,
+            file_path=result.file_path,
+            row_count=result.imported_count,
+            imported_count=result.imported_count,
         )
 
-    except (ValueError, FileValidationError) as e:
-        logger.error("Voter list upload failed", error=str(e))
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        ) from None
+    except FileValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
@@ -135,29 +110,20 @@ async def upload_petition(  # nosemgrep: fastapi-unauthenticated-route
             HTTPException: 404 if campaign not found
     """
     try:
-        file_service = FileService(session)
-        scan_id, crop_count = await file_service.process_petition_upload(
+        service = UploadService(session)
+        result = await service.process_petition_upload(
+            campaign_id=campaign_id,
             file=file,
-            campaign_id=campaign_id,
             region=region,
-        )
-
-        logger.info(
-            "Petition uploaded and cropped",
-            file_name=file.filename,
-            campaign_id=campaign_id,
-            scan_id=scan_id,
-            crop_count=crop_count,
         )
 
         return PetitionUploadResponse(
             message="Petition uploaded and cropped successfully",
-            scan_id=scan_id,
-            crop_count=crop_count,
+            scan_id=result.scan_id,
+            crop_count=result.crop_count,
         )
 
     except (ValueError, FileValidationError) as e:
-        logger.error("Petition upload failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),

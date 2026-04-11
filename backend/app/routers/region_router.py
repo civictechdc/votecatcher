@@ -3,16 +3,12 @@
 from typing import Annotated
 from uuid import UUID
 
-import structlog
 from fastapi import APIRouter, Depends, status
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from app.api_models import ApiModel
-from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
 from app.dependencies import get_session
-from app.services.voter_list_service import VoterListService
-
-logger = structlog.get_logger(__name__)
+from app.services.region_query_service import RegionQueryService
 
 router = APIRouter(prefix="/regions", tags=["regions"])
 
@@ -49,30 +45,22 @@ async def get_voter_list_status(  # nosemgrep: fastapi-unauthenticated-route
     region_id: UUID,
     session: SessionDep,
 ) -> VoterListStatusResponse:
-    """Get the current voter list status for a region.
+    """Get the current voter list status for a region."""
+    service = RegionQueryService(session)
+    result = service.get_voter_list_status(region_id)
 
-    Args:
-            region_id: Region UUID
-            session: Database session
-
-    Returns:
-            Voter list status with upload info if exists
-    """
-    service = VoterListService(session)
-    upload = service.get_active_upload(region_id)
-
-    if not upload:
+    if not result.exists:
         return VoterListStatusResponse(exists=False, upload=None)
 
     return VoterListStatusResponse(
         exists=True,
         upload=UploadDetail(
-            id=str(upload.id),
-            original_filename=upload.original_filename,
-            file_size=upload.file_size,
-            row_count=upload.row_count,
-            uploaded_at=upload.uploaded_at.isoformat(),
-            status=upload.status.value,
+            id=result.upload.id,
+            original_filename=result.upload.original_filename,
+            file_size=result.upload.file_size,
+            row_count=result.upload.row_count,
+            uploaded_at=result.upload.uploaded_at,
+            status=result.upload.status,
         ),
     )
 
@@ -86,31 +74,11 @@ async def delete_voter_list(  # nosemgrep: fastapi-unauthenticated-route
     region_id: UUID,
     session: SessionDep,
 ) -> DeleteVoterListResponse:
-    """Delete all voters for a region and mark uploads as superseded.
+    """Delete all voters for a region and mark uploads as superseded."""
+    service = RegionQueryService(session)
+    result = service.delete_voter_list(region_id)
 
-    Args:
-            region_id: Region UUID
-            session: Database session
-
-    Returns:
-            Count of deleted voters
-    """
-    service = VoterListService(session)
-
-    deleted_count = service.delete_voters_for_region(region_id)
-
-    uploads = session.exec(
-        select(VoterListUpload).where(VoterListUpload.region_id == region_id)
-    ).all()
-    for upload in uploads:
-        upload.status = UploadStatus.SUPERSEDED
-
-    session.commit()
-
-    logger.info(
-        "Voter list deleted",
-        region_id=str(region_id),
-        deleted_count=deleted_count,
+    return DeleteVoterListResponse(
+        deleted_count=result.deleted_count,
+        success=result.success,
     )
-
-    return DeleteVoterListResponse(deleted_count=deleted_count, success=True)

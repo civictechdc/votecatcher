@@ -37,7 +37,7 @@ def _pdf_file(filename: str = "petition.pdf") -> tuple[bytes, str]:
 class TestVoterListUploadFormDataContract:
     """Given a campaign and region exist, the voter list upload endpoint."""
 
-    @patch("app.routers.upload_router.FileService")
+    @patch("app.services.upload_service.FileService")
     def test_accepts_snake_case_campaign_id(
         self, mock_fs_cls: AsyncMock, client: TestClient, test_campaign: Campaign
     ):
@@ -91,7 +91,7 @@ class TestVoterListUploadFormDataContract:
 
         assert response.status_code == 422
 
-    @patch("app.routers.upload_router.FileService")
+    @patch("app.services.upload_service.FileService")
     def test_response_serializes_to_camel_case(
         self, mock_fs_cls: AsyncMock, client: TestClient, test_campaign: Campaign
     ):
@@ -119,7 +119,7 @@ class TestVoterListUploadFormDataContract:
 class TestPetitionUploadFormDataContract:
     """Given a campaign exists, the petition upload endpoint."""
 
-    @patch("app.routers.upload_router.FileService")
+    @patch("app.services.upload_service.FileService")
     def test_accepts_snake_case_campaign_id(
         self, mock_fs_cls: AsyncMock, client: TestClient, test_campaign: Campaign
     ):
@@ -150,7 +150,7 @@ class TestPetitionUploadFormDataContract:
 
         assert response.status_code == 422
 
-    @patch("app.routers.upload_router.FileService")
+    @patch("app.services.upload_service.FileService")
     def test_response_serializes_to_camel_case(
         self, mock_fs_cls: AsyncMock, client: TestClient, test_campaign: Campaign
     ):
@@ -172,7 +172,7 @@ class TestPetitionUploadFormDataContract:
         assert "scan_id" not in data
         assert "crop_count" not in data
 
-    @patch("app.routers.upload_router.FileService")
+    @patch("app.services.upload_service.FileService")
     def test_accepts_optional_region_form_field(
         self, mock_fs_cls: AsyncMock, client: TestClient, test_campaign: Campaign
     ):
