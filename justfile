@@ -151,7 +151,7 @@ sast-pr:
 
 # Run SCA — dependency vulnerability + license scanning
 sca:
-    osv-scanner scan --lockfile=uv:backend/uv.lock --lockfile=frontend/bun.lock
+    osv-scanner scan --lockfile=backend/uv.lock --lockfile=frontend/bun.lock
     trivy fs --severity CRITICAL,HIGH --scanners vuln --format json --output trivy-results.json .
 
 # Run container image scanning
@@ -200,7 +200,7 @@ security-test:
 
 # Run DAST scan with nuclei (requires running backend at localhost:8080)
 dast:
-    nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -json -o nuclei-results.json
+    nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -j -o nuclei-results.json
 
 # Run code duplication analysis
 duplication:

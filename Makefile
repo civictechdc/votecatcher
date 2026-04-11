@@ -118,7 +118,7 @@ sast-pr:
 	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --baseline-commit origin/main --json -o semgrep-pr.json backend/ frontend/src/
 
 sca:
-	osv-scanner scan --lockfile=uv:backend/uv.lock --lockfile=frontend/bun.lock
+	osv-scanner scan --lockfile=backend/uv.lock --lockfile=frontend/bun.lock
 	trivy fs --severity CRITICAL,HIGH --scanners vuln --format json --output trivy-results.json .
 
 container-scan:
@@ -157,7 +157,7 @@ security-test:
 	@echo "=== Security Tests Complete ==="
 
 dast:
-	nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -json -o nuclei-results.json
+	nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -j -o nuclei-results.json
 
 duplication:
 	jscpd backend/app/ --min-lines 5 --min-tokens 50 --threshold 5 --reporters html
