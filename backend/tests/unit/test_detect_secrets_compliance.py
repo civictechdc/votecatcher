@@ -41,14 +41,17 @@ def scan_results():
     """Run detect-secrets on all test files with credentials and return results."""
     results = {}
     for relpath in TEST_FILES_WITH_CREDENTIALS:
-        proc = subprocess.run(
-            ["detect-secrets", "scan", relpath],
-            capture_output=True,
-            text=True,
-            cwd=str(BACKEND_DIR),
-        )
+        try:
+            proc = subprocess.run(
+                ["detect-secrets", "scan", relpath],
+                capture_output=True,
+                text=True,
+                cwd=str(BACKEND_DIR),
+            )
+        except FileNotFoundError:
+            pytest.skip("detect-secrets not installed")
         if proc.returncode != 0:
-            pytest.skip(f"detect-secrets not available: {proc.stderr}")
+            pytest.skip(f"detect-secrets scan failed: {proc.stderr}")
         scan = json.loads(proc.stdout)
         all_findings = list(scan.get("results", {}).values())
         findings = all_findings[0] if all_findings else []

@@ -372,7 +372,7 @@ jobs:
         run: cd backend && uv sync --dev
 
       - name: Start backend
-        run: cd backend && uv run python -m app &
+        run: cd backend && uv run uvicorn app.api:app --host 0.0.0.0 --port 8080 &
         env:
           DATABASE_URL: "sqlite+aiosqlite:///./test.db"
 
