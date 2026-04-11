@@ -46,7 +46,7 @@ class SessionListResponse(ApiModel):
 
 
 @router.post("", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
-def create_session(  # nosemgrep: fastapi-unauthenticated-route
+def create_session(
     request: CreateSessionRequest,
     session: SessionDep,
 ) -> SessionResponse:
@@ -77,7 +77,7 @@ def create_session(  # nosemgrep: fastapi-unauthenticated-route
 
 
 @router.get("", response_model=SessionListResponse)
-def list_sessions(  # nosemgrep: fastapi-unauthenticated-route
+def list_sessions(
     session: SessionDep,
     session_type: str | None = None,
 ) -> SessionListResponse:
@@ -103,7 +103,7 @@ def list_sessions(  # nosemgrep: fastapi-unauthenticated-route
 
 
 @router.get("/{session_id}", response_model=SessionResponse)
-def get_session_detail(  # nosemgrep: fastapi-unauthenticated-route
+def get_session_detail(
     session_id: int,
     session: SessionDep,
 ) -> SessionResponse:
@@ -129,7 +129,7 @@ def get_session_detail(  # nosemgrep: fastapi-unauthenticated-route
 
 
 @router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_session(  # nosemgrep: fastapi-unauthenticated-route
+def delete_session(
     session_id: int,
     session: SessionDep,
 ) -> None:
@@ -145,7 +145,7 @@ def delete_session(  # nosemgrep: fastapi-unauthenticated-route
 
 
 @router.get("/{session_id}/export")
-def export_session(  # nosemgrep: fastapi-unauthenticated-route
+def export_session(
     session_id: int,
     session: SessionDep,
 ) -> StreamingResponse:

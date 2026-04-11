@@ -17,4 +17,15 @@ declare global {
 	}
 }
 
+declare module "$env/static/public" {
+	export const PUBLIC_API_URL: string;
+}
+
+declare module "$env/static/private" {
+	export const OCR_PROVIDER_API_KEY: string;
+	export const OCR_PROVIDER_NAME: string;
+	export const OCR_PROVIDER_MODEL: string;
+	export const DEMO_MODE: string;
+}
+
 export {};

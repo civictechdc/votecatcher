@@ -30,9 +30,7 @@ class PrebakedSessionList(ApiModel):
     sessions: list[PrebakedSession]
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "/sessions", response_model=PrebakedSessionList
-)
+@router.get("/sessions", response_model=PrebakedSessionList)
 def list_prebaked_sessions(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> PrebakedSessionList:
@@ -52,9 +50,7 @@ def list_prebaked_sessions(
     )
 
 
-@router.post(  # nosemgrep: fastapi-unauthenticated-route
-    "/reset", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.post("/reset", status_code=status.HTTP_204_NO_CONTENT)
 def reset_demo_data(
     db_session: Annotated[Session, Depends(get_session)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -73,9 +69,7 @@ def reset_demo_data(
     logger.info("Demo data reset complete")
 
 
-@router.post(  # nosemgrep: fastapi-unauthenticated-route
-    "/sessions/{session_id}/load", status_code=status.HTTP_200_OK
-)
+@router.post("/sessions/{session_id}/load", status_code=status.HTTP_200_OK)
 def load_prebaked_session(
     session_id: str,
     db_session: Annotated[Session, Depends(get_session)],

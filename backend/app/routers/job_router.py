@@ -64,18 +64,14 @@ class JobListResponse(ApiModel):
     total: int
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "", response_model=JobListResponse
-)
+@router.get("", response_model=JobListResponse)
 def list_jobs(
     session: SessionDep,
 ) -> JobListResponse:
     return JobQueryService(session).list_jobs()
 
 
-@router.post(  # nosemgrep: fastapi-unauthenticated-route
-    "", response_model=JobResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
 def create_job(
     request: CreateJobRequest,
     session: SessionDep,
@@ -95,9 +91,7 @@ def create_job(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "/{job_id}", response_model=JobResponse
-)
+@router.get("/{job_id}", response_model=JobResponse)
 def get_job(
     job_id: int,
     session: SessionDep,
@@ -109,9 +103,7 @@ def get_job(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
-@router.post(  # nosemgrep: fastapi-unauthenticated-route
-    "/{job_id}/cancel", response_model=JobResponse
-)
+@router.post("/{job_id}/cancel", response_model=JobResponse)
 def cancel_job(
     job_id: int,
     session: SessionDep,
@@ -126,9 +118,7 @@ def cancel_job(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
 
-@router.post(  # nosemgrep: fastapi-unauthenticated-route
-    "/{job_id}/start", response_model=JobResponse
-)
+@router.post("/{job_id}/start", response_model=JobResponse)
 def start_job(
     job_id: int,
     session: SessionDep,
@@ -143,9 +133,7 @@ def start_job(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "/{job_id}/status", response_class=StreamingResponse
-)
+@router.get("/{job_id}/status", response_class=StreamingResponse)
 async def get_job_status_stream(
     job_id: int,
     session: SessionDep,

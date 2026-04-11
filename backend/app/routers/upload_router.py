@@ -33,7 +33,7 @@ class PetitionUploadResponse(ApiModel):
     crop_count: int
 
 
-@router.post(  # nosemgrep: fastapi-unauthenticated-route
+@router.post(
     "/voter-list",
     response_model=VoterListUploadResponse,
     status_code=status.HTTP_201_CREATED,
@@ -83,7 +83,7 @@ async def upload_voter_list(
         ) from None
 
 
-@router.post(  # nosemgrep: fastapi-unauthenticated-route
+@router.post(
     "/petition",
     response_model=PetitionUploadResponse,
     status_code=status.HTTP_201_CREATED,

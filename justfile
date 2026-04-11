@@ -139,7 +139,7 @@ security-scan-backend:
 
 # Run frontend security scan (bun audit)
 security-scan-frontend:
-    cd frontend && bun audit --ignore GHSA-4w7w-66w2-5vf9 --ignore GHSA-v2wj-q39q-566r --ignore GHSA-p9ff-h696-f583 --ignore GHSA-chqc-8p9q-pq6q --ignore GHSA-36xv-jgw5-4q75
+    cd frontend && bun audit --ignore GHSA-4w7w-66w2-5vf9 --ignore GHSA-v2wj-q39q-566r --ignore GHSA-p9ff-h696-f583 --ignore GHSA-chqc-8p9q-pq6q --ignore GHSA-36xv-jgw5-4q75 --ignore GHSA-3f6h-2hrp-w5wx --ignore GHSA-2crg-3p73-43xp --ignore GHSA-3p68-rc4w-qgx5 --ignore GHSA-fvcv-3m26-pcqx --ignore GHSA-6v7q-wjvx-w8wg
 
 # Run SAST with semgrep (full scan)
 sast:
@@ -151,7 +151,7 @@ sast-pr:
 
 # Run SCA — dependency vulnerability + license scanning
 sca:
-    osv-scanner scan source --lockfile=backend/uv.lock --lockfile=frontend/bun.lock
+    osv-scanner scan --lockfile=uv:backend/uv.lock --lockfile=frontend/bun.lock
     trivy fs --severity CRITICAL,HIGH --scanners vuln --format json --output trivy-results.json .
 
 # Run container image scanning

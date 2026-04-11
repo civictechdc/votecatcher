@@ -5,9 +5,7 @@ from app.events import sse_transport
 router = APIRouter(prefix="/events", tags=["events"])
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "/campaigns/{campaign_id}/stream"
-)
+@router.get("/campaigns/{campaign_id}/stream")
 async def campaign_event_stream(
     campaign_id: str,
 ):
@@ -15,7 +13,7 @@ async def campaign_event_stream(
     return await sse_transport.subscribe_to_campaign(campaign_id)
 
 
-@router.get("/jobs/{job_id}/stream")  # nosemgrep: fastapi-unauthenticated-route
+@router.get("/jobs/{job_id}/stream")
 async def job_event_stream(job_id: str):
     """SSE stream for job status updates."""
     return await sse_transport.subscribe_to_job(job_id)

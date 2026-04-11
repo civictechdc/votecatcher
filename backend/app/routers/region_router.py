@@ -40,9 +40,7 @@ class DeleteVoterListResponse(ApiModel):
     success: bool
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "/{region_id}/voter-list", response_model=VoterListStatusResponse
-)
+@router.get("/{region_id}/voter-list", response_model=VoterListStatusResponse)
 async def get_voter_list_status(
     region_id: UUID,
     session: SessionDep,
@@ -67,7 +65,7 @@ async def get_voter_list_status(
     )
 
 
-@router.delete(  # nosemgrep: fastapi-unauthenticated-route
+@router.delete(
     "/{region_id}/voter-list",
     response_model=DeleteVoterListResponse,
     status_code=status.HTTP_200_OK,

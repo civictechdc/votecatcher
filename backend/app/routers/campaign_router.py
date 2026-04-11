@@ -44,9 +44,7 @@ class CreateCampaignRequest(ApiModel):
     region: str = Field(default="DC", max_length=10)
 
 
-@router.post(  # nosemgrep: fastapi-unauthenticated-route
-    "", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
 def create_campaign(
     request: CreateCampaignRequest,
     session: SessionDep,
@@ -59,9 +57,7 @@ def create_campaign(
     )
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "", response_model=CampaignListResponse
-)
+@router.get("", response_model=CampaignListResponse)
 def list_campaigns(
     session: SessionDep,
     offset: int = 0,
@@ -73,9 +69,7 @@ def list_campaigns(
     return CampaignManagementService(session).list_campaigns(offset=offset, limit=limit)
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "/{campaign_id}", response_model=CampaignResponse
-)
+@router.get("/{campaign_id}", response_model=CampaignResponse)
 def get_campaign(
     campaign_id: uuid.UUID,
     session: SessionDep,
@@ -89,9 +83,7 @@ def get_campaign(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
-@router.delete(  # nosemgrep: fastapi-unauthenticated-route
-    "/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_campaign(
     campaign_id: uuid.UUID,
     session: SessionDep,
@@ -143,9 +135,7 @@ class PetitionScanListResponse(ApiModel):
     total: int
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "/{campaign_id}/metrics", response_model=CampaignMetricsResponse
-)
+@router.get("/{campaign_id}/metrics", response_model=CampaignMetricsResponse)
 def get_campaign_metrics(
     campaign_id: uuid.UUID,
     session: SessionDep,
@@ -167,9 +157,7 @@ def get_campaign_metrics(
     return CampaignMetricsResponse(**metrics)
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "/{campaign_id}/scans", response_model=PetitionScanListResponse
-)
+@router.get("/{campaign_id}/scans", response_model=PetitionScanListResponse)
 def list_campaign_scans(
     campaign_id: uuid.UUID,
     session: SessionDep,
@@ -183,9 +171,7 @@ def list_campaign_scans(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
-@router.delete(  # nosemgrep: fastapi-unauthenticated-route
-    "/{campaign_id}/scans/{scan_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/{campaign_id}/scans/{scan_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_campaign_scan(
     campaign_id: uuid.UUID,
     scan_id: int,
@@ -230,9 +216,7 @@ class CampaignResultsListResponse(ApiModel):
     page_size: int
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "/{campaign_id}/results", response_model=CampaignResultsListResponse
-)
+@router.get("/{campaign_id}/results", response_model=CampaignResultsListResponse)
 def get_campaign_results(
     campaign_id: uuid.UUID,
     session: SessionDep,
@@ -284,9 +268,7 @@ class SetupStatusResponse(ApiModel):
     state: str
 
 
-@router.get(  # nosemgrep: fastapi-unauthenticated-route
-    "/{campaign_id}/setup-status", response_model=SetupStatusResponse
-)
+@router.get("/{campaign_id}/setup-status", response_model=SetupStatusResponse)
 def get_setup_status(
     campaign_id: uuid.UUID,
     session: SessionDep,

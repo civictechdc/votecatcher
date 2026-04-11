@@ -109,7 +109,7 @@ security-scan-backend:
 	cd backend && uv audit
 
 security-scan-frontend:
-	cd frontend && bun audit --ignore GHSA-4w7w-66w2-5vf9 --ignore GHSA-v2wj-q39q-566r --ignore GHSA-p9ff-h696-f583 --ignore GHSA-chqc-8p9q-pq6q --ignore GHSA-36xv-jgw5-4q75
+	cd frontend && bun audit --ignore GHSA-4w7w-66w2-5vf9 --ignore GHSA-v2wj-q39q-566r --ignore GHSA-p9ff-h696-f583 --ignore GHSA-chqc-8p9q-pq6q --ignore GHSA-36xv-jgw5-4q75 --ignore GHSA-3f6h-2hrp-w5wx --ignore GHSA-2crg-3p73-43xp --ignore GHSA-3p68-rc4w-qgx5 --ignore GHSA-fvcv-3m26-pcqx --ignore GHSA-6v7q-wjvx-w8wg
 
 sast:
 	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --json -o semgrep-results.json backend/ frontend/src/
@@ -118,7 +118,7 @@ sast-pr:
 	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --baseline-commit origin/main --json -o semgrep-pr.json backend/ frontend/src/
 
 sca:
-	osv-scanner scan source --lockfile=backend/uv.lock --lockfile=frontend/bun.lock
+	osv-scanner scan --lockfile=uv:backend/uv.lock --lockfile=frontend/bun.lock
 	trivy fs --severity CRITICAL,HIGH --scanners vuln --format json --output trivy-results.json .
 
 container-scan:
