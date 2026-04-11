@@ -1,0 +1,26 @@
+id: fastapi-auth-bypass
+info:
+  name: FastAPI Authentication Bypass Detection
+  author: VoteCatcher
+  severity: high
+  description: Detects potential authentication bypass vulnerabilities in FastAPI endpoints
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/api/v1/admin/users"
+      - "{{BaseURL}}/api/v1/voters/export"
+      - "{{BaseURL}}/api/v1/settings"
+
+    matchers-condition: or
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        words:
+          - "users"
+          - "voters"
+          - "settings"
+        part: body
+        condition: or

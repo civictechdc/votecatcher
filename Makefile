@@ -118,7 +118,7 @@ sast-pr:
 	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --baseline-commit origin/main --json -o semgrep-pr.json backend/ frontend/src/
 
 sca:
-	osv-scanner scan --lockfile=backend/uv.lock --lockfile=frontend/bun.lock
+	osv-scanner scan ./backend ./frontend
 	trivy fs --severity CRITICAL,HIGH --scanners vuln --format json --output trivy-results.json .
 
 container-scan:
@@ -157,7 +157,7 @@ security-test:
 	@echo "=== Security Tests Complete ==="
 
 dast:
-	nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -j -o nuclei-results.json
+	nuclei -t security/nuclei-templates/ -u http://localhost:8080 -j -o nuclei-results.json
 
 duplication:
 	jscpd backend/app/ --min-lines 5 --min-tokens 50 --threshold 5 --reporters html
@@ -198,6 +198,7 @@ fallow-audit:
 	cd frontend && npx fallow audit --base main
 
 test-frontend:
+	cd frontend && bun run prepare
 	cd frontend && bun run test:unit
 
 sbom:
@@ -206,7 +207,7 @@ sbom:
 
 license-check:
 	@command -v osv-scanner >/dev/null 2>&1 || (echo "ERROR: osv-scanner not installed — run 'just install-tools'" && exit 1)
-	@osv-scanner --lockfile=backend/uv.lock --lockfile=frontend/bun.lock --licenses --format json --output /tmp/osv-licenses.json || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
+	@osv-scanner scan --licenses --format json --output /tmp/osv-licenses.json ./backend ./frontend || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
 	@if [ ! -s /tmp/osv-licenses.json ]; then echo "ERROR: osv-scanner produced no output" && exit 1; fi
 	@if grep -q "AGPL\|GPL\|LGPL" /tmp/osv-licenses.json; then echo "ERROR: AGPL/GPL/LGPL licenses detected" && exit 1; fi
 	@echo "OK: No copyleft license violations"

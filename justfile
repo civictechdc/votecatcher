@@ -151,7 +151,7 @@ sast-pr:
 
 # Run SCA — dependency vulnerability + license scanning
 sca:
-    osv-scanner scan --lockfile=backend/uv.lock --lockfile=frontend/bun.lock
+    osv-scanner scan ./backend ./frontend
     trivy fs --severity CRITICAL,HIGH --scanners vuln --format json --output trivy-results.json .
 
 # Run container image scanning
@@ -200,7 +200,7 @@ security-test:
 
 # Run DAST scan with nuclei (requires running backend at localhost:8080)
 dast:
-    nuclei -t .agent-workspace/quality-automation/nuclei-templates/ -u http://localhost:8080 -j -o nuclei-results.json
+    nuclei -t security/nuclei-templates/ -u http://localhost:8080 -j -o nuclei-results.json
 
 # Run code duplication analysis
 duplication:
@@ -246,6 +246,7 @@ fallow-audit:
 
 # Run frontend tests
 test-frontend:
+    cd frontend && bun run prepare
     cd frontend && bun run test:unit
 
 # Generate SBOM (Software Bill of Materials) for backend and frontend
@@ -256,7 +257,7 @@ sbom:
 # Check for AGPL/GPL/LGPL license violations
 license-check:
     @command -v osv-scanner >/dev/null 2>&1 || (echo "ERROR: osv-scanner not installed — run 'just install-tools'" && exit 1)
-    @osv-scanner --lockfile=backend/uv.lock --lockfile=frontend/bun.lock --licenses --format json --output /tmp/osv-licenses.json || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
+    @osv-scanner scan --licenses --format json --output /tmp/osv-licenses.json ./backend ./frontend || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
     @if [ ! -s /tmp/osv-licenses.json ]; then echo "ERROR: osv-scanner produced no output" && exit 1; fi
     @if grep -q "AGPL\|GPL\|LGPL" /tmp/osv-licenses.json; then echo "ERROR: AGPL/GPL/LGPL licenses detected" && exit 1; fi
     @echo "OK: No copyleft license violations"

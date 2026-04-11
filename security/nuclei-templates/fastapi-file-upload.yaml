@@ -1,0 +1,24 @@
+id: fastapi-file-upload
+info:
+  name: FastAPI File Upload Abuse Detection
+  author: VoteCatcher
+  severity: medium
+  description: Detects potential file upload bypass in FastAPI endpoints
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}/api/v1/upload"
+      - "{{BaseURL}}/api/v1/voters/batch-import"
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        words:
+          - "success"
+          - "uploaded"
+        part: body
+        condition: or
