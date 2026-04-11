@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeAll } from "vitest";
 import { render, fireEvent } from "@testing-library/svelte";
 import Table from "./Table.svelte";
 
@@ -21,6 +21,21 @@ const testRows: TestRow[] = [
 	{ id: 2, name: "Bob", email: "bob@test.com", status: "inactive" },
 	{ id: 3, name: "Charlie", email: "charlie@test.com", status: "active" },
 ];
+
+beforeAll(() => {
+	try {
+		const r = render(Table, {
+			props: { columns: testColumns, rows: testRows, sortable: true, onSortChange: vi.fn() },
+		});
+		r.unmount();
+	} catch {}
+	try {
+		const r = render(Table, {
+			props: { columns: testColumns, rows: [], emptyMessage: "warmup", sortable: true, onSortChange: vi.fn() },
+		});
+		r.unmount();
+	} catch {}
+});
 
 describe("Table Component", () => {
 	describe("Rendering", () => {
@@ -61,7 +76,7 @@ describe("Table Component", () => {
 	describe("Sorting", () => {
 		it("shows sort indicator for sortable columns", () => {
 			const { getAllByRole } = render(Table, {
-				props: { columns: testColumns, rows: testRows, sortable: true },
+				props: { columns: testColumns, rows: testRows, sortable: true, onSortChange: () => {} },
 			});
 			const sortableHeaders = getAllByRole("columnheader").filter(
 				(h) => h.getAttribute("aria-sort") !== null,
@@ -102,6 +117,7 @@ describe("Table Component", () => {
 					rows: testRows,
 					sortable: true,
 					sortConfig: { key: "name", direction: "asc" },
+					onSortChange: () => {},
 				},
 			});
 
@@ -179,14 +195,14 @@ describe("Table Component", () => {
 	describe("Empty State", () => {
 		it("shows empty message when no rows", () => {
 			const { getByText } = render(Table, {
-				props: { columns: testColumns, rows: [], emptyMessage: "No data available" },
+				props: { columns: testColumns, rows: [], emptyMessage: "No data available", sortable: true, onSortChange: () => {} },
 			});
 			expect(getByText("No data available")).toBeTruthy();
 		});
 
 		it("uses default empty message", () => {
 			const { getByText } = render(Table, {
-				props: { columns: testColumns, rows: [] },
+				props: { columns: testColumns, rows: [], sortable: true, onSortChange: () => {} },
 			});
 			expect(getByText("No results found")).toBeTruthy();
 		});
@@ -295,7 +311,7 @@ describe("Table Component", () => {
 
 		it("marks sortable columns with aria-sort", () => {
 			const { getByText } = render(Table, {
-				props: { columns: testColumns, rows: testRows, sortable: true },
+				props: { columns: testColumns, rows: testRows, sortable: true, onSortChange: () => {} },
 			});
 
 			const nameHeader = getByText("Name").closest('[role="columnheader"]');

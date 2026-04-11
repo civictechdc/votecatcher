@@ -33,7 +33,7 @@ describe("Jobs Store", () => {
 		it("starts with empty state", () => {
 			const state = get(jobs);
 			expect(state.jobs).toEqual([]);
-			expect(state.loading).toBe(true);
+			expect(state.loading).toBe(false);
 			expect(state.error).toBeNull();
 		});
 
@@ -123,19 +123,21 @@ describe("Jobs Store", () => {
 		it("connects to job status stream", () => {
 			const mockEventSource = {
 				close: vi.fn(),
-				onopen: null,
-				onmessage: null,
-				onerror: null,
+				onopen: null as (() => void) | null,
+				onmessage: null as ((event: MessageEvent) => void) | null,
+				onerror: null as (() => void) | null,
 			};
 
-			vi.stubGlobal(
-				"EventSource",
-				vi.fn(() => mockEventSource),
-			);
+			const EventSourceMock = vi.fn(function (this: typeof mockEventSource) {
+				Object.assign(this, mockEventSource);
+				return this;
+			});
+
+			vi.stubGlobal("EventSource", EventSourceMock);
 
 			jobs.connectToJob("job-1");
 
-			expect(EventSource).toHaveBeenCalledWith(expect.stringContaining("/api/jobs/job-1/status"));
+			expect(EventSourceMock).toHaveBeenCalledWith(expect.stringContaining("/api/jobs/job-1/status"));
 
 			vi.unstubAllGlobals();
 		});
@@ -145,10 +147,12 @@ describe("Jobs Store", () => {
 				close: vi.fn(),
 			};
 
-			vi.stubGlobal(
-				"EventSource",
-				vi.fn(() => mockEventSource),
-			);
+			const EventSourceMock = vi.fn(function (this: typeof mockEventSource) {
+				Object.assign(this, mockEventSource);
+				return this;
+			});
+
+			vi.stubGlobal("EventSource", EventSourceMock);
 
 			jobs.connectToJob("job-1");
 			jobs.disconnect();

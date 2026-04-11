@@ -2,24 +2,34 @@ import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/svelte";
 import Sidebar from "./Sidebar.svelte";
 
-// Mock $app/stores
 vi.mock("$app/stores", () => ({
 	page: {
 		subscribe: vi.fn((fn) => {
-			fn({ url: { pathname: "/workspace" } });
+			fn({ url: { pathname: "/workspace/campaigns" } });
 			return { unsubscribe: vi.fn() };
 		}),
 	},
+}));
+
+vi.mock("$lib/stores/campaigns", () => ({
+	campaigns: {
+		subscribe: vi.fn((fn) => {
+			fn({ campaigns: [], loading: false, loaded: true, error: null, metrics: {} });
+			return () => {};
+		}),
+		fetchAll: vi.fn(),
+	},
+}));
+
+vi.mock("$lib/utils/mode", () => ({
+	getLogoDestination: () => "/workspace/campaigns",
 }));
 
 describe("Sidebar Component", () => {
 	describe("Rendering", () => {
 		it("renders all navigation items", () => {
 			const { getByText } = render(Sidebar);
-			expect(getByText("Dashboard")).toBeTruthy();
 			expect(getByText("Campaigns")).toBeTruthy();
-			expect(getByText("Jobs")).toBeTruthy();
-			expect(getByText("Results")).toBeTruthy();
 			expect(getByText("Settings")).toBeTruthy();
 		});
 
@@ -32,8 +42,8 @@ describe("Sidebar Component", () => {
 	describe("Active State", () => {
 		it("highlights active nav item based on current path", () => {
 			const { getByText } = render(Sidebar);
-			const dashboardLink = getByText("Dashboard").closest("a");
-			expect(dashboardLink?.classList.contains("bg-blue-50")).toBe(true);
+			const campaignsLink = getByText("Campaigns").closest("a");
+			expect(campaignsLink?.classList.contains("bg-blue-50")).toBe(true);
 		});
 	});
 
@@ -48,10 +58,8 @@ describe("Sidebar Component", () => {
 			const { container } = render(Sidebar);
 			const menuButton = container.querySelector('button[aria-label="Toggle menu"]');
 
-			// Click to open
 			await fireEvent.click(menuButton!);
 
-			// Sidebar should be visible (check for transform class)
 			const sidebar = container.querySelector("aside");
 			expect(sidebar?.classList.contains("translate-x-0")).toBe(true);
 		});

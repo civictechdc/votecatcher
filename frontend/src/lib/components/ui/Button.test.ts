@@ -8,7 +8,7 @@ describe("Button Component", () => {
 			const { getByRole } = render(Button, { text: "Click me" });
 			const button = getByRole("button");
 			expect(button).toBeTruthy();
-			expect(button.textContent).toBe("Click me");
+			expect(button.textContent?.trim()).toBe("Click me");
 		});
 
 		it("renders with primary variant", () => {

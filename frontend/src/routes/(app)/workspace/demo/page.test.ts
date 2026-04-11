@@ -1,18 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/svelte";
+import { render, screen, waitFor } from "@testing-library/svelte";
 import { writable } from "svelte/store";
 import Page from "./+page.svelte";
 
-const createMockDemoStore = (initialState = {}) => {
+const createMockDemoStore = () => {
 	const state = {
+		initialized: true,
 		showResetConfirmation: false,
 		resetting: false,
 		loading: false,
-		error: null,
+		error: null as string | null,
 		prebakedSessions: [
 			{ id: "dc-2024", name: "DC Demo 2024", description: "Sample DC petition data" },
 		],
-		...initialState,
+		loadedSession: null as any,
 	};
 
 	const store = writable(state);
@@ -35,9 +36,11 @@ const createMockDemoStore = (initialState = {}) => {
 	};
 };
 
+let mockStore: ReturnType<typeof createMockDemoStore>;
+
 vi.mock("$lib/stores/demo", () => ({
 	get demo() {
-		return createMockDemoStore();
+		return mockStore;
 	},
 	isDemoModeEnabled: () => true,
 	setDemoMode: vi.fn(),
@@ -46,20 +49,24 @@ vi.mock("$lib/stores/demo", () => ({
 describe("Demo Page", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockStore = createMockDemoStore();
 	});
 
 	it("should display demo page title", () => {
 		render(Page);
-		expect(screen.getByText(/demo mode/i)).toBeInTheDocument();
+		expect(screen.getByText(/demo mode/i)).toBeTruthy();
 	});
 
 	it("should show reset button", () => {
 		render(Page);
-		expect(screen.getByRole("button", { name: /reset demo/i })).toBeInTheDocument();
+		const btn = screen.getByRole("button", { name: /reset demo/i });
+		expect(btn).toBeTruthy();
 	});
 
-	it("should show available pre-baked sessions", () => {
+	it("should show available pre-baked sessions", async () => {
 		render(Page);
-		expect(screen.getByText("DC Demo 2024")).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByText("DC Demo 2024")).toBeTruthy();
+		});
 	});
 });

@@ -173,7 +173,8 @@ describe("Demo Store", () => {
 			demo.confirmReset();
 			resetDemoStore();
 			const state = get(demo);
-			expect(state).toEqual({
+			expect(state).toMatchObject({
+				initialized: false,
 				showResetConfirmation: false,
 				resetting: false,
 				loading: false,

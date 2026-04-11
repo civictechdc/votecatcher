@@ -1,24 +1,44 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import CsvExportButton from "./CsvExportButton.svelte";
-import { results } from "$lib/stores/results";
 
-vi.mock("$lib/stores/results");
+const mockExportCSV = vi.fn();
+
+vi.mock("$lib/stores/results", () => ({
+	results: {
+		exportCSV: (...args: unknown[]) => mockExportCSV(...args),
+		fetchResults: vi.fn(),
+		clearError: vi.fn(),
+		reset: vi.fn(),
+		subscribe: vi.fn(() => () => {}),
+	},
+}));
 
 describe("CsvExportButton", () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+		vi.unstubAllGlobals();
+		mockExportCSV.mockReset();
+	});
+
 	it("renders export button", () => {
 		render(CsvExportButton, { jobId: 1 });
-		expect(screen.getByRole("button", { name: /export.*csv/i })).toBeInTheDocument();
+		const btn = screen.getByRole("button", { name: /export.*csv/i });
+		expect(btn).toBeTruthy();
 	});
 
 	it("triggers download on click", async () => {
-		vi.mocked(results.exportCSV).mockResolvedValue();
+		mockExportCSV.mockResolvedValue(undefined);
 
-		// Mock URL.createObjectURL and anchor click
-		const mockAnchor = { click: vi.fn(), href: "" };
-		vi.spyOn(document, "createElement").mockReturnValue(mockAnchor as unknown as HTMLElement);
+		const mockAnchor = document.createElement("a");
+		vi.spyOn(mockAnchor, "click");
+		vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
+			if (tagName.toLowerCase() === "a") return mockAnchor;
+			return document.createElementNS("http://www.w3.org/1999/xhtml", tagName) as HTMLElement;
+		});
 		vi.stubGlobal("URL", {
 			createObjectURL: vi.fn().mockReturnValue("blob:test-url"),
+			revokeObjectURL: vi.fn(),
 		});
 
 		render(CsvExportButton, { jobId: 1 });
@@ -27,15 +47,13 @@ describe("CsvExportButton", () => {
 		await fireEvent.click(button);
 
 		await waitFor(() => {
-			expect(results.exportCSV).toHaveBeenCalledWith(1);
+			expect(mockExportCSV).toHaveBeenCalledWith(1);
 		});
-
-		vi.unstubAllGlobals();
 	});
 
 	it("shows loading state during export", async () => {
 		let resolveExport: (() => void) | undefined;
-		vi.mocked(results.exportCSV).mockImplementation(
+		mockExportCSV.mockImplementation(
 			() =>
 				new Promise<void>((resolve) => {
 					resolveExport = resolve;
@@ -48,19 +66,20 @@ describe("CsvExportButton", () => {
 		fireEvent.click(button);
 
 		await waitFor(() => {
-			expect(screen.getByRole("button")).toBeDisabled();
+			const btn = screen.getByRole("button") as HTMLButtonElement;
+			expect(btn.disabled).toBe(true);
 		});
 
-		// Resolve the promise
 		resolveExport?.();
 
 		await waitFor(() => {
-			expect(screen.getByRole("button")).not.toBeDisabled();
+			const btn = screen.getByRole("button") as HTMLButtonElement;
+			expect(btn.disabled).toBe(false);
 		});
 	});
 
 	it("shows error message on export failure", async () => {
-		vi.mocked(results.exportCSV).mockRejectedValue(new Error("Export failed"));
+		mockExportCSV.mockRejectedValue(new Error("Export failed"));
 
 		render(CsvExportButton, { jobId: 1 });
 
@@ -68,7 +87,7 @@ describe("CsvExportButton", () => {
 		await fireEvent.click(button);
 
 		await waitFor(() => {
-			expect(screen.getByText(/export failed/i)).toBeInTheDocument();
+			expect(screen.getByText(/export failed/i)).toBeTruthy();
 		});
 	});
 });
