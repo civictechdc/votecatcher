@@ -118,7 +118,7 @@ sast-pr:
 	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --baseline-commit origin/main --json -o semgrep-pr.json backend/ frontend/src/
 
 sca:
-	osv-scanner scan --recursive ./backend ./frontend
+	osv-scanner scan -r .
 	trivy fs --severity CRITICAL,HIGH --scanners vuln --format json --output trivy-results.json .
 
 container-scan:
@@ -207,7 +207,7 @@ sbom:
 
 license-check:
 	@command -v osv-scanner >/dev/null 2>&1 || (echo "ERROR: osv-scanner not installed — run 'just install-tools'" && exit 1)
-	@osv-scanner scan --recursive --licenses --format json --output /tmp/osv-licenses.json ./backend ./frontend || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
+	@osv-scanner scan -r --licenses --format json --output /tmp/osv-licenses.json . || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
 	@if [ ! -s /tmp/osv-licenses.json ]; then echo "ERROR: osv-scanner produced no output" && exit 1; fi
 	@if grep -q "AGPL\|GPL\|LGPL" /tmp/osv-licenses.json; then echo "ERROR: AGPL/GPL/LGPL licenses detected" && exit 1; fi
 	@echo "OK: No copyleft license violations"
