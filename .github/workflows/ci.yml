@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: '0 3 * * *'
 
 jobs:
   lockfile-integrity:
@@ -16,9 +18,10 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
 
       - name: Check Python lockfile
         run: cd backend && uv lock --check
@@ -26,12 +29,29 @@ jobs:
       - name: Check JS lockfile
         run: cd frontend && bun install --frozen-lockfile
 
+      - name: Lockfile check summary
+        if: failure()
+        run: |
+          echo "::error::Lockfile integrity check failed. Run 'cd backend && uv lock' or 'cd frontend && bun install' to update lockfiles, then commit the changes."
+          echo "## ❌ Lockfile Integrity Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Lockfiles are out of sync with their respective manifest files." >> "$GITHUB_STEP_SUMMARY"
+          echo "Run the commands above locally and commit the updated lockfiles." >> "$GITHUB_STEP_SUMMARY"
+
   docs-validation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Validate documentation accuracy
         run: bash scripts/validate-docs.sh
+
+      - name: Docs validation summary
+        if: failure()
+        run: |
+          echo "::error::Documentation validation failed. Check the script output for stale or incorrect references."
+          echo "## ❌ Docs Validation Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Run 'bash scripts/validate-docs.sh' locally to see details." >> "$GITHUB_STEP_SUMMARY"
 
   changes:
     runs-on: ubuntu-latest
@@ -51,7 +71,22 @@ jobs:
               - 'frontend/**'
               - 'justfile'
 
-  backend-lint:
+  justfile-makefile-sync:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Makefile is in sync with justfile
+        run: python scripts/just-to-make.py --check
+
+      - name: Sync check summary
+        if: failure()
+        run: |
+          echo "::error::Makefile is out of sync with justfile. Run 'python scripts/just-to-make.py' to regenerate."
+          echo "## ❌ Justfile/Makefile Sync Failed" >> "$GITHUB_STEP_SUMMARY"
+
+  backend-quality:
     needs: [changes]
     if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -64,75 +99,75 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "backend/uv.lock"
 
-      - name: Install just
-        uses: extractions/setup-just@v2
-
       - name: Install dependencies
         run: cd backend && uv sync --dev
 
-      - name: Run backend lint
-        run: just lint-backend
+      - name: Lint
+        id: lint
+        run: cd backend && uv run ruff check . && uv run ruff format --check .
 
-  backend-typecheck:
-    needs: [backend-lint]
-    if: needs.backend-lint.result == 'success' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+      - name: Typecheck
+        id: typecheck
+        run: bash scripts/check-typecheck-baseline.sh
 
-      - name: Install UV
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "backend/uv.lock"
+      - name: Test
+        id: test
+        run: cd backend && uv run pytest tests/unit tests/matching tests/test_config.py --cov=app --cov-report=xml
 
-      - name: Install just
-        uses: extractions/setup-just@v2
-
-      - name: Install dependencies
-        run: cd backend && uv sync --dev
-
-      - name: Run backend typecheck
-        run: just typecheck-backend
-
-  backend-test:
-    needs: [backend-typecheck]
-    if: needs.backend-typecheck.result == 'success' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "backend/uv.lock"
-
-      - name: Install just
-        uses: extractions/setup-just@v2
-
-      - name: Install dependencies
-        run: cd backend && uv sync --dev
-
-      - name: Run backend tests
-        run: just test-backend
-
-      - name: Annotate test failures
-        if: failure()
+      - name: Security scan (bandit + uv audit)
+        id: security-scan
         run: |
-          if [ -f backend/coverage.xml ]; then
-            echo "::group::Backend Test Results"
-            echo "Tests failed — check logs above for details"
-            echo "::endgroup::"
-          fi
+          cd backend && uv run bandit -r app/
+          cd backend && uv audit
+
+      - name: Security tests
+        id: security-tests
+        run: cd backend && uv run pytest tests/security/ -v --tb=short
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
+        if: always() && steps.test.outcome != 'skipped'
         with:
           files: backend/coverage.xml
           fail_ci_if_error: false
 
-  frontend-lint:
+      - name: Backend failure summary
+        if: failure()
+        run: |
+          FAILED_STEPS=""
+          PASSED_STEPS=""
+
+          if [[ "${{ steps.lint.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Lint (ruff)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Lint (ruff)"; fi
+          if [[ "${{ steps.typecheck.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Typecheck (basedpyright)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Typecheck (basedpyright)"; fi
+          if [[ "${{ steps.test.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Tests (pytest)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Tests (pytest)"; fi
+          if [[ "${{ steps.security-scan.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Security scan (bandit + uv audit)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Security scan (bandit + uv audit)"; fi
+          if [[ "${{ steps.security-tests.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Security tests"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Security tests"; fi
+
+          FIRST_FAIL=$(echo -e "$FAILED_STEPS" | grep -m1 "❌" || true)
+          echo "::error::Backend quality gate failed:$FIRST_FAIL"
+
+          echo "## ❌ Backend Quality Gate" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo -e "$FAILED_STEPS" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Passed" >> "$GITHUB_STEP_SUMMARY"
+          echo -e "$PASSED_STEPS" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "_Steps after the first failure were not executed._" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Backend success summary
+        if: success()
+        run: |
+          echo "## ✅ Backend Quality Gate" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Lint (ruff)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Typecheck (basedpyright)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Tests (pytest)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Security scan (bandit + uv audit)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Security tests" >> "$GITHUB_STEP_SUMMARY"
+
+  frontend-quality:
     needs: [changes]
     if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -140,99 +175,69 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
 
-      - name: Cache bun
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            frontend/node_modules/.cache
-          key: bun-${{ hashFiles('frontend/bun.lock') }}
-          restore-keys: |
-            bun-
-
-      - name: Install just
-        uses: extractions/setup-just@v2
-
       - name: Install dependencies
         run: cd frontend && bun install --frozen-lockfile
 
-      - name: Run frontend lint
-        run: just lint-frontend
+      - name: Lint
+        id: lint
+        run: |
+          cd frontend && bun run lint
+          cd frontend && bun run fmt:check
 
-  frontend-typecheck:
-    needs: [frontend-lint]
-    if: needs.frontend-lint.result == 'success' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+      - name: Typecheck
+        id: typecheck
+        run: cd frontend && bun run check
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Test
+        id: test
+        run: |
+          cd frontend && bun run prepare
+          cd frontend && bun run test:unit
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+      - name: Security scan (bun audit)
+        id: security-scan
+        run: cd frontend && bun audit --ignore GHSA-4w7w-66w2-5vf9 --ignore GHSA-v2wj-q39q-566r --ignore GHSA-p9ff-h696-f583 --ignore GHSA-chqc-8p9q-pq6q --ignore GHSA-36xv-jgw5-4q75 --ignore GHSA-3f6h-2hrp-w5wx --ignore GHSA-2crg-3p73-43xp --ignore GHSA-3p68-rc4w-qgx5 --ignore GHSA-fvcv-3m26-pcqx --ignore GHSA-6v7q-wjvx-w8wg
 
-      - name: Cache bun
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            frontend/node_modules/.cache
-          key: bun-${{ hashFiles('frontend/bun.lock') }}
-          restore-keys: |
-            bun-
+      - name: Frontend failure summary
+        if: failure()
+        run: |
+          FAILED_STEPS=""
+          PASSED_STEPS=""
 
-      - name: Install just
-        uses: extractions/setup-just@v2
+          if [[ "${{ steps.lint.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Lint (oxlint + prettier)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Lint (oxlint + prettier)"; fi
+          if [[ "${{ steps.typecheck.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Typecheck (svelte-check)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Typecheck (svelte-check)"; fi
+          if [[ "${{ steps.test.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Tests (vitest)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Tests (vitest)"; fi
+          if [[ "${{ steps.security-scan.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Security scan (bun audit)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Security scan (bun audit)"; fi
 
-      - name: Install dependencies
-        run: cd frontend && bun install --frozen-lockfile
+          FIRST_FAIL=$(echo -e "$FAILED_STEPS" | grep -m1 "❌" || true)
+          echo "::error::Frontend quality gate failed:$FIRST_FAIL"
 
-      - name: Run frontend typecheck
-        run: just typecheck-frontend
+          echo "## ❌ Frontend Quality Gate" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo -e "$FAILED_STEPS" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Passed" >> "$GITHUB_STEP_SUMMARY"
+          echo -e "$PASSED_STEPS" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "_Steps after the first failure were not executed._" >> "$GITHUB_STEP_SUMMARY"
 
-  frontend-test:
-    needs: [frontend-typecheck]
-    if: needs.frontend-typecheck.result == 'success' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Cache bun
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            frontend/node_modules/.cache
-          key: bun-${{ hashFiles('frontend/bun.lock') }}
-          restore-keys: |
-            bun-
-
-      - name: Install just
-        uses: extractions/setup-just@v2
-
-      - name: Install dependencies
-        run: cd frontend && bun install --frozen-lockfile
-
-      - name: Run frontend tests
-        run: just test-frontend
+      - name: Frontend success summary
+        if: success()
+        run: |
+          echo "## ✅ Frontend Quality Gate" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Lint (oxlint + prettier)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Typecheck (svelte-check)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Tests (vitest)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Security scan (bun audit)" >> "$GITHUB_STEP_SUMMARY"
 
   frontend-fallow:
     needs: [changes]
@@ -244,7 +249,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -257,12 +262,354 @@ jobs:
       - name: Run fallow audit
         run: cd frontend && npx fallow audit --base origin/main --format compact
 
-  docker-build:
-    needs: [backend-test, frontend-test, frontend-fallow, security-test-backend, dast-smoke]
-    if: (needs.backend-test.result == 'success' && needs.frontend-test.result == 'success' && needs.frontend-fallow.result == 'success' && needs.dast-smoke.result == 'success') || github.ref == 'refs/heads/main'
+      - name: Fallow audit summary
+        if: failure()
+        run: |
+          echo "::error::Fallow audit found dead or unused code in the frontend. Run 'cd frontend && npx fallow audit --base origin/main' locally to see details."
+          echo "## ❌ Fallow Audit Failed" >> "$GITHUB_STEP_SUMMARY"
+
+  secrets-scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          GITLEAKS_VERSION=8.24.3
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz -C /usr/local/bin
+
+      - name: Run gitleaks
+        run: gitleaks detect --verbose .
+
+      - name: Secrets scan summary
+        if: failure()
+        run: |
+          echo "::error::Potential secrets detected in git history. Review the gitleaks output above and rotate any exposed credentials immediately."
+          echo "## ❌ Secrets Scan Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Action required:** Review findings above and rotate any exposed credentials." >> "$GITHUB_STEP_SUMMARY"
+
+  sast:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: "auto,p/owasp-top-ten,p/fastapi,p/jwt,p/xss"
+          baseline-commit: ${{ github.base_ref || 'main' }}
+          generateSarif: "1"
+
+      - name: Upload semgrep results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-results
+          path: semgrep-results.json
+
+      - name: SAST summary
+        if: failure()
+        run: |
+          echo "::error::Semgrep SAST found security issues. Review the findings in the logs and the uploaded semgrep-results artifact."
+          echo "## ❌ SAST Scan Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Download the \`semgrep-results\` artifact for full details." >> "$GITHUB_STEP_SUMMARY"
+
+  sca:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Install dependencies
+        run: |
+          cd backend && uv sync --dev
+          cd "${GITHUB_WORKSPACE}" && cd frontend && bun install --frozen-lockfile
+
+      - name: Cache osv-scanner
+        id: cache-osv
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/osv-scanner
+          key: osv-scanner-v1.9.2
+
+      - name: Install osv-scanner
+        if: steps.cache-osv.outputs.cache-hit != 'true'
+        run: go install github.com/google/osv-scanner/cmd/osv-scanner@v1.9.2
+
+      - name: Install trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+        env:
+          TRIVY_VERSION: v0.69.3
+
+      - name: Run SCA scan
+        run: |
+          ~/go/bin/osv-scanner scan -r .
+          trivy fs --severity CRITICAL,HIGH --scanners vuln --format json --output trivy-results.json .
+
+      - name: Upload SCA results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sca-results
+          path: |
+            osv-results.json
+            trivy-results.json
+
+      - name: SCA summary
+        if: failure()
+        run: |
+          echo "::error::SCA scan found vulnerable dependencies. Check osv-scanner and trivy output above, and the uploaded sca-results artifact."
+          echo "## ❌ SCA Scan Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Run 'just sca' locally to reproduce. Download the \`sca-results\` artifact for full details." >> "$GITHUB_STEP_SUMMARY"
+
+  dast-smoke:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: false
+
+      - name: Cache nuclei binary
+        id: cache-nuclei
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/nuclei
+          key: nuclei-v3.7.1-go
+
+      - name: Install nuclei
+        if: steps.cache-nuclei.outputs.cache-hit != 'true'
+        run: go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@v3.7.1
+
+      - name: Install dependencies
+        run: cd backend && uv sync --dev
+
+      - name: Start backend
+        run: cd backend && uv run uvicorn app.api:app --host 0.0.0.0 --port 8080 &
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./test.db"
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 15); do
+            if curl -sf http://localhost:8080/api/health > /dev/null 2>&1; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i/15)"
+            sleep 2
+          done
+          echo "::error::Backend did not become ready in 30 seconds — DAST smoke test cannot proceed"
+          exit 1
+
+      - name: Run DAST smoke test
+        id: nuclei-scan
+        run: ~/go/bin/nuclei -t security/nuclei-templates/ -u http://localhost:8080 -j -o nuclei-results.json
+
+      - name: Check for HIGH/CRITICAL findings
+        if: always() && steps.nuclei-scan.outcome != 'skipped'
+        run: |
+          if [ -f nuclei-results.json ]; then
+            HIGH_CRIT=$(grep -c '"severity":"critical"\|"severity":"high"' nuclei-results.json 2>/dev/null || echo "0")
+            if [ "$HIGH_CRIT" -gt 0 ]; then
+              echo "::error::$HIGH_CRIT HIGH/CRITICAL DAST findings detected — review nuclei-results.json"
+              exit 1
+            fi
+            echo "No HIGH/CRITICAL DAST findings"
+          else
+            echo "::error::No nuclei results file — DAST scan may have failed to execute"
+            exit 1
+          fi
+
+      - name: Upload DAST results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dast-smoke-results
+          path: nuclei-results.json
+
+      - name: DAST smoke summary
+        if: failure()
+        run: |
+          echo "## ❌ DAST Smoke Test Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ steps.nuclei-scan.outcome }}" == "failure" ]]; then
+            echo "Nuclei scan found vulnerabilities. Download \`dast-smoke-results\` artifact for details." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "DAST smoke test could not complete — check if the backend started successfully." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  dast-full:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Cache nuclei binary
+        id: cache-nuclei
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/nuclei
+          key: nuclei-v3.7.1-go
+
+      - name: Install nuclei
+        if: steps.cache-nuclei.outputs.cache-hit != 'true'
+        run: go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@v3.7.1
+
+      - name: Update nuclei templates
+        run: ~/go/bin/nuclei -update-templates
+
+      - name: Install dependencies
+        run: cd backend && uv sync --dev
+
+      - name: Start backend
+        run: cd backend && uv run uvicorn app.api:app --host 0.0.0.0 --port 8080 &
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./test.db"
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/api/health > /dev/null 2>&1; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 2
+          done
+          echo "::error::Backend did not become ready in 60 seconds — DAST full scan cannot proceed"
+          exit 1
+
+      - name: Run DAST scan
+        id: nuclei-scan
+        run: ~/go/bin/nuclei -t ~/go/bin/nuclei-templates/ -u http://localhost:8080 -j -o nuclei-results.json
+
+      - name: Check for HIGH/CRITICAL findings
+        if: always() && steps.nuclei-scan.outcome != 'skipped'
+        run: |
+          if [ -f nuclei-results.json ]; then
+            HIGH_CRIT=$(grep -c '"severity":"critical"\|"severity":"high"' nuclei-results.json 2>/dev/null || echo "0")
+            if [ "$HIGH_CRIT" -gt 0 ]; then
+              echo "::error::$HIGH_CRIT HIGH/CRITICAL DAST findings detected — review nuclei-results.json"
+              exit 1
+            fi
+            echo "No HIGH/CRITICAL DAST findings"
+          fi
+
+      - name: Upload nuclei results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nuclei-results
+          path: nuclei-results.json
+
+  container-scan:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend Docker image
+        id: build-backend
+        run: docker build -t votecatcher-backend ./backend
+
+      - name: Build frontend Docker image
+        id: build-frontend
+        run: docker build -t votecatcher-frontend ./frontend
+
+      - name: Run Trivy on backend
+        id: trivy-backend
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: votecatcher-backend
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Run Trivy on frontend
+        id: trivy-frontend
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: votecatcher-frontend
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Container scan failure summary
+        if: failure()
+        run: |
+          FAILED=""
+          if [[ "${{ steps.build-backend.outcome }}" != "success" ]]; then FAILED="$FAILED\n- ❌ Backend image build"; fi
+          if [[ "${{ steps.build-frontend.outcome }}" != "success" ]]; then FAILED="$FAILED\n- ❌ Frontend image build"; fi
+          if [[ "${{ steps.trivy-backend.outcome }}" == "failure" ]]; then FAILED="$FAILED\n- ❌ Backend Trivy scan (CRITICAL/HIGH CVEs)"; fi
+          if [[ "${{ steps.trivy-frontend.outcome }}" == "failure" ]]; then FAILED="$FAILED\n- ❌ Frontend Trivy scan (CRITICAL/HIGH CVEs)"; fi
+
+          echo "::error::Container scan failed:$FAILED"
+          echo "## ❌ Container Scan Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo -e "$FAILED" >> "$GITHUB_STEP_SUMMARY"
+
+  docker-build:
+    needs: [backend-quality, frontend-quality, frontend-fallow, container-scan, dast-smoke]
+    if: >-
+      (needs.backend-quality.result == 'success' &&
+       needs.frontend-quality.result == 'success' &&
+       needs.frontend-fallow.result == 'success' &&
+       needs.container-scan.result == 'success' &&
+       needs.dast-smoke.result == 'success') ||
+      github.ref == 'refs/heads/main' ||
+      github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check upstream results
+        if: needs.backend-quality.result != 'success' || needs.frontend-quality.result != 'success' || needs.frontend-fallow.result != 'success' || needs.container-scan.result != 'success' || needs.dast-smoke.result != 'success'
+        run: |
+          echo "::warning::Docker build proceeding despite upstream failures (main branch or scheduled run):"
+          [[ "${{ needs.backend-quality.result }}" != "success" ]] && echo "::warning::backend-quality: ${{ needs.backend-quality.result }}"
+          [[ "${{ needs.frontend-quality.result }}" != "success" ]] && echo "::warning::frontend-quality: ${{ needs.frontend-quality.result }}"
+          [[ "${{ needs.frontend-fallow.result }}" != "success" ]] && echo "::warning::frontend-fallow: ${{ needs.frontend-fallow.result }}"
+          [[ "${{ needs.container-scan.result }}" != "success" ]] && echo "::warning::container-scan: ${{ needs.container-scan.result }}"
+          [[ "${{ needs.dast-smoke.result }}" != "success" ]] && echo "::warning::dast-smoke: ${{ needs.dast-smoke.result }}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -308,100 +655,3 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache-frontend
           mv /tmp/.buildx-cache-frontend-new /tmp/.buildx-cache-frontend
-
-  justfile-makefile-sync:
-    needs: [changes]
-    if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Check Makefile is in sync with justfile
-        run: python scripts/just-to-make.py --check
-
-  security-test-backend:
-    needs: [backend-typecheck]
-    if: needs.backend-typecheck.result == 'success' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "backend/uv.lock"
-
-      - name: Install just
-        uses: extractions/setup-just@v2
-
-      - name: Install dependencies
-        run: cd backend && uv sync --dev
-
-      - name: Run security tests
-        run: just security-test
-
-  dast-smoke:
-    needs: [backend-typecheck]
-    if: needs.backend-typecheck.result == 'success' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: false
-
-      - name: Install just
-        uses: extractions/setup-just@v2
-
-      - name: Cache nuclei binary
-        id: cache-nuclei
-        uses: actions/cache@v4
-        with:
-          path: ~/go/bin/nuclei
-          key: nuclei-v3-go
-
-      - name: Install nuclei
-        if: steps.cache-nuclei.outputs.cache-hit != 'true'
-        run: go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-
-      - name: Install dependencies
-        run: cd backend && uv sync --dev
-
-      - name: Start backend
-        run: cd backend && uv run uvicorn app.api:app --host 0.0.0.0 --port 8080 &
-        env:
-          DATABASE_URL: "sqlite+aiosqlite:///./test.db"
-
-      - name: Wait for backend
-        run: |
-          for i in $(seq 1 15); do
-            if curl -sf http://localhost:8080/api/health > /dev/null 2>&1; then
-              echo "Backend is ready"
-              exit 0
-            fi
-            echo "Waiting for backend... ($i/15)"
-            sleep 2
-          done
-          echo "ERROR: Backend did not become ready in 30 seconds"
-          exit 1
-
-      - name: Run DAST smoke test
-        run: ~/go/bin/nuclei -t security/nuclei-templates/ -u http://localhost:8080 -j -o nuclei-results.json
-
-      - name: Check for HIGH/CRITICAL findings
-        if: always()
-        run: |
-          if [ -f nuclei-results.json ]; then
-            HIGH_CRIT=$(grep -c '"severity":"critical"\|"severity":"high"' nuclei-results.json 2>/dev/null || echo "0")
-            if [ "$HIGH_CRIT" -gt 0 ]; then
-              echo "::error::$HIGH_CRIT HIGH/CRITICAL DAST findings detected"
-              exit 1
-            fi
-            echo "No HIGH/CRITICAL DAST findings"
-          else
-            echo "No nuclei results file — scan may have failed"
-            exit 1
-          fi
