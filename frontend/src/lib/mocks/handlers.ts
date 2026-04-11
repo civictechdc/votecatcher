@@ -55,14 +55,8 @@ export const handlers = [
 	http.post("/api/store-api-key", async ({ request }) => {
 		const body = await jsonSafe(request);
 		const bodyRecord = body as Record<string, unknown>;
-		const provider =
-			bodyRecord["provider"] ??
-			bodyRecord["name"] ??
-			null;
-		const apiKey =
-			bodyRecord["apiKey"] ??
-			bodyRecord["api_key"] ??
-			null;
+		const provider = bodyRecord["provider"] ?? bodyRecord["name"] ?? null;
+		const apiKey = bodyRecord["apiKey"] ?? bodyRecord["api_key"] ?? null;
 
 		if (!provider || !apiKey) {
 			return new HttpResponse(JSON.stringify({ error: "Missing provider or apiKey" }), {

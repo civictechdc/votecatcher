@@ -1,0 +1,3 @@
+# OS-level CVEs in Debian base image — require upstream image update
+CVE-2025-69720
+CVE-2026-29111

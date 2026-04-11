@@ -35,8 +35,10 @@ class SettingsResponse(ApiModel):
     features: FeatureFlagsResponse
 
 
-@router.get("/features", response_model=FeatureFlagsResponse)
-def get_features(  # nosemgrep: fastapi-unauthenticated-route
+@router.get(  # nosemgrep: fastapi-unauthenticated-route
+    "/features", response_model=FeatureFlagsResponse
+)
+def get_features(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> FeatureFlagsResponse:
     """Get feature flags."""
@@ -50,8 +52,10 @@ def get_features(  # nosemgrep: fastapi-unauthenticated-route
     )
 
 
-@router.get("/settings", response_model=SettingsResponse)
-def get_settings_endpoint(  # nosemgrep: fastapi-unauthenticated-route
+@router.get(  # nosemgrep: fastapi-unauthenticated-route
+    "/settings", response_model=SettingsResponse
+)
+def get_settings_endpoint(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> SettingsResponse:
     """Get application settings."""
@@ -88,8 +92,10 @@ class ResetDataResponse(ApiModel):
     message: str
 
 
-@router.post("/reset-data", response_model=ResetDataResponse)
-def reset_all_data(  # nosemgrep: fastapi-unauthenticated-route
+@router.post(  # nosemgrep: fastapi-unauthenticated-route
+    "/reset-data", response_model=ResetDataResponse
+)
+def reset_all_data(
     db_session: Annotated[Session, Depends(get_session)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> ResetDataResponse:

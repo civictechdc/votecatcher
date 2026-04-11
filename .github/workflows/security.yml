@@ -137,6 +137,12 @@ jobs:
           go install github.com/google/osv-scanner/cmd/osv-scanner@latest
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
+      - name: Install trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+        env:
+          TRIVY_VERSION: v0.69.3
+
       - name: Run SCA scan
         run: just sca
 

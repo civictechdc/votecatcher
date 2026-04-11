@@ -102,8 +102,8 @@ describe("Frontend type contract BDD tests (Session 15)", () => {
 				{ row_idx: 1, predictionScore: 0.9, matchRank: 1 },
 				{ row_idx: 2, predictionScore: 0.7, matchRank: 2 },
 			];
-			const sorted = [...rows].sort((a, b) =>
-				(Number(b["predictionScore"]) || 0) - (Number(a["predictionScore"]) || 0)
+			const sorted = [...rows].sort(
+				(a, b) => (Number(b["predictionScore"]) || 0) - (Number(a["predictionScore"]) || 0),
 			);
 			expect(sorted[0]!["predictionScore"]).toBe(0.9);
 			expect(sorted[2]!["predictionScore"]).toBe(0.5);
@@ -289,8 +289,8 @@ describe("Frontend type contract BDD tests (Session 16)", () => {
 				{ row_idx: 1, predictionScore: 0.9, matchRank: 1 },
 				{ row_idx: 2, predictionScore: 0.7, matchRank: 2 },
 			];
-			const sorted = [...rows].sort((a, b) =>
-				(Number(b["predictionScore"]) || 0) - (Number(a["predictionScore"]) || 0)
+			const sorted = [...rows].sort(
+				(a, b) => (Number(b["predictionScore"]) || 0) - (Number(a["predictionScore"]) || 0),
 			);
 			expect(sorted[0]!["predictionScore"]).toBe(0.9);
 			expect(sorted[2]!["predictionScore"]).toBe(0.5);

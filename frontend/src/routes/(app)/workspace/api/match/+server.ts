@@ -16,7 +16,9 @@ const SERVER_DEMO = DEMO_MODE === "true";
 
 const MATCH_TABLE_COLUMNS: MatchColumn[] = [
 	new MatchColumn("Registration Name", function (first: MatchRow, second: MatchRow) {
-		return String(first["registeredName"] ?? "").localeCompare(String(second["registeredName"] ?? ""));
+		return String(first["registeredName"] ?? "").localeCompare(
+			String(second["registeredName"] ?? ""),
+		);
 	}),
 	new MatchColumn("Matched Name"),
 	new MatchColumn("Confidence", function (first, second) {

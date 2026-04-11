@@ -35,7 +35,9 @@ class ConfigService:
         deleted_counts: dict[str, int] = {}
 
         for table in RESET_TABLES:
-            deleted_counts[table] = conn.execute(text(f"DELETE FROM {table}")).rowcount
+            deleted_counts[table] = conn.execute(
+                text(f"DELETE FROM {table}")  # nosec B608 — table names from RESET_TABLES constant, not user input
+            ).rowcount
 
         self._session.commit()
 

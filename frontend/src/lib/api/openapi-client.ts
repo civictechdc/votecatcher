@@ -7,7 +7,7 @@ import {
 	SessionsApi,
 } from "./generated";
 
-const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || "http://localhost:8080/api";
+const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] || "http://localhost:8080/api";
 
 const config = new Configuration({
 	basePath: API_BASE_URL,

@@ -44,8 +44,10 @@ class CreateCampaignRequest(ApiModel):
     region: str = Field(default="DC", max_length=10)
 
 
-@router.post("", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
-def create_campaign(  # nosemgrep: fastapi-unauthenticated-route
+@router.post(  # nosemgrep: fastapi-unauthenticated-route
+    "", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED
+)
+def create_campaign(
     request: CreateCampaignRequest,
     session: SessionDep,
 ) -> CampaignResponse:
@@ -57,8 +59,10 @@ def create_campaign(  # nosemgrep: fastapi-unauthenticated-route
     )
 
 
-@router.get("", response_model=CampaignListResponse)
-def list_campaigns(  # nosemgrep: fastapi-unauthenticated-route
+@router.get(  # nosemgrep: fastapi-unauthenticated-route
+    "", response_model=CampaignListResponse
+)
+def list_campaigns(
     session: SessionDep,
     offset: int = 0,
     limit: int = 100,
@@ -69,8 +73,10 @@ def list_campaigns(  # nosemgrep: fastapi-unauthenticated-route
     return CampaignManagementService(session).list_campaigns(offset=offset, limit=limit)
 
 
-@router.get("/{campaign_id}", response_model=CampaignResponse)
-def get_campaign(  # nosemgrep: fastapi-unauthenticated-route
+@router.get(  # nosemgrep: fastapi-unauthenticated-route
+    "/{campaign_id}", response_model=CampaignResponse
+)
+def get_campaign(
     campaign_id: uuid.UUID,
     session: SessionDep,
 ) -> CampaignResponse:
@@ -83,8 +89,10 @@ def get_campaign(  # nosemgrep: fastapi-unauthenticated-route
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
-@router.delete("/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_campaign(  # nosemgrep: fastapi-unauthenticated-route
+@router.delete(  # nosemgrep: fastapi-unauthenticated-route
+    "/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_campaign(
     campaign_id: uuid.UUID,
     session: SessionDep,
 ) -> None:
@@ -135,8 +143,10 @@ class PetitionScanListResponse(ApiModel):
     total: int
 
 
-@router.get("/{campaign_id}/metrics", response_model=CampaignMetricsResponse)
-def get_campaign_metrics(  # nosemgrep: fastapi-unauthenticated-route
+@router.get(  # nosemgrep: fastapi-unauthenticated-route
+    "/{campaign_id}/metrics", response_model=CampaignMetricsResponse
+)
+def get_campaign_metrics(
     campaign_id: uuid.UUID,
     session: SessionDep,
 ) -> CampaignMetricsResponse:
@@ -157,8 +167,10 @@ def get_campaign_metrics(  # nosemgrep: fastapi-unauthenticated-route
     return CampaignMetricsResponse(**metrics)
 
 
-@router.get("/{campaign_id}/scans", response_model=PetitionScanListResponse)
-def list_campaign_scans(  # nosemgrep: fastapi-unauthenticated-route
+@router.get(  # nosemgrep: fastapi-unauthenticated-route
+    "/{campaign_id}/scans", response_model=PetitionScanListResponse
+)
+def list_campaign_scans(
     campaign_id: uuid.UUID,
     session: SessionDep,
 ) -> PetitionScanListResponse:
@@ -171,8 +183,10 @@ def list_campaign_scans(  # nosemgrep: fastapi-unauthenticated-route
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
-@router.delete("/{campaign_id}/scans/{scan_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_campaign_scan(  # nosemgrep: fastapi-unauthenticated-route
+@router.delete(  # nosemgrep: fastapi-unauthenticated-route
+    "/{campaign_id}/scans/{scan_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_campaign_scan(
     campaign_id: uuid.UUID,
     scan_id: int,
     session: SessionDep,
@@ -216,8 +230,10 @@ class CampaignResultsListResponse(ApiModel):
     page_size: int
 
 
-@router.get("/{campaign_id}/results", response_model=CampaignResultsListResponse)
-def get_campaign_results(  # nosemgrep: fastapi-unauthenticated-route
+@router.get(  # nosemgrep: fastapi-unauthenticated-route
+    "/{campaign_id}/results", response_model=CampaignResultsListResponse
+)
+def get_campaign_results(
     campaign_id: uuid.UUID,
     session: SessionDep,
     confidence: str | None = None,
@@ -268,8 +284,10 @@ class SetupStatusResponse(ApiModel):
     state: str
 
 
-@router.get("/{campaign_id}/setup-status", response_model=SetupStatusResponse)
-def get_setup_status(  # nosemgrep: fastapi-unauthenticated-route
+@router.get(  # nosemgrep: fastapi-unauthenticated-route
+    "/{campaign_id}/setup-status", response_model=SetupStatusResponse
+)
+def get_setup_status(
     campaign_id: uuid.UUID,
     session: SessionDep,
 ) -> SetupStatusResponse:

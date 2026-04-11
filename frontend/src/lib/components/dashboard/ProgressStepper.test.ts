@@ -1,10 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/svelte";
 import ProgressStepper from "./ProgressStepper.svelte";
-import type {
-	VoterListStatus,
-	PetitionsStatus,
-} from "$lib/api/generated/models/Campaign";
+import type { VoterListStatus, PetitionsStatus } from "$lib/api/generated/models/Campaign";
 
 describe("ProgressStepper — Type Contract (BDD)", () => {
 	const campaignId = "test-campaign-1";

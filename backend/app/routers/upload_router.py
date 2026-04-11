@@ -33,12 +33,12 @@ class PetitionUploadResponse(ApiModel):
     crop_count: int
 
 
-@router.post(
+@router.post(  # nosemgrep: fastapi-unauthenticated-route
     "/voter-list",
     response_model=VoterListUploadResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def upload_voter_list(  # nosemgrep: fastapi-unauthenticated-route
+async def upload_voter_list(
     campaign_id: str = Form(...),
     file: UploadFile = File(...),  # noqa: B008
     session: SessionDep = None,  # pyright: ignore[reportArgumentType]
@@ -83,12 +83,12 @@ async def upload_voter_list(  # nosemgrep: fastapi-unauthenticated-route
         ) from None
 
 
-@router.post(
+@router.post(  # nosemgrep: fastapi-unauthenticated-route
     "/petition",
     response_model=PetitionUploadResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def upload_petition(  # nosemgrep: fastapi-unauthenticated-route
+async def upload_petition(
     campaign_id: str = Form(...),
     file: UploadFile = File(...),  # noqa: B008
     region: str = Form("DC"),

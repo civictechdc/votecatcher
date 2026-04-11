@@ -45,9 +45,9 @@ function saveOverrides(overrides: FeatureFlagOverrides): void {
 
 function mergeFlags(serverFlags: FeatureFlags, overrides: FeatureFlagOverrides): FeatureFlags {
 	return {
-		simulationMode: overrides['simulationMode'] ?? serverFlags.simulationMode,
-		betaFeatures: overrides['betaFeatures'] ?? serverFlags.betaFeatures,
-		debugMode: overrides['debugMode'] ?? serverFlags.debugMode,
+		simulationMode: overrides["simulationMode"] ?? serverFlags.simulationMode,
+		betaFeatures: overrides["betaFeatures"] ?? serverFlags.betaFeatures,
+		debugMode: overrides["debugMode"] ?? serverFlags.debugMode,
 	};
 }
 
