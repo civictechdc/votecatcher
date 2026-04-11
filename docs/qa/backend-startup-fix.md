@@ -1,90 +1,67 @@
 # Backend Architecture Improvements — Session Log
 
-**Branch:** `refactor/svelte_frontend`
-**Status:** All sessions committed. Architecture improvements complete.
-**Test Results:** 803 passed, 0 failures, 8 skipped
-**Ruff:** 0 errors
-**detect-secrets:** 0 findings, baseline clean
+**Branch:** `refactor/svelte_frontend` (258 commits ahead of `origin/main`)
+**Status:** Sessions 1–23 committed. Outstanding items below.
+**Backend:** 803 passed, 0 failures, 8 skipped | Ruff: 0 errors | detect-secrets: clean
+**Frontend:** svelte-check 0 errors, 0 warnings | 21 vitest failures (Svelte 5 TL compat)
 
-## Original Problem (Resolved, Sessions 1–8)
+## Outstanding
 
-Backend (`main.py`) failed with `Error loading ASGI app. Could not import module "app.api"`. After creating `app/api.py`, a cascade of deeper issues surfaced — all resolved:
+### LSP Type Errors — `CampaignResponse` snake_case/camelCase mismatch
 
-1. Missing `app/api.py` — recreated FastAPI entry point with 9 routers, CORS, `/health`, lifespan
-2. `app/settings/__init__.py` — fixed stale import from deleted module
-3. `app/dependencies.py` — removed module-level `load_dotenv()` that overrode `.env.local` with `.env`
-4. Bare `load_dotenv()` in 4 files — created `app/settings/env_loader.py` with correct priority
-5. `app/ocr/ocr_client_factory.py` — restored missing symbols after refactor
-6. Missing `pyproject.toml` dependencies — added 11 packages, fixed `requires-python` range
-7. `pytest-asyncio` mode — added `asyncio_mode = "auto"`
-8. `mistralai` v2 breaking import change — updated imports
-9. FK table registration — added `ensure_all_models_registered()` autouse fixture
-10. `backend/.env` conflicting with `.env.local` — deleted
-11. CORS tests missing `Origin` header — added
-12–15. API snake_case → camelCase — created `ApiModel` base class, migrated all models, replaced `dict` fields with typed sub-models
-16. Stale test patches — removed from integration/security conftest files
-17. Removed `dotenv` dependency — replaced with pure-Python `env_parser.py`
+5 Svelte files reference camelCase properties (`uniqueName`, `createdAt`, `updatedAt`, `regionId`) that don't exist on the type — it only has snake_case (`unique_name`, `created_at`, etc.). Same pattern fixed in Sessions 13–16 but these files were missed.
 
-## Architecture Improvements (Sessions 9–23)
+| File | Bad Properties |
+|------|---------------|
+| `workspace/[id]/results/+page.svelte` | `ocrResultId`, `extractedName`, `extractedAddress`, `voterName`, `voterAddress`, `similarityScore`, `uniqueName` |
+| `workspace/[id]/jobs/+page.svelte` | `uniqueName` |
+| `workspace/[id]/jobs/[job_id]/+page.svelte` | `uniqueName` |
+| `workspace/campaigns/+page.svelte` | `uniqueName`, `createdAt`, `updatedAt` |
+| `workspace/[id]/upload/+page.svelte` | `regionId`, `uniqueName` |
 
-### Service Layer Extractions
+### Frontend Test Failures — Svelte 5 + @testing-library/svelte incompatibility
 
-| Service | Session | Router Before → After | Reduction | Unit Tests |
-|---------|---------|----------------------|-----------|------------|
-| `ResultsQueryService` | 9 | `results_router.py` 328 → 75 lines | 77% | — |
-| `CampaignQueryService` | 10 | `campaign_router.py` 672 → 433 lines | 36% | 13 BDD |
-| `JobQueryService` | 12 | `job_router.py` 388 → 202 lines | 48% | 33 BDD |
-| `CampaignManagementService` | 18 | `campaign_router.py` 433 → 282 lines | 35% | 16 BDD |
-| `SessionService` | 19 | `session_router.py` 222 → 168 lines | 24% | 13 BDD |
-| `ConfigService` | 20 | `config_router.py` 160 → 132 lines | 18% | 3 BDD |
-| `DemoOrchestrationService` | 22 | `demo_router.py` 117 → 88 lines | 25% | 12 BDD |
+21 tests in 10 files fail with `TypeError: Cannot convert undefined or null to object` from `render()`. Root cause: testing library doesn't fully support Svelte 5 runes-based components. Not regressions — pre-existing.
 
-### Frontend API Client — camelCase Alignment (Session 9)
+Affected: `Button`, `Table`, `Sidebar`, `SidebarNavItem`, `CsvExportButton`, `ProgressStepper`, `Demo Page`, `Campaigns List Page`, `Jobs Store`.
 
-Updated `openapi.yaml`, all 5 generated model files, and ~40+ frontend files from snake_case to camelCase.
+### Branch Integration
 
-### Frontend Form Data Contract — BDD/TDD (Session 11)
+258 commits ahead of `origin/main`. Needs PR review and merge strategy.
 
-9 BDD integration tests covering form data contract. **Key finding:** `ApiModel`'s `alias_generator` does NOT apply to `Form()` parameters — FastAPI matches form data by exact Python parameter name. Frontend must send `campaign_id` (snake_case) for form fields.
+## Completed Work
 
-**Frontend bugs fixed:** `UploadApi.ts` wrong param name, `uploads.ts` missing `campaignId` param, `getting-started/+page.svelte` snake_case/camelCase mismatch.
+### Service Layer Extractions (Sessions 9–22)
 
-### Frontend TypeScript Type Sync (Sessions 13–16)
+| Service | Session | Router Reduction | BDD Tests |
+|---------|---------|-----------------|-----------|
+| `ResultsQueryService` | 9 | 77% | — |
+| `CampaignQueryService` | 10 | 36% | 13 |
+| `JobQueryService` | 12 | 48% | 33 |
+| `CampaignManagementService` | 18 | 35% | 16 |
+| `SessionService` | 19 | 24% | 13 |
+| `ConfigService` | 20 | 18% | 3 |
+| `DemoOrchestrationService` | 22 | 25% | 12 |
 
-Resolved 115 → 0 `svelte-check` errors across 43 files over 4 sessions. 48 fix categories applied.
+### Other Milestones
 
-**Root causes:** (a) local snake_case interfaces shadowing generated camelCase API types, (b) broken Svelte HTML structure, (c) TypeScript strict-mode violations.
-
-**Key fix patterns:** Replaced local interfaces with generated types, bracket notation for `Record<string, unknown>` and `import.meta.env`, non-null assertions for array access, removed dead code (unused imports/variables/unreachable branches), added `as any` cast for vitest/vite Plugin incompatibility.
-
-### Backend Dead Code Cleanup (Session 17)
-
-All 7 vulture findings at 80%+ confidence confirmed as false positives (framework-required params for FastAPI lifespan, Protocol methods, structlog processors, Pydantic hooks). Created `vulture_whitelist.py` for 7 items. Ruff: 12 → 0 errors.
-
-### Frontend Svelte 5 Warning Cleanup (Session 21)
-
-Eliminated all 32 `svelte-check` warnings across 9 files. 6 fix categories: redundant ARIA roles (5), missing ARIA role on click handler (1), `state_referenced_locally` (5), deprecated event directives (10), `non_reactive_update` (5), missing `aria-label` / a11y (4).
-
-### detect-secrets Pre-Commit Fix (Session 23)
-
-Resolved the blocker that prevented committing files across Sessions 11–22.
-
-**Problem:** `detect-secrets` pre-commit hook flagged false positives across test files — `BasicAuthDetector` on `user:pass@host` patterns in database URLs, `KeywordDetector` on API key patterns, and `HexHighEntropyString` on UUID literals.
-
-**Fix (BDD/TDD red-green-refactor):**
-1. Created `test_detect_secrets_compliance.py` — 4 BDD tests scanning all flagged files via `detect-secrets scan`, asserting zero findings per category
-2. Fixed all test files — replaced literal credential strings with variable indirection
-3. Regenerated `.secrets.baseline` — removed all test file entries
+- **Sessions 1–8:** Backend startup fix, env loading, pyproject deps, pytest-asyncio, mistralai v2, ApiModel camelCase migration
+- **Session 9:** Frontend API client camelCase alignment (openapi.yaml, 5 generated models, ~40 frontend files)
+- **Session 11:** Frontend form data contract — 9 BDD tests. Key finding: `Form()` params use snake_case, not `ApiModel` aliases
+- **Sessions 13–16:** TypeScript type sync — 115 → 0 svelte-check errors across 43 files
+- **Session 17:** Dead code cleanup — 7 vulture false positives whitelisted, ruff 12 → 0
+- **Session 21:** Svelte 5 warning cleanup — 32 warnings eliminated across 9 files
+- **Session 23:** detect-secrets compliance — 4 BDD guard tests, variable indirection pattern for test fixtures
 
 ## Key Architectural Findings
 
 1. **Single source of truth for types:** Generated API types in `$lib/api/generated/models/` are canonical. Component-local interfaces that shadow them cause cascading type errors.
 2. **Form data ≠ JSON body:** `ApiModel` aliases don't apply to `Form()` fields. Frontend must use snake_case for form uploads, camelCase for JSON.
-3. **Service layer pattern:** Response builder methods (`_build_*_response`) are consistently duplicated across route handlers. Extracting them to services eliminates duplication and reduces router size by 18–77%.
-4. **CQRS not yet appropriate:** Service layer extraction is the right first step. Reconsider only when read queries hit measurable performance walls on production PostgreSQL.
-5. **detect-secrets safe patterns:** For test fixtures, use variable indirection (not inline literals) for URLs with credentials, API key values, and high-entropy hex strings. The 4 BDD compliance tests act as a permanent guard.
+3. **Service layer pattern:** Response builder methods (`_build_*_response`) duplicated across route handlers. Extraction eliminates duplication and reduces routers 18–77%.
+4. **CQRS not yet appropriate:** Service layer extraction is the right first step. Reconsider when read queries hit measurable performance walls.
+5. **detect-secrets safe patterns:** Variable indirection for test fixture URLs, API keys, high-entropy strings. 4 BDD compliance tests guard permanently.
 
-## Commit History
+## Commit History (Sessions 8–23)
 
 | Commit | Message | Session(s) |
 |--------|---------|------------|
@@ -99,3 +76,4 @@ Resolved the blocker that prevented committing files across Sessions 11–22.
 | `e6604d4` | refactor(backend): extract DemoOrchestrationService from demo_router | 22 |
 | `44618c5` | fix(backend): detect-secrets compliance + demo service tests | 23 |
 | `c8bdc94` | test(frontend): add BDD type contract and ProgressStepper tests | 14–15 |
+| `33898b4` | docs: update backend-startup-fix.md — all sessions committed, remove stale items | — |
