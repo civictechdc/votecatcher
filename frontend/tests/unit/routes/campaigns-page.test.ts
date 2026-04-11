@@ -19,7 +19,15 @@ vi.mock("$lib/stores/campaigns", () => ({
 vi.mock("$lib/stores/demo", () => ({
 	demo: {
 		subscribe: vi.fn((fn) => {
-			fn({ initialized: true, showResetConfirmation: false, resetting: false, loading: false, error: null, prebakedSessions: [], loadedSession: null });
+			fn({
+				initialized: true,
+				showResetConfirmation: false,
+				resetting: false,
+				loading: false,
+				error: null,
+				prebakedSessions: [],
+				loadedSession: null,
+			});
 			return () => {};
 		}),
 	},
@@ -177,7 +185,13 @@ describe("Campaigns List Page", () => {
 			vi.mocked(campaigns.delete).mockResolvedValue(undefined);
 
 			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
-				fn({ campaigns: testCampaigns.slice(0, 1), loading: false, loaded: true, error: null, metrics: {} });
+				fn({
+					campaigns: testCampaigns.slice(0, 1),
+					loading: false,
+					loaded: true,
+					error: null,
+					metrics: {},
+				});
 				return () => {};
 			});
 
@@ -200,7 +214,13 @@ describe("Campaigns List Page", () => {
 
 		it("does not delete if user cancels", async () => {
 			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
-				fn({ campaigns: testCampaigns.slice(0, 1), loading: false, loaded: true, error: null, metrics: {} });
+				fn({
+					campaigns: testCampaigns.slice(0, 1),
+					loading: false,
+					loaded: true,
+					error: null,
+					metrics: {},
+				});
 				return () => {};
 			});
 

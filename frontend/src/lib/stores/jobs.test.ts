@@ -137,7 +137,9 @@ describe("Jobs Store", () => {
 
 			jobs.connectToJob("job-1");
 
-			expect(EventSourceMock).toHaveBeenCalledWith(expect.stringContaining("/api/jobs/job-1/status"));
+			expect(EventSourceMock).toHaveBeenCalledWith(
+				expect.stringContaining("/api/jobs/job-1/status"),
+			);
 
 			vi.unstubAllGlobals();
 		});

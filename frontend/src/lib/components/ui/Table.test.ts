@@ -31,7 +31,13 @@ beforeAll(() => {
 	} catch {}
 	try {
 		const r = render(Table, {
-			props: { columns: testColumns, rows: [], emptyMessage: "warmup", sortable: true, onSortChange: vi.fn() },
+			props: {
+				columns: testColumns,
+				rows: [],
+				emptyMessage: "warmup",
+				sortable: true,
+				onSortChange: vi.fn(),
+			},
 		});
 		r.unmount();
 	} catch {}
@@ -195,7 +201,13 @@ describe("Table Component", () => {
 	describe("Empty State", () => {
 		it("shows empty message when no rows", () => {
 			const { getByText } = render(Table, {
-				props: { columns: testColumns, rows: [], emptyMessage: "No data available", sortable: true, onSortChange: () => {} },
+				props: {
+					columns: testColumns,
+					rows: [],
+					emptyMessage: "No data available",
+					sortable: true,
+					onSortChange: () => {},
+				},
 			});
 			expect(getByText("No data available")).toBeTruthy();
 		});
