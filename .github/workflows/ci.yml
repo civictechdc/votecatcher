@@ -116,9 +116,7 @@ jobs:
 
       - name: Security scan (bandit + uv audit)
         id: security-scan
-        run: |
-          cd backend && uv run bandit -r app/
-          cd backend && uv audit
+        run: cd backend && uv run bandit -r app/ && uv audit
 
       - name: Security tests
         id: security-tests
@@ -187,9 +185,7 @@ jobs:
 
       - name: Lint
         id: lint
-        run: |
-          cd frontend && bun run lint
-          cd frontend && bun run fmt:check
+        run: cd frontend && bun run lint && bun run fmt:check
 
       - name: Typecheck
         id: typecheck
