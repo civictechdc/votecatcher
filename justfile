@@ -151,7 +151,7 @@ sast-pr:
 
 # Run SCA — dependency vulnerability + license scanning
 sca:
-    osv-scanner scan ./backend ./frontend
+    osv-scanner scan --recursive ./backend ./frontend
     trivy fs --severity CRITICAL,HIGH --scanners vuln --format json --output trivy-results.json .
 
 # Run container image scanning
@@ -257,7 +257,7 @@ sbom:
 # Check for AGPL/GPL/LGPL license violations
 license-check:
     @command -v osv-scanner >/dev/null 2>&1 || (echo "ERROR: osv-scanner not installed — run 'just install-tools'" && exit 1)
-    @osv-scanner scan --licenses --format json --output /tmp/osv-licenses.json ./backend ./frontend || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
+    @osv-scanner scan --recursive --licenses --format json --output /tmp/osv-licenses.json ./backend ./frontend || (echo "ERROR: osv-scanner failed — check lockfiles exist" && exit 1)
     @if [ ! -s /tmp/osv-licenses.json ]; then echo "ERROR: osv-scanner produced no output" && exit 1; fi
     @if grep -q "AGPL\|GPL\|LGPL" /tmp/osv-licenses.json; then echo "ERROR: AGPL/GPL/LGPL licenses detected" && exit 1; fi
     @echo "OK: No copyleft license violations"

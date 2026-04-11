@@ -351,8 +351,7 @@ jobs:
       - name: Install UV
         uses: astral-sh/setup-uv@v4
         with:
-          enable-cache: true
-          cache-dependency-glob: "backend/uv.lock"
+          enable-cache: false
 
       - name: Install just
         uses: extractions/setup-just@v2
