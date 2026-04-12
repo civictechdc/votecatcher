@@ -49,6 +49,7 @@ class TestAppCreation:
             "/config",
             "/database",
             "/demo",
+            "/events",
             "/jobs",
             "/settings/providers",
             "/sessions",

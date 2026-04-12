@@ -3,24 +3,28 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.dependencies import warn_database_api_key_missing
 from app.routers import (
     campaign_router,
     config_router,
     database_router,
     demo_router,
+    events_router,
     job_router,
     provider_router,
     results_router,
     session_router,
     upload_router,
 )
+from app.startup import ApplicationStartup
+
+_startup = ApplicationStartup()
 
 
 @asynccontextmanager
 async def lifespan(_application: FastAPI):
-    warn_database_api_key_missing()
+    await _startup.startup()
     yield
+    await _startup.shutdown()
 
 
 app = FastAPI(root_path="/api", lifespan=lifespan)
@@ -42,6 +46,7 @@ app.include_router(campaign_router)
 app.include_router(config_router)
 app.include_router(database_router)
 app.include_router(demo_router)
+app.include_router(events_router)
 app.include_router(job_router)
 app.include_router(provider_router)
 app.include_router(results_router)
