@@ -9,10 +9,25 @@ on:
     - cron: '0 3 * * *'
 
 jobs:
-  lockfile-integrity:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'justfile'
+            frontend:
+              - 'frontend/**'
+              - 'justfile'
 
       - name: Install UV
         uses: astral-sh/setup-uv@v4
@@ -29,66 +44,37 @@ jobs:
       - name: Check JS lockfile
         run: cd frontend && bun install --frozen-lockfile
 
-      - name: Lockfile check summary
-        if: failure()
-        run: |
-          echo "::error::Lockfile integrity check failed. Run 'cd backend && uv lock' or 'cd frontend && bun install' to update lockfiles, then commit the changes."
-          echo "## ❌ Lockfile Integrity Failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Lockfiles are out of sync with their respective manifest files." >> "$GITHUB_STEP_SUMMARY"
-          echo "Run the commands above locally and commit the updated lockfiles." >> "$GITHUB_STEP_SUMMARY"
-
-  docs-validation:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - name: Validate documentation accuracy
         run: bash scripts/validate-docs.sh
 
-      - name: Docs validation summary
-        if: failure()
-        run: |
-          echo "::error::Documentation validation failed. Check the script output for stale or incorrect references."
-          echo "## ❌ Docs Validation Failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Run 'bash scripts/validate-docs.sh' locally to see details." >> "$GITHUB_STEP_SUMMARY"
-
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            backend:
-              - 'backend/**'
-              - 'justfile'
-            frontend:
-              - 'frontend/**'
-              - 'justfile'
-
-  justfile-makefile-sync:
-    needs: [changes]
-    if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - name: Check Makefile is in sync with justfile
+        if: steps.filter.outputs.backend == 'true' || github.ref == 'refs/heads/main'
         run: python scripts/just-to-make.py --check
 
-      - name: Sync check summary
+      - name: Prepare failure summary
         if: failure()
         run: |
-          echo "::error::Makefile is out of sync with justfile. Run 'python scripts/just-to-make.py' to regenerate."
-          echo "## ❌ Justfile/Makefile Sync Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Prepare checks failed. See step details above."
+          echo "## ❌ Prepare Checks Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "One or more preparation checks failed. Check the failed step above for details." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare success summary
+        if: success()
+        run: |
+          echo "## ✅ Prepare Checks" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Path changes detected" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Python lockfile (uv)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ JS lockfile (bun)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Documentation validation" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ steps.filter.outputs.backend }}" == "true" ]] || [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "- ✅ Justfile/Makefile sync" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   backend-quality:
-    needs: [changes]
-    if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
+    needs: [prepare]
+    if: needs.prepare.outputs.backend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -166,8 +152,8 @@ jobs:
           echo "- ✅ Security tests" >> "$GITHUB_STEP_SUMMARY"
 
   frontend-quality:
-    needs: [changes]
-    if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+    needs: [prepare]
+    if: needs.prepare.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -234,8 +220,8 @@ jobs:
           echo "- ✅ Security scan (bun audit)" >> "$GITHUB_STEP_SUMMARY"
 
   frontend-fallow:
-    needs: [changes]
-    if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+    needs: [prepare]
+    if: needs.prepare.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -286,8 +272,8 @@ jobs:
           echo "**Action required:** Review findings above and rotate any exposed credentials." >> "$GITHUB_STEP_SUMMARY"
 
   sast:
-    needs: [changes]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+    needs: [prepare]
+    if: needs.prepare.outputs.backend == 'true' || needs.prepare.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -317,8 +303,8 @@ jobs:
           echo "Download the \`semgrep-results\` artifact for full details." >> "$GITHUB_STEP_SUMMARY"
 
   sca:
-    needs: [changes]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+    needs: [prepare]
+    if: needs.prepare.outputs.backend == 'true' || needs.prepare.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -387,8 +373,8 @@ jobs:
           echo "Run 'just sca' locally to reproduce. Download the \`sca-results\` artifact for full details." >> "$GITHUB_STEP_SUMMARY"
 
   dast-smoke:
-    needs: [changes]
-    if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
+    needs: [prepare]
+    if: needs.prepare.outputs.backend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -538,9 +524,9 @@ jobs:
           path: nuclei-results.json
 
   docker-build:
-    needs: [changes, backend-quality, frontend-quality, frontend-fallow, dast-smoke]
+    needs: [prepare, backend-quality, frontend-quality, frontend-fallow, dast-smoke]
     if: >-
-      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') &&
+      (needs.prepare.outputs.backend == 'true' || needs.prepare.outputs.frontend == 'true') &&
       (needs.backend-quality.result == 'success' || needs.backend-quality.result == 'skipped') &&
       (needs.frontend-quality.result == 'success' || needs.frontend-quality.result == 'skipped') &&
       (needs.frontend-fallow.result == 'success' || needs.frontend-fallow.result == 'skipped') &&
