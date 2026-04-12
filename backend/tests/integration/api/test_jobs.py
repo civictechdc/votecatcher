@@ -14,8 +14,29 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.data.database.model.jobs import JobStatus, MatcherJob
+from app.data.database.model.llm_provider_config import LlmProviderConfig
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
+from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
+
+
+def _seed_prerequisites(session: Session, campaign: Campaign) -> None:
+    upload = VoterListUpload(
+        region_id=campaign.region_id,
+        original_filename="voters.csv",
+        file_size=1024,
+        row_count=100,
+        status=UploadStatus.ACTIVE,
+    )
+    session.add(upload)
+    provider = LlmProviderConfig(
+        provider="openai",
+        api_key="sk-test-key-for-integration-tests",  # pragma: allowlist secret
+        model="gpt-4o-mini",
+        is_configured=True,
+    )
+    session.add(provider)
+    session.flush()
 
 
 class TestCreateJob:
@@ -25,6 +46,7 @@ class TestCreateJob:
         self, client: TestClient, test_campaign: Campaign, session: Session
     ):
         """Should create matcher job successfully."""
+        _seed_prerequisites(session, test_campaign)
         petition_scan = PetitionScan(
             campaign_id=test_campaign.id,
             original_filename="test.pdf",
@@ -63,6 +85,7 @@ class TestCreateJob:
         self, client: TestClient, test_campaign: Campaign, session: Session
     ):
         """Should create job with null provider fields if not specified."""
+        _seed_prerequisites(session, test_campaign)
         petition_scan = PetitionScan(
             campaign_id=test_campaign.id,
             original_filename="test.pdf",
