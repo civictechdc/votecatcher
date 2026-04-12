@@ -86,8 +86,79 @@ class JobWorker:
         self.running = False
         logger.info("Job worker stopped")
 
+    def _orphan_state_map(self) -> dict[JobStatus, JobStatus]:
+        """Map orphan states to their terminal error states."""
+        return {
+            JobStatus.OCR_STARTED: JobStatus.OCR_FAILED,
+            JobStatus.OCR_PENDING: JobStatus.OCR_FAILED,
+            JobStatus.OCR_COMPLETED: JobStatus.MATCHING_ERROR,
+            JobStatus.MATCHING_PENDING: JobStatus.MATCHING_ERROR,
+            JobStatus.MATCHING: JobStatus.MATCHING_ERROR,
+        }
+
+    def _terminate_orphans_with_session(self, session: Session) -> list[MatcherJob]:
+        """Terminate orphaned jobs by moving them to terminal error states.
+
+        Args:
+                session: Database session to use for queries and updates.
+
+        Returns:
+                List of terminated orphaned jobs.
+        """
+        state_map = self._orphan_state_map()
+        orphans: list[MatcherJob] = []
+
+        for orphan_state, terminal_state in state_map.items():
+            jobs = session.exec(
+                select(MatcherJob).where(MatcherJob.current_status == orphan_state)
+            ).all()
+            for job in jobs:
+                orphans.append(job)
+                previous_status = job.current_status.value
+                job.current_status = terminal_state
+                job.ended_on = datetime.now(UTC)
+                job.error_data = {
+                    "message": f"Orphaned job terminated on restart (was {previous_status})",
+                    "previous_status": previous_status,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }
+
+                child_ocr_jobs = session.exec(
+                    select(OcrJob).where(
+                        OcrJob.matcher_job_id == job.id,
+                        OcrJob.status.not_in(
+                            [
+                                JobStatus.OCR_COMPLETED,
+                                JobStatus.OCR_FAILED,
+                                JobStatus.CANCELLED,
+                                JobStatus.MATCHING_COMPLETED,
+                                JobStatus.MATCHING_ERROR,
+                            ]
+                        ),
+                    )
+                ).all()
+                for ocr_job in child_ocr_jobs:
+                    ocr_job.status = JobStatus.OCR_FAILED
+
+                logger.warning(
+                    "Orphaned job terminated",
+                    job_id=job.id,
+                    previous_status=previous_status,
+                    new_status=terminal_state.value,
+                    campaign_id=str(job.campaign_id),
+                )
+
+        if orphans:
+            session.commit()
+            logger.info(
+                "Orphaned jobs terminated",
+                count=len(orphans),
+            )
+
+        return orphans
+
     async def _detect_orphaned_jobs(self) -> list[MatcherJob]:
-        """Detect jobs stuck in non-terminal states (orphaned by restart).
+        """Detect and terminate orphaned jobs stuck in non-terminal states.
 
         Orphaned jobs are those left in OCR_STARTED, OCR_COMPLETED,
         MATCHING_PENDING, or MATCHING states after a backend restart.
@@ -95,39 +166,8 @@ class JobWorker:
         Returns:
                 List of orphaned jobs found
         """
-        orphan_states = [
-            JobStatus.OCR_STARTED,
-            JobStatus.OCR_COMPLETED,
-            JobStatus.MATCHING_PENDING,
-            JobStatus.MATCHING,
-        ]
-        orphans = []
-
         with Session(engine) as session:
-            for status in orphan_states:
-                jobs = session.exec(
-                    select(MatcherJob).where(MatcherJob.current_status == status)
-                ).all()
-                for job in jobs:
-                    orphans.append(job)
-                    logger.warning(
-                        "Orphaned job detected",
-                        job_id=job.id,
-                        status=status.value,
-                        campaign_id=str(job.campaign_id),
-                        updated_on=job.updated_on.isoformat()
-                        if job.updated_on
-                        else None,
-                    )
-
-        if orphans:
-            logger.info(
-                "Orphaned jobs summary",
-                count=len(orphans),
-                note="These jobs can be cancelled or resumed from the UI",
-            )
-
-        return orphans
+            return self._terminate_orphans_with_session(session)
 
     async def _process_pending_jobs(self) -> None:
         """Process all pending jobs in NOT_STARTED state."""
@@ -465,6 +505,8 @@ class JobWorker:
         """
         from app.ocr.ocr_client_factory import extract_from_encoding_async
 
+        config = resolve_provider_config(session=session)
+
         for i, crop in enumerate(crops):
             existing_result = session.exec(
                 select(OcrResult).where(OcrResult.crop_id == crop.id)
@@ -495,7 +537,9 @@ class JobWorker:
                 for attempt in range(OCR_MAX_RETRIES):
                     try:
                         await asyncio.sleep(OCR_REAL_DELAY_SECONDS * (attempt + 1))
-                        ocr_entries = await extract_from_encoding_async(base64_image)
+                        ocr_entries = await extract_from_encoding_async(
+                            base64_image, config=config
+                        )
                         break
                     except Exception as retry_error:
                         last_error = retry_error
@@ -587,7 +631,7 @@ class JobWorker:
         )
 
         try:
-            config = resolve_provider_config()
+            config = resolve_provider_config(session=session)
 
             encoded_pages: list[EncodedPetitionPage] = []
             for idx, crop in enumerate(crops):
