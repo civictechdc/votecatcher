@@ -1,14 +1,17 @@
 <div align="center">
 
-<img src="docs/assets/votecatcher-logo.svg" width="120" height="120" alt="VoteCatcher Logo">
-
-# VoteCatcher
+# VoteCatcher ✓
 
 **Open Source Campaign Infrastructure**
 
 Automate ballot signature recognition and validation. Put powerful organizing tools in the hands of grassroots campaigns.
 
-[![CI](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-ISC-blue.svg)](LICENSE)
+[![CI](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml)
+[![Code Quality](https://github.com/civictechdc/votecatcher/actions/workflows/code-quality.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/code-quality.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![SvelteKit](https://img.shields.io/badge/SvelteKit-5-FF3E00.svg?logo=svelte&logoColor=white)](https://kit.svelte.dev)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 
 </div>
 
@@ -155,4 +158,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code standards, an
 
 ## License
 
-This project is open source under the [ISC License](LICENSE).
+This project is open source under the [MIT License](LICENSE).
