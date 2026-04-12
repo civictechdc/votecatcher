@@ -21,6 +21,7 @@ class DatabaseConfig(BaseModel):
         scheme = urlparse(v).scheme
         if scheme and scheme not in (
             "sqlite",
+            "sqlite+aiosqlite",
             "postgresql",
             "postgres",
             "postgresql+psycopg",
