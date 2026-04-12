@@ -330,3 +330,23 @@ validate-docs:
 sync-makefile:
     @python scripts/just-to-make.py > Makefile
     @echo "Makefile synced from justfile"
+
+# Show current project version
+version:
+    @cd backend && uv run cz version -p
+
+# Auto-bump version based on conventional commits since last tag
+release:
+    @cd backend && uv run cz bump --yes && git push --tags
+
+# Force a specific bump level (patch, minor, major)
+release-force level:
+    @cd backend && uv run cz bump --increment-{{level}} --yes && git push --tags
+
+# Bump prerelease suffix (alpha → beta → rc)
+release-prerelease:
+    @cd backend && uv run cz bump --prerelease alpha --yes && git push --tags
+
+# Create a stable release (drops prerelease suffix)
+release-stable:
+    @cd backend && uv run cz bump --prerelease release --yes && git push --tags

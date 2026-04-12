@@ -7,6 +7,7 @@ Guides for local development and contribution.
 | Document | Description |
 |----------|-------------|
 | [Running Locally](../running-locally.md) | Complete local development setup |
+| [Versioning](./versioning.md) | Release and version management |
 | [Architecture](../architecture/README.md) | System design and ADRs |
 | [API Spec](../../backend/openapi.yaml) | OpenAPI 3.1 specification |
 

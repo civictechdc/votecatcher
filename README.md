@@ -7,7 +7,8 @@
 Automate ballot signature recognition and validation. Put powerful organizing tools in the hands of grassroots campaigns.
 
 [![CI](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml)
-[![Code Quality](https://github.com/civictechdc/votecatcher/actions/workflows/code-quality.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/code-quality.yml)
+[![Security](https://github.com/civictechdc/votecatcher/actions/workflows/security.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/security.yml)
+[![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcivictechdc%2Fvotecatcher%2Fmain%2Fbackend%2Fpyproject.toml&query=%24.project.version&label=version&color=green)](https://github.com/civictechdc/votecatcher/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![SvelteKit](https://img.shields.io/badge/SvelteKit-5-FF3E00.svg?logo=svelte&logoColor=white)](https://kit.svelte.dev)
@@ -17,7 +18,66 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 
 ---
 
-## Quick Start
+## Getting Started
+
+The fastest way to run VoteCatcher is with **Docker** — no Python, Node, or build tools needed. All you need is [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed.
+
+### Run with Docker (recommended for non-developers)
+
+1. **Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)** and open it
+
+2. **Open a terminal** and run:
+
+```bash
+git clone https://github.com/civictechdc/votecatcher
+cd votecatcher
+```
+
+> Don't have git? Download the repo as a ZIP from the green "Code" button on GitHub, then unzip and `cd` into it.
+
+3. **Create config files** — copy the examples:
+
+```bash
+cp backend/.env.example backend/.env.local
+cp frontend/.env.example frontend/.env
+```
+
+4. **(Optional) Enable demo mode** — try VoteCatcher with sample data, no API key needed. Edit `backend/.env.local`:
+
+```env
+FEATURE_ENABLE_SIMULATION=1
+FEATURE_DEMO_MODE=1
+```
+
+And edit `frontend/.env`:
+
+```env
+PUBLIC_DEMO_MODE=true
+DEMO_MODE=true
+```
+
+5. **Start the app:**
+
+```bash
+docker compose up --build
+```
+
+Wait a minute or two for everything to build (first time only). Then open:
+
+| What | URL |
+|------|-----|
+| **VoteCatcher app** | http://localhost:5173 |
+| API docs | http://localhost:8080/docs |
+
+6. **To stop:** Press `Ctrl+C` in the terminal, or run `docker compose down`
+
+> **Want real OCR instead of simulation?** Edit `backend/.env.local` and set `OCR_PROVIDER_API_KEY` to your OpenAI, Gemini, or Mistral API key. See [Configuration Modes](docs/configuration-modes.md) for details.
+
+For a full walkthrough with sample data, see the [Demo Walkthrough](docs/demo-walkthrough.md).
+
+---
+
+## Quick Start (Developers)
 
 ### Prerequisites
 
@@ -147,6 +207,7 @@ For full configuration details, see [Configuration Modes](docs/configuration-mod
 | [Configuration Modes](docs/configuration-modes.md) | All configuration options |
 | [Architecture](docs/architecture/README.md) | C4 model diagrams and ADRs |
 | [Project Structure](docs/architecture/project-structure.md) | Directory layout and module overview |
+| [Versioning](docs/development/versioning.md) | Release and version management |
 | [Docker Deployment](docs/deployment/docker-compose-deployment.md) | Production deployment guide |
 | [User Guide](docs/user-guide.md) | Application usage guide |
 | [Demo Walkthrough](docs/demo-walkthrough.md) | Demo mode walkthrough |
