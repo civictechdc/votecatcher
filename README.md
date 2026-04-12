@@ -26,7 +26,7 @@ Click a button to deploy VoteCatcher with a managed database. You'll need an OCR
   <tr>
     <td>
       <a href="https://cloud.digitalocean.com/apps/new?repo=https://github.com/civictechdc/votecatcher/tree/main">
-        <img src="https://www.deploytodo.com/do-btn-blue.svg" alt="Deploy to DigitalOcean" width="180">
+        <img src="https://www.deploytodo.com/do-btn-blue.svg" alt="Deploy to DigitalOcean" height="36">
       </a>
     </td>
     <td>
@@ -36,21 +36,21 @@ Click a button to deploy VoteCatcher with a managed database. You'll need an OCR
   <tr>
     <td colspan="2">
       <a href="https://render.com/deploy?repo=https://github.com/civictechdc/votecatcher">
-        <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" width="180">
+        <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="36">
       </a>
     </td>
   </tr>
   <tr>
     <td colspan="2">
       <a href="https://railway.com/new">
-        <img src="https://railway.com/button.svg" alt="Deploy to Railway" width="180">
+        <img src="https://railway.com/button.svg" alt="Deploy to Railway" height="36">
       </a>
     </td>
   </tr>
   <tr>
     <td>
       <a href="https://coolify.io">
-        <img src="https://github.com/kbkgk1/deploy-buttons/raw/refs/heads/main/svgs/deploy-coolify.svg" alt="Deploy to Coolify" width="180">
+        <img src="https://github.com/kbkgk1/deploy-buttons/raw/refs/heads/main/svgs/deploy-coolify.svg" alt="Deploy to Coolify" height="36">
       </a>
     </td>
     <td>
