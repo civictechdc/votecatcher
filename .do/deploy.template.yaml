@@ -80,4 +80,3 @@ spec:
         match:
           path:
             prefix: /api
-        preserve_path_prefix: true

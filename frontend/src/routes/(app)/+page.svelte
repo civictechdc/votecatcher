@@ -10,7 +10,7 @@
 	<div class="container mx-auto px-4 py-16">
 		<div class="mx-auto max-w-4xl text-center">
 			<div class="mb-6 flex items-center justify-center gap-3">
-				<h1 class="text-5xl font-bold text-slate-900">VoteCatcher ✓</h1>
+				<h1 class="text-5xl font-bold text-blue-600">VoteCatcher ✓</h1>
 			</div>
 
 			<p class="mx-auto mb-4 max-w-3xl text-xl font-medium text-slate-700">
