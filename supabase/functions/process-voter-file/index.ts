@@ -121,7 +121,7 @@ serve(async (req) => {
       error_message: insertError ? insertError.message : null,
       completed_at: new Date().toISOString(),
     });
-  } catch (err) {
+  } catch (_err) {
     // Log but do not fail the function if this insert fails
   }
 
