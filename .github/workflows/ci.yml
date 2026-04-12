@@ -47,6 +47,34 @@ jobs:
       - name: Validate documentation accuracy
         run: bash scripts/validate-docs.sh
 
+      - name: Validate deploy configs
+        run: |
+          python3 -c "
+          import yaml, configparser, sys
+          errors = []
+          for f in ['.do/deploy.template.yaml', 'render.yaml']:
+              try:
+                  data = yaml.safe_load(open(f))
+                  if f == '.do/deploy.template.yaml' and 'spec' not in data:
+                      errors.append(f'{f}: missing spec key')
+              except Exception as e:
+                  errors.append(f'{f}: {e}')
+          try:
+              c = configparser.ConfigParser()
+              c.read('railway.toml')
+              if 'build' not in c.sections():
+                  errors.append('railway.toml: missing [build]')
+              if 'deploy' not in c.sections():
+                  errors.append('railway.toml: missing [deploy]')
+          except Exception as e:
+              errors.append(f'railway.toml: {e}')
+          if errors:
+              for e in errors:
+                  print(f'ERROR: {e}')
+              sys.exit(1)
+          print('All deploy configs valid')
+          "
+
       - name: Check Makefile is in sync with justfile
         if: steps.filter.outputs.backend == 'true' || github.ref == 'refs/heads/main'
         run: python scripts/just-to-make.py --check
@@ -68,6 +96,7 @@ jobs:
           echo "- ✅ Python lockfile (uv)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ JS lockfile (bun)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Documentation validation" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Deploy config validation" >> "$GITHUB_STEP_SUMMARY"
           if [[ "${{ steps.filter.outputs.backend }}" == "true" ]] || [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "- ✅ Justfile/Makefile sync" >> "$GITHUB_STEP_SUMMARY"
           fi
@@ -601,6 +630,26 @@ jobs:
           rm -rf /tmp/.buildx-cache-frontend
           mv /tmp/.buildx-cache-frontend-new /tmp/.buildx-cache-frontend
 
+      - name: Build backend production image
+        id: build-backend-prod
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.prod
+          push: false
+          load: true
+          tags: votecatcher-backend:prod
+
+      - name: Build frontend production image
+        id: build-frontend-prod
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile.prod
+          push: false
+          load: true
+          tags: votecatcher-frontend:prod
+
       - name: Run Trivy on backend
         id: trivy-backend
         uses: aquasecurity/trivy-action@0.35.0
@@ -625,6 +674,8 @@ jobs:
 
           if [[ "${{ steps.build-backend.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Backend image build"; else FAILED="$FAILED\n- ❌ Backend image build"; fi
           if [[ "${{ steps.build-frontend.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Frontend image build"; else FAILED="$FAILED\n- ❌ Frontend image build"; fi
+          if [[ "${{ steps.build-backend-prod.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Backend production image build"; else FAILED="$FAILED\n- ❌ Backend production image build"; fi
+          if [[ "${{ steps.build-frontend-prod.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Frontend production image build"; else FAILED="$FAILED\n- ❌ Frontend production image build"; fi
           if [[ "${{ steps.trivy-backend.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Backend Trivy scan"; else FAILED="$FAILED\n- ❌ Backend Trivy scan (CRITICAL/HIGH CVEs)"; fi
           if [[ "${{ steps.trivy-frontend.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Frontend Trivy scan"; else FAILED="$FAILED\n- ❌ Frontend Trivy scan (CRITICAL/HIGH CVEs)"; fi
 
@@ -646,5 +697,7 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Backend image build" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Frontend image build" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Backend production image build" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Frontend production image build" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Backend Trivy scan" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Frontend Trivy scan" >> "$GITHUB_STEP_SUMMARY"
