@@ -430,7 +430,7 @@ jobs:
       - name: Start backend
         run: cd backend && uv run uvicorn app.api:app --host 0.0.0.0 --port 8080 &
         env:
-          DATABASE_URL: "sqlite+aiosqlite:///./test.db"
+          DATABASE_URL: "sqlite:///./test.db"
 
       - name: Wait for backend
         run: |
@@ -514,7 +514,7 @@ jobs:
       - name: Start backend
         run: cd backend && uv run uvicorn app.api:app --host 0.0.0.0 --port 8080 &
         env:
-          DATABASE_URL: "sqlite+aiosqlite:///./test.db"
+          DATABASE_URL: "sqlite:///./test.db"
 
       - name: Wait for backend
         run: |
