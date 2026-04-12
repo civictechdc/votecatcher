@@ -1,0 +1,22 @@
+{
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxlint-vscode"
+  },
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
+  "ruff.configurationPreference": "filesystemFirst",
+  "ruff.format.backend": "uv",
+  "ruff.lint.enable": true,
+  "ruff.format.enable": true,
+  "basedpyright.analysis.diagnosticMode": "openFilesOnly",
+  "basedpyright.importStrategy": "useBundled",
+  "basedpyright.disableOrganizeImports": true
+}

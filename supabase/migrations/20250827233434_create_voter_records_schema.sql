@@ -25,8 +25,8 @@ CREATE POLICY "Allow user to insert voter records"
 ON voter_records FOR INSERT
 WITH CHECK (
   EXISTS (
-    SELECT 1 FROM campaign 
-    WHERE campaign.id = voter_records.campaign_id 
+    SELECT 1 FROM campaign
+    WHERE campaign.id = voter_records.campaign_id
     AND campaign.user_id = auth.uid()
   )
 );
@@ -35,8 +35,8 @@ CREATE POLICY "Allow user to select own voter records"
 ON voter_records FOR SELECT
 USING (
   EXISTS (
-    SELECT 1 FROM campaign 
-    WHERE campaign.id = voter_records.campaign_id 
+    SELECT 1 FROM campaign
+    WHERE campaign.id = voter_records.campaign_id
     AND campaign.user_id = auth.uid()
   )
 );
@@ -72,17 +72,17 @@ ON file_processing_status FOR UPDATE
 USING (auth.uid() = user_id);
 
 -- Create Storage bucket for voter files
-INSERT INTO storage.buckets (id, name, public) 
+INSERT INTO storage.buckets (id, name, public)
 VALUES ('voter-files', 'voter-files', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- Create storage policies (create if they don't exist)
-DO $$ 
+DO $$
 BEGIN
     -- Upload policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'objects'
         AND schemaname = 'storage'
         AND policyname = 'Allow authenticated users to upload voter files'
     ) THEN
@@ -93,8 +93,8 @@ BEGIN
 
     -- Select policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'objects'
         AND schemaname = 'storage'
         AND policyname = 'Allow users to view their own voter files'
     ) THEN
@@ -105,8 +105,8 @@ BEGIN
 
     -- Update policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'objects'
         AND schemaname = 'storage'
         AND policyname = 'Allow users to update their own voter files'
     ) THEN
@@ -117,8 +117,8 @@ BEGIN
 
     -- Delete policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'objects'
         AND schemaname = 'storage'
         AND policyname = 'Allow users to delete their own voter files'
     ) THEN

@@ -1,0 +1,412 @@
+import asyncio
+import base64
+import logging
+import os
+from _asyncio import Task
+from collections.abc import AsyncGenerator
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from logging import Formatter
+from pathlib import Path
+from typing import Any
+
+import fitz
+import pandas as pd
+from fitz import Page, Pixmap, Rect
+from tqdm.notebook import tqdm
+
+from app.campaign.campaign_repository import ReadCampaign
+from app.events.matching_task_events import MatchingTaskMonitor
+from app.files.file_repository import (
+    CreatePetitionCrop,
+    ReadPetitionScan,
+    ScannedPetitionRepository,
+)
+from app.logger_config.app_logger import AppLogger
+from app.matching.match_repository import MatchingTask, is_terminal_matching_status
+from app.ocr import extract_from_encoding_async
+from app.ocr.data.data_models import EncodedPetitionDocuments, EncodedPetitionPage
+from app.ocr.ocr_config import CropConfig, get_current_crop_config
+from app.ocr.ocr_manager import OcrHandler, OcrRequest
+from app.ocr.response_types import (
+    MatchingJobStatusProgress,
+    adapt_ocr_batch_status_to_progress_response,
+)
+
+logger = AppLogger.get_logger(
+    log_name=__name__,
+    # log_file=f"ocr_processing_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
+)
+
+log_format: Formatter = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+# open ai api key
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+HELICONE_PERSONAL_API_KEY = os.getenv("HELICONE_PERSONAL_API_KEY")
+
+OCR_COLUMNS: list[str] = ["OCR Name", "OCR Address", "OCR Ward"]
+
+
+def _save_cropped_image(byte_and_path: tuple[bytes, Path]) -> None:
+    (img_bytes, dest_path) = byte_and_path
+    try:
+        with open(dest_path, "wb") as f:
+            f.write(img_bytes)
+        logger.debug(f"Saved {dest_path.name}")
+    except Exception as e:
+        logger.debug(f"Error saving {dest_path.name}: {e}")
+    # Image.save handles file closing internally
+
+
+def encode_document_pages(
+    campaign_id: str,
+    scan: ReadPetitionScan,
+    img_dir: Path,
+) -> tuple[list[EncodedPetitionPage], list[CreatePetitionCrop]]:
+    """Convert a PDF's pages to encoded images, cropping to target area.
+    Returns list of base64 encoded image strings."""
+
+    crop_config: CropConfig = get_current_crop_config()
+    file_path: Path = Path(scan.file_path)
+
+    logger.info(f"Starting PDF conversion for file: {file_path}")
+    encoded_image_list: list[EncodedPetitionPage] = []
+
+    # Save the crop database entries
+    cropped_entries: list[CreatePetitionCrop] = []
+
+    # Open PDF document
+    with fitz.open(filename=file_path) as doc:
+        total_pages: int = len(doc)
+
+        logger.info(f"PDF opened successfully. Total pages: {total_pages}")
+        logger.debug("\nCropping Images and Converting to Bytes Objects")
+        page_magnitude: int = len(str(total_pages))
+        # Process each page
+        for page_num in range(total_pages):
+            page: Page = doc[page_num]
+            # Get page dimensions
+            rect: Rect = page.rect
+            width: float = rect.width
+            height: float = rect.height
+
+            # Calculate crop rectangle
+            crop_rect: Rect = Rect(
+                0,  # left
+                height * crop_config.TOP_CROP,  # top
+                width,  # right
+                height * crop_config.BOTTOM_CROP,  # bottom
+            )
+
+            # Get pixmap with cropped area and grayscale
+            pix: Pixmap = page.get_pixmap(
+                matrix=fitz.Matrix(1, 1),  # zoom factors of 1 = 72 dpi
+                colorspace=fitz.csGRAY,  # convert to grayscale
+                clip=crop_rect,  # crop to our target area
+            )
+            file_dest: Path = img_dir.joinpath(
+                f"{page_num:0{page_magnitude}d}-{file_path.stem}.jpeg"
+            )
+
+            # Convert to bytes and encode
+            img_bytes: bytes = pix.tobytes(output="jpeg")
+            # Save cropped image asynchronously
+            try:
+                file_dest.parent.mkdir(parents=True, exist_ok=True)
+                with open(file_dest, "wb") as f:
+                    f.write(img_bytes)
+                logger.debug(f"Saved {file_dest.name}")
+            except Exception as e:
+                logger.debug(f"Error saving {file_dest.name}: {e}")
+
+            cropped_entries.append(
+                CreatePetitionCrop(
+                    file_path=str(file_dest),
+                    file_name=file_dest.name,
+                    page_number=page_num,
+                    top_crop=crop_config.TOP_CROP,
+                    bottom_crop=crop_config.BOTTOM_CROP,
+                    petition_scan_id=scan.id,
+                    campaign_id=campaign_id,
+                )
+            )
+            encoded: str = base64.b64encode(img_bytes).decode("utf-8")
+            encoded_page: EncodedPetitionPage = EncodedPetitionPage(
+                page_num=page_num,
+                encoded_page=encoded,
+                image_path=str(file_dest),
+                petition_file_name=file_path.name,
+                petition_file_page_total=total_pages,
+                scan_id=scan.id,
+            )
+            logger.debug(f"Encoded: {encoded}")
+            # Adding each cropped encoded page to the list
+            encoded_image_list.append(encoded_page)
+
+        logger.info(
+            f"Completed encoding for {file_path.name}. Generated "
+            f"{len(encoded_image_list)} encoded pages for OCR"
+        )
+
+    return (encoded_image_list, cropped_entries)
+
+
+# function for adding data
+def add_metadata(initial_data: list[dict], page_no: int, filename: str) -> list[dict]:
+    """
+    Adds page number, row number, and filename metadata to the recognized signatures
+
+    Args:
+        initial_data (list[dict]): The initial data to add metadata to.
+        page_no (int): The page number of the current page.
+        filename (str): The name of the file.
+
+    Returns:
+        list[dict]: The final data with metadata.
+    """
+
+    final_data = []
+    for row, data in enumerate(initial_data):
+        temp_dict = dict(data)
+        temp_dict["Page Number"] = page_no + 1
+        temp_dict["Row Number"] = row + 1
+        temp_dict["Filename"] = filename
+        final_data.append(temp_dict)
+
+    return final_data
+
+
+async def process_text_extraction(encodings: list[str]) -> list[list[dict]]:
+    """
+    Process a batch of images concurrently
+    """
+    async with asyncio.TaskGroup() as tg:
+        tasks: list[Task[list[dict[Any, Any]]]] = [
+            tg.create_task(extract_from_encoding_async(encoding))
+            for encoding in encodings
+        ]
+
+    results = [task.result() for task in tasks]
+
+    tasks = []
+    for encoding in encodings:
+        tasks.append(extract_from_encoding_async(encoding))
+
+    results = await asyncio.gather(*tasks)
+    return results
+
+
+def get_or_create_event_loop() -> asyncio.AbstractEventLoop:
+    try:
+        return asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop
+
+
+async def collect_ocr_data(
+    filedir: str,
+    filename: str,
+    max_page_num: int = None,
+    batch_size: int = 10,
+    st_bar=None,
+) -> list[dict]:
+    """
+    Collects OCR data from a PDF file.
+
+    Args:
+        filedir (str): The directory of the PDF file.
+        filename (str): The name of the PDF file.
+        max_page_num (int): The maximum number of pages to process.
+        batch_size (int): The number of pages to process in each batch.
+        st_bar (st.progress): A progress bar to display the progress of the OCR process.
+
+    Returns:
+        list: A list of dictionaries with the OCR data.
+    """
+    logger.info(f"Starting OCR collection for {filename}")
+    logger.info(f"Parameters - max_page_num: {max_page_num}, batch_size: {batch_size}")
+
+    # collecting images
+    encoded_images: list[str] = []
+    with ProcessPoolExecutor() as executor:
+        for encoded_pages in executor.map(
+            encode_document_pages, os.path.join(filedir, filename)
+        ):
+            for page in encoded_pages:
+                encoded_images.extend(page.encoded_page)
+
+    logger.debug(f"Collected {len(encoded_images)} images from scan.")
+    # encoded_images = collecting_pdf_encoded_images(os.path.join(filedir, filename))
+
+    # selecting pages
+    if max_page_num:
+        encoded_images = encoded_images[:max_page_num]
+        logger.info(f"Limited processing to {max_page_num} pages")
+
+    logger.debug("Files Successfully Converted to Bytes")
+    logger.debug("Performing OCR to read Names and Addresses")
+
+    full_data = []
+    total_pages = len(encoded_images)
+
+    # getting event loop
+    get_or_create_event_loop()
+
+    # Process in batches
+    logger.info(f"Processing {total_pages} pages in batches of {batch_size}")
+    for i in tqdm(range(0, total_pages, batch_size)):
+        batch = encoded_images[i : i + batch_size]
+        logger.info(
+            f"Processing batch {i // batch_size + 1} of "
+            f"{(total_pages + batch_size - 1) // batch_size}"
+        )
+
+        if st_bar:
+            st_bar.progress(
+                i / total_pages,
+                text=f"Processing pages {i + 1} to {i + batch_size} (of {total_pages})",
+            )
+
+        batch_results = await process_text_extraction(batch)
+
+        # Add metadata for each result in the batch
+        for page_idx, result in enumerate(batch_results):
+            current_page = i + page_idx
+            ocr_data = add_metadata(result, current_page, filename)
+            full_data.extend(ocr_data)
+
+        logger.info(
+            f"Batch {i // batch_size + 1} complete. "
+            f"Processed {len(batch_results)} pages"
+        )
+
+    logger.info(f"OCR collection complete. Total entries: {len(full_data)}")
+    return full_data
+
+
+async def create_batched_ocr_job(
+    campaign_data: ReadCampaign,
+    scans: list[ReadPetitionScan],
+    scan_repo: ScannedPetitionRepository,
+    crop_dir: Path,
+    ocr_handler: OcrHandler,
+    ocr_provider_id: str,
+    task_id: str,
+) -> MatchingJobStatusProgress:
+    total_pages = 0
+    """
+    1 - List of files belonging to the same campaign
+    2 - For each file, encoded the pages
+    3 - Then compile a list of encoded files that each contain encoded pages
+    4 - Submit the whole list to OCR
+    5 - OCR iterates through each set of encoded files
+    """
+
+    pages: list[EncodedPetitionPage] = []
+    # partial_encode = partial(
+    #     encode_document_pages,
+    #     campaign_id=campaign_data.unique_name,
+    #     crop_scan_repo=scan_repo,
+    #     img_dir=crop_dir,
+    # )
+
+    all_cropped_entries: list[CreatePetitionCrop] = []
+
+    def _worker(
+        scan: ReadPetitionScan,
+    ) -> tuple[list[EncodedPetitionPage], list[CreatePetitionCrop]]:
+        return encode_document_pages(campaign_data.unique_name, scan, crop_dir)
+
+    with ThreadPoolExecutor() as executor:
+        for encoded_file_pages, cropped_entries in executor.map(_worker, scans):
+            total_pages += len(encoded_file_pages)
+            pages.extend(encoded_file_pages)
+            all_cropped_entries.extend(cropped_entries)
+
+    if all_cropped_entries:
+        await scan_repo.save_cropped_assets(all_cropped_entries)
+
+    all_encoded_pages: EncodedPetitionDocuments = EncodedPetitionDocuments(
+        campaign_id=campaign_data.unique_name, encoded_pages=pages
+    )
+
+    request: OcrRequest = OcrRequest(
+        campaign_id=campaign_data.unique_name,
+        task_id=task_id,
+        provider_id=ocr_provider_id,
+        encoded_pages=all_encoded_pages.encoded_pages,
+    )
+
+    task: MatchingTask = await ocr_handler.start_ocr_job(request)
+
+    return adapt_ocr_batch_status_to_progress_response(task)
+
+
+async def emit_matching_job_status(
+    task_id: str, matching_task_monitor: MatchingTaskMonitor
+) -> AsyncGenerator[str, str]:
+    try:
+        async for task in matching_task_monitor.monitor_job(task_id):
+            response: MatchingJobStatusProgress = (
+                adapt_ocr_batch_status_to_progress_response(task)
+            )
+            yield response.model_dump_json()
+            if is_terminal_matching_status(task.status):
+                logger.debug(f"Task {task.id} ended with status: {task.status}")
+                break
+
+            await asyncio.sleep(5)  # 5 seconds poll rate
+    except Exception as e:
+        logger.error(f"Error monitoring matching job {task_id}: {e}")
+        raise e
+
+
+async def create_ocr_df(
+    filedir: str,
+    filename: str,
+    max_page_num: int | None = None,
+    batch_size: int = 10,
+    st_bar=None,
+) -> pd.DataFrame:
+    """
+    Creates a dataframe from OCR data.
+
+    Args:
+        filedir (str): The directory of the PDF file.
+        filename (str): The name of the PDF file.
+        max_page_num (int): The maximum number of pages to process.
+        batch_size (int): The number of pages to process in each batch.
+        st_bar (st.progress): A progress bar to display the progress of the OCR process.
+
+    Returns:
+        pd.DataFrame: A dataframe with the OCR data.
+    """
+    logger.info("Starting OCR DataFrame creation")
+
+    # gathering ocr_data
+    ocr_data = await collect_ocr_data(
+        filedir,
+        filename,
+        max_page_num=max_page_num,
+        batch_size=batch_size,
+        st_bar=st_bar,
+    )
+
+    # convert dataframe
+    ocr_df = pd.DataFrame(data=ocr_data)
+    logger.info(f"Created DataFrame with shape: {ocr_df.shape}")
+
+    # renaming columns
+    ocr_df.rename(
+        columns={"Name": "OCR Name", "Address": "OCR Address", "Ward": "OCR Ward"},
+        inplace=True,
+    )
+
+    # converting all caps names to title format
+    ocr_df["OCR Name"] = ocr_df["OCR Name"].apply(lambda row: row.title())
+
+    logger.info("OCR DataFrame creation complete")
+    return ocr_df

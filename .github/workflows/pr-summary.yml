@@ -1,0 +1,54 @@
+name: PR Quality Summary
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  pr-summary:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get workflow run info
+        id: run-info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const prNumber = run.pull_requests?.[0]?.number;
+            if (!prNumber) {
+              core.setOutput('has_pr', 'false');
+              return;
+            }
+            core.setOutput('has_pr', 'true');
+            core.setOutput('pr_number', prNumber);
+            core.setOutput('conclusion', run.conclusion);
+            core.setOutput('name', run.name);
+            core.setOutput('head_sha', run.head_sha);
+
+      - name: Generate PR summary
+        if: steps.run-info.outputs.has_pr == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.run-info.outputs.pr_number }};
+            const conclusion = '${{ steps.run-info.outputs.conclusion }}';
+            const workflowName = '${{ steps.run-info.outputs.name }}';
+
+            const icon = conclusion === 'success' ? '✅' : '❌';
+            const body = `## ${icon} ${workflowName}: ${conclusion}\n\n` +
+              `**Commit:** \`${{ steps.run-info.outputs.head_sha }}\`\n` +
+              `**Status:** ${conclusion}\n\n` +
+              `### Quality Checks\n` +
+              `- [${conclusion === 'success' ? 'x' : ' '}] ${workflowName} pipeline ${conclusion}\n`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body
+            });

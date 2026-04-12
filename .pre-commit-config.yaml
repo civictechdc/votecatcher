@@ -1,0 +1,46 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/oxc-project/mirrors-oxlint
+    rev: v0.16.4
+    hooks:
+      - id: oxlint
+        files: ^frontend/
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  # Ensure Makefile stays in sync with justfile
+  - repo: local
+    hooks:
+      - id: justfile-makefile-sync
+        name: justfile-makefile-sync
+        entry: python scripts/just-to-make.py --check
+        language: system
+        pass_filenames: false
+        files: ^(justfile|Makefile)$
+
+      - id: docs-validation
+        name: Validate documentation accuracy
+        entry: bash scripts/validate-docs.sh
+        language: system
+        files: ^docs/
+        pass_filenames: false

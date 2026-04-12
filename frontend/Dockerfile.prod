@@ -1,0 +1,38 @@
+FROM oven/bun:1 AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile
+
+FROM base AS build
+ARG ADAPTER=node
+ARG PUBLIC_API_URL=http://localhost:8080
+ARG PUBLIC_DEMO_MODE=false
+ARG DEMO_MODE=false
+ARG OCR_PROVIDER_NAME=openai
+ARG OCR_PROVIDER_MODEL=gpt-4o-mini
+ARG OCR_PROVIDER_API_KEY=
+ARG DATABASE_URL=postgresql://user:pass@localhost:5432/votecatcher  # pragma: allowlist secret
+ENV ADAPTER=${ADAPTER}
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN bun run build
+
+FROM node:20-slim AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 sveltekit
+
+COPY --from=build /app/build ./build
+COPY --from=build /app/package.json ./package.json
+
+USER sveltekit
+EXPOSE 3000
+
+CMD ["node", "build"]

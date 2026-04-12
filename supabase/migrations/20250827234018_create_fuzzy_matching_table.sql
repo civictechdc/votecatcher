@@ -15,11 +15,11 @@ CREATE TABLE IF NOT EXISTS registration_matches (
 );
 
 -- Add foreign key constraint if it doesn't exist
-DO $$ 
+DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'fk_registration' 
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE constraint_name = 'fk_registration'
         AND table_name = 'registration_matches'
     ) THEN
         ALTER TABLE registration_matches
@@ -34,20 +34,20 @@ END $$;
 ALTER TABLE registration_matches ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for registration_matches (create if they don't exist)
-DO $$ 
+DO $$
 BEGIN
     -- Insert policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'registration_matches' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'registration_matches'
         AND policyname = 'Allow user to insert own registration matches'
     ) THEN
         CREATE POLICY "Allow user to insert own registration matches"
         ON registration_matches FOR INSERT
         WITH CHECK (
           EXISTS (
-            SELECT 1 FROM campaign 
-            WHERE campaign.id = registration_matches.campaign_id 
+            SELECT 1 FROM campaign
+            WHERE campaign.id = registration_matches.campaign_id
             AND campaign.user_id = auth.uid()
           )
         );
@@ -55,16 +55,16 @@ BEGIN
 
     -- Select policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'registration_matches' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'registration_matches'
         AND policyname = 'Allow user to select own registration matches'
     ) THEN
         CREATE POLICY "Allow user to select own registration matches"
         ON registration_matches FOR SELECT
         USING (
           EXISTS (
-            SELECT 1 FROM campaign 
-            WHERE campaign.id = registration_matches.campaign_id 
+            SELECT 1 FROM campaign
+            WHERE campaign.id = registration_matches.campaign_id
             AND campaign.user_id = auth.uid()
           )
         );
@@ -72,16 +72,16 @@ BEGIN
 
     -- Update policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'registration_matches' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'registration_matches'
         AND policyname = 'Allow user to update own registration matches'
     ) THEN
         CREATE POLICY "Allow user to update own registration matches"
         ON registration_matches FOR UPDATE
         USING (
           EXISTS (
-            SELECT 1 FROM campaign 
-            WHERE campaign.id = registration_matches.campaign_id 
+            SELECT 1 FROM campaign
+            WHERE campaign.id = registration_matches.campaign_id
             AND campaign.user_id = auth.uid()
           )
         );
@@ -89,16 +89,16 @@ BEGIN
 
     -- Delete policy
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'registration_matches' 
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'registration_matches'
         AND policyname = 'Allow user to delete own registration matches'
     ) THEN
         CREATE POLICY "Allow user to delete own registration matches"
         ON registration_matches FOR DELETE
         USING (
           EXISTS (
-            SELECT 1 FROM campaign 
-            WHERE campaign.id = registration_matches.campaign_id 
+            SELECT 1 FROM campaign
+            WHERE campaign.id = registration_matches.campaign_id
             AND campaign.user_id = auth.uid()
           )
         );
@@ -125,9 +125,9 @@ BEGIN
       rd.id AS registration_id,
       (vr.first_name || ' ' || vr.last_name) AS registered_name,
       -- Simple string similarity using length difference and case-insensitive comparison
-      CASE 
+      CASE
         WHEN LOWER(vr.first_name || ' ' || vr.last_name) = LOWER(rd.name) THEN 0
-        WHEN LOWER(vr.first_name || ' ' || vr.last_name) LIKE '%' || LOWER(rd.name) || '%' 
+        WHEN LOWER(vr.first_name || ' ' || vr.last_name) LIKE '%' || LOWER(rd.name) || '%'
              OR LOWER(rd.name) LIKE '%' || LOWER(vr.first_name || ' ' || vr.last_name) || '%' THEN 1
         ELSE ABS(LENGTH(vr.first_name || ' ' || vr.last_name) - LENGTH(rd.name)) + 10
       END AS name_distance,
@@ -138,7 +138,7 @@ BEGIN
         COALESCE(vr.street_dir_suffix, '')
       ) AS registered_address,
       -- Simple string similarity for addresses
-      CASE 
+      CASE
         WHEN LOWER(
           COALESCE(vr.street_number, '') || ' ' ||
           COALESCE(vr.street_name, '') || ' ' ||
@@ -150,7 +150,7 @@ BEGIN
           COALESCE(vr.street_name, '') || ' ' ||
           COALESCE(vr.street_type, '') || ' ' ||
           COALESCE(vr.street_dir_suffix, '')
-        ) LIKE '%' || LOWER(rd.address) || '%' 
+        ) LIKE '%' || LOWER(rd.address) || '%'
              OR LOWER(rd.address) LIKE '%' || LOWER(
           COALESCE(vr.street_number, '') || ' ' ||
           COALESCE(vr.street_name, '') || ' ' ||
@@ -215,13 +215,13 @@ BEGIN
   -- First, delete existing matches for this campaign
   DELETE FROM registration_matches WHERE campaign_id = campaign_id_input;
   -- Get total count of registrations for this campaign
-  SELECT COUNT(*) INTO total_registrations 
-  FROM registration_data 
+  SELECT COUNT(*) INTO total_registrations
+  FROM registration_data
   WHERE campaign_id = campaign_id_input;
   -- Process registrations one by one to avoid massive cross-joins
-  FOR registration_record IN 
+  FOR registration_record IN
     SELECT id, name, address, campaign_id
-    FROM registration_data 
+    FROM registration_data
     WHERE campaign_id = campaign_id_input
     ORDER BY id
   LOOP
@@ -238,7 +238,7 @@ BEGIN
       campaign_id
     )
     WITH single_registration AS (
-      SELECT 
+      SELECT
         registration_record.id AS registration_id,
         registration_record.name,
         registration_record.address,
@@ -249,9 +249,9 @@ BEGIN
         sr.registration_id,
         (vr.first_name || ' ' || vr.last_name) AS registered_name,
         -- Simple string similarity using length difference and case-insensitive comparison
-        CASE 
+        CASE
           WHEN LOWER(vr.first_name || ' ' || vr.last_name) = LOWER(sr.name) THEN 0
-          WHEN LOWER(vr.first_name || ' ' || vr.last_name) LIKE '%' || LOWER(sr.name) || '%' 
+          WHEN LOWER(vr.first_name || ' ' || vr.last_name) LIKE '%' || LOWER(sr.name) || '%'
                OR LOWER(sr.name) LIKE '%' || LOWER(vr.first_name || ' ' || vr.last_name) || '%' THEN 1
           ELSE ABS(LENGTH(vr.first_name || ' ' || vr.last_name) - LENGTH(sr.name)) + 10
         END AS name_distance,
@@ -262,7 +262,7 @@ BEGIN
           COALESCE(vr.street_dir_suffix, '')
         ) AS registered_address,
         -- Simple string similarity for addresses
-        CASE 
+        CASE
           WHEN LOWER(
             COALESCE(vr.street_number, '') || ' ' ||
             COALESCE(vr.street_name, '') || ' ' ||
@@ -274,7 +274,7 @@ BEGIN
             COALESCE(vr.street_name, '') || ' ' ||
             COALESCE(vr.street_type, '') || ' ' ||
             COALESCE(vr.street_dir_suffix, '')
-          ) LIKE '%' || LOWER(sr.address) || '%' 
+          ) LIKE '%' || LOWER(sr.address) || '%'
                OR LOWER(sr.address) LIKE '%' || LOWER(
             COALESCE(vr.street_number, '') || ' ' ||
             COALESCE(vr.street_name, '') || ' ' ||

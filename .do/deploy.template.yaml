@@ -1,0 +1,83 @@
+spec:
+  name: votecatcher
+  region: nyc
+
+  services:
+    - name: backend
+      source_dir: backend
+      dockerfile_path: backend/Dockerfile.prod
+      git:
+        branch: main
+        repo_clone_url: https://github.com/civictechdc/votecatcher.git
+      http_port: 8080
+      instance_size_slug: apps-s-1vcpu-1gb
+      health_check:
+        http_path: /health
+        initial_delay_seconds: 30
+        period_seconds: 30
+        timeout_seconds: 10
+        failure_threshold: 3
+      envs:
+        - key: DATABASE_URL
+          scope: RUN_TIME
+          value: ${votecatcher-db.DATABASE_URL}
+        - key: OCR_PROVIDER_NAME
+          scope: RUN_TIME
+          value: openai
+        - key: OCR_PROVIDER_MODEL
+          scope: RUN_TIME
+          value: gpt-4o-mini
+        - key: OCR_PROVIDER_API_KEY
+          scope: RUN_TIME
+          type: SECRET
+        - key: PYTHONUNBUFFERED
+          scope: RUN_TIME
+          value: "1"
+
+    - name: frontend
+      source_dir: frontend
+      dockerfile_path: frontend/Dockerfile.prod
+      git:
+        branch: main
+        repo_clone_url: https://github.com/civictechdc/votecatcher.git
+      http_port: 3000
+      instance_size_slug: apps-s-1vcpu-0.5gb
+      envs:
+        - key: PUBLIC_API_URL
+          scope: RUN_AND_BUILD_TIME
+        - key: ORIGIN
+          scope: RUN_AND_BUILD_TIME
+        - key: DATABASE_URL
+          scope: RUN_TIME
+          value: ${votecatcher-db.DATABASE_URL}
+        - key: BETTER_AUTH_SECRET
+          scope: RUN_TIME
+          type: SECRET
+        - key: OCR_PROVIDER_NAME
+          scope: RUN_TIME
+          value: openai
+        - key: OCR_PROVIDER_MODEL
+          scope: RUN_TIME
+          value: gpt-4o-mini
+        - key: OCR_PROVIDER_API_KEY
+          scope: RUN_TIME
+          type: SECRET
+
+  databases:
+    - name: votecatcher-db
+      engine: PG
+      production: false
+
+  ingress:
+    rules:
+      - component:
+          name: frontend
+        match:
+          path:
+            prefix: /
+      - component:
+          name: backend
+        match:
+          path:
+            prefix: /api
+        preserve_path_prefix: true

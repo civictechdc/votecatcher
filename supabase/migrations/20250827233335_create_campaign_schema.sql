@@ -62,10 +62,10 @@ returns trigger as $$
 begin
   -- If we're setting a campaign to active, deactivate all other campaigns for this user
   if new.status = 'active' then
-    update public.campaign 
-    set status = 'inactive' 
-    where user_id = new.user_id 
-    and id != new.id 
+    update public.campaign
+    set status = 'inactive'
+    where user_id = new.user_id
+    and id != new.id
     and status = 'active';
   end if;
   return new;
@@ -75,4 +75,4 @@ $$ language plpgsql;
 -- Create trigger to enforce single active campaign
 create trigger enforce_single_active_campaign
   before insert or update on public.campaign
-  for each row execute function ensure_single_active_campaign(); 
+  for each row execute function ensure_single_active_campaign();

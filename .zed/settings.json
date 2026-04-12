@@ -1,0 +1,74 @@
+{
+	"indent_guides": {
+		"background_coloring": "disabled"
+	},
+	"project_name": "VoteCatcher",
+	"format_on_save": "on",
+	"debugger": {
+		"dock": "bottom",
+		"save_breakpoints": true,
+		"button": true
+	},
+	"inlay_hints": {
+		"enabled": true,
+		"show_value_hints": true
+	},
+	"languages": {
+		"TypeScript": {
+			"inlay_hints": {
+				"enabled": true
+			}
+		},
+		"Svelte": {
+			"formatter": {
+				"language_server": {
+					"name": "oxfmt"
+				}
+			}
+		},
+		"Python": {
+			"language_servers": ["ruff", "!ty", "basedpyright"],
+			"code_actions_on_format": {
+				"source.organizeImports.ruff": true
+			},
+			"formatter": {
+				"language_server": {
+					"name": "ruff"
+				}
+			}
+		}
+	},
+	"lsp": {
+		"basedpyright": {
+			"settings": {
+				"python": {
+					"pythonPath": "backend/.venv/bin/python"
+				},
+				"basedpyright.analysis": {
+					"include": ["backend/app"],
+					"inlayHints.variableTypes": true,
+					"callArgumentNames": true,
+					"functionReturnTypes": true,
+					"genericTypes": true
+				}
+			}
+		},
+		"tailwindcss-language-server": {
+			"settings": {
+				"experimental": {
+					"classRegex": [
+						"\\.className\\s*[+]?=\\s*['\"]([^'\"]*)['\"]",
+						"\\.setAttributeNS\\(.*,\\s*['\"]class['\"],\\s*['\"]([^'\"]*)['\"]",
+						"\\.setAttribute\\(['\"]class['\"],\\s*['\"]([^'\"]*)['\"]",
+						"\\.classList\\.add\\(['\"]([^'\"]*)['\"]",
+						"\\.classList\\.remove\\(['\"]([^'\"]*)['\"]",
+						"\\.classList\\.toggle\\(['\"]([^'\"]*)['\"]",
+						"\\.classList\\.contains\\(['\"]([^'\"]*)['\"]",
+						"\\.classList\\.replace\\(\\s*['\"]([^'\"]*)['\"]",
+						"\\.classList\\.replace\\([^,)]+,\\s*['\"]([^'\"]*)['\"]"
+					]
+				}
+			}
+		}
+	}
+}

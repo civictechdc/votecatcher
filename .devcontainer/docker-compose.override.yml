@@ -1,0 +1,84 @@
+# DevContainer Override for VoteCatcher Development
+# This extends the base docker-compose.yml with development-specific services
+# and configurations optimized for VS Code DevContainer
+
+services:
+  # Override frontend service for devcontainer
+  frontend:
+    volumes:
+      - .:/workspace:cached
+      - votecatcher-node-modules:/workspace/frontend/node_modules
+      - votecatcher-sveltekit-build:/workspace/frontend/.svelte-kit
+    command: sleep infinity
+    environment:
+      - VITE_API_URL=http://localhost:8080
+      - DEMO_MODE=false
+
+  # Override backend service for devcontainer
+  backend:
+    volumes:
+      - .:/workspace:cached
+      - votecatcher-venv:/workspace/backend/.venv
+      - votecatcher-coverage:/workspace/backend/.coverage
+    command: sleep infinity
+    environment:
+      - ENV=local
+      - DATABASE_URL=postgresql://votecatcher:votecatcher_dev@db:5432/votecatcher
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+
+  # Development database with enhanced configuration
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: votecatcher
+      POSTGRES_PASSWORD: votecatcher_dev  # pragma: allowlist secret
+      POSTGRES_DB: votecatcher
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - votecatcher-postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-dev-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U votecatcher -d votecatcher"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # pgAdmin for database inspection (optional, runs on port 5050)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@votecatcher.local
+      PGADMIN_DEFAULT_PASSWORD: dev_password  # pragma: allowlist secret
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - votecatcher-pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  # Named volumes for faster builds and cache persistence
+  votecatcher-postgres-data:
+    external: false
+  votecatcher-pgadmin-data:
+    external: false
+  votecatcher-node-modules:
+    external: false
+  votecatcher-sveltekit-build:
+    external: false
+  votecatcher-venv:
+    external: false
+  votecatcher-coverage:
+    external: false
+
+networks:
+  default:
+    name: votecatcher-dev

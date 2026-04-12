@@ -1,0 +1,18 @@
+rules:
+  - id: fastapi-unauthenticated-route
+    patterns:
+      - pattern-either:
+          - pattern: |
+              @app.$ROUTE(...)
+              def $FUNC(...):
+                  ...
+          - pattern: |
+              @router.$ROUTE(...)
+              def $FUNC(...):
+                  ...
+    message: "FastAPI route without authentication decorator"
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: security
+      technology: [fastapi]

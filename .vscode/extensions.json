@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "charliermarsh.ruff",
+    "detachhead.basedpyright",
+    "svelte.svelte-vscode",
+    "tailwindcss.tailwindcss",
+    "GitHub.vscode-pull-request-github",
+    "redhat.vscode-yaml",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}

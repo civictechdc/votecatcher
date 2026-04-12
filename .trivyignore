@@ -1,0 +1,7 @@
+# OS-level CVEs in Debian base image — require upstream image update
+# ncurses buffer overflow — no patched deb package available yet (#16)
+CVE-2025-69720
+# systemd out-of-bounds write — no patched deb package available yet (#16)
+CVE-2026-29111
+# openssl/libssl3t64 NULL pointer dereference in CMS — no patched deb13 package yet
+CVE-2026-28390

@@ -1,0 +1,41 @@
+title = "VoteCatcher Secret Detection"
+
+[[rules]]
+id = "supabase-url"
+description = "Supabase project URL"
+regex = '''https://[a-z0-9]{20}\.supabase\.co'''
+tags = ["supabase", "api-key"]
+
+[[rules]]
+id = "supabase-key"
+description = "Supabase service key"
+regex = '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_-]{86}\.[a-zA-Z0-9_-]{43}'''
+tags = ["supabase", "jwt", "api-key"]
+
+[[rules]]
+id = "openai-key"
+description = "OpenAI API key"
+regex = '''sk-[a-zA-Z0-9]{48}'''
+tags = ["openai", "api-key"]
+
+[[rules]]
+id = "voter-data"
+description = "Potential voter PII patterns"
+regex = '''(voter_id|voter_name|voter_address|voter_dob)[\s=:]["\'][^"\']+["\']'''
+tags = ["pii", "voter-data"]
+
+[allowlist]
+description = "Global allowlist"
+regexes = [
+    '''test_.*supabase.*''',
+    '''mock_.*key.*''',
+    '''your-supabase-key''',
+    '''example-.*key''',
+]
+paths = [
+    '''^backend/tests/.*$''',
+    '''^frontend/tests/.*$''',
+    '''^\.agent/skills/.*$''',
+    '''^backend/\.agent/skills/.*$''',
+    '''^frontend/\.agent/skills/.*$''',
+]

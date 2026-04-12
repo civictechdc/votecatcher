@@ -130,4 +130,4 @@ serve(async (req) => {
   }
 
   return new Response(JSON.stringify({ message: 'Success', records_processed: records.length }), { status: 200, headers: corsHeaders });
-}); 
+});

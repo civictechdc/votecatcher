@@ -51,8 +51,8 @@ create policy "Allow user to view own API key usage"
 on api_key_usage for select
 using (
   exists (
-    select 1 from api_keys 
-    where api_keys.id = api_key_usage.api_key_id 
+    select 1 from api_keys
+    where api_keys.id = api_key_usage.api_key_id
     and api_keys.user_id = auth.uid()
   )
 );
@@ -61,8 +61,8 @@ create policy "Allow user to insert own API key usage"
 on api_key_usage for insert
 with check (
   exists (
-    select 1 from api_keys 
-    where api_keys.id = api_key_usage.api_key_id 
+    select 1 from api_keys
+    where api_keys.id = api_key_usage.api_key_id
     and api_keys.user_id = auth.uid()
   )
 );
@@ -71,8 +71,8 @@ create policy "Allow user to update own API key usage"
 on api_key_usage for update
 using (
   exists (
-    select 1 from api_keys 
-    where api_keys.id = api_key_usage.api_key_id 
+    select 1 from api_keys
+    where api_keys.id = api_key_usage.api_key_id
     and api_keys.user_id = auth.uid()
   )
 );
@@ -86,4 +86,4 @@ create trigger update_api_keys_updated_at
 
 create trigger update_api_key_usage_updated_at
   before update on api_key_usage
-  for each row execute function update_updated_at_column(); 
+  for each row execute function update_updated_at_column();
