@@ -20,60 +20,33 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 
 ## Getting Started
 
-The fastest way to run VoteCatcher is with **Docker** — no Python, Node, or build tools needed. All you need is [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed.
+The fastest way to run VoteCatcher is with **Docker** — no Python, Node, or build tools needed. All you need is [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
 
-### Run with Docker (recommended for non-developers)
+1. **Download VoteCatcher** — clone with git or download the ZIP from the green "Code" button on GitHub, then open a terminal in the folder
 
-1. **Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)** and open it
-
-2. **Open a terminal** and run:
+2. **Run the setup script:**
 
 ```bash
-git clone https://github.com/civictechdc/votecatcher
-cd votecatcher
+# macOS / Linux
+./start.sh
+
+# Windows Command Prompt
+start.bat
+
+# Windows PowerShell
+.\start.ps1
 ```
 
-> Don't have git? Download the repo as a ZIP from the green "Code" button on GitHub, then unzip and `cd` into it.
-
-3. **Create config files** — copy the examples:
-
-```bash
-cp backend/.env.example backend/.env.local
-cp frontend/.env.example frontend/.env
-```
-
-4. **(Optional) Enable demo mode** — try VoteCatcher with sample data, no API key needed. Edit `backend/.env.local`:
-
-```env
-FEATURE_ENABLE_SIMULATION=1
-FEATURE_DEMO_MODE=1
-```
-
-And edit `frontend/.env`:
-
-```env
-PUBLIC_DEMO_MODE=true
-DEMO_MODE=true
-```
-
-5. **Start the app:**
-
-```bash
-docker compose up --build
-```
-
-Wait a minute or two for everything to build (first time only). Then open:
+That's it. The script checks Docker, creates config files, and starts the app. Once ready, open:
 
 | What | URL |
 |------|-----|
 | **VoteCatcher app** | http://localhost:5173 |
 | API docs | http://localhost:8080/docs |
 
-6. **To stop:** Press `Ctrl+C` in the terminal, or run `docker compose down`
+To stop: press `Ctrl+C`, or run `docker compose down`
 
-> **Want real OCR instead of simulation?** Edit `backend/.env.local` and set `OCR_PROVIDER_API_KEY` to your OpenAI, Gemini, or Mistral API key. See [Configuration Modes](docs/configuration-modes.md) for details.
-
-For a full walkthrough with sample data, see the [Demo Walkthrough](docs/demo-walkthrough.md).
+> **Need to configure OCR providers or database?** See [Configuration Modes](docs/configuration-modes.md).
 
 ---
 
