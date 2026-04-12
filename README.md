@@ -24,36 +24,36 @@ Click a button to deploy VoteCatcher with a managed database. You'll need an OCR
 
 <table border="0">
   <tr>
-    <td>
-      <a href="https://cloud.digitalocean.com/apps/new?repo=https://github.com/civictechdc/votecatcher/tree/main">
+    <td valign="middle">
+      <a href="https://cloud.digitalocean.com/apps/new?repo=https://github.com/civictechdc/votecatcher/tree/main" target="_blank" rel="noopener noreferrer">
         <img src="https://www.deploytodo.com/do-btn-blue.svg" alt="Deploy to DigitalOcean" height="36">
       </a>
     </td>
-    <td>
+    <td valign="middle">
       <sub>Ephemeral dev DB — <a href="docs/deployment/docker-compose-deployment.md">upgrade to managed Postgres</a> for production</sub>
     </td>
   </tr>
   <tr>
-    <td colspan="2">
-      <a href="https://render.com/deploy?repo=https://github.com/civictechdc/votecatcher">
+    <td colspan="2" valign="middle">
+      <a href="https://render.com/deploy?repo=https://github.com/civictechdc/votecatcher" target="_blank" rel="noopener noreferrer">
         <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="36">
       </a>
     </td>
   </tr>
   <tr>
-    <td colspan="2">
-      <a href="https://railway.com/new">
+    <td colspan="2" valign="middle">
+      <a href="https://railway.com/new" target="_blank" rel="noopener noreferrer">
         <img src="https://railway.com/button.svg" alt="Deploy to Railway" height="36">
       </a>
     </td>
   </tr>
   <tr>
-    <td>
-      <a href="https://coolify.io">
+    <td valign="middle">
+      <a href="https://coolify.io" target="_blank" rel="noopener noreferrer">
         <img src="https://github.com/kbkgk1/deploy-buttons/raw/refs/heads/main/svgs/deploy-coolify.svg" alt="Deploy to Coolify" height="36">
       </a>
     </td>
-    <td>
+    <td valign="middle">
       <sub>Self-hosted — point at this repo's <code>docker-compose.yml</code></sub>
     </td>
   </tr>
