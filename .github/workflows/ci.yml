@@ -656,7 +656,7 @@ jobs:
             OCR_PROVIDER_NAME=openai
             OCR_PROVIDER_MODEL=gpt-4o-mini
             OCR_PROVIDER_API_KEY=
-            DATABASE_URL=postgresql://user:pass@localhost:5432/votecatcher  # pragma: allowlist secret
+            DATABASE_URL=postgresql://user:pass@localhost:5432/votecatcher
 
       - name: Run Trivy on backend
         id: trivy-backend
