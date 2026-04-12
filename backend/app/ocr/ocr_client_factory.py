@@ -250,11 +250,15 @@ _PROVIDER_EXTRACTORS: dict[str, Any] = {
 }
 
 
-async def extract_from_encoding_async(base64_image: str) -> list[dict[str, Any]]:
+async def extract_from_encoding_async(
+    base64_image: str,
+    config: ProviderConfig | None = None,
+) -> list[dict[str, Any]]:
     logger.debug("Starting OCR extraction for image")
 
     try:
-        config = resolve_provider_config()
+        if config is None:
+            config = resolve_provider_config()
 
         extractor = _PROVIDER_EXTRACTORS.get(config.provider)
         if extractor is None:
