@@ -22,12 +22,12 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 
 Click a button to deploy VoteCatcher with a managed database. You'll need an OCR provider API key (e.g., OpenAI).
 
-<table border="0"><tr>
-<td align="center"><a href="https://cloud.digitalocean.com/apps/new?repo=https://github.com/civictechdc/votecatcher/tree/main"><img src="https://www.deploytodo.com/do-btn-blue.svg" alt="Deploy to DigitalOcean" height="40"></a><br><sub>Ephemeral DB — <a href="docs/deployment/docker-compose-deployment.md">upgrade to managed Postgres</a></sub></td>
-<td align="center"><a href="https://render.com/deploy?repo=https://github.com/civictechdc/votecatcher"><img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="40"></a></td>
-<td align="center"><a href="https://railway.com/new"><img src="https://railway.com/button.svg" alt="Deploy to Railway" height="40"></a></td>
-<td align="center"><a href="https://coolify.io"><img src="https://github.com/kbkgk1/deploy-buttons/raw/refs/heads/main/svgs/deploy-coolify.svg" alt="Deploy to Coolify" height="40"></a><br><sub>Self-hosted — use <code>docker-compose.yml</code></sub></td>
-</tr></table>
+<table border="0">
+<tr><td><a href="https://cloud.digitalocean.com/apps/new?repo=https://github.com/civictechdc/votecatcher/tree/main"><img src="https://www.deploytodo.com/do-btn-blue.svg" alt="Deploy to DigitalOcean" height="40"></a></td><td><sub>Ephemeral dev DB — <a href="docs/deployment/docker-compose-deployment.md">upgrade to managed Postgres</a> for production</sub></td></tr>
+<tr><td><a href="https://render.com/deploy?repo=https://github.com/civictechdc/votecatcher"><img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="40"></a></td><td></td></tr>
+<tr><td><a href="https://railway.com/new"><img src="https://railway.com/button.svg" alt="Deploy to Railway" height="40"></a></td><td></td></tr>
+<tr><td><a href="https://coolify.io"><img src="https://github.com/kbkgk1/deploy-buttons/raw/refs/heads/main/svgs/deploy-coolify.svg" alt="Deploy to Coolify" height="40"></a></td><td><sub>Self-hosted — point at this repo's <code>docker-compose.yml</code></sub></td></tr>
+</table>
 
 ---
 
