@@ -7,6 +7,11 @@ RUN bun install --frozen-lockfile
 
 FROM base AS build
 ARG PUBLIC_API_URL=http://localhost:8080
+ARG PUBLIC_DEMO_MODE=false
+ARG DEMO_MODE=false
+ARG OCR_PROVIDER_NAME=openai
+ARG OCR_PROVIDER_MODEL=gpt-4o-mini
+ARG OCR_PROVIDER_API_KEY=
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run build

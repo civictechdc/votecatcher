@@ -649,7 +649,13 @@ jobs:
           push: false
           load: true
           tags: votecatcher-frontend:prod
-          build-args: PUBLIC_API_URL=http://localhost:8080
+          build-args: |
+            PUBLIC_API_URL=http://localhost:8080
+            PUBLIC_DEMO_MODE=false
+            DEMO_MODE=false
+            OCR_PROVIDER_NAME=openai
+            OCR_PROVIDER_MODEL=gpt-4o-mini
+            OCR_PROVIDER_API_KEY=
 
       - name: Run Trivy on backend
         id: trivy-backend
