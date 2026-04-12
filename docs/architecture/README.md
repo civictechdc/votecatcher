@@ -14,6 +14,12 @@ The C4 model provides a simple, hierarchical way to visualize software architect
 | [c4-containers.md](./c4-containers.md) | 2 | Containers - Applications and data stores |
 | [c4-components.md](./c4-components.md) | 3 | Components - Backend service decomposition |
 
+### Project Structure
+
+| Document | Description |
+|----------|-------------|
+| [project-structure.md](./project-structure.md) | Directory layout and module overview |
+
 ### Architecture Decision Records (ADRs)
 
 ADRs capture important architectural decisions along with their context and consequences.
