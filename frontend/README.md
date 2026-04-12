@@ -1,42 +1,77 @@
-# sv
+# VoteCatcher Frontend
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+SvelteKit 5 application for the VoteCatcher campaign management platform.
 
-## Creating a project
+## Tech Stack
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Framework**: SvelteKit 2, Svelte 5
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **Auth**: Better Auth
+- **ORM**: Drizzle
+- **Testing**: Vitest (unit), Playwright (e2e)
+- **Linting**: oxlint, oxfmt
+- **Package Manager**: bun
 
-```sh
-# create a new project
-npx sv create my-app
+## Quick Start
+
+```bash
+bun install
+cp .env.example .env
+bun run dev
 ```
 
-To recreate this project with the same configuration:
+Open http://localhost:5173
 
-```sh
-# recreate this project
-bun x sv create --template minimal --types ts --add mcp="ide:opencode,claude-code,vscode,other+setup:local" better-auth="demo:password" storybook tailwindcss="plugins:typography,forms" playwright vitest="usages:component,unit" prettier eslint devtools-json drizzle="database:postgresql+postgresql:postgres.js+docker:no" --install bun ./
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `bun run dev` | Start dev server |
+| `bun run build` | Production build |
+| `bun run preview` | Preview production build |
+| `bun run test` | Run all tests (vitest + playwright) |
+| `bun run test:unit` | Run unit tests only |
+| `bun run test:e2e` | Run e2e tests only |
+| `bun run lint` | Lint with oxlint |
+| `bun run lint:fix` | Auto-fix lint issues |
+| `bun run fmt` | Format with oxfmt |
+| `bun run fmt:check` | Check formatting |
+| `bun run check` | Type check with svelte-check |
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── lib/            # Shared code
+│   │   ├── components/ # UI components
+│   │   ├── server/     # Server-only code (auth, DB)
+│   │   └── types/      # TypeScript types
+│   ├── routes/         # SvelteKit routes (file-based routing)
+│   ├── stories/        # Storybook stories
+│   └── hooks.server.ts # Server middleware
+├── e2e/                # Playwright end-to-end tests
+├── tests/              # Vitest unit/component tests
+├── static/             # Static assets
+└── drizzle.config.ts   # Drizzle ORM configuration
 ```
 
-## Developing
+## Environment Variables
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Copy `.env.example` to `.env` and configure:
 
-```sh
-npm run dev
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PUBLIC_API_URL` | Yes | Backend API URL (no `/api` suffix) |
+| `PUBLIC_DEMO_MODE` | No | Enable demo mode client-side |
+| `DEMO_MODE` | No | Enable demo mode server-side |
+| `ORIGIN` | No | App origin for CORS |
+| `DATABASE_URL` | No | PostgreSQL for server-side auth |
+| `BETTER_AUTH_SECRET` | No | Session encryption secret |
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Related Documentation
 
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- [Running Locally](../docs/running-locally.md) — full development setup
+- [Configuration Modes](../docs/configuration-modes.md) — all config options
+- [Root README](../README.md) — project overview
