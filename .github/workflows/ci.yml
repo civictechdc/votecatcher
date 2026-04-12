@@ -650,6 +650,7 @@ jobs:
           load: true
           tags: votecatcher-frontend:prod
           build-args: |
+            ADAPTER=node
             PUBLIC_API_URL=http://localhost:8080
             PUBLIC_DEMO_MODE=false
             DEMO_MODE=false
