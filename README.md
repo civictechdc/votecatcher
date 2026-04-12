@@ -22,12 +22,17 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 
 Click a button to deploy VoteCatcher with a managed database. You'll need an OCR provider API key (e.g., OpenAI).
 
-[![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/civictechdc/votecatcher/tree/main)
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/civictechdc/votecatcher)
-[![Deploy to Railway](https://railway.com/button.svg)](https://railway.com/new)
-[![Deploy to Coolify](https://github.com/kbkgk1/deploy-buttons/raw/refs/heads/main/svgs/deploy-coolify.svg)](https://coolify.io)
+<a href="https://cloud.digitalocean.com/apps/new?repo=https://github.com/civictechdc/votecatcher/tree/main"><img src="https://www.deploytodo.com/do-btn-blue.svg" alt="Deploy to DigitalOcean" height="40"></a>
 
-> **Note:** DigitalOcean uses an ephemeral dev database by default — [upgrade to managed Postgres](docs/deployment/docker-compose-deployment.md) for production. For Coolify (self-hosted), point it at this repo's `docker-compose.yml`.
+_DigitalOcean uses an ephemeral dev database — [upgrade to managed Postgres](docs/deployment/docker-compose-deployment.md) for production._
+
+<a href="https://render.com/deploy?repo=https://github.com/civictechdc/votecatcher"><img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="40"></a>
+
+<a href="https://railway.com/new"><img src="https://railway.com/button.svg" alt="Deploy to Railway" height="40"></a>
+
+<a href="https://coolify.io"><img src="https://github.com/kbkgk1/deploy-buttons/raw/refs/heads/main/svgs/deploy-coolify.svg" alt="Deploy to Coolify" height="40"></a>
+
+_For Coolify (self-hosted), point it at this repo's `docker-compose.yml`._
 
 ---
 
