@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 from app.data.database.model.jobs import JobStatus, MatcherJob
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
+from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
 
 _ORPHAN_STATES = frozenset(
     {
@@ -106,6 +107,20 @@ class JobQueryService:
                 "No petition scans uploaded for this campaign. "
                 "Please upload a petition PDF first."
             )
+
+        active_upload = self._session.exec(
+            select(VoterListUpload).where(
+                VoterListUpload.region_id == campaign.region_id,
+                VoterListUpload.status == UploadStatus.ACTIVE,
+            )
+        ).first()
+        if not active_upload:
+            raise ValueError(
+                "No voter list uploaded for this campaign's region. "
+                "Please upload a voter list first."
+            )
+
+        self._validate_ocr_provider(self._session)
 
         job = MatcherJob(
             campaign_id=campaign_id,
@@ -243,3 +258,24 @@ class JobQueryService:
         elif "MATCHING" in status:
             return "matching"
         return "unknown"
+
+    @staticmethod
+    def _validate_ocr_provider(session: Session) -> None:
+        """Validate that an OCR provider is configured.
+
+        Checks DB config first, then env vars via resolve_provider_config.
+
+        Raises:
+            ValueError: If no OCR provider is configured.
+        """
+        from app.ocr.ocr_client_factory import resolve_provider_config
+
+        try:
+            resolve_provider_config(session=session)
+        except ValueError:
+            raise ValueError(
+                "No OCR provider configured. "
+                "Configure via the settings UI or set "
+                "OCR_PROVIDER_NAME, OCR_PROVIDER_MODEL, and OCR_PROVIDER_API_KEY "
+                "environment variables."
+            )

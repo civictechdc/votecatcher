@@ -61,6 +61,36 @@ def _seed_petition_scan(session: Session, campaign: Campaign) -> PetitionScan:
     return scan
 
 
+def _seed_voter_list_upload(session: Session, region_id) -> None:
+    from app.data.database.model.voter_list_upload import (
+        UploadStatus,
+        VoterListUpload,
+    )
+
+    upload = VoterListUpload(
+        region_id=region_id,
+        original_filename="voters.csv",
+        file_size=1024,
+        row_count=100,
+        status=UploadStatus.ACTIVE,
+    )
+    session.add(upload)
+    session.flush()
+
+
+def _seed_llm_provider(session: Session) -> None:
+    from app.data.database.model.llm_provider_config import LlmProviderConfig
+
+    config = LlmProviderConfig(
+        provider="openai",
+        api_key="sk-test-key-for-unit-tests",  # pragma: allowlist secret
+        model="gpt-4o-mini",
+        is_configured=True,
+    )
+    session.add(config)
+    session.flush()
+
+
 def _seed_job(
     session: Session,
     campaign: Campaign,
@@ -191,6 +221,8 @@ class TestCreateJob:
 
         region, campaign = _seed_campaign(session)
         _seed_petition_scan(session, campaign)
+        _seed_voter_list_upload(session, region.id)
+        _seed_llm_provider(session)
 
         service = JobQueryService(session)
         result = service.create_job(
@@ -230,6 +262,8 @@ class TestCreateJob:
 
         region, campaign = _seed_campaign(session)
         _seed_petition_scan(session, campaign)
+        _seed_voter_list_upload(session, region.id)
+        _seed_llm_provider(session)
 
         service = JobQueryService(session)
         result = service.create_job(
@@ -238,6 +272,65 @@ class TestCreateJob:
         )
 
         assert result.force_reprocess is True
+
+
+class TestCreateJobPrerequisites:
+    """Feature: Job creation pre-flight validation.
+
+    As the system
+    I want to reject job creation when prerequisites are missing
+    So that jobs never enter a state where they'll immediately fail.
+
+    Background:
+        Given a campaign with petition scans
+    """
+
+    @pytest.fixture
+    def _seeded(self, session: Session):
+        region, campaign = _seed_campaign(session)
+        _seed_petition_scan(session, campaign)
+        return campaign
+
+    def test_rejects_when_no_voter_list_uploaded(self, session: Session, _seeded):
+        """Scenario: Campaign has no voter list uploaded for its region.
+
+        Given a campaign with scans but no voter list
+        When create_job is called
+        Then it raises ValueError mentioning voter list.
+        """
+        from app.services.job_query_service import JobQueryService
+
+        service = JobQueryService(session)
+        with pytest.raises(ValueError, match="voter list"):
+            service.create_job(campaign_id=_seeded.id)
+
+    def test_rejects_when_no_ocr_provider_configured(self, session: Session, _seeded):
+        """Scenario: No OCR provider is configured in DB or env.
+
+        Given a campaign with scans and voter list but no provider
+        When create_job is called
+        Then it raises ValueError mentioning OCR provider.
+        """
+        from app.services.job_query_service import JobQueryService
+
+        from app.data.database.model.voter_list_upload import (
+            UploadStatus,
+            VoterListUpload,
+        )
+
+        upload = VoterListUpload(
+            region_id=_seeded.region_id,
+            original_filename="voters.csv",
+            file_size=1024,
+            row_count=100,
+            status=UploadStatus.ACTIVE,
+        )
+        session.add(upload)
+        session.commit()
+
+        service = JobQueryService(session)
+        with pytest.raises(ValueError, match="OCR provider"):
+            service.create_job(campaign_id=_seeded.id)
 
 
 class TestCancelJob:
