@@ -649,6 +649,7 @@ jobs:
           push: false
           load: true
           tags: votecatcher-frontend:prod
+          build-args: PUBLIC_API_URL=http://localhost:8080
 
       - name: Run Trivy on backend
         id: trivy-backend
