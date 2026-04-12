@@ -18,6 +18,19 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 
 ---
 
+## Deploy to the Cloud
+
+Click a button to deploy VoteCatcher with a managed database. You'll need an OCR provider API key (e.g., OpenAI).
+
+[![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/civictechdc/votecatcher/tree/main)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/civictechdc/votecatcher)
+[![Deploy to Railway](https://railway.com/button.svg)](https://railway.com/new)
+[![Deploy to Coolify](https://github.com/kbkgk1/deploy-buttons/raw/refs/heads/main/svgs/deploy-coolify.svg)](https://coolify.io)
+
+> **Note:** DigitalOcean uses an ephemeral dev database by default — [upgrade to managed Postgres](docs/deployment/docker-compose-deployment.md) for production. For Coolify (self-hosted), point it at this repo's `docker-compose.yml`.
+
+---
+
 ## Getting Started
 
 The fastest way to run VoteCatcher is with **Docker** — no Python, Node, or build tools needed. All you need is [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
