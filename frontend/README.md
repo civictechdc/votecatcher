@@ -25,19 +25,19 @@ Open http://localhost:5173
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Start dev server |
-| `bun run build` | Production build |
-| `bun run preview` | Preview production build |
-| `bun run test` | Run all tests (vitest + playwright) |
-| `bun run test:unit` | Run unit tests only |
-| `bun run test:e2e` | Run e2e tests only |
-| `bun run lint` | Lint with oxlint |
-| `bun run lint:fix` | Auto-fix lint issues |
-| `bun run fmt` | Format with oxfmt |
-| `bun run fmt:check` | Check formatting |
-| `bun run check` | Type check with svelte-check |
+| Command             | Description                         |
+| ------------------- | ----------------------------------- |
+| `bun run dev`       | Start dev server                    |
+| `bun run build`     | Production build                    |
+| `bun run preview`   | Preview production build            |
+| `bun run test`      | Run all tests (vitest + playwright) |
+| `bun run test:unit` | Run unit tests only                 |
+| `bun run test:e2e`  | Run e2e tests only                  |
+| `bun run lint`      | Lint with oxlint                    |
+| `bun run lint:fix`  | Auto-fix lint issues                |
+| `bun run fmt`       | Format with oxfmt                   |
+| `bun run fmt:check` | Check formatting                    |
+| `bun run check`     | Type check with svelte-check        |
 
 ## Project Structure
 
@@ -61,14 +61,14 @@ frontend/
 
 Copy `.env.example` to `.env` and configure:
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `PUBLIC_API_URL` | Yes | Backend API URL (no `/api` suffix) |
-| `PUBLIC_DEMO_MODE` | No | Enable demo mode client-side |
-| `DEMO_MODE` | No | Enable demo mode server-side |
-| `ORIGIN` | No | App origin for CORS |
-| `DATABASE_URL` | No | PostgreSQL for server-side auth |
-| `BETTER_AUTH_SECRET` | No | Session encryption secret |
+| Variable             | Required | Description                        |
+| -------------------- | -------- | ---------------------------------- |
+| `PUBLIC_API_URL`     | Yes      | Backend API URL (no `/api` suffix) |
+| `PUBLIC_DEMO_MODE`   | No       | Enable demo mode client-side       |
+| `DEMO_MODE`          | No       | Enable demo mode server-side       |
+| `ORIGIN`             | No       | App origin for CORS                |
+| `DATABASE_URL`       | No       | PostgreSQL for server-side auth    |
+| `BETTER_AUTH_SECRET` | No       | Session encryption secret          |
 
 ## Related Documentation
 
