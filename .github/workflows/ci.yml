@@ -537,58 +537,14 @@ jobs:
           name: nuclei-results
           path: nuclei-results.json
 
-  container-scan:
-    needs: [changes]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build backend Docker image
-        id: build-backend
-        run: docker build -t votecatcher-backend ./backend
-
-      - name: Build frontend Docker image
-        id: build-frontend
-        run: docker build -t votecatcher-frontend ./frontend
-
-      - name: Run Trivy on backend
-        id: trivy-backend
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          image-ref: votecatcher-backend
-          severity: CRITICAL,HIGH
-          exit-code: 1
-
-      - name: Run Trivy on frontend
-        id: trivy-frontend
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          image-ref: votecatcher-frontend
-          severity: CRITICAL,HIGH
-          exit-code: 1
-
-      - name: Container scan failure summary
-        if: failure()
-        run: |
-          FAILED=""
-          if [[ "${{ steps.build-backend.outcome }}" != "success" ]]; then FAILED="$FAILED\n- ❌ Backend image build"; fi
-          if [[ "${{ steps.build-frontend.outcome }}" != "success" ]]; then FAILED="$FAILED\n- ❌ Frontend image build"; fi
-          if [[ "${{ steps.trivy-backend.outcome }}" == "failure" ]]; then FAILED="$FAILED\n- ❌ Backend Trivy scan (CRITICAL/HIGH CVEs)"; fi
-          if [[ "${{ steps.trivy-frontend.outcome }}" == "failure" ]]; then FAILED="$FAILED\n- ❌ Frontend Trivy scan (CRITICAL/HIGH CVEs)"; fi
-
-          echo "::error::Container scan failed:$FAILED"
-          echo "## ❌ Container Scan Failed" >> "$GITHUB_STEP_SUMMARY"
-          echo -e "$FAILED" >> "$GITHUB_STEP_SUMMARY"
-
   docker-build:
-    needs: [backend-quality, frontend-quality, frontend-fallow, container-scan, dast-smoke]
+    needs: [changes, backend-quality, frontend-quality, frontend-fallow, dast-smoke]
     if: >-
-      (needs.backend-quality.result == 'success' &&
-       needs.frontend-quality.result == 'success' &&
-       needs.frontend-fallow.result == 'success' &&
-       needs.container-scan.result == 'success' &&
-       needs.dast-smoke.result == 'success') ||
+      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') &&
+      (needs.backend-quality.result == 'success' || needs.backend-quality.result == 'skipped') &&
+      (needs.frontend-quality.result == 'success' || needs.frontend-quality.result == 'skipped') &&
+      (needs.frontend-fallow.result == 'success' || needs.frontend-fallow.result == 'skipped') &&
+      (needs.dast-smoke.result == 'success' || needs.dast-smoke.result == 'skipped') ||
       github.ref == 'refs/heads/main' ||
       github.event_name == 'schedule'
     runs-on: ubuntu-latest
@@ -596,14 +552,17 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check upstream results
-        if: needs.backend-quality.result != 'success' || needs.frontend-quality.result != 'success' || needs.frontend-fallow.result != 'success' || needs.container-scan.result != 'success' || needs.dast-smoke.result != 'success'
+        if: >-
+          needs.backend-quality.result == 'failure' ||
+          needs.frontend-quality.result == 'failure' ||
+          needs.frontend-fallow.result == 'failure' ||
+          needs.dast-smoke.result == 'failure'
         run: |
           echo "::warning::Docker build proceeding despite upstream failures (main branch or scheduled run):"
-          [[ "${{ needs.backend-quality.result }}" != "success" ]] && echo "::warning::backend-quality: ${{ needs.backend-quality.result }}"
-          [[ "${{ needs.frontend-quality.result }}" != "success" ]] && echo "::warning::frontend-quality: ${{ needs.frontend-quality.result }}"
-          [[ "${{ needs.frontend-fallow.result }}" != "success" ]] && echo "::warning::frontend-fallow: ${{ needs.frontend-fallow.result }}"
-          [[ "${{ needs.container-scan.result }}" != "success" ]] && echo "::warning::container-scan: ${{ needs.container-scan.result }}"
-          [[ "${{ needs.dast-smoke.result }}" != "success" ]] && echo "::warning::dast-smoke: ${{ needs.dast-smoke.result }}"
+          [[ "${{ needs.backend-quality.result }}" == "failure" ]] && echo "::warning::backend-quality: failed"
+          [[ "${{ needs.frontend-quality.result }}" == "failure" ]] && echo "::warning::frontend-quality: failed"
+          [[ "${{ needs.frontend-fallow.result }}" == "failure" ]] && echo "::warning::frontend-fallow: failed"
+          [[ "${{ needs.dast-smoke.result }}" == "failure" ]] && echo "::warning::dast-smoke: failed"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -625,10 +584,13 @@ jobs:
             ${{ runner.os }}-buildx-frontend-
 
       - name: Build backend Docker image
+        id: build-backend
         uses: docker/build-push-action@v6
         with:
           context: ./backend
           push: false
+          load: true
+          tags: votecatcher-backend
           cache-from: type=local,src=/tmp/.buildx-cache-backend
           cache-to: type=local,dest=/tmp/.buildx-cache-backend-new,mode=max
 
@@ -638,10 +600,13 @@ jobs:
           mv /tmp/.buildx-cache-backend-new /tmp/.buildx-cache-backend
 
       - name: Build frontend Docker image
+        id: build-frontend
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
           push: false
+          load: true
+          tags: votecatcher-frontend
           cache-from: type=local,src=/tmp/.buildx-cache-frontend
           cache-to: type=local,dest=/tmp/.buildx-cache-frontend-new,mode=max
 
@@ -649,3 +614,51 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache-frontend
           mv /tmp/.buildx-cache-frontend-new /tmp/.buildx-cache-frontend
+
+      - name: Run Trivy on backend
+        id: trivy-backend
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: votecatcher-backend
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Run Trivy on frontend
+        id: trivy-frontend
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: votecatcher-frontend
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Docker build and scan failure summary
+        if: failure()
+        run: |
+          FAILED=""
+          PASSED=""
+
+          if [[ "${{ steps.build-backend.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Backend image build"; else FAILED="$FAILED\n- ❌ Backend image build"; fi
+          if [[ "${{ steps.build-frontend.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Frontend image build"; else FAILED="$FAILED\n- ❌ Frontend image build"; fi
+          if [[ "${{ steps.trivy-backend.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Backend Trivy scan"; else FAILED="$FAILED\n- ❌ Backend Trivy scan (CRITICAL/HIGH CVEs)"; fi
+          if [[ "${{ steps.trivy-frontend.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Frontend Trivy scan"; else FAILED="$FAILED\n- ❌ Frontend Trivy scan (CRITICAL/HIGH CVEs)"; fi
+
+          FIRST_FAIL=$(echo -e "$FAILED" | grep -m1 "❌" || true)
+          echo "::error::Docker build and scan failed:$FIRST_FAIL"
+
+          echo "## ❌ Docker Build & Scan Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo -e "$FAILED" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Passed" >> "$GITHUB_STEP_SUMMARY"
+          echo -e "$PASSED" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Docker build and scan success summary
+        if: success()
+        run: |
+          echo "## ✅ Docker Build & Scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Backend image build" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Frontend image build" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Backend Trivy scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Frontend Trivy scan" >> "$GITHUB_STEP_SUMMARY"
