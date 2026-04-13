@@ -17,14 +17,34 @@ router = APIRouter(prefix="/config", tags=["config"])
 
 
 class FeatureFlagsResponse(ApiModel):
-    """Feature flags response."""
-
     simulation_mode: bool
     beta_features: bool
     debug_mode: bool
     demo_mode: bool
     demo_reset: bool
     always_batch_ocr: bool
+    fieldspec_persistence: bool
+    fieldspec_service: bool
+    fieldspec_matching: bool
+    fieldspec_voter_list: bool
+    fieldspec_api: bool
+
+
+def _build_features_response(settings: Settings) -> FeatureFlagsResponse:
+    f = settings.features
+    return FeatureFlagsResponse(
+        simulation_mode=f.runtime.simulation.enabled,
+        beta_features=f.runtime.beta_features.enabled,
+        debug_mode=f.runtime.debug_mode.enabled,
+        demo_mode=f.runtime.demo_mode.enabled,
+        demo_reset=f.runtime.demo_reset.enabled,
+        always_batch_ocr=f.runtime.always_batch_ocr.enabled,
+        fieldspec_persistence=f.fieldspec.persistence.enabled,
+        fieldspec_service=f.fieldspec.service.enabled,
+        fieldspec_matching=f.fieldspec.matching.enabled,
+        fieldspec_voter_list=f.fieldspec.voter_list.enabled,
+        fieldspec_api=f.fieldspec.api.enabled,
+    )
 
 
 class SettingsResponse(ApiModel):
@@ -40,14 +60,7 @@ def get_features(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> FeatureFlagsResponse:
     """Get feature flags."""
-    return FeatureFlagsResponse(
-        simulation_mode=settings.feature_simulation,
-        beta_features=settings.feature_beta,
-        debug_mode=settings.feature_debug,
-        demo_mode=settings.feature_demo,
-        demo_reset=settings.demo_reset,
-        always_batch_ocr=settings.always_batch_ocr,
-    )
+    return _build_features_response(settings)
 
 
 @router.get("/settings", response_model=SettingsResponse)
@@ -58,14 +71,7 @@ def get_settings_endpoint(
     return SettingsResponse(
         ocr_provider=settings.ocr_provider_name,
         ocr_model=settings.ocr_model,
-        features=FeatureFlagsResponse(
-            simulation_mode=settings.feature_simulation,
-            beta_features=settings.feature_beta,
-            debug_mode=settings.feature_debug,
-            demo_mode=settings.feature_demo,
-            demo_reset=settings.demo_reset,
-            always_batch_ocr=settings.always_batch_ocr,
-        ),
+        features=_build_features_response(settings),
     )
 
 
