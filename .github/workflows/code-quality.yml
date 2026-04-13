@@ -28,10 +28,11 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v2
 
-      - name: Install dependencies
-        run: |
-          cd backend && uv sync --dev
-          cd frontend && bun install --frozen-lockfile
+      - name: Install backend dependencies
+        run: cd backend && uv sync --dev
+
+      - name: Install frontend dependencies
+        run: cd frontend && bun install --frozen-lockfile
 
       - name: Install code quality tools
         run: npm install -g jscpd fallow
