@@ -14,7 +14,8 @@ from pydantic_settings import (
 )
 
 from app.settings.providers.database_config import DatabaseConfig
-from app.settings.providers.feature_config import FeatureConfig
+from app.settings.providers.features import AllFeatures
+from app.settings.providers.features._base import FeatureFlag
 from app.settings.providers.ocr_config import OcrConfig
 from app.settings.providers.supabase_config import SupabaseConfig
 from app.settings.sources.environment import EnvironmentSource
@@ -103,6 +104,16 @@ class Settings(BaseSettings):
     demo_reset: bool = Field(default=False, alias="FEATURE_DEMO_RESET")
     always_batch_ocr: bool = Field(default=True, alias="FEATURE_ALWAYS_BATCH_OCR")
 
+    fieldspec_persistence: bool = Field(
+        default=False, alias="FEATURE_FIELDSPEC_PERSISTENCE"
+    )
+    fieldspec_service: bool = Field(default=False, alias="FEATURE_FIELDSPEC_SERVICE")
+    fieldspec_matching: bool = Field(default=False, alias="FEATURE_FIELDSPEC_MATCHING")
+    fieldspec_voter_list: bool = Field(
+        default=False, alias="FEATURE_FIELDSPEC_VOTER_LIST"
+    )
+    fieldspec_api: bool = Field(default=False, alias="FEATURE_FIELDSPEC_API")
+
     clear_runtime_on_launch: bool = Field(
         default=False, alias="DEV_CLEAR_RUNTIME_ON_LAUNCH"
     )
@@ -139,12 +150,59 @@ class Settings(BaseSettings):
         )
 
     @property
-    def features(self) -> FeatureConfig:
-        return FeatureConfig(
-            simulation=self.feature_simulation,
-            beta_features=self.feature_beta,
-            debug_mode=self.feature_debug,
-            demo_mode=self.feature_demo,
+    def features(self) -> AllFeatures:
+        from app.settings.providers.features.fieldspec import FieldSpecFlags
+        from app.settings.providers.features.runtime import RuntimeFlags
+
+        return AllFeatures(
+            runtime=RuntimeFlags(
+                simulation=FeatureFlag(
+                    enabled=self.feature_simulation,
+                    meta=RuntimeFlags.model_fields["simulation"].default.meta,
+                ),
+                beta_features=FeatureFlag(
+                    enabled=self.feature_beta,
+                    meta=RuntimeFlags.model_fields["beta_features"].default.meta,
+                ),
+                debug_mode=FeatureFlag(
+                    enabled=self.feature_debug,
+                    meta=RuntimeFlags.model_fields["debug_mode"].default.meta,
+                ),
+                demo_mode=FeatureFlag(
+                    enabled=self.feature_demo,
+                    meta=RuntimeFlags.model_fields["demo_mode"].default.meta,
+                ),
+                demo_reset=FeatureFlag(
+                    enabled=self.demo_reset,
+                    meta=RuntimeFlags.model_fields["demo_reset"].default.meta,
+                ),
+                always_batch_ocr=FeatureFlag(
+                    enabled=self.always_batch_ocr,
+                    meta=RuntimeFlags.model_fields["always_batch_ocr"].default.meta,
+                ),
+            ),
+            fieldspec=FieldSpecFlags(
+                persistence=FeatureFlag(
+                    enabled=self.fieldspec_persistence,
+                    meta=FieldSpecFlags.model_fields["persistence"].default.meta,
+                ),
+                service=FeatureFlag(
+                    enabled=self.fieldspec_service,
+                    meta=FieldSpecFlags.model_fields["service"].default.meta,
+                ),
+                matching=FeatureFlag(
+                    enabled=self.fieldspec_matching,
+                    meta=FieldSpecFlags.model_fields["matching"].default.meta,
+                ),
+                voter_list=FeatureFlag(
+                    enabled=self.fieldspec_voter_list,
+                    meta=FieldSpecFlags.model_fields["voter_list"].default.meta,
+                ),
+                api=FeatureFlag(
+                    enabled=self.fieldspec_api,
+                    meta=FieldSpecFlags.model_fields["api"].default.meta,
+                ),
+            ),
         )
 
     def local_campaign_base_dir(self) -> Path:

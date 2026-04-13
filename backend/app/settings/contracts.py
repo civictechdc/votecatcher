@@ -4,10 +4,10 @@ from typing import Protocol
 
 from pydantic import SecretStr
 
+from app.settings.providers.features import AllFeatures
+
 
 class ProvidesDatabaseConfig(Protocol):
-    """Any source that provides database configuration."""
-
     @property
     def url(self) -> str: ...
 
@@ -16,8 +16,6 @@ class ProvidesDatabaseConfig(Protocol):
 
 
 class ProvidesSupabaseConfig(Protocol):
-    """Supabase-specific configuration."""
-
     @property
     def url(self) -> str: ...
 
@@ -32,8 +30,6 @@ class ProvidesSupabaseConfig(Protocol):
 
 
 class ProvidesOcrConfig(Protocol):
-    """OCR provider configuration."""
-
     @property
     def provider_name(self) -> str: ...
 
@@ -45,16 +41,5 @@ class ProvidesOcrConfig(Protocol):
 
 
 class ProvidesFeatureConfig(Protocol):
-    """Feature flag configuration."""
-
     @property
-    def simulation(self) -> bool: ...
-
-    @property
-    def beta_features(self) -> bool: ...
-
-    @property
-    def debug_mode(self) -> bool: ...
-
-    @property
-    def demo_mode(self) -> bool: ...
+    def features(self) -> AllFeatures: ...
