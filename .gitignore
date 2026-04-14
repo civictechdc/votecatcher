@@ -74,6 +74,9 @@ pids
 tmp/
 temp/
 
+# Plans (local development only)
+plans/
+
 # Agent workspace (local development only)
 .agent-workspace/
 .agent/
