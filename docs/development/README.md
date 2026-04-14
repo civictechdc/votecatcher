@@ -10,6 +10,9 @@ Guides for local development and contribution.
 | [Versioning](./versioning.md) | Release and version management |
 | [Architecture](../architecture/README.md) | System design and ADRs |
 | [API Spec](../../backend/openapi.yaml) | OpenAPI 3.1 specification |
+| [Field Spec Schema](./field-spec-schema.md) | JSON5 regional spec file format reference |
+| [Adding a Region](./adding-a-region.md) | Tutorial: add a new voter region |
+| [Testing Guide](./testing.md) | Testing patterns including approval tests |
 
 ## Quick Start
 
@@ -117,9 +120,13 @@ git push origin feature/your-feature-name
 votecatcher/
 ├── backend/              # FastAPI backend
 │   ├── app/
-│   │   ├── routers/     # API endpoints
-│   │   ├── services/    # Business logic
-│   │   ├── data/        # Database layer
+│   │   ├── domain/       # Domain value objects and pure functions (field_spec.py)
+│   │   ├── regions/      # JSON5 regional spec source files (dc.json5, demo.json5)
+│   │   ├── routers/      # API endpoints
+│   │   ├── services/     # Business logic (field_spec_service.py, voter_list_service.py)
+│   │   ├── matching/     # Fuzzy matching (matching_service.py, voter_data_adapter.py)
+│   │   ├── repositories/ # Persistence implementations (field_spec_repo.py)
+│   │   ├── data/         # Database layer
 │   │   └── ...
 │   └── tests/           # Test suites
 │
@@ -160,7 +167,10 @@ votecatcher/
 - [Running Locally](../running-locally.md) - Detailed setup
 - [Architecture](../architecture/README.md) - System design
 - [API Specification](../../backend/openapi.yaml) - OpenAPI spec
-- [Fallow Refactor Plan](../plans/fallow-refactor.md) - Frontend code quality improvement plan
+- [Field Spec Schema](./field-spec-schema.md) - JSON5 regional spec format
+- [Adding a Region](./adding-a-region.md) - Tutorial: add a new voter region
+- [Matching Process](../architecture/matching-process.md) - Spec-driven matching pipeline
+- [Testing Guide](./testing.md) - Approval tests and testing patterns
 
 ## Code Quality Tools
 

@@ -87,6 +87,7 @@ graph TB
     EventsRouter --> SSEManager
     ProviderRouter --> ProvidersService
     RegionRouter --> VoterRepo
+    RegionRouter --> FieldSpecService
     ResultsRouter --> MatchRepository
 
     JobOrchestrator --> OCRManager

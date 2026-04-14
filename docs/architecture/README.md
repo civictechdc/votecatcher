@@ -36,6 +36,9 @@ ADRs capture important architectural decisions along with their context and cons
 | Use FastAPI BackgroundTasks for job orchestration | [ADR-0002](./decisions/0002-use-fastapi-background-tasks.md) | Accepted |
 | Use SSE for real-time updates | [ADR-0003](./decisions/0003-use-sse-for-realtime-updates.md) | Accepted |
 | Hybrid matching: DB pre-filter + RapidFuzz | [ADR-0004](./decisions/0004-hybrid-matching-strategy.md) | Accepted |
+| Spec-driven field configuration | [ADR-0006](./decisions/0006-spec-driven-field-configuration.md) | Accepted |
+| Feature flag lifecycle framework | [ADR-0007](./decisions/0007-feature-flag-lifecycle-framework.md) | Accepted |
+| Template-based field rendering | [ADR-0008](./decisions/0008-template-based-field-rendering.md) | Accepted |
 
 ### Technology Stack
 
@@ -46,6 +49,8 @@ ADRs capture important architectural decisions along with their context and cons
 | Database | PostgreSQL | Reliable, feature-rich, well-supported |
 | OCR | LLM Batch APIs (OpenAI, Gemini, Mistral) | Cost-effective, async processing |
 | Matching | RapidFuzz | Fast fuzzy string matching |
+| Field Specs | JSON5 + Pydantic | Spec-driven regional configuration |
+| Testing | ApprovalTests | Regression-guarded golden masters |
 
 ## External References
 
