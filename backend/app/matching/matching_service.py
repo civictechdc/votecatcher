@@ -63,18 +63,6 @@ class MatchingService:
         region_id: Any,
         zipcode: str | None = None,
     ) -> list[RegisteredVoter]:
-        """Pre-filter voters by region and optional zipcode.
-
-        Implements DB pre-filtering from SPEC.md §3.4 to reduce the
-        search space before fuzzy matching.
-
-        Args:
-            region_id: Region UUID to filter by
-            zipcode: Optional zipcode to further narrow results
-
-        Returns:
-            List of RegisteredVoter instances matching filters
-        """
         statement = select(RegisteredVoter).where(
             RegisteredVoter.region_id == region_id
         )
@@ -93,6 +81,36 @@ class MatchingService:
             count=len(voters),
         )
 
+        return list(voters)
+
+    def pre_filter_voters_with_spec(
+        self,
+        spec: RegionFieldSpecConfig,
+        region_id: Any,
+        filter_value: str | None = None,
+    ) -> list[RegisteredVoter]:
+        statement = select(RegisteredVoter).where(
+            RegisteredVoter.region_id == region_id
+        )
+
+        if filter_value and spec.pre_filter_field_id:
+            pf = spec.pre_filter_field()
+            if pf:
+                blob_attr = (
+                    "address_data"
+                    if pf.category in ("address",)
+                    else "other_field_data"
+                )
+                if pf.category == "name":
+                    blob_attr = "name_data"
+                statement = statement.where(
+                    col(getattr(RegisteredVoter, blob_attr))[
+                        spec.pre_filter_field_id
+                    ].as_string()
+                    == filter_value
+                )
+
+        voters = self.session.exec(statement).all()
         return list(voters)
 
     def extract_name_and_address(self, ocr_text: dict[str, Any]) -> tuple[str, str]:

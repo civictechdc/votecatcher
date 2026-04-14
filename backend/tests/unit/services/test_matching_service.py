@@ -7,8 +7,11 @@ Tests follow BDD scenarios from SPEC.md §3.4:
 - Spec-driven matching with dynamic field weights and render_template
 """
 
+from pathlib import Path
 from unittest.mock import MagicMock
-from uuid import uuid4
+from uuid import uuid4, UUID
+
+import pytest
 
 from app.domain.field_spec import (
     BallotField,
@@ -123,6 +126,7 @@ def _dc_spec() -> RegionFieldSpecConfig:
             "zip_code",
         ],
         crop_config=CropConfig(top_crop=0.385, bottom_crop=0.725, base_threshold=85),
+        pre_filter_field_id="zip_code",
     )
 
 
@@ -399,3 +403,173 @@ class TestSpecDrivenSimilarity:
         total_weight = spec.total_match_weight()
         assert total_weight > 0
         assert 0.0 <= result["similarity_score"] <= 1.0
+
+
+def _spec_with_pre_filter() -> RegionFieldSpecConfig:
+    return RegionFieldSpecConfig(
+        region_name="Test Region",
+        country_code="US",
+        ballot_fields=[
+            BallotField(
+                id="name",
+                label="Full Name",
+                field_type="text",
+                required_for_matching=True,
+                match_weight=1.0,
+            ),
+        ],
+        voter_reg_fields=[
+            VoterRegField(
+                id="zip_code",
+                csv_column_name="Zip_Code",
+                data_type="text",
+                category="address",
+            ),
+        ],
+        field_mappings=[
+            FieldMapping(ballot_field_id="name", template="test"),
+        ],
+        hash_fields=["zip_code"],
+        crop_config=CropConfig(top_crop=0.1, bottom_crop=0.9, base_threshold=85),
+        pre_filter_field_id="zip_code",
+    )
+
+
+def _spec_without_pre_filter() -> RegionFieldSpecConfig:
+    return RegionFieldSpecConfig(
+        region_name="Test Region",
+        country_code="US",
+        ballot_fields=[
+            BallotField(
+                id="name",
+                label="Full Name",
+                field_type="text",
+                required_for_matching=True,
+                match_weight=1.0,
+            ),
+        ],
+        voter_reg_fields=[
+            VoterRegField(
+                id="zip_code",
+                csv_column_name="Zip_Code",
+                data_type="text",
+                category="address",
+            ),
+        ],
+        field_mappings=[
+            FieldMapping(ballot_field_id="name", template="test"),
+        ],
+        hash_fields=["zip_code"],
+        crop_config=CropConfig(top_crop=0.1, bottom_crop=0.9, base_threshold=85),
+    )
+
+
+class TestPreFilterVotersWithSpec:
+    @pytest.fixture
+    def engine(self, tmp_path: Path):
+        from app.persistence.engines.sqlite import SqliteEngine
+
+        db_path = tmp_path / "test.db"
+        engine = SqliteEngine(url=f"sqlite:///{db_path}")
+        engine.initialize()
+        return engine
+
+    @pytest.fixture
+    def region_id(self, engine):
+        from app.data.database.model.schema import Region
+
+        with engine.create_session() as session:
+            region = Region(
+                region_key="TEST",
+                region_name="Test Region",
+                country_code="US",
+            )
+            session.add(region)
+            session.commit()
+            session.refresh(region)
+            return region.id
+
+    @pytest.fixture
+    def session(self, engine):
+        return engine.create_session()
+
+    def _seed_voters(self, session, region_id: UUID):
+        from app.data.database.model.registered_voter import (
+            RegisteredVoter as DbVoter,
+        )
+
+        voters = [
+            DbVoter(
+                region_id=region_id,
+                name_data={"first_name": "Alice", "last_name": "Smith"},
+                address_data={"zip_code": "20001"},
+            ),
+            DbVoter(
+                region_id=region_id,
+                name_data={"first_name": "Bob", "last_name": "Jones"},
+                address_data={"zip_code": "20002"},
+            ),
+            DbVoter(
+                region_id=region_id,
+                name_data={"first_name": "Carol", "last_name": "White"},
+                address_data={"zip_code": "20001"},
+            ),
+        ]
+        for v in voters:
+            session.add(v)
+        session.commit()
+
+    def test_pre_filter_uses_spec_field_id(self, session, region_id):
+        spec = _spec_with_pre_filter()
+        self._seed_voters(session, region_id)
+        service = MatchingService(session=session)
+
+        results = service.pre_filter_voters_with_spec(
+            spec, region_id, filter_value="20001"
+        )
+
+        assert len(results) == 2
+        names = {v.name_data.get("first_name") for v in results}
+        assert names == {"Alice", "Carol"}
+
+    def test_pre_filter_with_no_configured_field(self, session, region_id):
+        spec = _spec_without_pre_filter()
+        self._seed_voters(session, region_id)
+        service = MatchingService(session=session)
+
+        results = service.pre_filter_voters_with_spec(
+            spec, region_id, filter_value="20001"
+        )
+
+        assert len(results) == 3
+
+    def test_pre_filter_no_filter_value(self, session, region_id):
+        spec = _spec_with_pre_filter()
+        self._seed_voters(session, region_id)
+        service = MatchingService(session=session)
+
+        results = service.pre_filter_voters_with_spec(
+            spec, region_id, filter_value=None
+        )
+
+        assert len(results) == 3
+
+    def test_pre_filter_empty_filter_value(self, session, region_id):
+        spec = _spec_with_pre_filter()
+        self._seed_voters(session, region_id)
+        service = MatchingService(session=session)
+
+        results = service.pre_filter_voters_with_spec(spec, region_id, filter_value="")
+
+        assert len(results) == 3
+
+    def test_pre_filter_no_matching_voters(self, session, region_id):
+        spec = _spec_with_pre_filter()
+        self._seed_voters(session, region_id)
+        service = MatchingService(session=session)
+
+        results = service.pre_filter_voters_with_spec(
+            spec, region_id, filter_value="99999"
+        )
+
+        assert len(results) == 0
