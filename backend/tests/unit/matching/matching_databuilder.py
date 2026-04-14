@@ -18,6 +18,8 @@ CSV_PATH = (
     / "fake_voter_records.csv"
 )
 
+HAS_VOTER_CSV = CSV_PATH.exists()
+
 CONFIDENCE_HIGH = 0.85
 CONFIDENCE_MEDIUM = 0.60
 
