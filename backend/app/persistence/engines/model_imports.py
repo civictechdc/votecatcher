@@ -18,6 +18,9 @@ def import_models() -> None:
     from app.data.database.model.registered_voter import (
         RegisteredVoter,  # noqa: F401
     )
+    from app.data.database.model.region_field_spec import (  # noqa: F401
+        RegionFieldSpecModel,
+    )
     from app.data.database.model.schema import Campaign, Region  # noqa: F401
     from app.data.database.model.session import (
         Session as SessionModel,  # noqa: F401

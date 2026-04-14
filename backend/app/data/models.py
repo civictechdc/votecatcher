@@ -18,6 +18,7 @@ from app.data.database.model.petition_scan import PetitionScan
 
 # Voter List Tracking (Phase 13)
 from app.data.database.model.region_schema import RegionSchema
+from app.data.database.model.region_field_spec import RegionFieldSpecModel
 from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.schema import Campaign, Region
 from app.data.database.model.session import Session, SessionType
@@ -52,4 +53,6 @@ __all__ = [
     "VoterListUpload",
     "UploadStatus",
     "RegionSchema",
+    # Field Specs
+    "RegionFieldSpecModel",
 ]
