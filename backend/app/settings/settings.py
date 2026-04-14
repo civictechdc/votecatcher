@@ -104,16 +104,6 @@ class Settings(BaseSettings):
     demo_reset: bool = Field(default=False, alias="FEATURE_DEMO_RESET")
     always_batch_ocr: bool = Field(default=True, alias="FEATURE_ALWAYS_BATCH_OCR")
 
-    fieldspec_persistence: bool = Field(
-        default=False, alias="FEATURE_FIELDSPEC_PERSISTENCE"
-    )
-    fieldspec_service: bool = Field(default=False, alias="FEATURE_FIELDSPEC_SERVICE")
-    fieldspec_matching: bool = Field(default=False, alias="FEATURE_FIELDSPEC_MATCHING")
-    fieldspec_voter_list: bool = Field(
-        default=False, alias="FEATURE_FIELDSPEC_VOTER_LIST"
-    )
-    fieldspec_api: bool = Field(default=False, alias="FEATURE_FIELDSPEC_API")
-
     clear_runtime_on_launch: bool = Field(
         default=False, alias="DEV_CLEAR_RUNTIME_ON_LAUNCH"
     )
@@ -151,11 +141,9 @@ class Settings(BaseSettings):
 
     @property
     def features(self) -> AllFeatures:
-        from app.settings.providers.features.fieldspec import FieldSpecFlags
         from app.settings.providers.features.runtime import RuntimeFlags
 
         runtime_defaults = RuntimeFlags()
-        fieldspec_defaults = FieldSpecFlags()
 
         return AllFeatures(
             runtime=RuntimeFlags(
@@ -182,28 +170,6 @@ class Settings(BaseSettings):
                 always_batch_ocr=FeatureFlag(
                     enabled=self.always_batch_ocr,
                     meta=runtime_defaults.always_batch_ocr.meta,
-                ),
-            ),
-            fieldspec=FieldSpecFlags(
-                persistence=FeatureFlag(
-                    enabled=self.fieldspec_persistence,
-                    meta=fieldspec_defaults.persistence.meta,
-                ),
-                service=FeatureFlag(
-                    enabled=self.fieldspec_service,
-                    meta=fieldspec_defaults.service.meta,
-                ),
-                matching=FeatureFlag(
-                    enabled=self.fieldspec_matching,
-                    meta=fieldspec_defaults.matching.meta,
-                ),
-                voter_list=FeatureFlag(
-                    enabled=self.fieldspec_voter_list,
-                    meta=fieldspec_defaults.voter_list.meta,
-                ),
-                api=FeatureFlag(
-                    enabled=self.fieldspec_api,
-                    meta=fieldspec_defaults.api.meta,
                 ),
             ),
         )
