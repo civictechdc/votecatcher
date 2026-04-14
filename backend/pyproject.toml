@@ -74,9 +74,12 @@ packages = ["app"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = "app"
+pythonpath = ["app", "tests"]
 addopts = ["--import-mode=importlib"]
 asyncio_mode = "auto"
+markers = [
+    "slow: tests that process large datasets (100K voters)",
+]
 
 
 [tool.ruff]
