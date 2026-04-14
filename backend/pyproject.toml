@@ -1,6 +1,6 @@
 [project]
 name = "ballot-petition-signature-verifier"
-version = "1.0.0-alpha.2"
+version = "1.0.0-alpha.3"
 description = "A python package for verifying ballot petition signatures"
 readme = "README.md"
 requires-python = ">=3.12,<4"

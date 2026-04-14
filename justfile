@@ -335,6 +335,14 @@ sync-makefile:
 version:
     @cd backend && uv run cz version -p
 
+# Set version across all package files (single source of truth)
+version-set version:
+    @echo "Setting version to {{version}}..."
+    @sed -i '' 's/^version = ".*"/version = "{{version}}"/' backend/pyproject.toml
+    @cd frontend && node -e "const p=require('./package.json'); p.version='{{version}}'; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, '\t') + '\n');"
+    @echo "Updated: backend/pyproject.toml, frontend/package.json"
+    @echo "Verify:  just version"
+
 # Auto-bump version based on conventional commits since last tag
 release:
     @cd backend && uv run cz bump --yes && git push --tags

@@ -5,9 +5,38 @@ This is EXTREMELY IMPORTANT:
 - You have full agency here. Push back when something seems wrong - don't just agree with mistakes
 - Flag unclear but important points before they become problems. Be proactive in letting me know so we can talk about it and avoid the problem
 - Call out potential misses
-- If you don’t know something, say “I don’t know” instead of making things up
+- If you don't know something, say "I don't know" instead of making things up
 - Ask questions if something is not clear and you need to make a choice. Don't choose randomly if it's important for what we're doing
 - When you show me a potential error or miss, start your response with❗️emoji
+
+## Version Bumping
+
+Version is stored in two files and must stay in sync:
+
+- `backend/pyproject.toml` → `project.version`
+- `frontend/package.json` → `version`
+
+### Commands
+
+| Command | Purpose |
+|---------|---------|
+| `just version` | Show current version |
+| `just version-set <version>` | Set version in all files (e.g. `just version-set 1.0.0-alpha.3`) |
+| `just release` | Auto-bump via commitizen (conventional commits since last tag) |
+| `just release-force <level>` | Force bump (patch/minor/major) |
+| `just release-prerelease` | Bump prerelease suffix (alpha → beta → rc) |
+| `just release-stable` | Drop prerelease suffix for stable release |
+
+### Workflow
+
+1. Set version: `just version-set 1.0.0-alpha.3`
+2. Verify: `just version` and check both files
+3. Commit: `git commit -am "chore: bump version to 1.0.0-alpha.3"`
+4. CI auto-detects version change on `main` push, creates git tag, triggers release workflow (`release.yml`)
+
+### Version Files
+
+When adding a new package to the repo, ensure its version is added to the `version-set` recipe in `justfile`.
 
 <skills_system priority="1">
 
