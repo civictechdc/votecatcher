@@ -9,6 +9,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session
 
 from app.data.database.session import get_db_session as _get_db_session
+from app.persistence.session import get_engine as _get_engine
 
 logger = structlog.get_logger(__name__)
 
@@ -33,6 +34,16 @@ def warn_database_api_key_missing() -> None:
 def get_session() -> Generator[Session]:
     """Get database session for API endpoints."""
     yield from _get_db_session()
+
+
+def get_field_spec_service() -> Generator:
+    """Get FieldSpecService with DB-backed repository."""
+    from app.repositories.field_spec_repo import FieldSpecRepositoryImpl
+    from app.services.field_spec_service import FieldSpecService
+
+    engine = _get_engine()
+    repo = FieldSpecRepositoryImpl(engine)
+    yield FieldSpecService(repo)
 
 
 def get_engine_dependency() -> Generator[Session]:
