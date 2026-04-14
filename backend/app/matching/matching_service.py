@@ -21,6 +21,8 @@ from app.data.database.model.jobs import MatcherJob
 from app.data.database.model.match_result import ConfidenceLevel, MatchResult
 from app.data.database.model.ocr_result import OcrResult
 from app.data.database.model.registered_voter import RegisteredVoter
+from app.domain.field_spec import RegionFieldSpecConfig, render_template
+from app.matching.voter_data_adapter import flatten_voter_data
 
 logger = structlog.get_logger(__name__)
 
@@ -147,6 +149,39 @@ class MatchingService:
         harmonic_mean = (2 * name_score * address_score) / (name_score + address_score)
 
         return harmonic_mean
+
+    def calculate_spec_driven_similarity(
+        self,
+        spec: RegionFieldSpecConfig,
+        ocr_text: dict[str, Any],
+        voter: RegisteredVoter,
+    ) -> dict[str, Any]:
+        flat = flatten_voter_data(voter, spec.voter_reg_fields)
+        matchable = spec.matchable_fields()
+        total_weight = spec.total_match_weight()
+
+        field_scores: dict[str, float] = {}
+        weighted_sum = 0.0
+
+        for field in matchable:
+            mapping = spec.get_mapping_for(field.id)
+            if not mapping:
+                continue
+
+            ocr_value = str(ocr_text.get(field.id, ""))
+            voter_value = render_template(mapping.template, flat)
+
+            score = fuzz.ratio(ocr_value, voter_value) / 100.0
+            field_scores[field.id] = score
+            weighted_sum += score * field.match_weight
+
+        overall = weighted_sum / total_weight if total_weight > 0 else 0.0
+
+        return {
+            "similarity_score": overall,
+            "confidence_level": self.assign_confidence(overall),
+            "field_scores": field_scores,
+        }
 
     def assign_confidence(self, similarity_score: float) -> ConfidenceLevel:
         """Assign confidence level based on similarity score.
