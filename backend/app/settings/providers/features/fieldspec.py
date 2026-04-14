@@ -18,7 +18,12 @@ Hygiene test (test_feature_flag_hygiene.py) enforces:
 
 from pydantic import BaseModel, Field
 
-from app.settings.providers.features._base import FeatureFlag, FlagLifecycle, FlagMeta
+from app.settings.providers.features._base import (
+    FeatureFlag,
+    FlagLifecycle,
+    FlagMeta,
+    FlagPhase,
+)
 
 
 class FieldSpecFlags(BaseModel):
@@ -46,6 +51,7 @@ class FieldSpecFlags(BaseModel):
                 lifecycle=FlagLifecycle.transitional,
                 issue=12,
                 description="G7: MatchingService uses spec-driven weights and templates",
+                phase=FlagPhase.ACTIVATED,
             ),
         ),
     )
@@ -55,6 +61,7 @@ class FieldSpecFlags(BaseModel):
                 lifecycle=FlagLifecycle.transitional,
                 issue=12,
                 description="G8: VoterListService uses spec for CSV parsing and hashing",
+                phase=FlagPhase.ACTIVATED,
             ),
         ),
     )
