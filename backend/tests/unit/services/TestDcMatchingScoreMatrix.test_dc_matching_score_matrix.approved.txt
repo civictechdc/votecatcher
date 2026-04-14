@@ -1,0 +1,34 @@
+OCR: name='John Smith' address='123 Main St NW'
+------------------------------------------------------------
+  vs John Smith                | 123 Main St NW            | sim=1.0000 conf=HIGH   | name=1.0000 addr=1.0000
+  vs Jane A Doe                | 456 Oak Ave NE            | sim=0.3261 conf=LOW    | name=0.3000 addr=0.3571
+  vs Robert Johnson            | 789 Pine St SW            | sim=0.4211 conf=LOW    | name=0.3333 addr=0.5714
+  vs Mary Wilson               | 654 Cedar Ln NW           | sim=0.2609 conf=LOW    | name=0.1905 addr=0.4138
+
+OCR: name='Jane A Doe' address='456 Oak Ave NE'
+------------------------------------------------------------
+  vs John Smith                | 123 Main St NW            | sim=0.3261 conf=LOW    | name=0.3000 addr=0.3571
+  vs Jane A Doe                | 456 Oak Ave NE            | sim=1.0000 conf=HIGH   | name=1.0000 addr=1.0000
+  vs Robert Johnson            | 789 Pine St SW            | sim=0.2308 conf=LOW    | name=0.2500 addr=0.2143
+  vs Mary Wilson               | 654 Cedar Ln NW           | sim=0.3380 conf=LOW    | name=0.2857 addr=0.4138
+
+OCR: name='Robert Johnson' address='789 Pine St SW'
+------------------------------------------------------------
+  vs John Smith                | 123 Main St NW            | sim=0.4211 conf=LOW    | name=0.3333 addr=0.5714
+  vs Jane A Doe                | 456 Oak Ave NE            | sim=0.2308 conf=LOW    | name=0.2500 addr=0.2143
+  vs Robert Johnson            | 789 Pine St SW            | sim=1.0000 conf=HIGH   | name=1.0000 addr=1.0000
+  vs Mary Wilson               | 654 Cedar Ln NW           | sim=0.3704 conf=LOW    | name=0.4000 addr=0.3448
+
+OCR: name='' address='321 Elm Blvd SE'
+------------------------------------------------------------
+  vs John Smith                | 123 Main St NW            | sim=0.0000 conf=LOW    | name=0.0000 addr=0.2759
+  vs Jane A Doe                | 456 Oak Ave NE            | sim=0.0000 conf=LOW    | name=0.0000 addr=0.3448
+  vs Robert Johnson            | 789 Pine St SW            | sim=0.0000 conf=LOW    | name=0.0000 addr=0.2759
+  vs Mary Wilson               | 654 Cedar Ln NW           | sim=0.0000 conf=LOW    | name=0.0000 addr=0.2000
+
+OCR: name='Mary Wilson' address=''
+------------------------------------------------------------
+  vs John Smith                | 123 Main St NW            | sim=0.0000 conf=LOW    | name=0.1905 addr=0.0000
+  vs Jane A Doe                | 456 Oak Ave NE            | sim=0.0000 conf=LOW    | name=0.2857 addr=0.0000
+  vs Robert Johnson            | 789 Pine St SW            | sim=0.0000 conf=LOW    | name=0.4000 addr=0.0000
+  vs Mary Wilson               | 654 Cedar Ln NW           | sim=0.0000 conf=LOW    | name=1.0000 addr=0.0000
