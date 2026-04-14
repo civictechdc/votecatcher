@@ -270,7 +270,7 @@
 				<select
 					id="status-filter"
 					bind:value={statusFilter}
-					class="min-w-40 appearance-none rounded-md border border-slate-300 bg-white px-3 py-2 pr-10 text-sm shadow-sm hover:border-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+					class="min-w-40 appearance-none bg-none rounded-md border border-slate-300 bg-white px-3 py-2 pr-10 text-sm shadow-sm hover:border-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
 				>
 					<option value="all">All Statuses</option>
 					<option value="not_started">Not Started</option>

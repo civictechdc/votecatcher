@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import { PUBLIC_API_URL } from "$env/static/public";
 
-export type EventType = "job:status_changed" | "job:progress" | "metrics:updated";
+export type EventType = "job:status_changed" | "job:progress" | "metrics:updated" | "setup:updated";
 
 export interface BaseEvent {
 	event_id: string;
@@ -33,14 +33,19 @@ export interface MetricsUpdatedEvent extends BaseEvent {
 	high_confidence: number;
 }
 
-export type AppEvent = JobStatusEvent | JobProgressEvent | MetricsUpdatedEvent;
+export interface SetupUpdatedEvent extends BaseEvent {
+	event_type: "setup:updated";
+	upload_type: string;
+}
+
+export type AppEvent = JobStatusEvent | JobProgressEvent | MetricsUpdatedEvent | SetupUpdatedEvent;
 
 function isValidEvent(data: unknown): data is AppEvent {
 	if (typeof data !== "object" || data === null) return false;
 	const evt = data as Record<string, unknown>;
 	if (typeof evt["event_type"] !== "string") return false;
 	if (typeof evt["event_id"] !== "string") return false;
-	const validTypes: EventType[] = ["job:status_changed", "job:progress", "metrics:updated"];
+	const validTypes: EventType[] = ["job:status_changed", "job:progress", "metrics:updated", "setup:updated"];
 	return validTypes.includes(evt["event_type"] as EventType);
 }
 
@@ -78,6 +83,9 @@ function createEventStore() {
 				break;
 			case "metrics:updated":
 				document.dispatchEvent(new CustomEvent("votecatcher:metrics:updated", { detail: event }));
+				break;
+			case "setup:updated":
+				document.dispatchEvent(new CustomEvent("votecatcher:setup:updated", { detail: event }));
 				break;
 		}
 	}

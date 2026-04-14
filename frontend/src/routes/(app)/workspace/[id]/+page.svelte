@@ -116,6 +116,12 @@
 		jobs.fetchAll();
 		fetchMetrics();
 		fetchSetupStatus();
+
+		document.addEventListener('votecatcher:setup:updated', fetchSetupStatus as EventListener);
+
+		return () => {
+			document.removeEventListener('votecatcher:setup:updated', fetchSetupStatus as EventListener);
+		};
 	});
 
 	afterNavigate(({ from, to }) => {
