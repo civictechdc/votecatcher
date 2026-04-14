@@ -20,12 +20,6 @@ from app.startup import ApplicationStartup
 
 
 def _default_spec_loader():
-    from app.settings.settings import get_settings
-
-    settings = get_settings()
-    if not settings.features.fieldspec.service.enabled:
-        return 0, []
-
     from app.persistence.session import get_engine
     from app.repositories.field_spec_repo import FieldSpecRepositoryImpl
     from app.services.field_spec_service import FieldSpecService

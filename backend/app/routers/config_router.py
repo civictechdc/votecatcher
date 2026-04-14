@@ -23,11 +23,6 @@ class FeatureFlagsResponse(ApiModel):
     demo_mode: bool
     demo_reset: bool
     always_batch_ocr: bool
-    fieldspec_persistence: bool
-    fieldspec_service: bool
-    fieldspec_matching: bool
-    fieldspec_voter_list: bool
-    fieldspec_api: bool
 
 
 def _build_features_response(settings: Settings) -> FeatureFlagsResponse:
@@ -39,11 +34,6 @@ def _build_features_response(settings: Settings) -> FeatureFlagsResponse:
         demo_mode=f.runtime.demo_mode.enabled,
         demo_reset=f.runtime.demo_reset.enabled,
         always_batch_ocr=f.runtime.always_batch_ocr.enabled,
-        fieldspec_persistence=f.fieldspec.persistence.enabled,
-        fieldspec_service=f.fieldspec.service.enabled,
-        fieldspec_matching=f.fieldspec.matching.enabled,
-        fieldspec_voter_list=f.fieldspec.voter_list.enabled,
-        fieldspec_api=f.fieldspec.api.enabled,
     )
 
 

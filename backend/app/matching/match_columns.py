@@ -1,3 +1,4 @@
+# TODO(field-spec): Make display columns configurable per region
 class MatchColumns:
     __slots__ = ()
     OCR_NAME = "OCR Name"

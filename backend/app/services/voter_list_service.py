@@ -9,7 +9,6 @@ from uuid import UUID
 
 from sqlmodel import Session, select
 
-from app.data.database.model.region_schema import RegionSchema
 from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
 from app.domain.field_spec import RegionFieldSpecConfig, VoterRegField
@@ -20,24 +19,6 @@ class VoterListService:
 
     def __init__(self, session: Session):
         self.session = session
-
-    def compute_data_hash(
-        self,
-        name_data: dict[str, Any],
-        address_data: dict[str, Any],
-        hash_fields: list[str],
-    ) -> str:
-        """DEPRECATED: Only searches name_data and address_data. Use compute_data_hash_all instead. Removed in G10."""
-        values = []
-
-        for field in hash_fields:
-            if field in name_data:
-                values.append(self._normalize_name(str(name_data[field])))
-            elif field in address_data:
-                values.append(self._normalize_name(str(address_data[field])))
-
-        combined = "|".join(values)
-        return hashlib.sha256(combined.encode()).hexdigest()
 
     def compute_data_hash_all(
         self,
@@ -81,22 +62,6 @@ class VoterListService:
 
         return rows
 
-    def parse_csv_with_schema(
-        self, csv_content: str, schema: RegionSchema
-    ) -> list[dict[str, Any]]:
-        """DEPRECATED: Use parse_csv_with_spec instead. Removed in G10."""
-        reader = csv.DictReader(StringIO(csv_content))
-        rows = []
-
-        for row in reader:
-            mapped: dict[str, Any] = {}
-            for csv_col, canonical in schema.column_mappings.items():
-                if csv_col in row:
-                    mapped[canonical] = row[csv_col]
-            rows.append(mapped)
-
-        return rows
-
     @staticmethod
     def group_by_category(
         mapped_fields: dict[str, Any],
@@ -117,90 +82,6 @@ class VoterListService:
                 other_data[field.id] = value
 
         return name_data, address_data, other_data
-
-    def get_or_create_schema(self, region_id: UUID) -> RegionSchema:
-        """DEPRECATED: Use FieldSpecService.get_spec instead. Removed in G10."""
-        schema = self.session.exec(
-            select(RegionSchema).where(RegionSchema.region_id == region_id)
-        ).first()
-
-        if schema:
-            return schema
-
-        schema = RegionSchema(
-            region_id=region_id,
-            name="Default Schema",
-            column_mappings={
-                "FirstName": "first_name",
-                "LastName": "last_name",
-                "Street": "street",
-                "City": "city",
-                "State": "state",
-                "Zip": "zip",
-            },
-            hash_fields=["first_name", "last_name", "street", "zip"],
-        )
-        self.session.add(schema)
-        self.session.commit()
-        self.session.refresh(schema)
-        return schema
-
-    def merge_voter_list(
-        self,
-        region_id: UUID,
-        rows: list[dict[str, Any]],
-        upload: VoterListUpload,
-    ) -> tuple[int, int]:
-        """DEPRECATED: Use merge_voter_list_with_spec instead. Removed in G10."""
-        schema = self.get_or_create_schema(region_id)
-        new_count = 0
-        updated_count = 0
-
-        for row in rows:
-            name_data = {
-                "first_name": row.get("first_name", ""),
-                "last_name": row.get("last_name", ""),
-            }
-            address_data = {
-                "street": row.get("street", ""),
-                "city": row.get("city", ""),
-                "state": row.get("state", ""),
-                "zip": row.get("zip", ""),
-            }
-
-            data_hash = self.compute_data_hash(
-                name_data, address_data, schema.hash_fields
-            )
-
-            existing = self.session.exec(
-                select(RegisteredVoter).where(
-                    RegisteredVoter.region_id == region_id,
-                    RegisteredVoter.data_hash == data_hash,
-                )
-            ).first()
-
-            now = datetime.now(UTC)
-            if existing:
-                existing.last_seen_at = now
-                existing.last_upload_id = upload.id
-                updated_count += 1
-            else:
-                voter = RegisteredVoter(
-                    region_id=region_id,
-                    name_data=name_data,
-                    address_data=address_data,
-                    other_field_data={},
-                    data_hash=data_hash,
-                    first_seen_at=now,
-                    last_seen_at=now,
-                    first_upload_id=upload.id,
-                    last_upload_id=upload.id,
-                )
-                self.session.add(voter)
-                new_count += 1
-
-        self.session.commit()
-        return (new_count, updated_count)
 
     def merge_voter_list_with_spec(
         self,
@@ -258,15 +139,12 @@ class VoterListService:
         upload: Any,
         spec: RegionFieldSpecConfig | None = None,
     ) -> tuple[int, int]:
-        """Dispatch merge to spec-driven or hardcoded path based on feature flag."""
-        from app.settings.settings import get_settings
-
-        if get_settings().features.fieldspec.voter_list.enabled and spec is not None:
-            return self.merge_voter_list_with_spec(
-                region_id=region_id, rows=rows, upload=upload, spec=spec
-            )
-        else:
-            return self.merge_voter_list(region_id=region_id, rows=rows, upload=upload)
+        """Merge voter list using spec-driven parsing and hashing."""
+        if spec is None:
+            raise ValueError("spec is required — hardcoded merge removed in G10")
+        return self.merge_voter_list_with_spec(
+            region_id=region_id, rows=rows, upload=upload, spec=spec
+        )
 
     def supersede_previous_uploads(self, region_id: UUID, new_upload: VoterListUpload):
         """Mark previous active uploads as superseded."""
