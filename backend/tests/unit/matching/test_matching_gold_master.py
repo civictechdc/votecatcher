@@ -20,6 +20,7 @@ from rapidfuzz import fuzz
 from tests.unit.matching.matching_databuilder import (
     CONFIDENCE_HIGH,
     CONFIDENCE_MEDIUM,
+    HAS_VOTER_CSV,
     assign_confidence,
     load_ocr_results,
     load_voters_from_csv,
@@ -43,6 +44,12 @@ def _approve_or_compare(approval_path: Path, actual: str) -> None:
         pytest.fail(
             f"Created initial approval file: {approval_path.name}. Re-run to verify."
         )
+
+
+requires_voter_csv = pytest.mark.skipif(
+    not HAS_VOTER_CSV,
+    reason="Voter CSV not available (gitignored, local-only fixture)",
+)
 
 
 class TestOldAlgorithmSanity:
@@ -87,6 +94,7 @@ class TestOldAlgorithmSanity:
         assert assign_confidence(0.0) == "LOW"
 
 
+@requires_voter_csv
 class TestOldAlgorithmApproval:
     """Approval test: 50 OCR results × 100K voters via OLD algorithm.
 
