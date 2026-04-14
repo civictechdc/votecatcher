@@ -19,62 +19,62 @@ DEMO_VOTERS = [
     {
         "first_name": "John",
         "last_name": "Smith",
-        "zip": "20001",
-        "street": "123 Main St NW",
+        "street_number": "123",
+        "street_name": "Main St NW",
     },
     {
         "first_name": "Maria",
         "last_name": "Garcia",
-        "zip": "20002",
-        "street": "456 Oak Ave NE",
+        "street_number": "456",
+        "street_name": "Oak Ave NE",
     },
     {
         "first_name": "Robert",
         "last_name": "Johnson",
-        "zip": "20003",
-        "street": "789 Pine St SW",
+        "street_number": "789",
+        "street_name": "Pine St SW",
     },
     {
         "first_name": "Sarah",
         "last_name": "Williams",
-        "zip": "20004",
-        "street": "321 Elm Blvd SE",
+        "street_number": "321",
+        "street_name": "Elm Blvd SE",
     },
     {
         "first_name": "David",
         "last_name": "Brown",
-        "zip": "20005",
-        "street": "654 Cedar Ln NW",
+        "street_number": "654",
+        "street_name": "Cedar Ln NW",
     },
     {
         "first_name": "Jennifer",
         "last_name": "Davis",
-        "zip": "20006",
-        "street": "987 Maple Dr NE",
+        "street_number": "987",
+        "street_name": "Maple Dr NE",
     },
     {
         "first_name": "Michael",
         "last_name": "Miller",
-        "zip": "20007",
-        "street": "147 Birch Ave NW",
+        "street_number": "147",
+        "street_name": "Birch Ave NW",
     },
     {
         "first_name": "Lisa",
         "last_name": "Wilson",
-        "zip": "20008",
-        "street": "258 Walnut Way SE",
+        "street_number": "258",
+        "street_name": "Walnut Way SE",
     },
     {
         "first_name": "James",
         "last_name": "Taylor",
-        "zip": "20009",
-        "street": "369 Cherry Ct NW",
+        "street_number": "369",
+        "street_name": "Cherry Ct NW",
     },
     {
         "first_name": "Emily",
         "last_name": "Anderson",
-        "zip": "20010",
-        "street": "741 Spruce Pl NE",
+        "street_number": "741",
+        "street_name": "Spruce Pl NE",
     },
 ]
 
@@ -100,6 +100,7 @@ class DemoDataService:
         self.session = session
 
     DEMO_PREFIX = "demo-"
+    DEMO_REGION_KEY = "DEMO"
 
     def load_minimal_session(self) -> dict:
         """Load minimal demo session with 10 entries."""
@@ -120,8 +121,8 @@ class DemoDataService:
 
             # 1. Create Region (with demo prefix for selective reset)
             region = Region(
-                region_key=f"{self.DEMO_PREFIX}dc",
-                region_name="Washington, DC (Demo)",
+                region_key="DEMO",
+                region_name="Demo Region",
                 country_code="US",
             )
             self.session.add(region)
@@ -148,10 +149,8 @@ class DemoDataService:
                         "last_name": voter_data["last_name"],
                     },
                     address_data={
-                        "street": voter_data["street"],
-                        "zip": voter_data["zip"],
-                        "city": "Washington",
-                        "state": "DC",
+                        "street_number": voter_data["street_number"],
+                        "street_name": voter_data["street_name"],
                     },
                 )
                 self.session.add(voter)
@@ -359,11 +358,11 @@ class DemoDataService:
                     """
 					DELETE FROM registered_voters
 					WHERE region_id IN (
-						SELECT id FROM regions WHERE region_key LIKE :prefix
+						SELECT id FROM regions WHERE region_key LIKE :prefix OR region_key = :demo_key
 					)
 				"""
                 ),
-                prefix_param,
+                {**prefix_param, "demo_key": self.DEMO_REGION_KEY},
             ).rowcount
 
             deleted_counts["campaigns"] = conn.execute(
@@ -372,8 +371,10 @@ class DemoDataService:
             ).rowcount
 
             deleted_counts["regions"] = conn.execute(
-                text("DELETE FROM regions WHERE region_key LIKE :prefix"),
-                prefix_param,
+                text(
+                    "DELETE FROM regions WHERE region_key LIKE :prefix OR region_key = :demo_key"
+                ),
+                {**prefix_param, "demo_key": self.DEMO_REGION_KEY},
             ).rowcount
 
             deleted_counts["users"] = conn.execute(

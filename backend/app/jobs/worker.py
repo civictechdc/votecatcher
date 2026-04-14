@@ -818,15 +818,23 @@ class JobWorker:
         if not campaign:
             raise ValueError(f"Campaign not found: {job.campaign_id}")
 
+        from app.dependencies import get_field_spec_service
         from app.matching.matching_service import MatchingService
 
         matching_service = MatchingService(session=session)
+
+        spec_service = next(get_field_spec_service())
+        region_key = "DC"
+        if hasattr(campaign, "region") and campaign.region:
+            region_key = campaign.region.region_key
+        spec = spec_service.get_spec_by_key(region_key)
 
         total_ocr_results = len(ocr_results)
         for idx, ocr_result in enumerate(ocr_results, start=1):
             await asyncio.sleep(MATCHING_DELAY_SECONDS)
 
-            matches = matching_service.match_ocr_result(
+            matches = matching_service.match_ocr_result_with_spec(
+                spec=spec,
                 ocr_text=ocr_result.extracted_text,
                 region_id=campaign.region_id,
                 top_n=5,

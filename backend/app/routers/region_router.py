@@ -10,7 +10,6 @@ from app.api_models import ApiModel
 from app.dependencies import get_field_spec_service, get_session
 from app.services.field_spec_service import FieldSpecService
 from app.services.region_query_service import RegionQueryService
-from app.settings.settings import get_settings
 
 router = APIRouter(prefix="/regions", tags=["regions"])
 
@@ -62,10 +61,6 @@ async def list_regions(
     service: FieldSpecServiceDep,
 ) -> RegionListResponse:
     """List available regions with loaded field specs."""
-    settings = get_settings()
-    if not settings.features.fieldspec.api.enabled:
-        return RegionListResponse(regions=[])
-
     rows = service.list_regions()
 
     return RegionListResponse(
