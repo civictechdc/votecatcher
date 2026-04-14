@@ -1,0 +1,5 @@
+DC name template renders
+
+full name: {'first_name': 'John', 'middle_name': 'M', 'last_name': 'Smith'} => 'John M Smith'
+no middle: {'first_name': 'Jane', 'middle_name': '', 'last_name': 'Doe'} => 'Jane Doe'
+empty middle: {'first_name': 'Bob', 'middle_name': ' ', 'last_name': 'Jones'} => 'Bob Jones'

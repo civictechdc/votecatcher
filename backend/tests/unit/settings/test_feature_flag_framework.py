@@ -59,7 +59,7 @@ class TestFlagMeta:
 class TestRuntimeFlags:
     def test_all_permanent(self):
         flags = RuntimeFlags()
-        for name in flags.model_fields:
+        for name in RuntimeFlags.model_fields:
             flag = getattr(flags, name)
             assert isinstance(flag, FeatureFlag)
             assert flag.meta.lifecycle == FlagLifecycle.permanent
@@ -70,10 +70,11 @@ class TestRuntimeFlags:
         assert flags.always_batch_ocr.enabled is True
 
     def test_override_via_construction(self):
+        defaults = RuntimeFlags()
         flags = RuntimeFlags(
             simulation=FeatureFlag(
                 enabled=True,
-                meta=RuntimeFlags.model_fields["simulation"].default.meta,
+                meta=defaults.simulation.meta,
             ),
         )
         assert flags.simulation.enabled is True
@@ -82,20 +83,20 @@ class TestRuntimeFlags:
 class TestFieldSpecFlags:
     def test_all_transitional(self):
         flags = FieldSpecFlags()
-        for name in flags.model_fields:
+        for name in FieldSpecFlags.model_fields:
             flag = getattr(flags, name)
             assert isinstance(flag, FeatureFlag)
             assert flag.meta.lifecycle == FlagLifecycle.transitional
 
     def test_all_have_issue(self):
         flags = FieldSpecFlags()
-        for name in flags.model_fields:
+        for name in FieldSpecFlags.model_fields:
             flag = getattr(flags, name)
             assert flag.meta.issue is not None, f"{name} missing issue"
 
     def test_all_start_disabled(self):
         flags = FieldSpecFlags()
-        for name in flags.model_fields:
+        for name in FieldSpecFlags.model_fields:
             flag = getattr(flags, name)
             assert flag.enabled is False
 
@@ -105,24 +106,26 @@ class TestFieldSpecFlags:
 
     def test_fully_complete_true_when_all_enabled(self):
         flags = FieldSpecFlags()
-        for name in flags.model_fields:
-            field_info = FieldSpecFlags.model_fields[name]
+        defaults = FieldSpecFlags()
+        for name in FieldSpecFlags.model_fields:
+            default_meta = getattr(defaults, name).meta
             setattr(
                 flags,
                 name,
-                FeatureFlag(enabled=True, meta=field_info.default.meta),
+                FeatureFlag(enabled=True, meta=default_meta),
             )
         assert flags.fully_complete is True
 
     def test_fully_complete_false_if_one_missing(self):
         flags = FieldSpecFlags()
-        names = list(flags.model_fields.keys())
+        defaults = FieldSpecFlags()
+        names = list(FieldSpecFlags.model_fields.keys())
         for name in names[:-1]:
-            field_info = FieldSpecFlags.model_fields[name]
+            default_meta = getattr(defaults, name).meta
             setattr(
                 flags,
                 name,
-                FeatureFlag(enabled=True, meta=field_info.default.meta),
+                FeatureFlag(enabled=True, meta=default_meta),
             )
         assert flags.fully_complete is False
 
@@ -158,7 +161,6 @@ class TestAllFeatures:
             assert flag.meta.lifecycle != FlagLifecycle.permanent
 
     def test_domain_registry_matches_model_fields(self):
-        features = AllFeatures()
         expected = {"runtime", "fieldspec"}
-        actual = set(features.model_fields.keys())
+        actual = set(AllFeatures.model_fields.keys())
         assert actual == expected

@@ -1,11 +1,17 @@
 import os
 
 import pytest
+from approvaltests import set_default_reporter
+from approvaltests.reporters.python_native_reporter import PythonNativeReporter
 
 os.environ["DATABASE_URL"] = "sqlite:///file:memdb?mode=memory&cache=shared&uri=true"
 os.environ["SUPABASE_URL"] = ""
 os.environ["SUPABASE_SERVICE_KEY"] = ""
 os.environ["SUPABASE_DB_PASSWORD"] = ""
+
+
+def pytest_configure(config):
+    set_default_reporter(PythonNativeReporter())
 
 
 def ensure_all_models_registered():

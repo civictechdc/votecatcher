@@ -1,0 +1,7 @@
+DC address template renders
+
+standard NE: {'street_number': '730', 'street_number_suffix': '', 'street_name': 'Lawrence', 'street_type': 'St', 'street_dir_suffix': 'NE', 'apartment_number': ''} => '730 Lawrence St NE'
+with unit SE: {'street_number': '1300', 'street_number_suffix': '', 'street_name': '4th', 'street_type': 'St', 'street_dir_suffix': 'SE', 'apartment_number': 'UNIT 715'} => '1300 4th St SE, Apt UNIT 715'
+with apt hash: {'street_number': '235', 'street_number_suffix': '', 'street_name': 'Carroll', 'street_type': 'St', 'street_dir_suffix': 'NW', 'apartment_number': '#316'} => '235 Carroll St NW, Apt #316'
+N/A street num: {'street_number': 'N/A', 'street_number_suffix': '', 'street_name': '4th', 'street_type': 'St', 'street_dir_suffix': 'NW', 'apartment_number': '#011'} => '4th St NW, Apt #011'
+empty street num: {'street_number': '', 'street_number_suffix': '', 'street_name': 'Emailes', 'street_type': 'St', 'street_dir_suffix': 'SW', 'apartment_number': ''} => 'Emailes St SW'
