@@ -127,17 +127,17 @@ class TestFlagEnforcementPatterns:
 
             settings = get_settings()
 
-            if settings.features.fieldspec.matching.enabled:
+            if settings.features.example.matching.enabled:
                 score = spec_driven_matching(spec, ocr, voter)
             else:
                 score = hardcoded_matching(ocr_name, ocr_address, voter_name, voter_address)
         """)
         lines = code.splitlines()
         has_ref = any(
-            re.search(r"features\.fieldspec\.matching\.enabled", line) for line in lines
+            re.search(r"features\.example\.matching\.enabled", line) for line in lines
         )
         has_else = TestFlagLifecycleSimulation._has_else_after_flag(
-            lines, "fieldspec", "matching"
+            lines, "example", "matching"
         )
         assert has_ref, "Flag should be referenced"
         assert has_else, "Flag should have else branch"
@@ -145,16 +145,15 @@ class TestFlagEnforcementPatterns:
     def test_wrong_usage_no_else(self):
         """Code that gates on a flag but has no fallback — ossified."""
         code = dedent("""\
-            if settings.features.fieldspec.voter_list.enabled:
+            if settings.features.example.parsing.enabled:
                 parse_with_spec()
         """)
         lines = code.splitlines()
         has_ref = any(
-            re.search(r"features\.fieldspec\.voter_list\.enabled", line)
-            for line in lines
+            re.search(r"features\.example\.parsing\.enabled", line) for line in lines
         )
         has_else = TestFlagLifecycleSimulation._has_else_after_flag(
-            lines, "fieldspec", "voter_list"
+            lines, "example", "parsing"
         )
         assert has_ref
         assert not has_else, "Should detect missing else branch"

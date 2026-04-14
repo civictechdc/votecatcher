@@ -22,7 +22,7 @@ class TestDemoDataService:
 
         regions = session.exec(select(Region)).all()
         assert len(regions) == 1
-        assert regions[0].region_key == "demo-dc"
+        assert regions[0].region_key == "DEMO"
 
     def test_load_minimal_session_creates_campaign(self, session: Session):
         """Test that loading creates a campaign with demo prefix."""

@@ -138,21 +138,3 @@ class TestOcrConfig:
         )
         assert config.provider_name == "open_ai"
         assert config.model == "gpt-4o-mini"
-
-
-class TestFeatureConfig:
-    """Tests for FeatureConfig provider."""
-
-    def test_feature_flags(self):
-        """Should configure feature flags."""
-        from app.settings.providers.feature_config import FeatureConfig
-
-        config = FeatureConfig(
-            simulation=True,
-            beta_features=True,
-            debug_mode=False,
-            demo_mode=True,
-        )
-        assert config.simulation is True
-        assert config.beta_features is True
-        assert config.debug_mode is False

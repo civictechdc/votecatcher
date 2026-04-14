@@ -6,6 +6,13 @@ from sqlmodel import Session, select
 from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.schema import Region
 from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
+from app.domain.field_spec import (
+    BallotField,
+    CropConfig,
+    FieldMapping,
+    RegionFieldSpecConfig,
+    VoterRegField,
+)
 from app.services.voter_list_service import VoterListService
 
 
@@ -14,14 +21,86 @@ def voter_list_service(session: Session):
     return VoterListService(session)
 
 
+@pytest.fixture
+def test_spec() -> RegionFieldSpecConfig:
+    return RegionFieldSpecConfig(
+        region_name="Test Region",
+        country_code="US",
+        ballot_fields=[
+            BallotField(
+                id="name",
+                label="Full Name",
+                field_type="text",
+                required_for_matching=True,
+                match_weight=1.0,
+            ),
+            BallotField(
+                id="address",
+                label="Address",
+                field_type="address",
+                required_for_matching=True,
+                match_weight=1.0,
+            ),
+        ],
+        voter_reg_fields=[
+            VoterRegField(
+                id="first_name",
+                csv_column_name="First_Name",
+                data_type="text",
+                category="name",
+            ),
+            VoterRegField(
+                id="last_name",
+                csv_column_name="Last_Name",
+                data_type="text",
+                category="name",
+            ),
+            VoterRegField(
+                id="street",
+                csv_column_name="Street",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="city",
+                csv_column_name="City",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="state",
+                csv_column_name="State",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="zip",
+                csv_column_name="Zip",
+                data_type="text",
+                category="address",
+            ),
+        ],
+        field_mappings=[
+            FieldMapping(ballot_field_id="name", template="{first_name} {last_name}"),
+            FieldMapping(
+                ballot_field_id="address",
+                template="{street} {city} {state} {zip}",
+            ),
+        ],
+        hash_fields=["last_name", "first_name", "street"],
+        crop_config=CropConfig(top_crop=0.385, bottom_crop=0.725, base_threshold=85),
+    )
+
+
 class TestVoterListServiceIntegration:
     """Integration tests for VoterListService with database."""
 
-    def test_merge_voter_list_creates_new_voters(
+    def test_merge_creates_new_voters(
         self,
         session: Session,
         voter_list_service: VoterListService,
         test_region: Region,
+        test_spec: RegionFieldSpecConfig,
     ):
         upload = VoterListUpload(
             region_id=test_region.id,
@@ -52,8 +131,8 @@ class TestVoterListServiceIntegration:
             },
         ]
 
-        new_count, updated_count = voter_list_service.merge_voter_list(
-            test_region.id, rows, upload
+        new_count, updated_count = voter_list_service.merge(
+            test_region.id, rows, upload, spec=test_spec
         )
 
         assert new_count == 2
@@ -64,11 +143,12 @@ class TestVoterListServiceIntegration:
         ).all()
         assert len(voters) == 2
 
-    def test_merge_voter_list_updates_existing(
+    def test_merge_updates_existing(
         self,
         session: Session,
         voter_list_service: VoterListService,
         test_region: Region,
+        test_spec: RegionFieldSpecConfig,
     ):
         upload1 = VoterListUpload(
             region_id=test_region.id,
@@ -91,7 +171,7 @@ class TestVoterListServiceIntegration:
             },
         ]
 
-        voter_list_service.merge_voter_list(test_region.id, rows, upload1)
+        voter_list_service.merge(test_region.id, rows, upload1, spec=test_spec)
 
         upload2 = VoterListUpload(
             region_id=test_region.id,
@@ -103,8 +183,8 @@ class TestVoterListServiceIntegration:
         session.add(upload2)
         session.commit()
 
-        new_count, updated_count = voter_list_service.merge_voter_list(
-            test_region.id, rows, upload2
+        new_count, updated_count = voter_list_service.merge(
+            test_region.id, rows, upload2, spec=test_spec
         )
 
         assert new_count == 0
@@ -179,24 +259,12 @@ class TestVoterListServiceIntegration:
         assert active is not None
         assert active.original_filename == "second.csv"
 
-    def test_get_or_create_schema_creates_default(
-        self,
-        session: Session,
-        voter_list_service: VoterListService,
-        test_region: Region,
-    ):
-        schema = voter_list_service.get_or_create_schema(test_region.id)
-
-        assert schema is not None
-        assert schema.region_id == test_region.id
-        assert "first_name" in schema.column_mappings.values()
-        assert len(schema.hash_fields) > 0
-
     def test_delete_voters_for_region(
         self,
         session: Session,
         voter_list_service: VoterListService,
         test_region: Region,
+        test_spec: RegionFieldSpecConfig,
     ):
         upload = VoterListUpload(
             region_id=test_region.id,
@@ -218,7 +286,7 @@ class TestVoterListServiceIntegration:
                 "zip": "12345",
             },
         ]
-        voter_list_service.merge_voter_list(test_region.id, rows, upload)
+        voter_list_service.merge(test_region.id, rows, upload, spec=test_spec)
 
         deleted_count = voter_list_service.delete_voters_for_region(test_region.id)
 

@@ -56,7 +56,7 @@ def client(session: Session):
 
     clear_engine_cache()
     with (
-        patch("app.persistence.session.get_engine", return_value=test_engine),
+        patch("app.persistence.session.get_engine", return_value=_TestEngine()),
         TestClient(app) as test_client,
     ):
         yield test_client
