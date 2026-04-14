@@ -1,6 +1,6 @@
 [project]
 name = "ballot-petition-signature-verifier"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 description = "A python package for verifying ballot petition signatures"
 readme = "README.md"
 requires-python = ">=3.12,<4"
@@ -66,6 +66,8 @@ dev = [
     "commitizen>=4.13.10",
     "approvaltests>=0.2.0",
     "pytest-approvaltests>=0.2.0",
+    "pandas-stubs>=2.2.0",
+    "types-requests>=2.32.0",
 ]
 
 [build-system]

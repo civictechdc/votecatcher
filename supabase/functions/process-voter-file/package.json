@@ -1,6 +1,6 @@
 {
   "name": "process-voter-file",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha.2",
   "dependencies": {
     "papaparse": "^5.4.1"
   }

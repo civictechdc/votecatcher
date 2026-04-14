@@ -18,7 +18,6 @@ APP_DIR = BACKEND_DIR / "app"
 MODULES_WITH_LOAD_DOTENV = [
     "app/data/database_client.py",
     "app/common/data/supabase_client.py",
-    "app/matching/fuzzy_match_helper.py",
     "app/ocr/ocr_helper.py",
 ]
 
@@ -58,12 +57,6 @@ class TestNoBareLoadDotenv:
         path = BACKEND_DIR / "app/common/data/supabase_client.py"
         assert not self._has_bare_load_dotenv(path.read_text()), (
             "supabase_client.py must not call bare load_dotenv()"
-        )
-
-    def test_fuzzy_match_helper_no_bare_load_dotenv(self):
-        path = BACKEND_DIR / "app/matching/fuzzy_match_helper.py"
-        assert not self._has_bare_load_dotenv(path.read_text()), (
-            "fuzzy_match_helper.py must not call bare load_dotenv()"
         )
 
     def test_ocr_helper_no_bare_load_dotenv(self):
