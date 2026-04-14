@@ -9,6 +9,7 @@ from sqlmodel import Session
 
 if TYPE_CHECKING:
     from app.domain.campaign import Campaign
+    from app.domain.field_spec import RegionFieldSpecConfig
     from app.domain.petition import Petition
     from app.domain.voter import RegisteredVoter
 
@@ -63,3 +64,29 @@ class VoterRepository(Protocol):
     def find_by_id(self, voter_id: int) -> RegisteredVoter | None: ...
 
     def find_by_region(self, region_id: UUID) -> list[RegisteredVoter]: ...
+
+
+@runtime_checkable
+class FieldSpecRepository(Protocol):
+    """Manages field spec persistence."""
+
+    def find_by_region(self, region_id: UUID) -> RegionFieldSpecConfig | None: ...
+
+    def find_by_region_key(self, region_key: str) -> RegionFieldSpecConfig | None: ...
+
+    def save(
+        self, spec: RegionFieldSpecConfig, region_id: UUID
+    ) -> RegionFieldSpecConfig: ...
+
+    def upsert(
+        self,
+        region_key: str,
+        spec: RegionFieldSpecConfig,
+        *,
+        region_name: str,
+        country_code: str,
+    ) -> None: ...
+
+    def delete(self, region_id: UUID) -> bool: ...
+
+    def list_regions(self) -> list[tuple[str, str, UUID]]: ...
