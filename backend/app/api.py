@@ -17,7 +17,25 @@ from app.routers import (
 )
 from app.startup import ApplicationStartup
 
-_startup = ApplicationStartup()
+
+def _default_spec_loader():
+    from app.settings.settings import get_settings
+
+    settings = get_settings()
+    if not settings.features.fieldspec.service.enabled:
+        return 0, []
+
+    from app.persistence.session import get_engine
+    from app.repositories.field_spec_repo import FieldSpecRepositoryImpl
+    from app.services.field_spec_service import FieldSpecService
+
+    engine = get_engine()
+    repo = FieldSpecRepositoryImpl(engine)
+    service = FieldSpecService(repo)
+    return service.load_all_specs(fail_fast=True)
+
+
+_startup = ApplicationStartup(spec_loader=_default_spec_loader)
 
 
 @asynccontextmanager
