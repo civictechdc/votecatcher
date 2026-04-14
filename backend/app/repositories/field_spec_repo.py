@@ -173,6 +173,10 @@ class FieldSpecRepositoryImpl:
 
     def list_regions(self) -> list[tuple[str, str, UUID]]:
         with self._engine.create_session() as session:
-            statement = select(RegionFieldSpecModel)
-            models = session.exec(statement).all()
-            return [(m.region_key, m.name, m.region_id) for m in models]
+            statement = select(
+                RegionFieldSpecModel.region_key,
+                Region.region_name,
+                RegionFieldSpecModel.region_id,
+            ).join(Region, RegionFieldSpecModel.region_id == Region.id)
+            rows = session.exec(statement).all()
+            return [(key, name, rid) for key, name, rid in rows]

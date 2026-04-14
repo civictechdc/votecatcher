@@ -54,6 +54,9 @@ class FieldSpecService:
             )
         return result
 
+    def list_regions(self) -> list[tuple[str, str, UUID]]:
+        return self._repo.list_regions()
+
     def validate_spec(self, spec: RegionFieldSpecConfig) -> list[str]:
         errors = spec.validate_integrity()
         if not spec.ballot_fields:

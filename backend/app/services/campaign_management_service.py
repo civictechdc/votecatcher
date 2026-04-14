@@ -27,6 +27,18 @@ class CampaignManagementService:
     def __init__(self, session: Session):
         self._session = session
 
+    def _resolve_region(self, region_key: str) -> uuid.UUID:
+        """Look up region by key. Creates DC default if key is DC and not found."""
+        normalized = region_key.upper()
+        region = self._session.exec(
+            select(Region).where(Region.region_key == normalized)
+        ).first()
+        if region:
+            return region.id
+        if normalized == "DC":
+            return self._ensure_default_region()
+        raise ValueError(f"Region '{region_key}' not found")
+
     def _ensure_default_region(self) -> uuid.UUID:
         region = self._session.exec(
             select(Region).where(Region.region_key == "DC")
@@ -74,7 +86,7 @@ class CampaignManagementService:
         Returns:
             Created campaign response
         """
-        region_id = self._ensure_default_region()
+        region_id = self._resolve_region(region)
         campaign = Campaign(
             unique_name=name,
             title=name,

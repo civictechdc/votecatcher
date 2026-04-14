@@ -2,6 +2,7 @@ import hmac
 import os
 from collections.abc import Generator
 from pathlib import Path
+from uuid import UUID
 
 import structlog
 from fastapi import Header, HTTPException, status
@@ -44,6 +45,21 @@ def get_field_spec_service() -> Generator:
     engine = _get_engine()
     repo = FieldSpecRepositoryImpl(engine)
     yield FieldSpecService(repo)
+
+
+def get_region_by_key(session: Session, region_key: str) -> UUID:
+    """Look up a region by key, creating default DC if needed."""
+    from sqlmodel import select
+
+    from app.data.database.model.schema import Region
+
+    normalized_key = region_key.upper()
+    region = session.exec(
+        select(Region).where(Region.region_key == normalized_key)
+    ).first()
+    if region:
+        return region.id
+    raise ValueError(f"Region '{region_key}' not found")
 
 
 def get_engine_dependency() -> Generator[Session]:

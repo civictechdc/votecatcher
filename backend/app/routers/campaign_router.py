@@ -52,9 +52,14 @@ def create_campaign(
     """Create a new campaign."""
     from app.services.campaign_management_service import CampaignManagementService
 
-    return CampaignManagementService(session).create_campaign(
-        name=request.name, year=request.year, region=request.region
-    )
+    try:
+        return CampaignManagementService(session).create_campaign(
+            name=request.name, year=request.year, region=request.region
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
 
 
 @router.get("", response_model=CampaignListResponse)
