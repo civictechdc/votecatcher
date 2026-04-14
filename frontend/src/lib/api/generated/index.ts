@@ -1,5 +1,6 @@
 export { Configuration } from "./runtime";
 export { CampaignsApi } from "./CampaignsApi";
+export { RegionsApi } from "./RegionsApi";
 export { UploadApi } from "./UploadApi";
 export { JobsApi } from "./JobsApi";
 export { ResultsApi } from "./ResultsApi";
@@ -18,3 +19,5 @@ export type { ResultResponse, ResultsListResponse, MatchPrediction } from "./mod
 export type { VoterListUploadResponse, PetitionUploadResponse } from "./models/Upload";
 
 export type { SessionResponse } from "./models/Session";
+
+export type { RegionSummary, RegionListResponse } from "./models/Region";

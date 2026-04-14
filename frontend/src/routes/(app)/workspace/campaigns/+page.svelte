@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { campaigns } from '$lib/stores/campaigns';
+	import { regions } from '$lib/stores/regions';
 	import { Button, Table, LoadingState, Modal, ErrorDisplay } from '$lib/components/ui';
 	import type { CampaignResponse } from '$lib/api/generated';
 	import type { SortConfig } from '$lib/components/ui/Table.svelte';
@@ -27,6 +28,7 @@
 
 	onMount(() => {
 		campaigns.fetchAll();
+		regions.fetchAll();
 	});
 
 	function formatDate(date: string | Date | null | undefined): string {
@@ -219,14 +221,20 @@
 			<label for="region" class="block text-sm font-medium text-slate-700 mb-1">
 				Region
 			</label>
-			<input
-				type="text"
+			<select
 				id="region"
 				bind:value={formData.region}
 				class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
-				placeholder="e.g., DC"
 				required
-			/>
+			>
+				{#if $regions.loading || $regions.regions.length === 0}
+					<option value="DC">District of Columbia</option>
+				{:else}
+					{#each $regions.regions as region}
+						<option value={region.key}>{region.name}</option>
+					{/each}
+				{/if}
+			</select>
 		</div>
 
 		<div class="flex justify-end gap-3 pt-4">

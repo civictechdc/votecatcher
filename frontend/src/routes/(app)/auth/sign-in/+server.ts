@@ -8,7 +8,8 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	// Simple mock: if password matches mock value, require two-factor; else sign in
-	if (password === "2fa") { // pragma: allowlist secret
+	if (password === "2fa") {
+		// pragma: allowlist secret
 		return new Response(JSON.stringify({ ok: true, twoFactorRequired: true }), {
 			status: 200,
 			headers: { "Content-Type": "application/json" },

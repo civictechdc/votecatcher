@@ -131,9 +131,13 @@ graph TB
 - [ ] Document database schema decisions (if non-obvious)
 
 ### Phase 2: Backend Services
-- [ ] Write C4 Components diagram for backend
-- [ ] Create ADRs for major decisions (OCR client abstraction, job orchestration, matching strategy)
-- [ ] Document confidence calibration results
+- [x] Write C4 Components diagram for backend
+- [x] Create ADRs for major decisions (OCR client abstraction, job orchestration, matching strategy)
+- [x] Document confidence calibration results
+- [x] ADR-0006: Spec-driven field configuration
+- [x] ADR-0007: Feature flag lifecycle framework
+- [x] ADR-0008: Template-based field rendering
+- [x] C4 Components updated with FieldSpecService, VoterDataAdapter, FieldSpecRepo
 
 ### Phase 3: Frontend Foundation
 - [ ] Document frontend architecture decisions (if non-obvious)
