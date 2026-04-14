@@ -63,6 +63,7 @@ class MatchingService:
         region_id: Any,
         zipcode: str | None = None,
     ) -> list[RegisteredVoter]:
+        """DEPRECATED: Hardcoded zip filter. Use pre_filter_voters_with_spec instead. Removed in G10."""
         statement = select(RegisteredVoter).where(
             RegisteredVoter.region_id == region_id
         )
@@ -114,7 +115,7 @@ class MatchingService:
         return list(voters)
 
     def extract_name_and_address(self, ocr_text: dict[str, Any]) -> tuple[str, str]:
-        """Extract name and address from OCR result text.
+        """DEPRECATED: Hardcoded name/address extraction. Removed in G10.
 
         Handles various OCR output formats gracefully.
 
@@ -141,20 +142,7 @@ class MatchingService:
         voter_name: str,
         voter_address: str,
     ) -> float:
-        """Calculate weighted similarity score between OCR and voter data.
-
-        Uses harmonic mean of name and address similarity scores to balance
-        the contribution of each field.
-
-        Args:
-            ocr_name: OCR-extracted name
-            ocr_address: OCR-extracted address
-            voter_name: Voter registration name
-            voter_address: Voter registration address
-
-        Returns:
-            Similarity score between 0.0 and 1.0
-        """
+        """DEPRECATED: Hardcoded harmonic mean scoring. Use calculate_spec_driven_similarity instead. Removed in G10."""
         if not ocr_name and not ocr_address:
             return 0.0
 
@@ -222,29 +210,58 @@ class MatchingService:
         else:
             return ConfidenceLevel.LOW
 
+    def match_ocr_result_with_spec(
+        self,
+        spec: RegionFieldSpecConfig,
+        ocr_text: dict[str, Any],
+        region_id: Any,
+        top_n: int = 5,
+    ) -> list[dict[str, Any]]:
+        """Spec-driven matching pipeline using dynamic field weights."""
+        voters = self.pre_filter_voters_with_spec(
+            spec=spec,
+            region_id=region_id,
+        )
+
+        if not voters:
+            logger.warning(
+                "No voters found for region",
+                region_id=str(region_id),
+            )
+            return []
+
+        matches: list[dict[str, Any]] = []
+
+        for voter in voters:
+            result = self.calculate_spec_driven_similarity(spec, ocr_text, voter)
+            matches.append(
+                {
+                    "voter_id": voter.id,
+                    "similarity_score": result["similarity_score"],
+                    "confidence_level": result["confidence_level"],
+                    "field_scores": result["field_scores"],
+                }
+            )
+
+        matches.sort(key=lambda x: x["similarity_score"], reverse=True)
+
+        top_matches = matches[:top_n]
+
+        logger.debug(
+            "Matched OCR result (spec-driven)",
+            top_score=top_matches[0]["similarity_score"] if top_matches else 0,
+            matches_returned=len(top_matches),
+        )
+
+        return top_matches
+
     def match_ocr_result(
         self,
         ocr_text: dict[str, Any],
         region_id: Any,
         top_n: int = 5,
     ) -> list[dict[str, Any]]:
-        """Match single OCR result against registered voters.
-
-        Implements the matching algorithm:
-        1. Pre-filter voters by region
-        2. Extract name and address from OCR
-        3. Calculate similarity for each voter
-        4. Rank by score and return top N
-
-        Args:
-            ocr_text: OCR extracted text dictionary
-            region_id: Region UUID for pre-filtering
-            top_n: Number of top predictions to return (default 5)
-
-        Returns:
-            List of match dictionaries with voter_id, similarity_score,
-            confidence_level, and field_scores
-        """
+        """DEPRECATED: Hardcoded matching pipeline. Use calculate_spec_driven_similarity instead. Removed in G10."""
         voters = self.pre_filter_voters(region_id=region_id)
 
         if not voters:
@@ -298,14 +315,7 @@ class MatchingService:
         return top_matches
 
     def _build_voter_name(self, voter: RegisteredVoter) -> str:
-        """Build full name string from voter name_data.
-
-        Args:
-            voter: RegisteredVoter instance
-
-        Returns:
-            Full name string
-        """
+        """DEPRECATED: Hardcoded name builder. Spec-driven path uses render_template. Removed in G10."""
         name_data = voter.name_data or {}
         parts = [
             name_data.get("first_name", ""),
@@ -315,14 +325,7 @@ class MatchingService:
         return " ".join(part for part in parts if part)
 
     def _build_voter_address(self, voter: RegisteredVoter) -> str:
-        """Build full address string from voter address_data.
-
-        Args:
-            voter: RegisteredVoter instance
-
-        Returns:
-            Full address string
-        """
+        """DEPRECATED: Hardcoded address builder. Spec-driven path uses render_template. Removed in G10."""
         address_data = voter.address_data or {}
         parts = [
             address_data.get("street_number", ""),
@@ -380,12 +383,34 @@ class MatchingService:
         medium_count = 0
         low_count = 0
 
+        from app.settings.settings import get_settings
+
+        spec = None
+        if get_settings().features.fieldspec.matching.enabled:
+            from app.dependencies import get_field_spec_service
+
+            spec_service = next(get_field_spec_service())
+            region_key = "DC"
+            if hasattr(job.campaign, "region") and job.campaign.region:
+                region_key = job.campaign.region.region_key
+            spec = spec_service.get_spec_by_key(region_key)
+        else:
+            spec = None
+
         for ocr_result in ocr_results:
-            matches = self.match_ocr_result(
-                ocr_text=ocr_result.extracted_text,
-                region_id=job.campaign.region_id,
-                top_n=5,
-            )
+            if spec:
+                matches = self.match_ocr_result_with_spec(
+                    spec=spec,
+                    ocr_text=ocr_result.extracted_text,
+                    region_id=job.campaign.region_id,
+                    top_n=5,
+                )
+            else:
+                matches = self.match_ocr_result(
+                    ocr_text=ocr_result.extracted_text,
+                    region_id=job.campaign.region_id,
+                    top_n=5,
+                )
 
             self.store_match_results(
                 ocr_result_id=ocr_result.id,

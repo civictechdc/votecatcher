@@ -19,11 +19,10 @@ import structlog
 from sqlmodel import Session, func, select
 
 from app.data.database.model.jobs import JobStatus, MatcherJob, OcrJob
-from app.data.database.model.match_result import ConfidenceLevel, MatchResult
+from app.data.database.model.match_result import MatchResult
 from app.data.database.model.ocr_result import OcrResult
 from app.data.database.model.petition_crop import PetitionCrop
 from app.data.database.model.petition_scan import PetitionScan
-from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.schema import Campaign
 from app.data.database.session import engine
 from app.events import JobProgressEvent, JobStatusEvent, MetricsUpdatedEvent, event_bus
@@ -819,25 +818,19 @@ class JobWorker:
         if not campaign:
             raise ValueError(f"Campaign not found: {job.campaign_id}")
 
-        voters = session.exec(
-            select(RegisteredVoter).where(
-                RegisteredVoter.region_id == campaign.region_id
-            )
-        ).all()
+        from app.matching.matching_service import MatchingService
 
-        if not voters:
-            logger.warning(
-                "No voters found for region",
-                job_id=job.id,
-                region_id=str(campaign.region_id),
-            )
-            return
+        matching_service = MatchingService(session=session)
 
         total_ocr_results = len(ocr_results)
         for idx, ocr_result in enumerate(ocr_results, start=1):
             await asyncio.sleep(MATCHING_DELAY_SECONDS)
 
-            matches = self._find_top_matches(ocr_result, voters, top_n=5)
+            matches = matching_service.match_ocr_result(
+                ocr_text=ocr_result.extracted_text,
+                region_id=campaign.region_id,
+                top_n=5,
+            )
 
             for rank, match in enumerate(matches, start=1):
                 match_result = MatchResult(
@@ -915,84 +908,6 @@ class JobWorker:
             "name": sample_names[name_idx],
             "address": sample_addresses[address_idx],
         }
-
-    def _find_top_matches(
-        self,
-        ocr_result: OcrResult,
-        voters: list[RegisteredVoter],
-        top_n: int = 5,
-    ) -> list[dict]:
-        """Find top matching voters for an OCR result.
-
-        Uses simple string similarity for MVP. Can be enhanced with
-        RapidFuzz for production.
-
-        Args:
-                ocr_result: OCR result to match
-                voters: List of registered voters to match against
-                top_n: Number of top matches to return
-
-        Returns:
-                List of match dictionaries with voter_id, similarity_score,
-                confidence_level, and field_scores
-        """
-        from rapidfuzz import fuzz
-
-        ocr_name = str(ocr_result.extracted_text.get("name", ""))
-        ocr_address = str(ocr_result.extracted_text.get("address", ""))
-
-        matches = []
-        for voter in voters:
-            name_data = voter.name_data or {}
-            address_data = voter.address_data or {}
-
-            voter_name = " ".join(
-                [
-                    name_data.get("first_name") or "",
-                    name_data.get("last_name") or "",
-                ]
-            ).strip()
-
-            voter_address = " ".join(
-                [
-                    address_data.get("street") or "",
-                    address_data.get("city") or "",
-                    address_data.get("state") or "",
-                    address_data.get("zip") or "",
-                ]
-            ).strip()
-
-            name_score = fuzz.ratio(ocr_name, voter_name) / 100.0
-            address_score = fuzz.ratio(ocr_address, voter_address) / 100.0
-
-            if name_score + address_score > 0:
-                similarity = (2 * name_score * address_score) / (
-                    name_score + address_score
-                )
-            else:
-                similarity = 0.0
-
-            if similarity >= 0.85:
-                confidence = ConfidenceLevel.HIGH
-            elif similarity >= 0.60:
-                confidence = ConfidenceLevel.MEDIUM
-            else:
-                confidence = ConfidenceLevel.LOW
-
-            matches.append(
-                {
-                    "voter_id": voter.id,
-                    "similarity_score": similarity,
-                    "confidence_level": confidence,
-                    "field_scores": {
-                        "name": name_score,
-                        "address": address_score,
-                    },
-                }
-            )
-
-        matches.sort(key=lambda x: x["similarity_score"], reverse=True)
-        return matches[:top_n]
 
 
 _worker: JobWorker | None = None

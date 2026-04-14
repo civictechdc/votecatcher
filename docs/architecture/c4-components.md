@@ -25,6 +25,7 @@ graph TB
         ProvidersService[providers.py]
         SupabaseService[supabase_service.py]
         VoterListService[voter_list_service.py]
+        FieldSpecService[field_spec_service.py]
     end
 
     subgraph Infrastructure
@@ -57,12 +58,24 @@ graph TB
         FuzzyMatchHelper[fuzzy_match_helper.py]
         MatchColumns[match_columns.py]
         MatchRepository[match_repository.py]
+        VoterDataAdapter[voter_data_adapter.py]
     end
 
     subgraph Data Layer - Repositories
         CampaignRepo[campaign_repo.py]
         VoterRepo[voter_repo.py]
         PetitionRepo[petition_repo.py]
+        FieldSpecRepo[field_spec_repo.py]
+    end
+
+    subgraph Domain Layer
+        FieldSpec[field_spec.py]
+        TemplateRenderer[render_template]
+    end
+
+    subgraph Regional Config
+        DCSpec[dc.json5]
+        RegionsDir[app/regions/]
     end
 
     CampaignRouter --> CampaignRepo
@@ -97,6 +110,14 @@ graph TB
     MatchingService --> MatchColumns
     MatchingService --> MatchRepository
     MatchingService --> VoterRepo
+    MatchingService --> FieldSpecService
+    MatchingService --> VoterDataAdapter
+    VoterDataAdapter --> FieldSpec
+
+    FieldSpecService --> FieldSpecRepo
+    FieldSpecService --> RegionsDir
+
+    FieldSpecRepo --> FieldSpec
 
     style OCRManager fill:#1168bd,color:#fff
     style MatchingService fill:#1168bd,color:#fff
@@ -117,7 +138,7 @@ graph TB
 | demo_router | `demo_router.py` | Demo mode operations |
 | events_router | `events_router.py` | SSE real-time event streaming |
 | provider_router | `provider_router.py` | LLM provider management |
-| region_router | `region_router.py` | Region CRUD operations |
+| region_router | `region_router.py` | Region CRUD operations, region list endpoint, field spec lookup |
 | results_router | `results_router.py` | Match results retrieval |
 | database_router | `database_router.py` | Database health and status |
 
@@ -129,6 +150,7 @@ graph TB
 | providers | `providers.py` | LLM provider registry and selection |
 | supabase_service | `supabase_service.py` | Supabase integration |
 | voter_list_service | `voter_list_service.py` | Voter list import and parsing |
+| field_spec_service | `field_spec_service.py` | Field spec use cases and spec loading |
 
 ### OCR Module
 
@@ -153,6 +175,7 @@ graph TB
 | Fuzzy Match Helper | `fuzzy_match_helper.py` | RapidFuzz-based name/address matching |
 | Match Columns | `match_columns.py` | Column-level comparison logic |
 | Match Repository | `match_repository.py` | Match result persistence |
+| Voter Data Adapter | `voter_data_adapter.py` | Flattens voter JSON blobs for template rendering |
 
 ### Data Layer (Repositories)
 
@@ -161,6 +184,7 @@ graph TB
 | Campaign Repo | `repositories/campaign_repo.py` | Campaign database operations |
 | Voter Repo | `repositories/voter_repo.py` | Voter list database operations |
 | Petition Repo | `repositories/petition_repo.py` | Petition and crop database operations |
+| Field Spec Repo | `repositories/field_spec_repo.py` | Field spec persistence |
 
 ### Infrastructure
 
@@ -168,6 +192,19 @@ graph TB
 |-----------|----------------|
 | Job Orchestrator | State machine for job phases (OCR -> Matching) |
 | SSE Manager | Manage real-time connections, broadcast updates |
+
+### Domain Layer
+
+| Component | File | Responsibility |
+|-----------|------|----------------|
+| Field Spec | `domain/field_spec.py` | Domain value objects: BallotField, VoterRegField, RegionFieldSpecConfig, render_template |
+
+### Regional Config
+
+| Component | File | Responsibility |
+|-----------|------|----------------|
+| DC Spec | `regions/dc.json5` | DC region field spec source file |
+| Regions Dir | `regions/` | Directory for regional JSON5 spec files |
 
 ## Key Interactions
 
