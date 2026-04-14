@@ -4,11 +4,140 @@ Tests follow BDD scenarios from SPEC.md §3.4:
 - Name + address extraction from OCR results
 - RapidFuzz fuzzy matching with weighted scoring
 - Confidence level assignment
+- Spec-driven matching with dynamic field weights and render_template
 """
 
 from unittest.mock import MagicMock
+from uuid import uuid4
 
+from app.domain.field_spec import (
+    BallotField,
+    CropConfig,
+    FieldMapping,
+    RegionFieldSpecConfig,
+    VoterRegField,
+)
+from app.domain.voter import RegisteredVoter
 from app.matching.matching_service import MatchingService
+
+
+def _dc_spec() -> RegionFieldSpecConfig:
+    return RegionFieldSpecConfig(
+        region_name="District of Columbia",
+        country_code="US",
+        ballot_fields=[
+            BallotField(
+                id="name",
+                label="Full Name",
+                field_type="text",
+                required_for_matching=True,
+                match_weight=1.0,
+            ),
+            BallotField(
+                id="address",
+                label="Address",
+                field_type="address",
+                required_for_matching=True,
+                match_weight=1.0,
+            ),
+            BallotField(
+                id="ward",
+                label="Ward",
+                field_type="integer",
+                required_for_matching=False,
+                match_weight=0.3,
+            ),
+        ],
+        voter_reg_fields=[
+            VoterRegField(
+                id="last_name",
+                csv_column_name="Last_Name",
+                data_type="text",
+                category="name",
+            ),
+            VoterRegField(
+                id="first_name",
+                csv_column_name="First_Name",
+                data_type="text",
+                category="name",
+            ),
+            VoterRegField(
+                id="middle_name",
+                csv_column_name="Middle_Name",
+                data_type="text",
+                category="name",
+            ),
+            VoterRegField(
+                id="street_number",
+                csv_column_name="Street_Number",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="street_name",
+                csv_column_name="Street_Name",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="street_type",
+                csv_column_name="Street_Type",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="street_dir_suffix",
+                csv_column_name="Street_Dir_Suffix",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="zip_code",
+                csv_column_name="Zip_Code",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="ward",
+                csv_column_name="WARD",
+                data_type="integer",
+                category="geography",
+            ),
+        ],
+        field_mappings=[
+            FieldMapping(
+                ballot_field_id="name",
+                template="{first_name} {middle_name} {last_name}",
+            ),
+            FieldMapping(
+                ballot_field_id="address",
+                template="{street_number} {street_name} {street_type} {street_dir_suffix}",
+            ),
+            FieldMapping(ballot_field_id="ward", template="{ward}"),
+        ],
+        hash_fields=[
+            "last_name",
+            "first_name",
+            "street_number",
+            "street_name",
+            "zip_code",
+        ],
+        crop_config=CropConfig(top_crop=0.385, bottom_crop=0.725, base_threshold=85),
+    )
+
+
+def _make_voter(
+    name_data: dict | None = None,
+    address_data: dict | None = None,
+    other_field_data: dict | None = None,
+) -> RegisteredVoter:
+    return RegisteredVoter(
+        id=1,
+        region_id=uuid4(),
+        name_data=name_data or {},
+        address_data=address_data or {},
+        other_field_data=other_field_data or {},
+    )
 
 
 class TestMatchingServiceExtraction:
@@ -173,3 +302,100 @@ class TestMatchingServiceInitialization:
         )
         assert service.high_threshold == 0.90
         assert service.medium_threshold == 0.70
+
+
+class TestSpecDrivenSimilarity:
+    def test_spec_driven_similarity_uses_spec_weights(self):
+        spec = _dc_spec()
+        service = MatchingService(session=MagicMock())
+        voter = _make_voter(
+            name_data={"first_name": "John", "last_name": "Smith"},
+            address_data={
+                "street_number": "123",
+                "street_name": "Main",
+                "street_type": "St",
+            },
+            other_field_data={"ward": "3"},
+        )
+        ocr_text = {"name": "John Smith", "address": "123 Main St"}
+
+        result = service.calculate_spec_driven_similarity(spec, ocr_text, voter)
+
+        assert "field_scores" in result
+        assert "name" in result["field_scores"]
+        assert "address" in result["field_scores"]
+
+    def test_spec_driven_similarity_builds_voter_name_from_spec(self):
+        spec = _dc_spec()
+        service = MatchingService(session=MagicMock())
+        voter = _make_voter(
+            name_data={"first_name": "Jane", "middle_name": "A", "last_name": "Doe"},
+        )
+        ocr_text = {"name": "Jane A Doe", "address": ""}
+
+        result = service.calculate_spec_driven_similarity(spec, ocr_text, voter)
+
+        assert result["field_scores"]["name"] >= 0.95
+
+    def test_spec_driven_similarity_builds_voter_address_from_spec(self):
+        spec = _dc_spec()
+        service = MatchingService(session=MagicMock())
+        voter = _make_voter(
+            address_data={
+                "street_number": "456",
+                "street_name": "Oak",
+                "street_type": "Ave",
+                "street_dir_suffix": "NE",
+            },
+        )
+        ocr_text = {"name": "", "address": "456 Oak Ave NE"}
+
+        result = service.calculate_spec_driven_similarity(spec, ocr_text, voter)
+
+        assert result["field_scores"]["address"] >= 0.80
+
+    def test_spec_driven_ward_has_reduced_weight(self):
+        spec = _dc_spec()
+        service = MatchingService(session=MagicMock())
+        voter = _make_voter(other_field_data={"ward": "3"})
+        ocr_text = {"name": "", "address": "", "ward": "3"}
+
+        service.calculate_spec_driven_similarity(spec, ocr_text, voter)
+
+        name_matchable = any(
+            f.id == "name" and f.match_weight == 1.0 for f in spec.matchable_fields()
+        )
+        ward_field = next(f for f in spec.ballot_fields if f.id == "ward")
+        assert ward_field.match_weight == 0.3
+        assert name_matchable
+
+    def test_spec_driven_field_scores_keyed_by_ballot_field_id(self):
+        spec = _dc_spec()
+        service = MatchingService(session=MagicMock())
+        voter = _make_voter(
+            name_data={"first_name": "John", "last_name": "Smith"},
+            address_data={"street_number": "123", "street_name": "Main"},
+            other_field_data={"ward": "3"},
+        )
+        ocr_text = {"name": "John Smith", "address": "123 Main", "ward": "3"}
+
+        result = service.calculate_spec_driven_similarity(spec, ocr_text, voter)
+
+        matchable_ids = {f.id for f in spec.matchable_fields()}
+        for field_id in matchable_ids:
+            assert field_id in result["field_scores"]
+
+    def test_spec_driven_overall_score_is_weighted(self):
+        spec = _dc_spec()
+        service = MatchingService(session=MagicMock())
+        voter = _make_voter(
+            name_data={"first_name": "John", "last_name": "Smith"},
+            address_data={"street_number": "123", "street_name": "Main"},
+        )
+        ocr_text = {"name": "John Smith", "address": "123 Main"}
+
+        result = service.calculate_spec_driven_similarity(spec, ocr_text, voter)
+
+        total_weight = spec.total_match_weight()
+        assert total_weight > 0
+        assert 0.0 <= result["similarity_score"] <= 1.0
