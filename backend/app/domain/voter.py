@@ -19,7 +19,12 @@ class RegisteredVoter(BaseModel, frozen=True):
 
     @property
     def full_name(self) -> str:
-        """Get full name from name_data."""
+        """Get full name from name_data.
+
+        Simplified default using hardcoded keys (first_name, middle_name, last_name).
+        Not spec-aware — for display/logging only. Spec-driven matching uses
+        render_template with field_mappings instead.
+        """
         parts = [
             self.name_data.get("first_name", ""),
             self.name_data.get("middle_name", ""),
@@ -28,7 +33,11 @@ class RegisteredVoter(BaseModel, frozen=True):
         return " ".join(p for p in parts if p)
 
     def is_matchable(self) -> bool:
-        """Check if voter has enough data for matching."""
+        """Check if voter has enough data for matching.
+
+        Simplified default using hardcoded key (last_name). Not spec-aware.
+        Spec-driven matching checks matchable_fields() on RegionFieldSpecConfig.
+        """
         return bool(self.name_data.get("last_name"))
 
     def __repr__(self) -> str:
