@@ -154,53 +154,56 @@ class Settings(BaseSettings):
         from app.settings.providers.features.fieldspec import FieldSpecFlags
         from app.settings.providers.features.runtime import RuntimeFlags
 
+        runtime_defaults = RuntimeFlags()
+        fieldspec_defaults = FieldSpecFlags()
+
         return AllFeatures(
             runtime=RuntimeFlags(
                 simulation=FeatureFlag(
                     enabled=self.feature_simulation,
-                    meta=RuntimeFlags.model_fields["simulation"].default.meta,
+                    meta=runtime_defaults.simulation.meta,
                 ),
                 beta_features=FeatureFlag(
                     enabled=self.feature_beta,
-                    meta=RuntimeFlags.model_fields["beta_features"].default.meta,
+                    meta=runtime_defaults.beta_features.meta,
                 ),
                 debug_mode=FeatureFlag(
                     enabled=self.feature_debug,
-                    meta=RuntimeFlags.model_fields["debug_mode"].default.meta,
+                    meta=runtime_defaults.debug_mode.meta,
                 ),
                 demo_mode=FeatureFlag(
                     enabled=self.feature_demo,
-                    meta=RuntimeFlags.model_fields["demo_mode"].default.meta,
+                    meta=runtime_defaults.demo_mode.meta,
                 ),
                 demo_reset=FeatureFlag(
                     enabled=self.demo_reset,
-                    meta=RuntimeFlags.model_fields["demo_reset"].default.meta,
+                    meta=runtime_defaults.demo_reset.meta,
                 ),
                 always_batch_ocr=FeatureFlag(
                     enabled=self.always_batch_ocr,
-                    meta=RuntimeFlags.model_fields["always_batch_ocr"].default.meta,
+                    meta=runtime_defaults.always_batch_ocr.meta,
                 ),
             ),
             fieldspec=FieldSpecFlags(
                 persistence=FeatureFlag(
                     enabled=self.fieldspec_persistence,
-                    meta=FieldSpecFlags.model_fields["persistence"].default.meta,
+                    meta=fieldspec_defaults.persistence.meta,
                 ),
                 service=FeatureFlag(
                     enabled=self.fieldspec_service,
-                    meta=FieldSpecFlags.model_fields["service"].default.meta,
+                    meta=fieldspec_defaults.service.meta,
                 ),
                 matching=FeatureFlag(
                     enabled=self.fieldspec_matching,
-                    meta=FieldSpecFlags.model_fields["matching"].default.meta,
+                    meta=fieldspec_defaults.matching.meta,
                 ),
                 voter_list=FeatureFlag(
                     enabled=self.fieldspec_voter_list,
-                    meta=FieldSpecFlags.model_fields["voter_list"].default.meta,
+                    meta=fieldspec_defaults.voter_list.meta,
                 ),
                 api=FeatureFlag(
                     enabled=self.fieldspec_api,
-                    meta=FieldSpecFlags.model_fields["api"].default.meta,
+                    meta=fieldspec_defaults.api.meta,
                 ),
             ),
         )

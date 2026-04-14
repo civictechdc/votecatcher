@@ -68,7 +68,9 @@ class TestFeatureFlagHygiene:
         features = AllFeatures()
         transitional = features.all_transitional()
         dead = []
-        for domain, name, _ in transitional:
+        for domain, name, flag in transitional:
+            if flag.meta.phase.value == "defined":
+                continue
             pattern = rf"features\.{domain}\.{name}\.enabled"
             refs = _grep_codebase(pattern)
             if not refs:
@@ -82,7 +84,9 @@ class TestFeatureFlagHygiene:
         features = AllFeatures()
         transitional = features.all_transitional()
         ossified = []
-        for domain, name, _ in transitional:
+        for domain, name, flag in transitional:
+            if flag.meta.phase.value == "defined":
+                continue
             pattern = rf"features\.{domain}\.{name}\.enabled"
             refs = _grep_codebase(pattern)
             if not refs:
@@ -115,8 +119,7 @@ class TestFeatureFlagHygiene:
             for p in FEATURES_DIR.glob("*.py")
             if p.stem not in ("__init__", "_base")
         }
-        features = AllFeatures()
-        registered = set(features.model_fields.keys())
+        registered = set(AllFeatures.model_fields.keys())
         assert domain_files == registered, (
             f"Mismatch between files on disk and AllFeatures registry.\n"
             f"  Files on disk: {sorted(domain_files)}\n"

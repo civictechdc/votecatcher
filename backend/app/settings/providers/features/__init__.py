@@ -34,9 +34,9 @@ class AllFeatures(BaseModel):
     def all_transitional(self) -> list[tuple[str, str, FeatureFlag]]:
         """Collect all transitional flags with (domain, name, flag) for hygiene checks."""
         flags: list[tuple[str, str, FeatureFlag]] = []
-        for domain_name in self.model_fields:
+        for domain_name in self.__class__.model_fields:
             domain = getattr(self, domain_name)
-            for flag_name in domain.model_fields:
+            for flag_name in domain.__class__.model_fields:
                 flag = getattr(domain, flag_name)
                 if (
                     isinstance(flag, FeatureFlag)
