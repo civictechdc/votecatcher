@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
 
+import app.data.database.model.region_field_spec  # noqa: F401 — ensures table creation
 from app.data.database.model.schema import Campaign, Region
 
 
@@ -27,25 +28,31 @@ def session_fixture():
 def client(session: Session):
     """Create test client with the test database session.
 
-    Patches init_db and get_engine to prevent any real DB connections.
-    Overrides both get_session and get_db_session dependencies.
+    Uses the same engine as the session fixture so data is shared.
     """
     from app.api import app
     from app.data.database.session import get_db_session
-    from app.dependencies import get_session
+    from app.dependencies import get_field_spec_service, get_session
     from app.persistence.session import clear_engine_cache
+    from app.repositories.field_spec_repo import FieldSpecRepositoryImpl
+    from app.services.field_spec_service import FieldSpecService
 
-    test_engine = create_engine(
-        "sqlite:///file:memdb?mode=memory&cache=shared&uri=true",
-        connect_args={"check_same_thread": False},
-    )
-    SQLModel.metadata.create_all(test_engine)
+    test_engine = session.get_bind()
+
+    class _TestEngine:
+        def create_session(self):
+            return Session(test_engine)
 
     def override_get_session():
         yield session
 
+    def override_get_field_spec_service():
+        repo = FieldSpecRepositoryImpl(_TestEngine())
+        yield FieldSpecService(repo)
+
     app.dependency_overrides[get_session] = override_get_session
     app.dependency_overrides[get_db_session] = override_get_session
+    app.dependency_overrides[get_field_spec_service] = override_get_field_spec_service
 
     clear_engine_cache()
     with (
@@ -57,7 +64,6 @@ def client(session: Session):
     session.close()
     app.dependency_overrides.clear()
     clear_engine_cache()
-    test_engine.dispose()
 
 
 @pytest.fixture

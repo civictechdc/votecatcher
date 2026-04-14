@@ -11,6 +11,7 @@ from app.routers import (
     events_router,
     job_router,
     provider_router,
+    region_router,
     results_router,
     session_router,
     upload_router,
@@ -67,6 +68,7 @@ app.include_router(demo_router)
 app.include_router(events_router)
 app.include_router(job_router)
 app.include_router(provider_router)
+app.include_router(region_router)
 app.include_router(results_router)
 app.include_router(session_router)
 app.include_router(upload_router)
