@@ -81,6 +81,10 @@ plans/
 .agent-workspace/
 .agent/
 
+# Agent skills (tooling config, not application source)
+.agents/
+.claude/skills/
+
 # Secret detection baseline (contains detected patterns)
 .secrets.baseline
 
