@@ -1,0 +1,108 @@
+{
+  "region_name": "Demo Region",
+  "country_code": "US",
+  "ballot_fields": [
+    {
+      "id": "name",
+      "label": "Full Name",
+      "field_type": "text",
+      "required_for_matching": true,
+      "match_weight": 1.0
+    },
+    {
+      "id": "address",
+      "label": "Address",
+      "field_type": "address",
+      "required_for_matching": true,
+      "match_weight": 1.0
+    },
+    {
+      "id": "ward",
+      "label": "Ward",
+      "field_type": "integer",
+      "required_for_matching": false,
+      "match_weight": 0.3
+    },
+    {
+      "id": "date_signed",
+      "label": "Date Signed",
+      "field_type": "date",
+      "required_for_matching": false,
+      "match_weight": 0.0
+    }
+  ],
+  "voter_reg_fields": [
+    {
+      "id": "last_name",
+      "csv_column_name": "Last_Name",
+      "data_type": "text",
+      "category": "name"
+    },
+    {
+      "id": "first_name",
+      "csv_column_name": "First_Name",
+      "data_type": "text",
+      "category": "name"
+    },
+    {
+      "id": "middle_name",
+      "csv_column_name": "Middle_Name",
+      "data_type": "text",
+      "category": "name"
+    },
+    {
+      "id": "street_number",
+      "csv_column_name": "Street_Number",
+      "data_type": "text",
+      "category": "address"
+    },
+    {
+      "id": "street_name",
+      "csv_column_name": "Street_Name",
+      "data_type": "text",
+      "category": "address"
+    },
+    {
+      "id": "street_type",
+      "csv_column_name": "Street_Type",
+      "data_type": "text",
+      "category": "address"
+    },
+    {
+      "id": "street_dir_suffix",
+      "csv_column_name": "Street_Dir_Suffix",
+      "data_type": "text",
+      "category": "address"
+    }
+  ],
+  "field_mappings": [
+    {
+      "ballot_field_id": "name",
+      "template": "{first_name} {middle_name} {last_name}"
+    },
+    {
+      "ballot_field_id": "address",
+      "template": "{street_number} {street_name} {street_type} {street_dir_suffix}"
+    },
+    {
+      "ballot_field_id": "ward",
+      "template": ""
+    },
+    {
+      "ballot_field_id": "date_signed",
+      "template": ""
+    }
+  ],
+  "hash_fields": [
+    "last_name",
+    "first_name",
+    "street_number",
+    "street_name"
+  ],
+  "crop_config": {
+    "top_crop": 0.385,
+    "bottom_crop": 0.725,
+    "base_threshold": 85
+  },
+  "pre_filter_field_id": null
+}

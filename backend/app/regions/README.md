@@ -7,6 +7,7 @@ This directory contains JSON5 field specification files for each supported voter
 | File | Region | Description |
 |------|--------|-------------|
 | `dc.json5` | District of Columbia | DC Board of Elections voter roll format |
+| `demo.json5` | Demo Region | Simplified DC subset for dev/demo/simulation modes and fallback |
 
 ## Adding a New Region
 
