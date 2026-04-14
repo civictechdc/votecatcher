@@ -4,6 +4,7 @@ from app.events.event_types import (
     JobProgressEvent,
     JobStatusEvent,
     MetricsUpdatedEvent,
+    SetupUpdatedEvent,
 )
 
 
@@ -73,3 +74,33 @@ class TestMetricsUpdatedEvent:
         json_str = event.model_dump_json()
         assert "metrics:updated" in json_str
         assert "total_signatures" in json_str
+
+
+class TestSetupUpdatedEvent:
+    def test_setup_updated_event_values(self):
+        assert EventType.SETUP_UPDATED == "setup:updated"
+
+    def test_setup_updated_event_has_required_fields(self):
+        event = SetupUpdatedEvent(
+            campaign_id="abc123",
+            upload_type="voter_list",
+        )
+        assert event.campaign_id == "abc123"
+        assert event.upload_type == "voter_list"
+        assert event.event_type == EventType.SETUP_UPDATED
+
+    def test_setup_updated_event_petition_type(self):
+        event = SetupUpdatedEvent(
+            campaign_id="def456",
+            upload_type="petition",
+        )
+        assert event.upload_type == "petition"
+
+    def test_setup_updated_event_serializes_to_json(self):
+        event = SetupUpdatedEvent(
+            campaign_id="abc123",
+            upload_type="voter_list",
+        )
+        json_str = event.model_dump_json()
+        assert "setup:updated" in json_str
+        assert "voter_list" in json_str

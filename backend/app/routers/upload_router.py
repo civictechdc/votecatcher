@@ -7,6 +7,8 @@ from sqlmodel import Session
 
 from app.api_models import ApiModel
 from app.dependencies import get_session
+from app.events.event_bus import event_bus
+from app.events.event_types import SetupUpdatedEvent
 from app.files.file_service import FileValidationError
 from app.services.upload_service import UploadService
 
@@ -64,6 +66,13 @@ async def upload_voter_list(
             file=file,
         )
 
+        await event_bus.publish(
+            SetupUpdatedEvent(
+                campaign_id=campaign_id,
+                upload_type="voter_list",
+            )
+        )
+
         return VoterListUploadResponse(
             message="Voter list uploaded and imported successfully",
             file_path=result.file_path,
@@ -115,6 +124,13 @@ async def upload_petition(
             campaign_id=campaign_id,
             file=file,
             region=region,
+        )
+
+        await event_bus.publish(
+            SetupUpdatedEvent(
+                campaign_id=campaign_id,
+                upload_type="petition",
+            )
         )
 
         return PetitionUploadResponse(

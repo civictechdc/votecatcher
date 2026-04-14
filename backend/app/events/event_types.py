@@ -10,6 +10,7 @@ class EventType(str, Enum):
     JOB_STATUS_CHANGED = "job:status_changed"
     JOB_PROGRESS = "job:progress"
     METRICS_UPDATED = "metrics:updated"
+    SETUP_UPDATED = "setup:updated"
 
 
 class BaseEvent(BaseModel):
@@ -40,3 +41,8 @@ class MetricsUpdatedEvent(BaseEvent):
     total_signatures: int
     processed: int
     high_confidence: int
+
+
+class SetupUpdatedEvent(BaseEvent):
+    event_type: Literal[EventType.SETUP_UPDATED] = EventType.SETUP_UPDATED
+    upload_type: str

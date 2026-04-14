@@ -138,7 +138,7 @@ def render_template(template: str, voter_row: dict[str, str]) -> str:
     placeholders = _extract_placeholders(template)
     result = template
     for field in placeholders:
-        value = voter_row.get(field, "").strip()
+        value = (voter_row.get(field) or "").strip()
         if value.upper() in NA_SENTINELS:
             value = ""
         result = result.replace(f"{{{field}}}", value)

@@ -97,3 +97,17 @@ class TestRenderTemplate:
             {"a": "na", "b": "test"},
         )
         assert result == "test"
+
+    def test_none_value_treated_as_empty(self):
+        result = render_template(
+            "{first_name} {last_name}",
+            {"first_name": None, "last_name": "Doe"},
+        )
+        assert result == "Doe"
+
+    def test_all_none_values_returns_empty(self):
+        result = render_template(
+            "{first_name} {last_name}",
+            {"first_name": None, "last_name": None},
+        )
+        assert result == ""

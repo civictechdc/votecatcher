@@ -206,6 +206,10 @@ jobs:
         id: typecheck
         run: cd frontend && bun run check
 
+      - name: Build
+        id: build
+        run: cd frontend && bun run build
+
       - name: Test
         id: test
         run: cd frontend && bun run prepare && bun run test:unit
@@ -222,6 +226,7 @@ jobs:
 
           if [[ "${{ steps.lint.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Lint (oxlint + prettier)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Lint (oxlint + prettier)"; fi
           if [[ "${{ steps.typecheck.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Typecheck (svelte-check)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Typecheck (svelte-check)"; fi
+          if [[ "${{ steps.build.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Build (vite)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Build (vite)"; fi
           if [[ "${{ steps.test.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Tests (vitest)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Tests (vitest)"; fi
           if [[ "${{ steps.security-scan.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Security scan (bun audit)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Security scan (bun audit)"; fi
 
@@ -245,6 +250,7 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Lint (oxlint + prettier)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Typecheck (svelte-check)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Build (vite)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Tests (vitest)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Security scan (bun audit)" >> "$GITHUB_STEP_SUMMARY"
 
