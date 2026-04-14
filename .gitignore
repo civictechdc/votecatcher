@@ -148,6 +148,7 @@ supabase/.env
 !.vscode/tasks.json
 !backend/typecheck-baseline.json
 !backend/pyrightconfig.json
+!backend/tests/**/assets/*.json
 !frontend/.fallowrc.json
 
 # Upload directories
