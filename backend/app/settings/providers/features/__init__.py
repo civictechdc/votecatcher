@@ -5,7 +5,6 @@ Usage:
 
     features = AllFeatures()
     features.runtime.simulation.enabled   # True/False
-    features.fieldspec.matching.enabled   # True/False
 
 Adding a new flag domain:
 1. Create a new file in this directory (e.g., newfeature.py)
@@ -23,13 +22,11 @@ Removing a transitional domain (G10 cleanup pattern):
 from pydantic import BaseModel, Field
 
 from app.settings.providers.features._base import FeatureFlag, FlagLifecycle
-from app.settings.providers.features.fieldspec import FieldSpecFlags
 from app.settings.providers.features.runtime import RuntimeFlags
 
 
 class AllFeatures(BaseModel):
     runtime: RuntimeFlags = Field(default_factory=RuntimeFlags)
-    fieldspec: FieldSpecFlags = Field(default_factory=FieldSpecFlags)
 
     def all_transitional(self) -> list[tuple[str, str, FeatureFlag]]:
         """Collect all transitional flags with (domain, name, flag) for hygiene checks."""
@@ -49,7 +46,6 @@ class AllFeatures(BaseModel):
 __all__ = [
     "AllFeatures",
     "RuntimeFlags",
-    "FieldSpecFlags",
     "FeatureFlag",
     "FlagLifecycle",
 ]
