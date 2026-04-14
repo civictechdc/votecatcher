@@ -119,42 +119,44 @@ def _make_dc_spec() -> RegionFieldSpecConfig:
 class TestVoterListService:
     """Tests for VoterListService utility methods."""
 
-    def test_compute_data_hash_basic(self):
-        """Test hash computation with basic fields."""
+    def test_compute_data_hash_all_basic(self):
+        """Test hash computation with basic fields across all categories."""
         service = VoterListService(None)
         name_data = {"first_name": "John", "last_name": "Doe"}
         address_data = {"street": "123 Main St", "zip": "12345"}
         hash_fields = ["first_name", "last_name", "street", "zip"]
 
-        result = service.compute_data_hash(name_data, address_data, hash_fields)
+        result = service.compute_data_hash_all(name_data, address_data, {}, hash_fields)
 
         assert result is not None
         assert len(result) == 64
 
-    def test_compute_data_hash_consistent(self):
+    def test_compute_data_hash_all_consistent(self):
         """Test that same input produces same hash."""
         service = VoterListService(None)
         name_data = {"first_name": "Jane", "last_name": "Smith"}
         address_data = {"street": "456 Oak Ave", "zip": "67890"}
         hash_fields = ["first_name", "last_name", "street", "zip"]
 
-        hash1 = service.compute_data_hash(name_data, address_data, hash_fields)
-        hash2 = service.compute_data_hash(name_data, address_data, hash_fields)
+        hash1 = service.compute_data_hash_all(name_data, address_data, {}, hash_fields)
+        hash2 = service.compute_data_hash_all(name_data, address_data, {}, hash_fields)
 
         assert hash1 == hash2
 
-    def test_compute_data_hash_different_inputs(self):
+    def test_compute_data_hash_all_different_inputs(self):
         """Test that different inputs produce different hashes."""
         service = VoterListService(None)
         hash_fields = ["first_name", "last_name"]
 
-        hash1 = service.compute_data_hash(
+        hash1 = service.compute_data_hash_all(
             {"first_name": "John", "last_name": "Doe"},
+            {},
             {},
             hash_fields,
         )
-        hash2 = service.compute_data_hash(
+        hash2 = service.compute_data_hash_all(
             {"first_name": "Jane", "last_name": "Smith"},
+            {},
             {},
             hash_fields,
         )
@@ -178,26 +180,26 @@ class TestVoterListService:
         assert service._normalize_name("123 Main Street") == "123 main street"
         assert service._normalize_name("APT 4B") == "apt 4b"
 
-    def test_compute_data_hash_missing_fields(self):
+    def test_compute_data_hash_all_missing_fields(self):
         """Test hash computation when some fields are missing."""
         service = VoterListService(None)
         name_data = {"first_name": "John"}
         address_data = {"street": "123 Main St"}
         hash_fields = ["first_name", "last_name", "street"]
 
-        result = service.compute_data_hash(name_data, address_data, hash_fields)
+        result = service.compute_data_hash_all(name_data, address_data, {}, hash_fields)
 
         assert result is not None
         assert len(result) == 64
 
-    def test_compute_data_hash_empty_hash_fields(self):
+    def test_compute_data_hash_all_empty_hash_fields(self):
         """Test hash computation with empty hash fields list."""
         service = VoterListService(None)
         name_data = {"first_name": "John"}
         address_data = {"street": "123 Main St"}
         hash_fields = []
 
-        result = service.compute_data_hash(name_data, address_data, hash_fields)
+        result = service.compute_data_hash_all(name_data, address_data, {}, hash_fields)
 
         empty_hash = hashlib.sha256(b"").hexdigest()
         assert result == empty_hash
@@ -324,7 +326,7 @@ class TestSpecDrivenParsing:
 
 
 class TestSpecDrivenMerge:
-    """G8.3: Tests for replacing get_or_create_schema with spec-driven merge."""
+    """G8.3: Tests for spec-driven merge."""
 
     def test_merge_uses_spec_hash_fields(self):
         """merge_voter_list_with_spec uses spec-defined hash_fields."""
@@ -425,10 +427,10 @@ class TestSpecDrivenMerge:
 
 
 class TestSchemaReplacement:
-    """G8.3: Tests for replacing get_or_create_schema with spec lookup."""
+    """G8.3: Tests for spec-driven parsing replacing hardcoded schema."""
 
     def test_spec_replaces_schema_for_csv_parsing(self):
-        """parse_csv_with_spec produces same shape as parse_csv_with_schema would."""
+        """parse_csv_with_spec produces correct field mappings."""
         service = VoterListService(None)
         spec = _make_dc_spec()
 
@@ -443,8 +445,8 @@ class TestSchemaReplacement:
         assert rows[0]["first_name"] == "John"
         assert rows[0]["street_number"] == "123"
 
-    def test_spec_hash_fields_replaces_schema_hash_fields(self):
-        """spec.hash_fields replaces RegionSchema.hash_fields."""
+    def test_spec_hash_fields(self):
+        """spec.hash_fields drives hash computation."""
         spec = _make_dc_spec()
         service = VoterListService(None)
 
@@ -462,32 +464,27 @@ class TestSchemaReplacement:
         assert result is not None
         assert len(result) == 64
 
-    def test_existing_voters_with_old_keys_still_work_with_hash(self):
-        """Old voters with 'street'/'zip' keys can still be hashed via compute_data_hash (old method)."""
-        service = VoterListService(None)
 
-        old_name_data = {"first_name": "John", "last_name": "Doe"}
-        old_address_data = {
-            "street": "123 Main St",
-            "city": "Washington",
-            "state": "DC",
-            "zip": "20001",
-        }
-        old_hash_fields = ["first_name", "last_name", "street", "zip"]
+class TestMergeRequiresSpec:
+    """G10: merge() requires spec — hardcoded path removed."""
 
-        result = service.compute_data_hash(
-            old_name_data, old_address_data, old_hash_fields
-        )
+    def test_merge_raises_without_spec(self):
+        """merge() raises ValueError when spec is None."""
+        service = VoterListService(MagicMock())
 
-        assert result is not None
-        assert len(result) == 64
+        try:
+            service.merge(
+                region_id="region-1",
+                rows=[{"last_name": "Doe"}],
+                upload=MagicMock(),
+                spec=None,
+            )
+            assert False, "Should have raised ValueError"
+        except ValueError as e:
+            assert "spec is required" in str(e)
 
-
-class TestFlagGuard:
-    """G8: Feature flag guard tests for spec-driven voter list."""
-
-    def test_merge_dispatches_to_spec_when_flag_on(self):
-        """merge_voter_list dispatches to spec-driven path when spec provided."""
+    def test_merge_delegates_to_spec_driven(self):
+        """merge() delegates to merge_voter_list_with_spec when spec provided."""
         spec = _make_dc_spec()
         mock_session = MagicMock()
         mock_session.exec.return_value.first.return_value = None
@@ -498,7 +495,7 @@ class TestFlagGuard:
         upload = MagicMock()
         upload.id = "upload-1"
 
-        new_count, updated_count = service.merge_voter_list_with_spec(
+        new_count, updated_count = service.merge(
             region_id="region-1", rows=rows, upload=upload, spec=spec
         )
 

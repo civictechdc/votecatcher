@@ -114,7 +114,7 @@ class TestDemoDataLoading:
 
             # Check demo region exists (filter by demo- prefix)
             demo_regions = session.exec(
-                select(Region).where(Region.region_key == "demo-dc")
+                select(Region).where(Region.region_key == "DEMO")
             ).all()
             assert len(demo_regions) == 1
 
@@ -124,7 +124,7 @@ class TestDemoDataLoading:
 
             # Check demo region is deleted
             demo_regions_after = session.exec(
-                select(Region).where(Region.region_key == "demo-dc")
+                select(Region).where(Region.region_key == "DEMO")
             ).all()
             assert len(demo_regions_after) == 0
         finally:

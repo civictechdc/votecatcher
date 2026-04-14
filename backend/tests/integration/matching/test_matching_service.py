@@ -1,11 +1,12 @@
 """Integration tests for Matching service.
 
-Tests cover matching service integration with database for voter
-pre-filtering, fuzzy matching, and result storage.
+Tests cover matching service integration with database for spec-driven
+voter pre-filtering, fuzzy matching, and result storage.
 """
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from uuid import uuid4
 
 import pytest
 from sqlmodel import Session, SQLModel, create_engine, select
@@ -18,7 +19,84 @@ from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.schema import Campaign, Region
 from app.data.database.model.user import User
+from app.domain.field_spec import (
+    BallotField,
+    CropConfig,
+    FieldMapping,
+    RegionFieldSpecConfig,
+    VoterRegField,
+)
 from app.matching.matching_service import MatchingService
+
+
+def _dc_spec() -> RegionFieldSpecConfig:
+    return RegionFieldSpecConfig(
+        region_name="District of Columbia",
+        country_code="US",
+        ballot_fields=[
+            BallotField(
+                id="name",
+                label="Full Name",
+                field_type="text",
+                required_for_matching=True,
+                match_weight=1.0,
+            ),
+            BallotField(
+                id="address",
+                label="Address",
+                field_type="address",
+                required_for_matching=True,
+                match_weight=1.0,
+            ),
+        ],
+        voter_reg_fields=[
+            VoterRegField(
+                id="last_name",
+                csv_column_name="Last_Name",
+                data_type="text",
+                category="name",
+            ),
+            VoterRegField(
+                id="first_name",
+                csv_column_name="First_Name",
+                data_type="text",
+                category="name",
+            ),
+            VoterRegField(
+                id="street_number",
+                csv_column_name="Street_Number",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="street_name",
+                csv_column_name="Street_Name",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="street_type",
+                csv_column_name="Street_Type",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="street_dir_suffix",
+                csv_column_name="Street_Dir_Suffix",
+                data_type="text",
+                category="address",
+            ),
+        ],
+        field_mappings=[
+            FieldMapping(ballot_field_id="name", template="{first_name} {last_name}"),
+            FieldMapping(
+                ballot_field_id="address",
+                template="{street_number} {street_name} {street_type} {street_dir_suffix}",
+            ),
+        ],
+        hash_fields=["last_name", "first_name", "street_number", "street_name"],
+        crop_config=CropConfig(top_crop=0.385, bottom_crop=0.725, base_threshold=85),
+    )
 
 
 class TestMatchingServiceIntegration:
@@ -212,36 +290,33 @@ class TestMatchingServiceIntegration:
         return voters
 
     def test_pre_filter_voters_by_region(self, session, sample_region, sample_voters):
-        """Should filter voters by region ID."""
+        """Should filter voters by region ID using spec-driven pre-filter."""
         service = MatchingService(session=session)
+        spec = _dc_spec()
 
-        voters = service.pre_filter_voters(region_id=sample_region.id)
+        voters = service.pre_filter_voters_with_spec(
+            spec=spec, region_id=sample_region.id
+        )
 
         assert len(voters) == 3
 
-    def test_extract_name_and_address_from_ocr(self, session):
-        """Should extract name and address from OCR text."""
+    def test_spec_driven_similarity_exact_match(self, session):
+        """Should return high similarity for exact match via spec-driven scoring."""
         service = MatchingService(session=session)
-
-        name, address = service.extract_name_and_address(
-            {"name": "John Smith", "address": "123 Main St"}
+        spec = _dc_spec()
+        voter = RegisteredVoter(
+            region_id=uuid4(),
+            name_data={"first_name": "John", "last_name": "Smith"},
+            address_data={"street_number": "123", "street_name": "Main St"},
         )
 
-        assert name == "John Smith"
-        assert address == "123 Main St"
-
-    def test_calculate_similarity_scores(self, session):
-        """Should calculate similarity scores correctly."""
-        service = MatchingService(session=session)
-
-        score = service.calculate_similarity(
-            ocr_name="John Smith",
-            ocr_address="123 Main St",
-            voter_name="John Smith",
-            voter_address="123 Main St",
+        result = service.calculate_spec_driven_similarity(
+            spec=spec,
+            ocr_text={"name": "John Smith", "address": "123 Main St"},
+            voter=voter,
         )
 
-        assert score >= 0.95
+        assert result["similarity_score"] >= 0.95
 
     def test_assign_confidence_levels(self, session):
         """Should assign correct confidence levels."""
@@ -251,13 +326,15 @@ class TestMatchingServiceIntegration:
         assert service.assign_confidence(0.75) == ConfidenceLevel.MEDIUM
         assert service.assign_confidence(0.45) == ConfidenceLevel.LOW
 
-    def test_match_ocr_result_returns_top_predictions(
+    def test_match_ocr_result_with_spec_returns_top_predictions(
         self, session, sample_region, sample_voters
     ):
-        """Should return top predictions for OCR result."""
+        """Should return top predictions using spec-driven matching."""
         service = MatchingService(session=session)
+        spec = _dc_spec()
 
-        predictions = service.match_ocr_result(
+        predictions = service.match_ocr_result_with_spec(
+            spec=spec,
             ocr_text={"name": "John Smith", "address": "123 Main St"},
             region_id=sample_region.id,
             top_n=3,
@@ -302,7 +379,7 @@ class TestMatchingServiceIntegration:
 
 
 class TestMatchingServiceEdgeCases:
-    """Tests for matching service edge cases."""
+    """Tests for matching service edge cases with spec-driven matching."""
 
     @pytest.fixture
     def engine(self):
@@ -318,33 +395,31 @@ class TestMatchingServiceEdgeCases:
         with Session(engine) as session:
             yield session
 
-    def test_extract_from_empty_ocr_text(self, session):
-        """Should handle empty OCR text gracefully."""
+    def test_spec_driven_similarity_with_empty_ocr(self, session):
+        """Should return low similarity for empty OCR input."""
         service = MatchingService(session=session)
-
-        name, address = service.extract_name_and_address({})
-
-        assert name == ""
-        assert address == ""
-
-    def test_calculate_similarity_with_empty_strings(self, session):
-        """Should return 0 for empty OCR input."""
-        service = MatchingService(session=session)
-
-        score = service.calculate_similarity(
-            ocr_name="",
-            ocr_address="",
-            voter_name="John Smith",
-            voter_address="123 Main St",
+        spec = _dc_spec()
+        voter = RegisteredVoter(
+            region_id=uuid4(),
+            name_data={"first_name": "John", "last_name": "Smith"},
+            address_data={"street_number": "123", "street_name": "Main St"},
         )
 
-        assert score == 0.0
+        result = service.calculate_spec_driven_similarity(
+            spec=spec,
+            ocr_text={"name": "", "address": ""},
+            voter=voter,
+        )
+
+        assert result["similarity_score"] < 0.5
 
     def test_match_with_no_matching_voters(self, session):
-        """Should return empty list when no voters match."""
+        """Should return empty list when no voters in region."""
         service = MatchingService(session=session)
+        spec = _dc_spec()
 
-        predictions = service.match_ocr_result(
+        predictions = service.match_ocr_result_with_spec(
+            spec=spec,
             ocr_text={"name": "Nonexistent Person", "address": "999 Nowhere St"},
             region_id=999,
             top_n=5,

@@ -1,7 +1,7 @@
 """Tests for G7.7: worker.py delegates matching to MatchingService.
 
-Verifies that _run_matching_phase uses MatchingService.match_ocr_result
-instead of inline duplicate matching logic.
+Verifies that _run_matching_phase uses MatchingService.match_ocr_result_with_spec
+with spec-driven matching.
 """
 
 from unittest.mock import MagicMock, patch
@@ -45,7 +45,7 @@ def mock_ocr_job():
 
 class TestWorkerDelegatesToMatchingService:
     @pytest.mark.asyncio
-    async def test_matching_phase_calls_matching_service(
+    async def test_matching_phase_calls_match_ocr_result_with_spec(
         self, worker, mock_session, mock_job, mock_ocr_job
     ):
         ocr_result = MagicMock()
@@ -54,15 +54,20 @@ class TestWorkerDelegatesToMatchingService:
 
         campaign = MagicMock(spec=Campaign)
         campaign.region_id = MagicMock()
+        campaign.region = MagicMock()
+        campaign.region.region_key = "DC"
 
         mock_session.exec.return_value.all.return_value = [ocr_result]
         mock_session.get.return_value = campaign
 
-        with patch(
-            "app.matching.matching_service.MatchingService"
-        ) as MockMatchingService:
+        with (
+            patch(
+                "app.matching.matching_service.MatchingService"
+            ) as MockMatchingService,
+            patch("app.dependencies.get_field_spec_service") as mock_get_spec,
+        ):
             mock_ms_instance = MockMatchingService.return_value
-            mock_ms_instance.match_ocr_result.return_value = [
+            mock_ms_instance.match_ocr_result_with_spec.return_value = [
                 {
                     "voter_id": 99,
                     "similarity_score": 0.9,
@@ -71,10 +76,16 @@ class TestWorkerDelegatesToMatchingService:
                 }
             ]
 
+            mock_spec_service = MagicMock()
+            mock_spec = MagicMock()
+            mock_spec_service.get_spec_by_key.return_value = mock_spec
+            mock_get_spec.return_value = iter([mock_spec_service])
+
             await worker._run_matching_phase(mock_session, mock_job, mock_ocr_job)
 
             MockMatchingService.assert_called_once_with(session=mock_session)
-            mock_ms_instance.match_ocr_result.assert_called_once_with(
+            mock_ms_instance.match_ocr_result_with_spec.assert_called_once_with(
+                spec=mock_spec,
                 ocr_text=ocr_result.extracted_text,
                 region_id=campaign.region_id,
                 top_n=5,
@@ -90,6 +101,8 @@ class TestWorkerDelegatesToMatchingService:
 
         campaign = MagicMock(spec=Campaign)
         campaign.region_id = MagicMock()
+        campaign.region = MagicMock()
+        campaign.region.region_key = "DC"
 
         mock_session.exec.return_value.all.return_value = [ocr_result]
         mock_session.get.return_value = campaign
@@ -101,12 +114,20 @@ class TestWorkerDelegatesToMatchingService:
             "field_scores": {"name": 0.8, "address": 0.7},
         }
 
-        with patch(
-            "app.matching.matching_service.MatchingService"
-        ) as MockMatchingService:
-            MockMatchingService.return_value.match_ocr_result.return_value = [
+        with (
+            patch(
+                "app.matching.matching_service.MatchingService"
+            ) as MockMatchingService,
+            patch("app.dependencies.get_field_spec_service") as mock_get_spec,
+        ):
+            MockMatchingService.return_value.match_ocr_result_with_spec.return_value = [
                 match_data
             ]
+
+            mock_spec_service = MagicMock()
+            mock_spec = MagicMock()
+            mock_spec_service.get_spec_by_key.return_value = mock_spec
+            mock_get_spec.return_value = iter([mock_spec_service])
 
             await worker._run_matching_phase(mock_session, mock_job, mock_ocr_job)
 

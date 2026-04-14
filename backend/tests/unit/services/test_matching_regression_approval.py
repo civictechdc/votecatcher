@@ -1,34 +1,141 @@
-"""Characterization test — captures current hardcoded MatchingService behavior.
+"""Characterization test — captures spec-driven MatchingService behavior.
 
-This approval test establishes a baseline BEFORE the spec-driven refactor.
-After G7.3, re-run to compare. If scores changed:
-- Intentional (better scoring) → approve new baseline
-- Unintentional → fix regression
+This approval test establishes a baseline for the spec-driven matching.
+If scores change unexpectedly, investigate. If intentional (better scoring),
+approve new baseline.
 """
 
 from unittest.mock import MagicMock
 
 from approvaltests import verify
 
+from app.domain.field_spec import (
+    BallotField,
+    CropConfig,
+    FieldMapping,
+    RegionFieldSpecConfig,
+    VoterRegField,
+)
 from app.matching.matching_service import MatchingService
 
 
-def _build_mock_voter(name_data: dict, address_data: dict) -> MagicMock:
+def _dc_spec() -> RegionFieldSpecConfig:
+    return RegionFieldSpecConfig(
+        region_name="District of Columbia",
+        country_code="US",
+        ballot_fields=[
+            BallotField(
+                id="name",
+                label="Full Name",
+                field_type="text",
+                required_for_matching=True,
+                match_weight=1.0,
+            ),
+            BallotField(
+                id="address",
+                label="Address",
+                field_type="address",
+                required_for_matching=True,
+                match_weight=1.0,
+            ),
+            BallotField(
+                id="ward",
+                label="Ward",
+                field_type="integer",
+                required_for_matching=False,
+                match_weight=0.3,
+            ),
+        ],
+        voter_reg_fields=[
+            VoterRegField(
+                id="last_name",
+                csv_column_name="Last_Name",
+                data_type="text",
+                category="name",
+            ),
+            VoterRegField(
+                id="first_name",
+                csv_column_name="First_Name",
+                data_type="text",
+                category="name",
+            ),
+            VoterRegField(
+                id="middle_name",
+                csv_column_name="Middle_Name",
+                data_type="text",
+                category="name",
+            ),
+            VoterRegField(
+                id="street_number",
+                csv_column_name="Street_Number",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="street_name",
+                csv_column_name="Street_Name",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="street_type",
+                csv_column_name="Street_Type",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="street_dir_suffix",
+                csv_column_name="Street_Dir_Suffix",
+                data_type="text",
+                category="address",
+            ),
+            VoterRegField(
+                id="ward",
+                csv_column_name="WARD",
+                data_type="integer",
+                category="geography",
+            ),
+        ],
+        field_mappings=[
+            FieldMapping(
+                ballot_field_id="name",
+                template="{first_name} {middle_name} {last_name}",
+            ),
+            FieldMapping(
+                ballot_field_id="address",
+                template="{street_number} {street_name} {street_type} {street_dir_suffix}",
+            ),
+            FieldMapping(ballot_field_id="ward", template="{ward}"),
+        ],
+        hash_fields=["last_name", "first_name", "street_number", "street_name"],
+        crop_config=CropConfig(top_crop=0.385, bottom_crop=0.725, base_threshold=85),
+    )
+
+
+_voter_counter = 0
+
+
+def _build_mock_voter(
+    name_data: dict, address_data: dict, other_field_data: dict | None = None
+) -> MagicMock:
+    global _voter_counter
+    _voter_counter += 1
     voter = MagicMock()
     voter.name_data = name_data
     voter.address_data = address_data
-    voter.id = hash(str(name_data) + str(address_data)) % 10000
+    voter.other_field_data = other_field_data or {}
+    voter.id = _voter_counter
     return voter
 
 
 class TestDcMatchingScoreMatrix:
     def test_dc_matching_score_matrix(self):
         ocr_inputs = [
-            {"name": "John Smith", "address": "123 Main St NW"},
-            {"name": "Jane A Doe", "address": "456 Oak Ave NE"},
-            {"name": "Robert Johnson", "address": "789 Pine St SW"},
-            {"name": "", "address": "321 Elm Blvd SE"},
-            {"name": "Mary Wilson", "address": ""},
+            {"name": "John Smith", "address": "123 Main St NW", "ward": ""},
+            {"name": "Jane A Doe", "address": "456 Oak Ave NE", "ward": ""},
+            {"name": "Robert Johnson", "address": "789 Pine St SW", "ward": ""},
+            {"name": "", "address": "321 Elm Blvd SE", "ward": ""},
+            {"name": "Mary Wilson", "address": "", "ward": ""},
         ]
 
         voters = [
@@ -70,36 +177,22 @@ class TestDcMatchingScoreMatrix:
             ),
         ]
 
+        spec = _dc_spec()
         service = MatchingService(session=MagicMock())
 
         lines: list[str] = []
         for ocr in ocr_inputs:
-            ocr_name, ocr_address = service.extract_name_and_address(ocr)
-            lines.append(f"OCR: name={ocr_name!r} address={ocr_address!r}")
+            lines.append(
+                f"OCR: name={ocr.get('name', '')!r} address={ocr.get('address', '')!r}"
+            )
             lines.append("-" * 60)
 
             for voter in voters:
-                voter_name = service._build_voter_name(voter)
-                voter_address = service._build_voter_address(voter)
-                similarity = service.calculate_similarity(
-                    ocr_name=ocr_name,
-                    ocr_address=ocr_address,
-                    voter_name=voter_name,
-                    voter_address=voter_address,
-                )
-                confidence = service.assign_confidence(similarity)
-                name_score = round(
-                    __import__("rapidfuzz").fuzz.ratio(ocr_name, voter_name) / 100.0, 4
-                )
-                addr_score = round(
-                    __import__("rapidfuzz").fuzz.ratio(ocr_address, voter_address)
-                    / 100.0,
-                    4,
-                )
+                result = service.calculate_spec_driven_similarity(spec, ocr, voter)
                 lines.append(
-                    f"  vs {voter_name:25s} | {voter_address:25s} "
-                    f"| sim={similarity:.4f} conf={confidence.value:6s} "
-                    f"| name={name_score:.4f} addr={addr_score:.4f}"
+                    f"  vs id={voter.id:4d} "
+                    f"| sim={result['similarity_score']:.4f} conf={result['confidence_level'].value:6s} "
+                    f"| scores={result['field_scores']}"
                 )
             lines.append("")
 
