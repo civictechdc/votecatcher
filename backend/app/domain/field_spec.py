@@ -1,5 +1,6 @@
 import re
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -38,6 +39,7 @@ class RegionFieldSpecConfig(BaseModel, frozen=True):
     field_mappings: list[FieldMapping]
     hash_fields: list[str]
     crop_config: CropConfig
+    pre_filter_field_id: str | None = None
 
     def get_mapping_for(self, ballot_field_id: str) -> FieldMapping | None:
         for m in self.field_mappings:
@@ -54,6 +56,14 @@ class RegionFieldSpecConfig(BaseModel, frozen=True):
 
     def total_match_weight(self) -> float:
         return sum(f.match_weight for f in self.matchable_fields())
+
+    def pre_filter_field(self) -> VoterRegField | None:
+        if not self.pre_filter_field_id:
+            return None
+        for f in self.voter_reg_fields:
+            if f.id == self.pre_filter_field_id:
+                return f
+        return None
 
     def validate_integrity(self) -> list[str]:
         errors: list[str] = []
@@ -106,6 +116,12 @@ class RegionFieldSpecConfig(BaseModel, frozen=True):
             errors.append("top_crop must be less than bottom_crop")
 
         return errors
+
+
+class FieldSpecNotFoundError(Exception):
+    def __init__(self, region_id: UUID):
+        self.region_id: UUID = region_id
+        super().__init__(f"Field spec not found for region: {region_id}")
 
 
 NA_SENTINELS = {"N/A", "NA"}

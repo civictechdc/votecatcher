@@ -193,6 +193,8 @@
     "zip_code",
   ],
 
+  pre_filter_field_id: "zip_code",
+
   crop_config: {
     top_crop: 0.385,
     bottom_crop: 0.725,

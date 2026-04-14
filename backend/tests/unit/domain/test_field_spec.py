@@ -476,3 +476,31 @@ class TestRegionFieldSpecConfig:
     def test_default_country_code(self):
         spec = _make_spec()
         assert spec.country_code == "US"
+
+    def test_pre_filter_field_returns_none_by_default(self):
+        spec = _make_spec()
+        assert spec.pre_filter_field_id is None
+        assert spec.pre_filter_field() is None
+
+    def test_pre_filter_field_returns_matching_field(self):
+        spec = _make_spec(pre_filter_field_id="zip_code")
+        pf = spec.pre_filter_field()
+        assert pf is not None
+        assert pf.id == "zip_code"
+        assert pf.category == "address"
+
+    def test_pre_filter_field_returns_none_for_unknown_id(self):
+        spec = _make_spec(pre_filter_field_id="nonexistent")
+        assert spec.pre_filter_field() is None
+
+    def test_pre_filter_field_with_name_category(self):
+        spec = _make_spec(pre_filter_field_id="last_name")
+        pf = spec.pre_filter_field()
+        assert pf is not None
+        assert pf.category == "name"
+
+    def test_pre_filter_field_with_geography_category(self):
+        spec = _make_spec(pre_filter_field_id="ward")
+        pf = spec.pre_filter_field()
+        assert pf is not None
+        assert pf.category == "geography"

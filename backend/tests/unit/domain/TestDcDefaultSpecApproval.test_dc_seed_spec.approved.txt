@@ -188,5 +188,6 @@
     "top_crop": 0.385,
     "bottom_crop": 0.725,
     "base_threshold": 85
-  }
+  },
+  "pre_filter_field_id": "zip_code"
 }
