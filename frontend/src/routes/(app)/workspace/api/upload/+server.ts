@@ -6,9 +6,9 @@ import type { RequestHandler } from "@sveltejs/kit";
 import { json } from "@sveltejs/kit";
 import { randomUUID } from "crypto";
 import { api, type ApiResult } from "$lib/api/client";
-import { DEMO_MODE } from "$env/static/private";
+import { env } from "$env/dynamic/private";
 
-const SERVER_DEMO = DEMO_MODE === "true";
+const SERVER_DEMO = (env["DEMO_MODE"] ?? "false") === "true";
 
 function getErrorMessage(result: ApiResult<unknown>): string {
 	return !result.ok ? result.error : "Unknown error";

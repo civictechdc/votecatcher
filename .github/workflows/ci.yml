@@ -209,6 +209,13 @@ jobs:
       - name: Build
         id: build
         run: cd frontend && bun run build
+        env:
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"  # pragma: allowlist secret
+          BETTER_AUTH_SECRET: "ci-placeholder"  # pragma: allowlist secret
+          DEMO_MODE: "false"
+          OCR_PROVIDER_API_KEY: "ci-placeholder"  # pragma: allowlist secret
+          OCR_PROVIDER_NAME: "openai"
+          OCR_PROVIDER_MODEL: "gpt-4o-mini"
 
       - name: Test
         id: test
