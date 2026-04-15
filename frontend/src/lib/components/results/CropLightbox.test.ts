@@ -75,5 +75,31 @@ describe("CropLightbox", () => {
 			});
 			expect(getByRole("dialog").getAttribute("aria-modal")).toBe("true");
 		});
+
+		it("traps Tab focus within dialog", async () => {
+			const { getByRole } = render(CropLightbox, {
+				props: { open: true, imageUrl: "/api/crops/1/image", onClose: () => {} },
+			});
+			const dialog = getByRole("dialog");
+			const closeBtn = getByRole("button", { name: "Close lightbox" });
+			closeBtn.focus();
+			const event = new KeyboardEvent("keydown", { key: "Tab", bubbles: true });
+			const spy = vi.spyOn(event, "preventDefault");
+			dialog.dispatchEvent(event);
+			expect(spy).toHaveBeenCalled();
+		});
+
+		it("traps Shift+Tab focus within dialog", async () => {
+			const { getByRole } = render(CropLightbox, {
+				props: { open: true, imageUrl: "/api/crops/1/image", onClose: () => {} },
+			});
+			const dialog = getByRole("dialog");
+			const closeBtn = getByRole("button", { name: "Close lightbox" });
+			closeBtn.focus();
+			const event = new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true });
+			const spy = vi.spyOn(event, "preventDefault");
+			dialog.dispatchEvent(event);
+			expect(spy).toHaveBeenCalled();
+		});
 	});
 });

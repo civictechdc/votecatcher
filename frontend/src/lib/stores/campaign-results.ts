@@ -126,16 +126,26 @@ function createCampaignResultsStore() {
 
 export const campaignResults = createCampaignResultsStore();
 
+export function escapeHtml(str: string): string {
+	return str
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
 export function resetCampaignResultsStore() {
 	campaignResults.reset();
 }
 
 export function renderExpandedCropImage(thumbnailUrl: string): string {
 	if (!thumbnailUrl) return "";
-	return `<img src="${thumbnailUrl}" alt="Enlarged crop" data-crop-url="${thumbnailUrl}" class="cursor-pointer hover:opacity-80 transition-opacity" style="max-width:400px;max-height:300px;border-radius:0.5rem;object-fit:contain" />`;
+	const safe = escapeHtml(thumbnailUrl);
+	return `<img src="${safe}" alt="Enlarged crop" data-crop-url="${safe}" class="cursor-pointer hover:opacity-80 transition-opacity" style="max-width:400px;max-height:300px;border-radius:0.5rem;object-fit:contain" />`;
 }
 
-function getConfidenceBadgeClass(confidence: string): string {
+export function getConfidenceBadgeClass(confidence: string): string {
 	switch (confidence) {
 		case "HIGH": return "bg-green-100 text-green-800";
 		case "MEDIUM": return "bg-yellow-100 text-yellow-800";
@@ -152,9 +162,11 @@ export function renderPredictionsTable(predictions: CampaignMatchPrediction[]): 
 	const rows = predictions.slice(0, 5).map((p) => {
 		const badge = getConfidenceBadgeClass(p.confidence);
 		const score = `${(p.similarityScore * 100).toFixed(1)}%`;
+		const name = escapeHtml(p.voterName || "-");
+		const address = escapeHtml(p.voterAddress || "-");
 		return `<tr class="border-t border-gray-100">
-			<td class="px-3 py-2 text-sm">${p.voterName || "-"}</td>
-			<td class="px-3 py-2 text-sm">${p.voterAddress || "-"}</td>
+			<td class="px-3 py-2 text-sm">${name}</td>
+			<td class="px-3 py-2 text-sm">${address}</td>
 			<td class="px-3 py-2 text-sm"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${badge}">${p.confidence}</span></td>
 			<td class="px-3 py-2 text-sm">${score}</td>
 		</tr>`;
@@ -173,7 +185,8 @@ export function renderPredictionsTable(predictions: CampaignMatchPrediction[]): 
 
 export function renderThumbnailCell(thumbnailUrl: string): string {
 	if (!thumbnailUrl) return '<span class="text-slate-400">—</span>';
-	return `<img src="${thumbnailUrl}" loading="lazy" width="60" height="40" alt="Crop thumbnail" class="rounded object-cover" />`;
+	const safe = escapeHtml(thumbnailUrl);
+	return `<img src="${safe}" loading="lazy" width="60" height="40" alt="Crop thumbnail" class="rounded object-cover" />`;
 }
 
 export function toggleAccordion(currentExpanded: number | null, clickedId: number): number | null {

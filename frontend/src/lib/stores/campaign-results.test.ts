@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sortResults, renderThumbnailCell, toggleAccordion, renderPredictionsTable, renderExpandedCropImage } from "./campaign-results";
+import { sortResults, renderThumbnailCell, toggleAccordion, renderPredictionsTable, renderExpandedCropImage, escapeHtml } from "./campaign-results";
 import type { CampaignResultResponse, CampaignMatchPrediction } from "./campaign-results";
 
 function makeResult(overrides: Partial<CampaignResultResponse> & { ocrResultId: number }): CampaignResultResponse {
@@ -65,6 +65,12 @@ describe("renderThumbnailCell", () => {
 		expect(html).toContain("—");
 		expect(html).not.toContain("<img");
 	});
+
+	it("escapes malicious URL in thumbnail", () => {
+		const html = renderThumbnailCell('" onerror="alert(1)');
+		expect(html).toContain("&quot;");
+		expect(html).not.toContain('onerror="alert');
+	});
 });
 
 describe("toggleAccordion", () => {
@@ -117,6 +123,38 @@ describe("renderExpandedCropImage", () => {
 		const html = renderExpandedCropImage("/api/crops/42/image");
 		expect(html).toContain("cursor-pointer");
 	});
+
+	it("escapes malicious URL in expanded crop", () => {
+		const html = renderExpandedCropImage('" onmouseover="alert(1)');
+		expect(html).toContain("&quot;");
+		expect(html).not.toContain('onmouseover="alert');
+	});
+});
+
+describe("escapeHtml", () => {
+	it("escapes ampersands", () => {
+		expect(escapeHtml("a&b")).toBe("a&amp;b");
+	});
+
+	it("escapes angle brackets", () => {
+		expect(escapeHtml("<script>alert(1)</script>")).toBe("&lt;script&gt;alert(1)&lt;/script&gt;");
+	});
+
+	it("escapes double quotes", () => {
+		expect(escapeHtml('val="x"')).toBe("val=&quot;x&quot;");
+	});
+
+	it("escapes single quotes", () => {
+		expect(escapeHtml("it's")).toBe("it&#39;s");
+	});
+
+	it("returns empty string unchanged", () => {
+		expect(escapeHtml("")).toBe("");
+	});
+
+	it("returns safe text unchanged", () => {
+		expect(escapeHtml("Alice Smith")).toBe("Alice Smith");
+	});
 });
 
 describe("renderPredictionsTable", () => {
@@ -162,6 +200,24 @@ describe("renderPredictionsTable", () => {
 		expect(html).toContain("Voter 5");
 		expect(html).not.toContain("Voter 6");
 		expect(html).not.toContain("Voter 7");
+	});
+
+	it("escapes XSS in voterName", () => {
+		const predictions = [
+			makePrediction({ rank: 1, voterName: '<script>alert("xss")</script>' }),
+		];
+		const html = renderPredictionsTable(predictions);
+		expect(html).not.toContain("<script>");
+		expect(html).toContain("&lt;script&gt;");
+	});
+
+	it("escapes XSS in voterAddress", () => {
+		const predictions = [
+			makePrediction({ rank: 1, voterAddress: '<img src=x onerror=alert(1)>' }),
+		];
+		const html = renderPredictionsTable(predictions);
+		expect(html).not.toContain("<img");
+		expect(html).toContain("&lt;img");
 	});
 });
 

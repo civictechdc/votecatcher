@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { campaignResults, sortResults, renderThumbnailCell, renderPredictionsTable, renderExpandedCropImage, toggleAccordion, type CampaignResultResponse } from '$lib/stores/campaign-results';
+	import { campaignResults, sortResults, renderThumbnailCell, renderPredictionsTable, renderExpandedCropImage, toggleAccordion, escapeHtml, getConfidenceBadgeClass, type CampaignResultResponse } from '$lib/stores/campaign-results';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Table, LoadingState, Button, ErrorDisplay } from '$lib/components/ui';
 	import CropLightbox from '$lib/components/results/CropLightbox.svelte';
@@ -36,24 +36,15 @@
 				id: result.ocrResultId,
 				thumbnail: renderThumbnailCell(result.thumbnailUrl),
 				confidence: topPrediction?.confidence
-					? `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(topPrediction.confidence)}">${topPrediction.confidence}</span>`
+					? `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceBadgeClass(topPrediction.confidence)}">${topPrediction.confidence}</span>`
 					: '-',
-				extracted_name: result.extractedName || '-',
-				extracted_address: result.extractedAddress || '-',
-				matched_name: topPrediction?.voterName || '-',
-				matched_address: topPrediction?.voterAddress || '-',
+				extracted_name: escapeHtml(result.extractedName || '-'),
+				extracted_address: escapeHtml(result.extractedAddress || '-'),
+				matched_name: escapeHtml(topPrediction?.voterName || '-'),
+				matched_address: escapeHtml(topPrediction?.voterAddress || '-'),
 				score: topPrediction?.similarityScore ? `${(topPrediction.similarityScore * 100).toFixed(1)}%` : '-'
 			};
 		});
-	}
-
-	function getConfidenceColor(confidence: string): string {
-		switch (confidence) {
-			case 'HIGH': return 'bg-green-100 text-green-800';
-			case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
-			case 'LOW': return 'bg-red-100 text-red-800';
-			default: return 'bg-gray-100 text-gray-800';
-		}
 	}
 
 	function handleRowClick(rowId: string | number) {
@@ -134,6 +125,7 @@
 							{@const result = getExpandedResult(row['id'] as string | number)}
 							{#if result}
 								<div class="flex gap-6">
+								{#if result.thumbnailUrl}
 								<div class="shrink-0" role="button" tabindex="0" aria-label="Open full-size crop image" onclick={(e) => {
 									const target = e.target as HTMLElement;
 									const url = target.getAttribute('data-crop-url') || target.closest('[data-crop-url]')?.getAttribute('data-crop-url');
@@ -149,6 +141,7 @@
 								}}>
 										{@html renderExpandedCropImage(result.thumbnailUrl)}
 									</div>
+								{/if}
 									<div class="flex-1 min-w-0">
 										<h4 class="text-sm font-semibold text-slate-700 mb-2">Predictions</h4>
 										{@html renderPredictionsTable(result.predictions)}

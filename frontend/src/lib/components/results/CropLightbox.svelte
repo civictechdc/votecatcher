@@ -12,11 +12,32 @@
 	}
 
 	function handleKeyDown(e: KeyboardEvent) {
-		if (open && e.key === 'Escape') onClose();
+		if (!open) return;
+		if (e.key === 'Escape') {
+			onClose();
+			return;
+		}
+		if (e.key === 'Tab') {
+			e.preventDefault();
+			const dialog = (e.currentTarget as Window).document.querySelector('[role="dialog"]');
+			if (!dialog) return;
+			const focusable = dialog.querySelectorAll<HTMLElement>(
+				'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+			);
+			if (focusable.length === 0) return;
+			const active = document.activeElement;
+			const first = focusable[0]!;
+			const last = focusable[focusable.length - 1]!;
+			if (e.shiftKey) {
+				(active === first ? last : first).focus();
+			} else {
+				(active === last ? first : last).focus();
+			}
+		}
 	}
 </script>
 
-<svelte:window on:keydown={handleKeyDown} />
+<svelte:window onkeydown={handleKeyDown} />
 
 {#if open}
 	<div
