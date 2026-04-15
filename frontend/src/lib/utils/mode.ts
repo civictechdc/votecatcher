@@ -1,12 +1,15 @@
-import { browser } from "$app/environment";
+import { browser, dev } from "$app/environment";
 import { PUBLIC_DEMO_MODE } from "$env/static/public";
 import { get } from "svelte/store";
 import { featureFlags } from "$lib/stores/featureFlags";
 
 export type AppMode = "production" | "demo" | "simulation" | "dev";
 
+const IS_DEV = dev;
+export { IS_DEV };
+
 export function getAppMode(): AppMode {
-	if (browser && import.meta.env.DEV) {
+	if (browser && IS_DEV) {
 		return "dev";
 	}
 	if (isDemoMode()) {
@@ -28,7 +31,7 @@ export function isSimulationMode(): boolean {
 }
 
 export function isDevMode(): boolean {
-	return import.meta.env.DEV;
+	return IS_DEV;
 }
 
 export function getLogoDestination(): string {
