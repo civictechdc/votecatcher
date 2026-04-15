@@ -104,6 +104,8 @@ class Settings(BaseSettings):
     demo_reset: bool = Field(default=False, alias="FEATURE_DEMO_RESET")
     always_batch_ocr: bool = Field(default=True, alias="FEATURE_ALWAYS_BATCH_OCR")
 
+    matching_engine: str = Field(default="harmonic", alias="MATCHING_ENGINE")
+
     clear_runtime_on_launch: bool = Field(
         default=False, alias="DEV_CLEAR_RUNTIME_ON_LAUNCH"
     )
@@ -170,6 +172,10 @@ class Settings(BaseSettings):
                 always_batch_ocr=FeatureFlag(
                     enabled=self.always_batch_ocr,
                     meta=runtime_defaults.always_batch_ocr.meta,
+                ),
+                matching_engine=FeatureFlag(
+                    enabled=True,
+                    meta=runtime_defaults.matching_engine.meta,
                 ),
             ),
         )
