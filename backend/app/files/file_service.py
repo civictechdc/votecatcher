@@ -8,6 +8,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
+if TYPE_CHECKING:
+    from app.domain.field_spec import RegionFieldSpecConfig
+
 import pandas as pd
 from pdf2image import convert_from_path
 from pydantic import BaseModel
@@ -192,13 +195,22 @@ class FileService:
         return (str(file_path), max(0, row_count))
 
     async def import_voter_list(
-        self, file: "UploadFile", region_id: UUID
+        self,
+        file: "UploadFile",
+        region_id: UUID,
+        spec: "RegionFieldSpecConfig | None" = None,
     ) -> tuple[str, int]:
         """Import voter list CSV into registered_voters table.
+
+        Uses the region's field spec to parse CSV columns into structured
+        name_data, address_data, and other_field_data blobs. If no spec
+        is provided and none can be loaded for the region, falls back to
+        basic column mapping.
 
         Args:
                 file: Uploaded CSV file
                 region_id: Region UUID to associate voters with
+                spec: Optional pre-loaded spec. If None, loads from DB.
 
         Returns:
                 Tuple of (file_path, imported_count)
@@ -215,83 +227,77 @@ class FileService:
         if len(content) == 0:
             raise FileValidationError("Empty file. CSV must have content.")
 
-        df = pd.read_csv(io.BytesIO(content))
-        df.columns = [col.strip() for col in df.columns]
-
-        required_columns = ["First_Name", "Last_Name"]
-        missing = [col for col in required_columns if col not in df.columns]
-        if missing:
-            raise FileValidationError(f"Missing required columns: {', '.join(missing)}")
+        csv_content = content.decode("utf-8")
 
         voter_dir = self.storage_base / "voter-lists"
         voter_dir.mkdir(parents=True, exist_ok=True)
         file_path = voter_dir / file.filename
         file_path.write_bytes(content)
 
-        from sqlmodel import col, select
+        from app.services.voter_list_service import VoterListService
 
-        result = self.session.exec(
-            select(RegisteredVoter.id).order_by(col(RegisteredVoter.id).desc()).limit(1)
-        )
-        max_id = result.first() or 0
+        if spec is None:
+            try:
+                from app.repositories.field_spec_repo import FieldSpecRepositoryImpl
+                from app.services.field_spec_service import FieldSpecService
 
-        voters_to_insert = []
-        for _idx, row in df.iterrows():
-            name_data = {
-                "first_name": str(row.get("First_Name", "")).strip(),
-                "last_name": str(row.get("Last_Name", "")).strip(),
-                "middle_name": str(row.get("Middle_Name", "")).strip()
-                if pd.notna(row.get("Middle_Name"))
-                else None,
-            }
+                from app.persistence.session import get_engine
 
-            street_parts = [
-                str(row.get("Street_Number", "")).strip()
-                if pd.notna(row.get("Street_Number"))
-                else "",
-                str(row.get("Street_Name", "")).strip()
-                if pd.notna(row.get("Street_Name"))
-                else "",
-                str(row.get("Street_Type", "")).strip()
-                if pd.notna(row.get("Street_Type"))
-                else "",
-                str(row.get("Street_Dir_Suffix", "")).strip()
-                if pd.notna(row.get("Street_Dir_Suffix"))
-                else "",
-            ]
-            street = " ".join(p for p in street_parts if p)
+                repo = FieldSpecRepositoryImpl(get_engine())
+                spec_service = FieldSpecService(repo)
+                spec = spec_service.get_spec(region_id)
+            except Exception:
+                spec = None
 
-            address_data = {
-                "street": street,
-                "city": str(row.get("City", "")).strip()
-                if pd.notna(row.get("City"))
-                else None,
-                "state": str(row.get("State", "")).strip()
-                if pd.notna(row.get("State"))
-                else None,
-                "zip": str(row.get("Zip", "")).strip()
-                if pd.notna(row.get("Zip"))
-                else None,
-            }
+        voter_list_service = VoterListService(self.session)
 
-            other_data = {
-                "party": str(row.get("Party", "")).strip()
-                if pd.notna(row.get("Party"))
-                else None,
-                "registration_date": str(row.get("Registration_Date", "")).strip()
-                if pd.notna(row.get("Registration_Date"))
-                else None,
-            }
-
-            max_id += 1
-            voter = RegisteredVoter(
-                id=max_id,
-                region_id=region_id,
-                name_data=name_data,
-                address_data=address_data,
-                other_field_data=other_data,
-            )
-            voters_to_insert.append(voter)
+        if spec is not None:
+            rows = voter_list_service.parse_csv_with_spec(csv_content, spec)
+            voters_to_insert = []
+            for row in rows:
+                name_data, address_data, other_data = (
+                    voter_list_service.group_by_category(row, spec.voter_reg_fields)
+                )
+                voter = RegisteredVoter(
+                    region_id=region_id,
+                    name_data=name_data,
+                    address_data=address_data,
+                    other_field_data=other_data,
+                )
+                voters_to_insert.append(voter)
+        else:
+            df = pd.read_csv(io.BytesIO(content))
+            df.columns = [col.strip() for col in df.columns]
+            voters_to_insert = []
+            for _idx, row in df.iterrows():
+                name_data = {
+                    "first_name": str(row.get("First_Name", "")).strip(),
+                    "last_name": str(row.get("Last_Name", "")).strip(),
+                    "middle_name": str(row.get("Middle_Name", "")).strip()
+                    if pd.notna(row.get("Middle_Name"))
+                    else None,
+                }
+                address_data = {
+                    "street": str(row.get("Street", "")).strip()
+                    if pd.notna(row.get("Street"))
+                    else None,
+                    "city": str(row.get("City", "")).strip()
+                    if pd.notna(row.get("City"))
+                    else None,
+                    "state": str(row.get("State", "")).strip()
+                    if pd.notna(row.get("State"))
+                    else None,
+                    "zip": str(row.get("Zip", "")).strip()
+                    if pd.notna(row.get("Zip"))
+                    else None,
+                }
+                voter = RegisteredVoter(
+                    region_id=region_id,
+                    name_data=name_data,
+                    address_data=address_data,
+                    other_field_data={},
+                )
+                voters_to_insert.append(voter)
 
         for voter in voters_to_insert:
             self.session.add(voter)
@@ -311,9 +317,6 @@ class FileService:
         self.session.add(upload)
         self.session.flush()
 
-        from app.services.voter_list_service import VoterListService
-
-        voter_list_service = VoterListService(self.session)
         voter_list_service.supersede_previous_uploads(region_id, upload)
 
         self.session.commit()
