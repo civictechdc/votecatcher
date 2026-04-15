@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Optional
 
 from sqlmodel import Session, select
 
+from app.services.ocr_text_parser import OcrTextParser
+
 if TYPE_CHECKING:
     from app.data.database.model.match_result import ConfidenceLevel, MatchResult
     from app.routers.results_router import MatchPrediction, ResultsListResponse
@@ -206,15 +208,7 @@ class ResultsQueryService:
             extracted_text = ""
             crop_id = ""
             if ocr_result:
-                if isinstance(ocr_result.extracted_text, dict):
-                    text_parts = []
-                    for key in sorted(ocr_result.extracted_text.keys()):
-                        val = ocr_result.extracted_text.get(key)
-                        if val:
-                            text_parts.append(str(val))
-                    extracted_text = " ".join(text_parts)
-                elif ocr_result.extracted_text:
-                    extracted_text = str(ocr_result.extracted_text)
+                extracted_text = OcrTextParser.format_text(ocr_result.extracted_text)
                 crop_id = str(ocr_result.crop_id)
 
             predictions = predictions_by_ocr.get(ocr_id, [])[:5]
