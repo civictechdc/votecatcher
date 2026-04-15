@@ -166,7 +166,8 @@ class TestFieldSpecRepository:
     def test_delete_removes_spec(self, repo, region_id):
         spec = _make_spec()
         repo.save(spec, region_id)
-        assert repo.delete(region_id) is True
+        deleted = repo.delete(region_id)
+        assert deleted is True
         assert repo.find_by_region(region_id) is None
 
     def test_delete_returns_false_for_missing(self, repo):

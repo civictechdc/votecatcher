@@ -45,7 +45,12 @@ function isValidEvent(data: unknown): data is AppEvent {
 	const evt = data as Record<string, unknown>;
 	if (typeof evt["event_type"] !== "string") return false;
 	if (typeof evt["event_id"] !== "string") return false;
-	const validTypes: EventType[] = ["job:status_changed", "job:progress", "metrics:updated", "setup:updated"];
+	const validTypes: EventType[] = [
+		"job:status_changed",
+		"job:progress",
+		"metrics:updated",
+		"setup:updated",
+	];
 	return validTypes.includes(evt["event_type"] as EventType);
 }
 

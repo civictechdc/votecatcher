@@ -304,8 +304,8 @@ class TestGetCampaignResults:
         for r in result.results:
             assert r.predictions[0].confidence == "HIGH"
 
-    def test_multi_job_campaign_aggregates_across_jobs(self, session: Session):
-        """Scenario: Two jobs in same campaign, results aggregated."""
+    def test_multi_job_campaign_returns_only_latest_job_results(self, session: Session):
+        """Scenario: Two jobs in same campaign, only latest job's results returned."""
         from app.services.campaign_query_service import CampaignQueryService
 
         region, campaign = _seed_campaign(session)
@@ -366,11 +366,9 @@ class TestGetCampaignResults:
         service = CampaignQueryService(session)
         result = service.get_campaign_results(campaign.id)
 
-        assert result.total == 2
-        assert len(result.results) == 2
-        job_ids = {r.job_id for r in result.results}
-        assert job1.id in job_ids
-        assert job2.id in job_ids
+        assert result.total == 1
+        assert len(result.results) == 1
+        assert result.results[0].job_id == job2.id
 
 
 class TestGetSetupStatus:

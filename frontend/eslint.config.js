@@ -29,8 +29,10 @@ export default defineConfig(
 			"no-restricted-syntax": [
 				"error",
 				{
-					message: "Do not dynamically access import.meta — use direct property access (e.g. import.meta.env.VITE_FOO). Vite's SSR module runner blocks dynamic access.",
-					selector: "MemberExpression[computed=true][object.object.name=import][object.property.name=meta]",
+					message:
+						"Do not dynamically access import.meta — use direct property access (e.g. import.meta.env.VITE_FOO). Vite's SSR module runner blocks dynamic access.",
+					selector:
+						"MemberExpression[computed=true][object.object.name=import][object.property.name=meta]",
 				},
 			],
 		},
@@ -49,7 +51,8 @@ export default defineConfig(
 			"no-restricted-syntax": [
 				"error",
 				{
-					message: "Use `dev` from `$app/environment` or `$env/static/public` instead of `import.meta.env` in Svelte files. See: https://svelte.dev/docs/kit/modules#$app-environment",
+					message:
+						"Use `dev` from `$app/environment` or `$env/static/public` instead of `import.meta.env` in Svelte files. See: https://svelte.dev/docs/kit/modules#$app-environment",
 					selector: "MemberExpression[object.meta.property.name=env][object.object.name=import]",
 				},
 			],
