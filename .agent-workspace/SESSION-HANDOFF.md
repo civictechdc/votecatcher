@@ -28,7 +28,15 @@ All work lives on **`feat/crops-in-results`** (branched from `origin/main` at `1
     - Router wraps result in `StreamingResponse`
     - New `tests/unit/routers/test_results_router.py` (2 integration tests)
     - Tests assert behavior: iterable+filename contract, `.all()` never called, incremental yield
-    - Nested ifs flattened to ternary/guard patterns (commit `c6f3d21`)
+  - Readability pass — `f511b8e`
+    - Replaced inline dict→string with `OcrTextParser.format_text` / `extract_name_and_address` in both query services
+    - Removed dead `CampaignQueryService._format_voter_name` / `_format_voter_address` wrappers
+    - Compacted `PredictionBuilder.format_voter_name/address` with `filter+join`
+    - Extracted `_csv_row` helper, moved `CSV_HEADER` to class constant
+
+- **Code quality standards** — moved to `AGENTS.md → Code Quality` (`e8582c6`)
+  - Readability-first Python (PEP 20), legacy refactoring, test discipline, nesting watch
+  - Handoff references it instead of duplicating
 
 - **Docs** — `0bb9855`. `matching-algorithm.md` rewritten. New `results-performance.md`.
 
@@ -45,11 +53,12 @@ All work lives on **`feat/crops-in-results`** (branched from `origin/main` at `1
 ## Pickup Instructions
 
 1. `git checkout feat/crops-in-results`
-2. Load skills: `caveman` (lite), `tdd`, `vsdd`
-3. Read plan: `.agent-workspace/implementation-plan.md`
-4. **Start with bead 6f** (quick `_providers` removal), then 6g
-5. After both: run VDD adversarial roast on EPIC-6, then close it
-6. TDD cycle (RED → DOMAIN → GREEN → DOMAIN → COMMIT) per bead
+2. Read **`AGENTS.md → Code Quality`** — project-wide standards
+3. Load skills: `caveman` (lite), `tdd`, `vsdd`
+4. Read plan: `.agent-workspace/implementation-plan.md`
+5. **Start with bead 6f** (quick `_providers` removal), then 6g
+6. After both: run VDD adversarial roast on EPIC-6, then close it
+7. TDD cycle (RED → DOMAIN → GREEN → DOMAIN → COMMIT) per bead
 
 ## What This Is About
 
@@ -74,7 +83,7 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 
 ## Code Quality Notes
 
-Project-wide standards live in **`AGENTS.md` → Code Quality** section. Read it. It covers readability patterns (PEP 20), legacy refactoring rules, test discipline, and nesting watch.
+Project-wide standards live in **`AGENTS.md → Code Quality`** section. Read it. It covers readability patterns (PEP 20), legacy refactoring rules, test discipline, and nesting watch.
 
 Session-specific notes:
 
