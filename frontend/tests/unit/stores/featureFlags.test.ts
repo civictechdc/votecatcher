@@ -1,13 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { get } from "svelte/store";
 
-vi.mock("$env/static/public", () => ({
-	PUBLIC_API_URL: "http://localhost:8000/api",
-}));
-
 vi.mock("$app/environment", () => ({
 	browser: false,
 }));
+
+vi.stubEnv("PUBLIC_API_URL", "http://localhost:8000/api");
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;

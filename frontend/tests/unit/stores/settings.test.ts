@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { get } from "svelte/store";
 
-// Mock environment variables before importing
-vi.mock("$env/static/public", () => ({
-	PUBLIC_API_URL: "http://localhost:8000/api",
-}));
+vi.stubEnv("PUBLIC_API_URL", "http://localhost:8000/api");
 
 // Mock fetch globally
 const mockFetch = vi.fn();
