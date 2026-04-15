@@ -1,7 +1,6 @@
 // Lightweight API client wrapper used by onboarding UI.
 // All direct Supabase calls in your previous app are replaced with REST endpoint calls.
 // For now endpoints are mocked under src/routes/api/*.
-import { PUBLIC_API_URL } from "$env/static/public";
 import type { MatchResponse, MatchingProgressResponse } from "$lib/api/response-types";
 import type {
 	DatabaseStatus,
@@ -10,7 +9,7 @@ import type {
 	ProvisionResult,
 } from "$lib/api/database-types";
 
-const BASE_URL = (PUBLIC_API_URL ?? "").replace(/\/$/, "");
+const BASE_URL = (import.meta.env["PUBLIC_API_URL"] ?? "http://localhost:8080").toString().replace(/\/$/, "");
 
 export type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
 
