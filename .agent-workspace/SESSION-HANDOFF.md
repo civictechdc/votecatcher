@@ -72,16 +72,33 @@ All work lives on **`feat/crops-in-results`** (branched from `origin/main` at `1
   - `LocalFileAdapter.__init__` now accepts `storage_base: Path | None` param, defaults to `os.getenv("UPLOAD_DIR", "./uploads")`.
   - Router tests set `UPLOAD_DIR` via `monkeypatch.setenv` to `tmp_path` for file-based tests.
 
-### Test count: ~1133 backend (18 campaign query + 10 results query + 8 storage + 6 crop router + existing), 41 frontend. Lint clean.
+### EPIC-4 (Frontend thumbnails + accordion) — IN PROGRESS
+
+- **Bead 4a (thumbnailUrl on CampaignResultResponse)** — DONE, `7d21c59`
+  - Added `thumbnailUrl: string` to `CampaignResultResponse` interface in `campaign-results.ts`
+  - Updated `makeResult` default + type-contract test
+  - 2 new tests (field present, default empty string)
+
+- **Bead 4b (Thumbnail column)** — DONE, `dee56ff`
+  - `renderThumbnailCell(thumbnailUrl)` pure function — `<img loading="lazy" width="60" height="40">` or `—` placeholder
+  - Added `{ key: 'thumbnail', label: 'Crop', sortable: false }` column to results page
+  - Wired via `getTableRows` → `renderThumbnailCell(result.thumbnailUrl)`
+  - 2 new tests (img attributes, empty placeholder)
+
+- **Bead 4c (Accordion expand)** — PARTIAL, `toggleAccordion` committed as `6631ccb`
+  - `toggleAccordion(currentExpanded, clickedId)` pure function — expand/collapse/switch logic
+  - 4 new tests (expand null→id, collapse id→null, switch id→other, arbitrary ids)
+  - **Still needed**: Table.svelte row expansion support + results page wiring + predictions mini-table
+
+### Test count: ~1133 backend, 48 frontend (22 campaign-results + 26 existing in lib). Lint + typecheck clean.
 
 ### Next Work
 
-1. **EPIC-4 (Frontend thumbnails + accordion)** — depends on EPIC-2 ✅, EPIC-3 ✅
-   - Bead 4a: Update CampaignResultResponse interface with thumbnailUrl
-   - Bead 4b: Thumbnail column with loading=lazy
-   - Bead 4c: Accordion expand row with top-5 predictions
-   - Bead 4d: CropLightbox modal
-   - Bead 4e: Image endpoint concurrency semaphore
+1. **EPIC-4 (continued)** — remaining beads:
+   - Bead 4c (cont): Add expandable row support to `Table.svelte` (`onRowClick`, `expandedRowId`, expanded row snippet). Wire into results `+page.svelte` — click row toggles panel with enlarged crop + top-5 predictions mini-table.
+   - Bead 4d: CropLightbox modal — click thumbnail → full-size image modal. Escape/overlay closes.
+   - Bead 4e: Backend semaphore — `asyncio.Semaphore(50)` in `crop_router.py`.
+   - VDD Roast EPIC-4
 
 ## Pickup Instructions
 
@@ -101,7 +118,7 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 1. ~~EPIC-5 (memory hygiene)~~ + ~~EPIC-6 (architecture refactor)~~ — **DONE**
 2. ~~EPIC-1 (sort fix)~~ + ~~EPIC-3 (SQL pagination)~~ — **DONE**
 3. ~~EPIC-2 (crop API endpoint)~~ — **DONE** (4/4 beads, committed `722763a`, roasted + path traversal fix `7632e93`)
-4. EPIC-4 (frontend thumbnails + accordion) — depends on EPIC-2 ✅, EPIC-3 ✅
+4. EPIC-4 (frontend thumbnails + accordion) — IN PROGRESS (4a/4b done, 4c partial)
 
 ## Key Decisions Made
 
@@ -132,6 +149,10 @@ Session-specific notes:
 - **In-codebase examples of AGENTS.md patterns**: `PredictionBuilder.format_voter_name` (filter+join), `OcrTextParser.format_text` (extracted helper), `ResultsQueryService.CSV_HEADER` (class constant), `sortResults` in `campaign-results.ts` (pure sort function with switch/case value extraction).
 - **SQLite yield_per limitation**: `yield_per(chunk_size)` on SQLite dialect buffers full result set. Streaming benefit is aspirational on SQLite; real benefit on Supabase Postgres. SQL pagination (EPIC-3) solves the memory problem differently via LIMIT/OFFSET.
 - **Frontend sort pattern**: Results page follows campaigns page pattern exactly. Import `SortConfig` from `Table.svelte`, add `$state<SortConfig | null>`, define sort function, pass `sortConfig` + `onSortChange` to Table.
+- **Frontend thumbnail column**: First column `{ key: 'thumbnail', sortable: false }`. Cell HTML from `renderThumbnailCell(result.thumbnailUrl)` pure function. `loading="lazy"` + 60x40px + rounded.
+- **Frontend accordion state**: `toggleAccordion(expandedId, clickedId)` pure function. Returns `null` if same row clicked, else `clickedId`. Used via `$state<number | null>(null)` in results page.
+- **Backend thumbnailUrl**: Backend returns `thumbnailUrl` (camelCase via `ApiModel` alias generator in `app/api_models/__init__.py`). Field is `thumbnail_url: str` in Python → `thumbnailUrl` in JSON. Always present (empty string when no crop).
+- **Table.svelte extension needed**: For Bead 4c, Table needs `onRowClick`, `expandedRowId`, and expanded row content snippet. This is the key architectural decision for next session. Keep it minimal — don't over-generalize.
 - **EPIC-2 new files**: `app/storage/crop_storage.py` (CropStorageAdapter protocol + LocalFileAdapter), `app/routers/crop_router.py` (GET image endpoint), `tests/unit/storage/test_crop_storage.py` (8 tests), `tests/unit/routers/test_crop_router.py` (6 tests).
 - **thumbnail_url approach**: Inline `f"/api/crops/{crop_id}/image"` in service layer. Don't inject adapter — keeps service pure of storage concerns. URL is a stable convention, not a lookup.
 - **Crop router test pattern**: Uses same `StaticPool` + `dependency_overrides` pattern as `test_results_router.py`. File-based tests use `monkeypatch.setenv("UPLOAD_DIR", str(tmp_path))`.
@@ -227,4 +248,4 @@ Session-specific notes:
 | #1 | EPIC-1: Sort fix | **DONE** |
 | #3 | EPIC-3: SQL pagination | **DONE** |
 | #2 | EPIC-2: Crop API endpoint | **DONE** (4/4 beads, roasted, fix `7632e93`) |
-| #4 | EPIC-4: Frontend thumbnails | Open |
+| #4 | EPIC-4: Frontend thumbnails | **IN PROGRESS** (4a/4b done, 4c partial) |
