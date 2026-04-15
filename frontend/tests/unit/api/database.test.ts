@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("$env/static/public", () => ({
-	PUBLIC_API_URL: "http://localhost:8000",
-}));
+vi.stubEnv("PUBLIC_API_URL", "http://localhost:8000");
 
 describe("api.database", () => {
 	beforeEach(() => {

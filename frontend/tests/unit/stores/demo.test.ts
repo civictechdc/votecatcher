@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { get } from "svelte/store";
 
-vi.mock("$env/static/public", () => ({
-	PUBLIC_DEMO_MODE: "true",
-}));
+vi.stubEnv("PUBLIC_DEMO_MODE", "true");
 
 vi.mock("$lib/stores/api-client", () => ({
 	getApiClient: () => ({
