@@ -9,6 +9,11 @@ This is EXTREMELY IMPORTANT:
 - Ask questions if something is not clear and you need to make a choice. Don't choose randomly if it's important for what we're doing
 - When you show me a potential error or miss, start your response with❗️emoji
 
+## Active Work
+
+When picking up the crops-in-results implementation, start here:
+**`.agent-workspace/SESSION-HANDOFF.md`** — entry point for the implementing agent.
+
 ## Version Bumping
 
 Version is stored in two files and must stay in sync:
