@@ -291,6 +291,76 @@ class TestGetCampaignResults:
         for r in result.results:
             assert r.predictions[0].confidence == "HIGH"
 
+    def test_pages_are_disjoint_by_ocr_result_id(self, session: Session):
+        """Scenario: Paginated pages never share the same ocr_result_id."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region, campaign = _seed_campaign(session)
+
+        scan = PetitionScan(
+            campaign_id=campaign.id,
+            original_filename="disjoint.pdf",
+            stored_path="/tmp/disjoint.pdf",
+            file_hash="dj123",
+            page_count=1,
+        )
+        session.add(scan)
+        session.flush()
+
+        job = MatcherJob(
+            campaign_id=campaign.id,
+            current_status=JobStatus.MATCHING_COMPLETED,
+        )
+        session.add(job)
+        session.flush()
+
+        for i in range(7):
+            crop = PetitionCrop(
+                scan_id=scan.id,
+                crop_index=i,
+                stored_path=f"/tmp/crop_d{i}.png",
+                crop_coordinates={},
+                page_number=1,
+            )
+            session.add(crop)
+            session.flush()
+
+            ocr = OcrResult(
+                crop_id=crop.id,
+                ocr_job_id=1,
+                extracted_text={"name": f"Name {i}"},
+            )
+            session.add(ocr)
+            session.flush()
+
+            match = MatchResult(
+                ocr_result_id=ocr.id,
+                matcher_job_id=job.id,
+                rank=1,
+                similarity_score=0.5,
+                confidence_level=ConfidenceLevel.LOW,
+            )
+            session.add(match)
+        session.commit()
+
+        service = CampaignQueryService(session)
+
+        page_size = 3
+        all_ids: set[int] = set()
+        page = 1
+        while True:
+            result = service.get_campaign_results(
+                campaign.id, page=page, page_size=page_size
+            )
+            page_ids = {r.ocr_result_id for r in result.results}
+            assert page_ids.isdisjoint(all_ids), f"Page {page} overlaps previous pages"
+            all_ids |= page_ids
+            if len(all_ids) >= result.total:
+                break
+            page += 1
+
+        assert all_ids == set(range(1, 8)) or len(all_ids) == 7
+
     def test_multi_job_campaign_returns_only_latest_job_results(self, session: Session):
         """Scenario: Two jobs in same campaign, only latest job's results returned."""
         from app.services.campaign_query_service import CampaignQueryService

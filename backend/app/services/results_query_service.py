@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Optional
 
 from sqlmodel import Session, select
 
+from sqlalchemy import func
 from app.services.ocr_text_parser import OcrTextParser
 
 if TYPE_CHECKING:
@@ -60,24 +61,42 @@ class ResultsQueryService:
         if not job:
             raise ValueError(f"Job {job_id} not found")
 
-        total_statement = select(MatchResult).where(
-            MatchResult.matcher_job_id == job_id
-        )
+        base_where = [MatchResult.matcher_job_id == job_id]
         if confidence:
-            total_statement = total_statement.where(
-                MatchResult.confidence_level == confidence
+            base_where.append(MatchResult.confidence_level == confidence)
+
+        total = self._session.exec(
+            select(func.count()).select_from(
+                select(func.distinct(MatchResult.ocr_result_id))
+                .where(*base_where)
+                .subquery()
+            )
+        ).one()
+
+        if total == 0:
+            from app.routers.results_router import ResultsListResponse
+
+            return ResultsListResponse(
+                results=[], total=0, page=page, page_size=page_size
             )
 
-        all_match_results = self._session.exec(total_statement).all()
-        total = len({r.ocr_result_id for r in all_match_results})
+        paginated_ocr_ids = list(
+            self._session.exec(
+                select(MatchResult.ocr_result_id)
+                .where(*base_where)
+                .distinct()
+                .order_by(MatchResult.ocr_result_id)
+                .offset((page - 1) * page_size)
+                .limit(page_size)
+            ).all()
+        )
 
-        ocr_result_ids = sorted({r.ocr_result_id for r in all_match_results})
-        offset = (page - 1) * page_size
-        paginated_ocr_ids = ocr_result_ids[offset : offset + page_size]
-
-        page_match_results = [
-            r for r in all_match_results if r.ocr_result_id in paginated_ocr_ids
-        ]
+        page_match_results = self._session.exec(
+            select(MatchResult).where(
+                MatchResult.ocr_result_id.in_(paginated_ocr_ids),
+                MatchResult.matcher_job_id == job_id,
+            )
+        ).all()
 
         predictions_by_ocr = self._build_predictions_from_match_results(
             page_match_results
