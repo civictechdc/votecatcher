@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { sortResults, renderThumbnailCell, toggleAccordion } from "./campaign-results";
-import type { CampaignResultResponse } from "./campaign-results";
+import { sortResults, renderThumbnailCell, toggleAccordion, renderPredictionsTable, renderExpandedCropImage } from "./campaign-results";
+import type { CampaignResultResponse, CampaignMatchPrediction } from "./campaign-results";
 
 function makeResult(overrides: Partial<CampaignResultResponse> & { ocrResultId: number }): CampaignResultResponse {
 	return {
@@ -82,6 +82,76 @@ describe("toggleAccordion", () => {
 
 	it("expands from number to different number", () => {
 		expect(toggleAccordion(42, 7)).toBe(7);
+	});
+});
+
+function makePrediction(overrides: Partial<CampaignMatchPrediction> & { rank: number }): CampaignMatchPrediction {
+	return {
+		voterName: "Test Voter",
+		voterAddress: "123 Test St",
+		similarityScore: 0.85,
+		confidence: "HIGH",
+		...overrides,
+	};
+}
+
+describe("renderExpandedCropImage", () => {
+	it("renders large image for valid URL", () => {
+		const html = renderExpandedCropImage("/api/crops/42/image");
+		expect(html).toContain('src="/api/crops/42/image"');
+		expect(html).toContain("max-width");
+		expect(html).toContain("max-height");
+	});
+
+	it("renders nothing for empty URL", () => {
+		const html = renderExpandedCropImage("");
+		expect(html).toBe("");
+	});
+});
+
+describe("renderPredictionsTable", () => {
+	it("renders table with prediction rows", () => {
+		const predictions = [
+			makePrediction({ rank: 1, voterName: "Alice Smith", similarityScore: 0.95, confidence: "HIGH" }),
+			makePrediction({ rank: 2, voterName: "Bob Jones", similarityScore: 0.72, confidence: "MEDIUM" }),
+		];
+		const html = renderPredictionsTable(predictions);
+		expect(html).toContain("Alice Smith");
+		expect(html).toContain("Bob Jones");
+		expect(html).toContain("<table");
+		expect(html).toContain("<tr");
+	});
+
+	it("renders score as percentage", () => {
+		const predictions = [
+			makePrediction({ rank: 1, similarityScore: 0.856 }),
+		];
+		const html = renderPredictionsTable(predictions);
+		expect(html).toContain("85.6%");
+	});
+
+	it("renders confidence badge with color class", () => {
+		const predictions = [
+			makePrediction({ rank: 1, confidence: "HIGH" }),
+		];
+		const html = renderPredictionsTable(predictions);
+		expect(html).toContain("bg-green-100");
+		expect(html).toContain("text-green-800");
+	});
+
+	it("renders empty message for empty predictions", () => {
+		const html = renderPredictionsTable([]);
+		expect(html).toContain("No predictions");
+	});
+
+	it("limits to 5 predictions", () => {
+		const predictions = Array.from({ length: 7 }, (_, i) =>
+			makePrediction({ rank: i + 1, voterName: `Voter ${i + 1}` })
+		);
+		const html = renderPredictionsTable(predictions);
+		expect(html).toContain("Voter 5");
+		expect(html).not.toContain("Voter 6");
+		expect(html).not.toContain("Voter 7");
 	});
 });
 

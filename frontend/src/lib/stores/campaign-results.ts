@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
 
-interface CampaignMatchPrediction {
+export interface CampaignMatchPrediction {
 	rank: number;
 	voterName: string;
 	voterAddress: string;
@@ -128,6 +128,47 @@ export const campaignResults = createCampaignResultsStore();
 
 export function resetCampaignResultsStore() {
 	campaignResults.reset();
+}
+
+export function renderExpandedCropImage(thumbnailUrl: string): string {
+	if (!thumbnailUrl) return "";
+	return `<img src="${thumbnailUrl}" alt="Enlarged crop" style="max-width:400px;max-height:300px;border-radius:0.5rem;object-fit:contain" />`;
+}
+
+function getConfidenceBadgeClass(confidence: string): string {
+	switch (confidence) {
+		case "HIGH": return "bg-green-100 text-green-800";
+		case "MEDIUM": return "bg-yellow-100 text-yellow-800";
+		case "LOW": return "bg-red-100 text-red-800";
+		default: return "bg-gray-100 text-gray-800";
+	}
+}
+
+export function renderPredictionsTable(predictions: CampaignMatchPrediction[]): string {
+	if (predictions.length === 0) {
+		return '<p class="text-sm text-gray-500 italic">No predictions available</p>';
+	}
+
+	const rows = predictions.slice(0, 5).map((p) => {
+		const badge = getConfidenceBadgeClass(p.confidence);
+		const score = `${(p.similarityScore * 100).toFixed(1)}%`;
+		return `<tr class="border-t border-gray-100">
+			<td class="px-3 py-2 text-sm">${p.voterName || "-"}</td>
+			<td class="px-3 py-2 text-sm">${p.voterAddress || "-"}</td>
+			<td class="px-3 py-2 text-sm"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${badge}">${p.confidence}</span></td>
+			<td class="px-3 py-2 text-sm">${score}</td>
+		</tr>`;
+	}).join("");
+
+	return `<table class="w-full text-left">
+		<thead><tr class="text-xs text-gray-500 uppercase">
+			<th class="px-3 py-1 font-medium">Name</th>
+			<th class="px-3 py-1 font-medium">Address</th>
+			<th class="px-3 py-1 font-medium">Confidence</th>
+			<th class="px-3 py-1 font-medium">Score</th>
+		</tr></thead>
+		<tbody>${rows}</tbody>
+	</table>`;
 }
 
 export function renderThumbnailCell(thumbnailUrl: string): string {
