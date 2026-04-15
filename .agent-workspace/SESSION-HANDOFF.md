@@ -78,6 +78,13 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 - **Test discipline**: Tests assert behavioral contracts (what), not implementation details (how). No `yield_per(1000)` mock, no `repr(type(...))` checks. See `TestCsvExport` in `test_results_query_behavior.py` as reference pattern.
 - **basedpyright**: 2 new false positives on `order_by()` args (SQLModel type stub limitation). Pre-existing errors unchanged.
 - **Legacy refactoring**: When touching existing code, apply small safe cleanups in the same commit: flatten nested ifs to guards/ternary, replace `isinstance` chains with dispatched helpers, extract repeated conditionals. Don't expand scope — only refactor what's already being modified. Leave the neighbourhood cleaner than you found it.
+- **Readability-first Python** (PEP 20 / Hitchhiker's Guide): When reading or writing code in this project, actively look for opportunities to apply these patterns:
+  - **Flat over nested** (PEP 20): Guard clauses and early returns over deep if/else nesting. See `_generate_csv_rows` for reference.
+  - **`filter(None, ...)` + `join`** over imperative append loops: `' '.join(filter(None, [first, last]))` is idiomatic Python for building delimited strings from optional parts. See `PredictionBuilder.format_voter_name`.
+  - **Extract shared helpers** before duplicating: `OcrTextParser.format_text` / `_csv_row` exist because inline dict→string and `io.StringIO`+`csv.writer` were repeated. When you see the same 5-line block twice, extract it.
+  - **Ternary for simple two-branch defaults**: `value if condition else default` over 4-line if/else. Reserve if/else for complex branches with side effects.
+  - **Dead wrappers are dead weight**: If a method just delegates to another with no added logic, remove it and call the target directly. See removed `CampaignQueryService._format_voter_name`.
+  - **Constants over inline literals**: Class-level `CSV_HEADER` over repeated inline lists. Named constants are searchable, DRY, and self-documenting.
 
 ## Required Skills
 
