@@ -818,10 +818,11 @@ class JobWorker:
         if not campaign:
             raise ValueError(f"Campaign not found: {job.campaign_id}")
 
-        from app.dependencies import get_field_spec_service
+        from app.dependencies import get_field_spec_service, get_matching_engine
         from app.matching.matching_service import MatchingService
 
-        matching_service = MatchingService(session=session)
+        aggregator = get_matching_engine()
+        matching_service = MatchingService(session=session, aggregator=aggregator)
 
         spec_service = next(get_field_spec_service())
         region_key = "DC"

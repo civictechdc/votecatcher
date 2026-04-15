@@ -22,6 +22,7 @@ from app.data.database.model.match_result import ConfidenceLevel, MatchResult
 from app.data.database.model.ocr_result import OcrResult
 from app.data.database.model.registered_voter import RegisteredVoter
 from app.domain.field_spec import RegionFieldSpecConfig, render_template
+from app.matching.engines import ScoreAggregator, get_engine
 from app.matching.voter_data_adapter import flatten_voter_data
 
 logger = structlog.get_logger(__name__)
@@ -39,6 +40,7 @@ class MatchingService:
         session: Database session for queries and persistence
         high_threshold: Minimum score for HIGH confidence (default 0.85)
         medium_threshold: Minimum score for MEDIUM confidence (default 0.60)
+        aggregator: ScoreAggregator strategy for combining field scores
     """
 
     def __init__(
@@ -46,17 +48,12 @@ class MatchingService:
         session: Session,
         high_threshold: float = 0.85,
         medium_threshold: float = 0.60,
+        aggregator: ScoreAggregator | None = None,
     ) -> None:
-        """Initialize matching service.
-
-        Args:
-            session: Database session
-            high_threshold: Minimum score for HIGH confidence (default 0.85)
-            medium_threshold: Minimum score for MEDIUM confidence (default 0.60)
-        """
         self.session = session
         self.high_threshold = high_threshold
         self.medium_threshold = medium_threshold
+        self.aggregator = aggregator or get_engine()
 
     def pre_filter_voters_with_spec(
         self,
@@ -96,10 +93,9 @@ class MatchingService:
     ) -> dict[str, Any]:
         flat = flatten_voter_data(voter, spec.voter_reg_fields)
         matchable = spec.matchable_fields()
-        total_weight = spec.total_match_weight()
 
         field_scores: dict[str, float] = {}
-        weighted_sum = 0.0
+        weights: dict[str, float] = {}
 
         for field in matchable:
             mapping = spec.get_mapping_for(field.id)
@@ -111,9 +107,9 @@ class MatchingService:
 
             score = fuzz.ratio(ocr_value, voter_value) / 100.0
             field_scores[field.id] = score
-            weighted_sum += score * field.match_weight
+            weights[field.id] = field.match_weight
 
-        overall = weighted_sum / total_weight if total_weight > 0 else 0.0
+        overall = self.aggregator.aggregate(field_scores, weights)
 
         return {
             "similarity_score": overall,

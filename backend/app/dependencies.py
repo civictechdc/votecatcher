@@ -47,6 +47,15 @@ def get_field_spec_service() -> Generator:
     yield FieldSpecService(repo)
 
 
+def get_matching_engine():
+    """Get the configured ScoreAggregator from settings."""
+    from app.matching.engines import get_engine
+    from app.settings.settings import get_settings
+
+    settings = get_settings()
+    return get_engine(settings.matching_engine)
+
+
 def get_region_by_key(session: Session, region_key: str) -> UUID:
     """Look up a region by key, creating default DC if needed."""
     from sqlmodel import select

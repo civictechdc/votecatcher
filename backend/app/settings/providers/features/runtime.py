@@ -59,3 +59,11 @@ class RuntimeFlags(BaseModel):
             ),
         ),
     )
+    matching_engine: FeatureFlag = Field(
+        default_factory=lambda: FeatureFlag(
+            meta=FlagMeta(
+                lifecycle=FlagLifecycle.permanent,
+                description="Matching score aggregation engine (harmonic/weighted)",
+            ),
+        ),
+    )
