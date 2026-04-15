@@ -6,7 +6,7 @@
 	import { campaigns } from '$lib/stores/campaigns';
 	import { jobs } from '$lib/stores/jobs';
 	import { Button } from '$lib/components/ui';
-	import { PUBLIC_API_URL } from '$env/static/public';
+	const API_BASE: string = (import.meta.env["PUBLIC_API_URL"] || 'http://localhost:8080') + '/api';
 
 	interface ProviderConfig {
 		provider: string;
@@ -28,7 +28,6 @@
 	}
 
 	let campaignId = $derived($page.params.id);
-	const API_BASE = (PUBLIC_API_URL || 'http://localhost:8080') + '/api';
 
 	let scans = $state<PetitionScan[]>([]);
 	let providers = $state<ProviderConfig[]>([]);

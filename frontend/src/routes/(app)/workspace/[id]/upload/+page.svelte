@@ -3,10 +3,9 @@
 	import { page } from '$app/stores';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Button } from '$lib/components/ui';
-	import { PUBLIC_API_URL } from '$env/static/public';
+	const API_BASE: string = import.meta.env["PUBLIC_API_URL"] || 'http://localhost:8080';
 
 	let campaignId = $derived($page.params.id ?? '');
-	const API_BASE = PUBLIC_API_URL || 'http://localhost:8080';
 
 	type Tab = 'voters' | 'petitions';
 	let activeTab = $state<Tab>('petitions');
