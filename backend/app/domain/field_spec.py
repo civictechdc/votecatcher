@@ -148,4 +148,4 @@ def render_template(template: str, voter_row: dict[str, str]) -> str:
     result = re.sub(r",\s*,", ",", result)
     result = re.sub(r",\s*$", "", result)
     result = re.sub(r"^\s*,\s*", "", result)
-    return result
+    return result.strip()
