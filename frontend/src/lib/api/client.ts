@@ -9,7 +9,9 @@ import type {
 	ProvisionResult,
 } from "$lib/api/database-types";
 
-const BASE_URL = (import.meta.env["PUBLIC_API_URL"] ?? "http://localhost:8080").toString().replace(/\/$/, "");
+const BASE_URL = (import.meta.env["PUBLIC_API_URL"] ?? "http://localhost:8080")
+	.toString()
+	.replace(/\/$/, "");
 
 export type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
 
