@@ -57,8 +57,10 @@ class CampaignQueryService:
         if not campaign:
             raise ValueError(f"Campaign {campaign_id} not found")
 
-        job_ids_statement = select(MatcherJob.id).where(
-            MatcherJob.campaign_id == campaign_id
+        job_ids_statement = (
+            select(MatcherJob.id)
+            .where(MatcherJob.campaign_id == campaign_id)
+            .order_by(MatcherJob.id.desc())
         )
         job_ids: list[int] = list(self._session.exec(job_ids_statement).all())
 
@@ -66,6 +68,8 @@ class CampaignQueryService:
             return CampaignResultsListResponse(
                 results=[], total=0, page=page, page_size=page_size
             )
+
+        latest_job_id = job_ids[0]
 
         confidence_filter = None
         if confidence:
@@ -75,7 +79,7 @@ class CampaignQueryService:
                 confidence_filter = None
 
         total_statement = select(MatchResult).where(
-            MatchResult.matcher_job_id.in_(job_ids)
+            MatchResult.matcher_job_id == latest_job_id
         )
         if confidence_filter:
             total_statement = total_statement.where(

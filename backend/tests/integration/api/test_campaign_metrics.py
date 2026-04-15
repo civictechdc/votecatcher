@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.data.database.model.jobs import JobStatus, MatcherJob
 from app.data.database.model.match_result import ConfidenceLevel, MatchResult
@@ -367,3 +367,103 @@ class TestCampaignMetricsAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["voterListCount"] == 50
+
+    def test_metrics_only_from_latest_job(
+        self,
+        client: TestClient,
+        test_campaign: Campaign,
+        session: Session,
+    ):
+        """Should count confidence from only the latest matching job.
+
+        Regression guard: when a campaign has multiple matcher jobs, metrics
+        must only reflect the latest job's results. Earlier jobs may have
+        broken scores (e.g. address scoring all zeros) and must not pollute
+        the confidence breakdown shown on the dashboard.
+        """
+        unique_path = f"/tmp/test_{uuid_module.uuid4().hex}.pdf"
+        scan = PetitionScan(
+            campaign_id=test_campaign.id,
+            original_filename="test.pdf",
+            stored_path=unique_path,
+            file_hash=uuid_module.uuid4().hex,
+            page_count=1,
+        )
+        session.add(scan)
+        session.commit()
+        session.refresh(scan)
+
+        old_job = MatcherJob(
+            campaign_id=test_campaign.id,
+            current_status=JobStatus.MATCHING_COMPLETED,
+        )
+        session.add(old_job)
+        session.commit()
+        session.refresh(old_job)
+
+        for i in range(3):
+            crop = PetitionCrop(
+                scan_id=scan.id,
+                crop_index=i,
+                stored_path=f"{unique_path}_crop_{i}.png",
+                crop_coordinates={},
+                page_number=1,
+            )
+            session.add(crop)
+            session.commit()
+            session.refresh(crop)
+
+            ocr = OcrResult(
+                crop_id=crop.id,
+                ocr_job_id=1,
+                extracted_text={"name": f"Name {i}", "address": f"Addr {i}"},
+            )
+            session.add(ocr)
+            session.commit()
+            session.refresh(ocr)
+
+            match = MatchResult(
+                ocr_result_id=ocr.id,
+                matcher_job_id=old_job.id,
+                rank=1,
+                voter_id=None,
+                similarity_score=0.5,
+                confidence_level=ConfidenceLevel.LOW,
+            )
+            session.add(match)
+        session.commit()
+
+        new_job = MatcherJob(
+            campaign_id=test_campaign.id,
+            current_status=JobStatus.MATCHING_COMPLETED,
+        )
+        session.add(new_job)
+        session.commit()
+        session.refresh(new_job)
+
+        ocr_results = session.exec(select(OcrResult).order_by(OcrResult.id)).all()
+        for i, ocr in enumerate(ocr_results):
+            level = [
+                ConfidenceLevel.HIGH,
+                ConfidenceLevel.HIGH,
+                ConfidenceLevel.MEDIUM,
+            ][i]
+            match = MatchResult(
+                ocr_result_id=ocr.id,
+                matcher_job_id=new_job.id,
+                rank=1,
+                voter_id=None,
+                similarity_score=0.9 if level == ConfidenceLevel.HIGH else 0.7,
+                confidence_level=level,
+            )
+            session.add(match)
+        session.commit()
+
+        response = client.get(f"/api/campaigns/{test_campaign.id}/metrics")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["highConfidence"] == 2
+        assert data["mediumConfidence"] == 1
+        assert data["lowConfidence"] == 0
