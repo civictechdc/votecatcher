@@ -1,5 +1,5 @@
 import type { RequestHandler } from "./$types";
-import { PUBLIC_API_URL } from "$env/static/public";
+const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
 const BASE_URL = PUBLIC_API_URL ?? "";
 
 export const GET: RequestHandler = async ({ params }) => {

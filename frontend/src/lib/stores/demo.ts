@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 import { getApiClient } from "./api-client";
-import { PUBLIC_DEMO_MODE } from "$env/static/public";
+const PUBLIC_DEMO_MODE: string = import.meta.env["PUBLIC_DEMO_MODE"] || "";
 
 export interface PrebakedSession {
 	id: string;

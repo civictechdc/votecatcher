@@ -1,7 +1,8 @@
 import { browser, dev } from "$app/environment";
-import { PUBLIC_DEMO_MODE } from "$env/static/public";
 import { get } from "svelte/store";
 import { featureFlags } from "$lib/stores/featureFlags";
+
+const PUBLIC_DEMO_MODE: string = import.meta.env["PUBLIC_DEMO_MODE"] || "";
 
 export type AppMode = "production" | "demo" | "simulation" | "dev";
 

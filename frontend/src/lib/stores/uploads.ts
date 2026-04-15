@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { PUBLIC_API_URL } from "$env/static/public";
+const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
 
 export interface UploadResult {
 	scanId: string;
