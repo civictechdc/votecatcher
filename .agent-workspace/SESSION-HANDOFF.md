@@ -10,63 +10,46 @@ All work lives on **`feat/crops-in-results`** (branched from `origin/main` at `1
 ## Current State
 
 ### Completed
+
 - **EPIC-5 (Memory Hygiene)** — DONE, committed as `6b0d67b`
-  - Bead 5a: `DemoMatchingTaskMonitor._cleanup_task()` clears `_events/_tasks/_providers` dicts in `monitor_job` finally block + `publish_updated_task_status` on terminal status
+  - Bead 5a: `DemoMatchingTaskMonitor._cleanup_task()` clears dicts in `monitor_job` finally block + `publish_updated_task_status` on terminal status
   - Bead 5b: `SupabaseEngine._get_engine()` passes `pool_recycle=300, pool_pre_ping=True`
   - Bead 5c: `SSETransport._create_stream_generator()` wrapped in `asyncio.timeout(3600)`
-  - Tests: 7 + 2 + 1 new = 10 new tests, 840 total unit tests passing
+  - 10 new tests, 840 total passing
 
-- **Bead 6a (PredictionBuilder)** — DONE, committed as `638393a`
-  - New `app/services/prediction_builder.py`: `PredictionData` (frozen dataclass), `PredictionBuilder` (stateless, pure `build()`, `format_voter_name()`, `format_voter_address()`)
-  - `CampaignQueryService._build_campaign_predictions()` and `ResultsQueryService._build_predictions_from_match_results()` now delegate to `PredictionBuilder.build()`
-  - Cross-service import (`ResultsQueryService` → `CampaignQueryService`) eliminated
-  - `_format_voter_name`/`_format_voter_address` on `CampaignQueryService` now thin wrappers delegating to `PredictionBuilder`
-  - 17 new tests + 2 parity tests. 860 total passing. Lint + typecheck clean.
+- **EPIC-6 (Architecture Hygiene)** — 5 of 7 beads done
+  - Bead 6a (PredictionBuilder) — `638393a`. Extracted `PredictionBuilder.build()` from both query services. Cross-service import eliminated. 19 tests.
+  - Bead 6b (OcrTextParser) — `e1be4c4`. `format_text()` + `extract_name_and_address()`. 14 tests. All 3 call sites wired.
+  - Bead 6c (Shared Test Fixtures) — `da22b9c`. Consolidated `engine()`/`session()` into `conftest.py`. -112 lines.
+  - Bead 6d+6e (Stream CSV + Extract HTTP) — `1a9227c`, tests refined `c6f3d21`
+    - `export_results_csv` returns `(Iterator[str], str)` — no `StreamingResponse` in service
+    - Query uses `yield_per(1000)` with `order_by(ocr_result_id, rank)` for ordered streaming
+    - OCR/voter lookups cached on-demand in generator, no bulk `.all()`
+    - Router wraps result in `StreamingResponse`
+    - New `tests/unit/routers/test_results_router.py` (2 integration tests)
+    - Tests assert behavior: iterable+filename contract, `.all()` never called, incremental yield
+    - Nested ifs flattened to ternary/guard patterns (commit `c6f3d21`)
 
-- **Bead 6b (OcrTextParser)** — DONE, committed as `e1be4c4`
-  - New `app/services/ocr_text_parser.py` with `format_text()` and `extract_name_and_address()`
-  - 14 tests for OcrTextParser
-  - All 3 call sites wired: `CampaignQueryService`, `ResultsQueryService.get_results()`, `ResultsQueryService.export_results_csv()`
-  - Inline dict→string in `export_results_csv` replaced with `OcrTextParser.format_text()`
-  - 874 total tests passing. Lint + typecheck clean.
+- **Docs** — `0bb9855`. `matching-algorithm.md` rewritten. New `results-performance.md`.
 
-- **Bead 6c (Shared Test Fixtures)** — DONE, committed as `da22b9c`
-  - Removed duplicated `engine()`/`session()` fixtures from 8 service test files
-  - All now use shared `tests/unit/services/conftest.py` fixture
-  - Dead imports (`SQLModel`, `create_engine`, unused `Session`/`pytest`) cleaned up
-  - Files: test_campaign_management_service, test_campaign_query_service, test_job_query_service, test_metrics_service, test_ocr_service, test_prediction_builder, test_results_query_service, test_session_service
-  - 2 files kept custom fixtures (test_config_service: custom table SQL; test_matching_service: SqliteEngine class)
-  - 874 tests passing. Lint clean. -112 lines.
-
-- **Beads 6d+6e (Stream CSV + Extract HTTP)** — DONE, committed as `1a9227c`, tests refined as `c6f3d21`
-  - `export_results_csv` returns `(Iterator[str], str)` — no `StreamingResponse` in service
-  - Query uses `yield_per(1000)` with `order_by(ocr_result_id, rank)` for ordered streaming
-  - OCR/voter lookups cached on-demand (no bulk `.all()`)
-  - Router wraps result in `StreamingResponse`
-  - New `tests/unit/routers/test_results_router.py` (2 integration tests)
-  - 879 total tests passing. Lint clean.
-  - Tests assert behavior (iterable+filename contract, no `.all()` called, incremental yield) not implementation details (no `yield_per(1000)` mock, no type repr checks)
-
-- **Docs** — committed as `0bb9855`
-  - `matching-algorithm.md` rewritten for spec-driven architecture (pluggable engines, field specs, parity data)
-  - New `docs/development/results-performance.md`
-  - `docs/development/README.md` index updated
+### Test count: 879 passing. Lint clean.
 
 ### Next Work
-- **EPIC-6 (Architecture Hygiene)** — remaining beads, all unblocked
-  - Bead 6f: Remove dead _providers dict from DemoMatchingTaskMonitor (LOW)
-  - Bead 6g: Add missing edge case tests for get_setup_status (MEDIUM)
-  - Suggested order: 6f (quick), then 6g
-- After EPIC-6: EPIC-1 (sort) + EPIC-3 (pagination) in parallel
-- Then EPIC-2 (crop API), then EPIC-4 (frontend)
+
+1. **Bead 6f**: Remove dead `_providers` dict from `DemoMatchingTaskMonitor` (LOW, quick)
+2. **Bead 6g**: Add missing edge case tests for `get_setup_status` in `CampaignQueryService` (MEDIUM)
+3. **EPIC-6 VDD Roast**: Adversarial review of all EPIC-6 beads after 6f+6g complete
+4. After EPIC-6 closes: **EPIC-1 (sort) + EPIC-3 (pagination)** in parallel
+5. Then EPIC-2 (crop API), then EPIC-4 (frontend)
 
 ## Pickup Instructions
 
 1. `git checkout feat/crops-in-results`
-2. Load skills: `caveman` (lite mode), `tdd`, `vsdd`
+2. Load skills: `caveman` (lite), `tdd`, `vsdd`
 3. Read plan: `.agent-workspace/implementation-plan.md`
-4. **Start with bead 6f** (quick _providers removal), then 6g (edge case tests)
-5. Begin TDD cycle (RED → DOMAIN → GREEN → DOMAIN → COMMIT) per bead
+4. **Start with bead 6f** (quick `_providers` removal), then 6g
+5. After both: run VDD adversarial roast on EPIC-6, then close it
+6. TDD cycle (RED → DOMAIN → GREEN → DOMAIN → COMMIT) per bead
 
 ## What This Is About
 
@@ -74,7 +57,7 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 
 ## Execution Order
 
-1. ~~EPIC-5 (memory hygiene)~~ + EPIC-6 (architecture refactor) — prerequisite for everything
+1. ~~EPIC-5 (memory hygiene)~~ + ~~EPIC-6 (architecture refactor)~~ — nearly done
 2. EPIC-1 (sort fix) + EPIC-3 (SQL pagination) — can run in parallel
 3. EPIC-2 (crop API endpoint) — depends on EPIC-5, EPIC-6
 4. EPIC-4 (frontend thumbnails + accordion) — depends on EPIC-2, EPIC-3
@@ -86,6 +69,14 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 - CropStorageAdapter pattern (LocalFileAdapter now, SupabaseStorageAdapter later)
 - Sync query services + async router wrapping (not full async SQLModel migration)
 - No formal proofs needed — property-based tests sufficient
+- CSV export: service returns `(iterable, filename)`, router wraps in `StreamingResponse` (purity boundary enforced)
+- CSV streaming: `yield_per(1000)` + on-demand OCR/voter caching, never `.all()`
+
+## Code Quality Notes
+
+- **Nesting watch**: `_generate_csv_rows` in `results_query_service.py` had deeply nested ifs flattened to ternary/guard patterns. Re-check after EPIC-3 pagination changes. See commit `c6f3d21`.
+- **Test discipline**: Tests assert behavioral contracts (what), not implementation details (how). No `yield_per(1000)` mock, no `repr(type(...))` checks. See `TestCsvExport` in `test_results_query_behavior.py` as reference pattern.
+- **basedpyright**: 2 new false positives on `order_by()` args (SQLModel type stub limitation). Pre-existing errors unchanged.
 
 ## Required Skills
 
@@ -96,7 +87,7 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 | `svelte-components` | `~/.agents/skills/svelte-components/SKILL.md` | Bits UI, Melt UI component library patterns |
 | `tdd` | `~/.agents/skills/tdd/SKILL.md` | Red-green-refactor 5-step cycle, phase boundary enforcement |
 | `vdd` | `.agents/skills/vdd/SKILL.md` (project) | Builder/Adversary loop, adversarial refinement |
-| `vsdd` | `.agents/skills/vsdd/SKILL.md` (project) | Spec → TDD → Adversarial → Formal pipeline, crosslink integration |
+| `vsdd` | `.agents/skills/vsdd/SKILL.md` (project) | Spec → TDD → Adversary → Formal pipeline |
 
 ### Project-level skills (in repo)
 | Skill | Location | Purpose |
@@ -105,7 +96,7 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 | `caveman-commit` | `.agents/skills/caveman-commit/SKILL.md` | Conventional commit messages |
 
 ### Load order per bead
-1. `caveman` — auto-active per AGENTS.md. Full mode. All comms terse. Code/commits/PRs normal.
+1. `caveman` — auto-active per AGENTS.md. Lite mode. Drop filler only.
 2. `tdd` — for the red-green-refactor cycle
 3. `vdd` or `vsdd` — for adversarial review after epic completion
 4. `writing-svelte5` + `svelte-components` — for EPIC-4 frontend beads only
@@ -140,7 +131,7 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 - Run `pytest-benchmark` for EPIC-3 scale tests. Capture numbers in crosslink comments.
 - Frontend: run `svelte-check --tsconfig ./tsconfig.json` after every Svelte file change.
 - Use parallel tool calls where possible — read files in parallel, run independent tests in parallel.
-- Batch related beads in one session where dependencies allow (e.g., EPIC-5 beads 5a+5b+5c together).
+- Batch related beads in one session where dependencies allow.
 
 ### Pre-commit note
 - `PRE_COMMIT_ALLOW_NO_CONFIG=1` needed for crosslink session/lock git commits (no .pre-commit-config.yaml)
@@ -166,7 +157,7 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 | #7 | Bead 5a: Monitor cleanup | **DONE** |
 | #8 | Bead 5b: Pool recycle | **DONE** |
 | #9 | Bead 5c: SSE max lifetime | **DONE** |
-| #6 | EPIC-6: Architecture hygiene | In progress |
+| #6 | EPIC-6: Architecture hygiene | In progress (5/7 beads) |
 | #10 | Bead 6a: PredictionBuilder | **DONE** |
 | #11 | Bead 6b: OcrTextParser | **DONE** |
 | #12 | Bead 6c: Shared test fixtures | **DONE** |
