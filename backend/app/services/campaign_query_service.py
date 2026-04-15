@@ -156,6 +156,7 @@ class CampaignQueryService:
     ) -> dict[int, list[CampaignMatchPrediction]]:
         """Build predictions grouped by OCR result ID for campaign results."""
         from app.data.database.model.registered_voter import RegisteredVoter
+        from app.services.prediction_builder import PredictionBuilder
 
         voter_ids = {r.voter_id for r in match_results if r.voter_id}
         voters_by_id: dict[int, RegisteredVoter] = {}
@@ -166,59 +167,34 @@ class CampaignQueryService:
             ).all()
             voters_by_id = {v.id: v for v in voters}
 
+        raw_predictions = PredictionBuilder.build(match_results, voters_by_id)
+
         predictions_by_ocr: dict[int, list[CampaignMatchPrediction]] = {}
-
-        for result in match_results:
-            ocr_id = result.ocr_result_id
-            if ocr_id not in predictions_by_ocr:
-                predictions_by_ocr[ocr_id] = []
-
-            voter = voters_by_id.get(result.voter_id) if result.voter_id else None
-
-            voter_name = ""
-            voter_address = ""
-            if voter:
-                voter_name = self._format_voter_name(voter)
-                voter_address = self._format_voter_address(voter)
-
-            predictions_by_ocr[ocr_id].append(
+        for ocr_id, preds in raw_predictions.items():
+            predictions_by_ocr[ocr_id] = [
                 CampaignMatchPrediction(
-                    rank=result.rank,
-                    voter_name=voter_name,
-                    voter_address=voter_address,
-                    similarity_score=result.similarity_score,
-                    confidence=result.confidence_level.value
-                    if result.confidence_level
-                    else "LOW",
+                    rank=p.rank,
+                    voter_name=p.voter_name,
+                    voter_address=p.voter_address,
+                    similarity_score=p.similarity_score,
+                    confidence=p.confidence,
                 )
-            )
-
-        for ocr_id in predictions_by_ocr:
-            predictions_by_ocr[ocr_id].sort(key=lambda p: p.rank)
+                for p in preds
+            ]
 
         return predictions_by_ocr
 
     @staticmethod
     def _format_voter_name(voter) -> str:
-        name_parts = []
-        if voter.name_data:
-            first = voter.name_data.get("first_name", "")
-            last = voter.name_data.get("last_name", "")
-            if first:
-                name_parts.append(first)
-            if last:
-                name_parts.append(last)
-        return " ".join(name_parts)
+        from app.services.prediction_builder import PredictionBuilder
+
+        return PredictionBuilder.format_voter_name(voter)
 
     @staticmethod
     def _format_voter_address(voter) -> str:
-        addr_parts = []
-        if voter.address_data:
-            for key in ("street", "city", "state", "zip"):
-                val = voter.address_data.get(key, "")
-                if val:
-                    addr_parts.append(val)
-        return ", ".join(addr_parts)
+        from app.services.prediction_builder import PredictionBuilder
+
+        return PredictionBuilder.format_voter_address(voter)
 
     def get_setup_status(self, campaign_id: uuid.UUID) -> SetupStatusResponse:
         """Get campaign setup status for progress stepper.
