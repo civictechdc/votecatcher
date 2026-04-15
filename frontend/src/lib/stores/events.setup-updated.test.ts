@@ -67,9 +67,12 @@ describe("Events Store — setup:updated", () => {
 			upload_type: "voter_list",
 		};
 
-		instances[0]!.onmessage!.call({} as EventSource, {
-			data: JSON.stringify(setupEventPayload),
-		} as MessageEvent);
+		instances[0]!.onmessage!.call(
+			{} as EventSource,
+			{
+				data: JSON.stringify(setupEventPayload),
+			} as MessageEvent,
+		);
 
 		expect(handler).toHaveBeenCalledTimes(1);
 		const customEvent = handler.mock.calls[0]![0] as CustomEvent;
@@ -98,9 +101,12 @@ describe("Events Store — setup:updated", () => {
 			upload_type: "petition",
 		};
 
-		instances[0]!.onmessage!.call({} as EventSource, {
-			data: JSON.stringify(setupEventPayload),
-		} as MessageEvent);
+		instances[0]!.onmessage!.call(
+			{} as EventSource,
+			{
+				data: JSON.stringify(setupEventPayload),
+			} as MessageEvent,
+		);
 
 		expect(handler).toHaveBeenCalledTimes(1);
 		const customEvent = handler.mock.calls[0]![0] as CustomEvent;
@@ -117,9 +123,12 @@ describe("Events Store — setup:updated", () => {
 		events.connect("campaign-123");
 		instances[0]!.onopen!.call({} as EventSource, {} as Event);
 
-		instances[0]!.onmessage!.call({} as EventSource, {
-			data: JSON.stringify({ event_type: "setup:updated" }),
-		} as MessageEvent);
+		instances[0]!.onmessage!.call(
+			{} as EventSource,
+			{
+				data: JSON.stringify({ event_type: "setup:updated" }),
+			} as MessageEvent,
+		);
 
 		expect(handler).not.toHaveBeenCalled();
 
