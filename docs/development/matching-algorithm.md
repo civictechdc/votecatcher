@@ -1,45 +1,94 @@
-# Matching Algorithm — DC Region (Legacy)
+# Matching Algorithm
 
-This document describes the **original matching algorithm** used for matching
-OCR-extracted petition signer data against the DC voter registration list.
+This document describes the matching algorithm for comparing OCR-extracted
+petition signer data against voter registration lists. The spec-driven system
+supports configurable regions via JSON5 field definitions.
 
 ## Algorithm Overview
 
-The algorithm compares OCR results (name + address) against every registered
-voter, computing a combined similarity score using **harmonic mean** of
-individual fuzzy match scores.
+The algorithm compares OCR results against every registered voter in a region,
+computing a combined similarity score by aggregating per-field fuzzy match
+scores using a pluggable engine.
 
 ### Source
 
-`app/matching/fuzzy_match_helper.py` (commit `11b9617`)
+`app/matching/matching_service.py`, `app/matching/engines.py`, `app/domain/field_spec.py`
 
 ### Scoring Formula
 
-```
-name_score = fuzz.ratio(ocr_name, voter_name) / 100
-addr_score = fuzz.ratio(ocr_address, voter_address) / 100
+Each matchable field is scored independently, then aggregated:
 
-if name_score + addr_score == addr_score == 0:
-    combined = 0.0
-else:
-    combined = (2 * name_score * addr_score) / (name_score + addr_score)
+```
+field_scores[field_id] = fuzz.ratio(ocr_value, voter_value) / 100
+weights[field_id] = field.match_weight
+
+combined = engine.aggregate(field_scores, weights)
 ```
 
 Where `fuzz.ratio` is RapidFuzz's normalized Levenshtein distance returning a
 float in [0, 100].<sup>[1](#f1)</sup> This was chosen over more sophisticated
-string metrics (Jaro-Winkler, Smith-Waterman) because Levenshtein distance
+string metrics (Jaro-Winkler, Smith-Winkler) because Levenshtein distance
 directly measures character-level edit operations — the kind of errors OCR
 commonly introduces (character substitutions, transpositions, insertions from
 handwriting artifacts).<sup>[2](#f2)</sup>
 
 ### Field Composition
 
-| Field | Template | Example |
-|-------|----------|---------|
-| Name | `First_Name + " " + Last_Name` | `"Alexis Walter"` |
-| Address | `Street_Number + " " + Street_Name + " " + Street_Type + " " + Street_Dir_Suffix` | `"23407 Hawkins Lock "` |
+Fields are defined per-region in JSON5 spec files. Voter data is composed via
+templates with `{field_id}` placeholders:
 
-Empty parts are omitted. Fields are read directly from the voter CSV columns.
+| Field | Template (DC) | Example |
+|-------|---------------|---------|
+| Name | `{first_name} {last_name}` | `"Alexis Walter"` |
+| Address | `{street_number} {street_name} {street_type} {street_dir_suffix}` | `"23407 Hawkins Lock"` |
+
+Empty parts are omitted by `render_template()`. Fields are mapped from voter CSV
+columns via the spec's `voter_reg_fields` definitions.
+
+### Score Aggregation Engines
+
+Two engines are available, selectable via `MATCHING_ENGINE` env var:
+
+#### Harmonic Mean (default)
+
+```
+H = Σ(wᵢ) / Σ(wᵢ / sᵢ)
+```
+
+Zero-propagating: if any field scores 0.0, the overall score is 0.0.
+
+#### Weighted Average
+
+```
+W = Σ(sᵢ × wᵢ) / Σ(wᵢ)
+```
+
+Arithmetic mean weighted by `BallotField.match_weight`.
+
+#### Comparison
+
+| name_score | addr_score | Harmonic | Weighted |
+|-----------|-----------|----------|----------|
+| 1.0 | 1.0 | 1.000 | 1.000 |
+| 1.0 | 0.5 | 0.667 | 0.750 |
+| 0.9 | 0.9 | 0.900 | 0.900 |
+| 0.5 | 0.1 | 0.167 | 0.300 |
+
+Harmonic mean penalizes imbalanced scores — both name AND address must be
+reasonable matches. Weighted average is more permissive when one field is
+strong but another is weak.
+
+#### Parity Against Gold Master Baseline
+
+50 OCR results × 100,000 registered voters:
+
+| Metric | Harmonic | Weighted |
+|--------|----------|----------|
+| Same confidence as baseline | **50/50** | 50/50 |
+| Same top voter as baseline | **50/50** | 44/50 |
+| Within ±0.0005 of baseline | **50/50** | 35/50 |
+| Mean delta | **0.000000** | +0.005415 |
+| Max \|delta\| | **0.000000** | 0.052300 |
 
 ### Confidence Levels
 
@@ -55,21 +104,6 @@ confidence. The 0.60 MEDIUM threshold captures near-matches where OCR quality
 degraded a field (e.g., "Christina" vs "Christian" → name_score=0.750) but the
 address partially confirms the match.<sup>[3](#f3)</sup>
 
-### Baseline Performance (Gold Master)
-
-50 OCR results × 100,000 registered voters:
-
-| Metric | Value |
-|--------|-------|
-| HIGH | 37 (74%) |
-| MEDIUM | 12 (24%) |
-| LOW | 1 (2%) |
-| Exact name matches | 36/50 (72%) |
-| Avg name score | 0.9205 |
-| Avg address score | 0.8974 |
-| Avg combined score | 0.9055 |
-| Combined range | 0.5783 – 1.0000 |
-
 ### Precision Characteristics
 
 - `fuzz.ratio` returns a float (not integer), divided by 100 → recurring decimals possible
@@ -77,54 +111,38 @@ address partially confirms the match.<sup>[3](#f3)</sup>
 - Combined (harmonic mean) reported at **4 decimal places** (0.0001 precision)
 - Confidence thresholds at 2 decimal places — individual scores are 10x more precise
 
-### Why Harmonic Mean
+### Why Harmonic Mean Is Default
 
-The harmonic mean was chosen over the arithmetic mean as the aggregation
-function because petition matching requires **both** name and address to
-agree.<sup>[4](#f4)</sup> Arithmetic mean would allow a perfect name match
+Petition matching requires **both** name and address to
+agree.<sup>[4](#f4)</sup> Weighted average would allow a perfect name match
 (1.0) paired with a garbage address (0.1) to score 0.55 — nearly MEDIUM —
 which is misleading for a petition validation use case where address is an
 independent confirming signal.
 
-Harmonic mean penalizes imbalanced scores:
-
-| name_score | addr_score | Harmonic | Arithmetic |
-|-----------|-----------|----------|------------|
-| 1.0 | 1.0 | 1.000 | 1.000 |
-| 1.0 | 0.5 | 0.667 | 0.750 |
-| 0.9 | 0.9 | 0.900 | 0.900 |
-| 0.5 | 0.1 | 0.167 | 0.300 |
-
-This ensures both name AND address must be reasonable matches — a perfect name
-with a terrible address won't produce a misleadingly high score.
-
 ### Matching Process
 
-1. Load voter registration CSV → compose `Full Name` and `Full Address` for each voter
-2. Load OCR results from database (name + address extracted text)
-3. For each OCR result:
-   - Compute `fuzz.ratio` against every voter's `Full Name` → get top N name matches
-   - Among top N name matches, compute `fuzz.ratio` against their `Full Address`
-   - Calculate harmonic mean of name + address scores
-   - Sort by combined score, return top match
-4. Assign confidence level based on combined score
+1. Load region spec from JSON5 → get matchable fields, templates, weights
+2. Flatten voter data via spec's `voter_reg_fields` → compose field values using templates
+3. Load OCR results from database (field-level extracted text)
+4. For each OCR result:
+   - Compute `fuzz.ratio` for each matchable field against every voter
+   - Aggregate per-field scores using configured engine
+   - Sort by combined score, return top N matches
+5. Assign confidence level based on combined score
 
 ### Limitations
 
-- **Full scan**: Compares every OCR result against every voter (O(n×m)) — no pre-filtering
-- **Region-specific**: Hardcoded DC column names (`First_Name`, `Street_Number`, etc.)
-- **No weights**: Name and address contribute equally
-- **No partial matching**: Uses `fuzz.ratio` (full string) rather than `partial_ratio`
+- **Full scan**: Compares every OCR result against every voter (O(n×m)) — no pre-filtering index
+- **Single similarity function**: Uses `fuzz.ratio` (full string) rather than `partial_ratio` or token-based variants
 - **No batch optimization**: Each OCR result scanned independently
 
 ### Gold Master Approval Tests
 
 The baseline is locked in approval tests at:
-- Branch: `test/matching-baseline-gold`
 - Test: `tests/unit/matching/test_matching_gold_master.py`
 - Approved snapshot: `tests/unit/matching/test_old_algorithm_approval.approved.txt`
 
-Any future matching implementation must prove parity against this locked baseline.
+Any change to the matching engine must prove parity against this locked baseline.
 
 ---
 
