@@ -8,24 +8,10 @@ private methods.
 import uuid
 from types import SimpleNamespace
 
-import pytest
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session
 
 from app.data.database.model.match_result import ConfidenceLevel, MatchResult
 from app.data.database.model.registered_voter import RegisteredVoter
-
-
-@pytest.fixture
-def engine():
-    engine = create_engine("sqlite:///:memory:", echo=False)
-    SQLModel.metadata.create_all(engine)
-    return engine
-
-
-@pytest.fixture
-def session(engine):
-    with Session(engine) as session:
-        yield session
 
 
 def _make_voter(

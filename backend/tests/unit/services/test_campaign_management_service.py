@@ -8,23 +8,10 @@ implement → verify → next.
 import uuid
 
 import pytest
-from sqlmodel import Session, SQLModel, create_engine, select
+from sqlmodel import Session, select
 
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign, Region
-
-
-@pytest.fixture
-def engine():
-    engine = create_engine("sqlite:///:memory:", echo=False)
-    SQLModel.metadata.create_all(engine)
-    return engine
-
-
-@pytest.fixture
-def session(engine):
-    with Session(engine) as session:
-        yield session
 
 
 def _seed_region(session: Session) -> Region:

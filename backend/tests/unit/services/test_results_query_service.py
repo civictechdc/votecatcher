@@ -2,8 +2,7 @@
 
 import uuid
 
-import pytest
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session
 
 from app.data.database.model.match_result import ConfidenceLevel, MatchResult
 from app.data.database.model.registered_voter import RegisteredVoter
@@ -11,17 +10,6 @@ from app.data.database.model.registered_voter import RegisteredVoter
 
 class TestResultsQueryService:
     """Tests for ResultsQueryService."""
-
-    @pytest.fixture
-    def engine(self):
-        engine = create_engine("sqlite:///:memory:", echo=False)
-        SQLModel.metadata.create_all(engine)
-        return engine
-
-    @pytest.fixture
-    def session(self, engine):
-        with Session(engine) as session:
-            yield session
 
     def test_build_predictions_from_match_results_empty(self, session: Session):
         """Test building predictions with no match results."""
