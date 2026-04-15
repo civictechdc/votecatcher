@@ -65,6 +65,7 @@ class TestWorkerDelegatesToMatchingService:
                 "app.matching.matching_service.MatchingService"
             ) as MockMatchingService,
             patch("app.dependencies.get_field_spec_service") as mock_get_spec,
+            patch("app.dependencies.get_matching_engine") as mock_get_engine,
         ):
             mock_ms_instance = MockMatchingService.return_value
             mock_ms_instance.match_ocr_result_with_spec.return_value = [
@@ -80,10 +81,14 @@ class TestWorkerDelegatesToMatchingService:
             mock_spec = MagicMock()
             mock_spec_service.get_spec_by_key.return_value = mock_spec
             mock_get_spec.return_value = iter([mock_spec_service])
+            mock_get_engine.return_value = MagicMock()
 
             await worker._run_matching_phase(mock_session, mock_job, mock_ocr_job)
 
-            MockMatchingService.assert_called_once_with(session=mock_session)
+            MockMatchingService.assert_called_once()
+            call_kwargs = MockMatchingService.call_args.kwargs
+            assert call_kwargs["session"] == mock_session
+            assert "aggregator" in call_kwargs
             mock_ms_instance.match_ocr_result_with_spec.assert_called_once_with(
                 spec=mock_spec,
                 ocr_text=ocr_result.extracted_text,
@@ -119,6 +124,7 @@ class TestWorkerDelegatesToMatchingService:
                 "app.matching.matching_service.MatchingService"
             ) as MockMatchingService,
             patch("app.dependencies.get_field_spec_service") as mock_get_spec,
+            patch("app.dependencies.get_matching_engine") as mock_get_engine,
         ):
             MockMatchingService.return_value.match_ocr_result_with_spec.return_value = [
                 match_data
@@ -128,6 +134,7 @@ class TestWorkerDelegatesToMatchingService:
             mock_spec = MagicMock()
             mock_spec_service.get_spec_by_key.return_value = mock_spec
             mock_get_spec.return_value = iter([mock_spec_service])
+            mock_get_engine.return_value = MagicMock()
 
             await worker._run_matching_phase(mock_session, mock_job, mock_ocr_job)
 
