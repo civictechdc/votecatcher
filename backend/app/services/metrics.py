@@ -153,9 +153,11 @@ class MetricsService:
         if not job_ids:
             return 0, {}
 
+        latest_job_id = max(job_ids)
+
         results = self.session.exec(
             select(MatchResult)
-            .where(MatchResult.matcher_job_id.in_(job_ids))
+            .where(MatchResult.matcher_job_id == latest_job_id)
             .where(MatchResult.rank == 1)
         ).all()
 

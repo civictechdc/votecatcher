@@ -286,3 +286,122 @@ class TestCampaignResultsAPI:
         assert data["total"] == 2
         for result in data["results"]:
             assert result["predictions"][0]["confidence"] == "HIGH"
+
+    def test_results_only_from_latest_job(
+        self,
+        client: TestClient,
+        test_campaign: Campaign,
+        session: Session,
+    ):
+        """Should return results from only the latest matching job.
+
+        Regression guard: when a campaign has multiple matcher jobs (e.g. a
+        re-run after fixing address scoring), the campaign results endpoint
+        must only show the latest job's results, not merge stale results from
+        earlier jobs. Without this fix, identical OCR results get duplicated
+        predictions — one from the old job (possibly LOW/broken scores) and
+        one from the new job (correct scores).
+        """
+        unique_path = f"/tmp/test_{uuid_module.uuid4().hex}.pdf"
+        scan = PetitionScan(
+            campaign_id=test_campaign.id,
+            original_filename="test.pdf",
+            stored_path=unique_path,
+            file_hash=uuid_module.uuid4().hex,
+            page_count=1,
+        )
+        session.add(scan)
+        session.commit()
+        session.refresh(scan)
+
+        crop = PetitionCrop(
+            scan_id=scan.id,
+            crop_index=0,
+            stored_path=f"{unique_path}_crop_0.png",
+            crop_coordinates={},
+            page_number=1,
+        )
+        session.add(crop)
+        session.commit()
+        session.refresh(crop)
+
+        ocr = OcrResult(
+            crop_id=crop.id,
+            ocr_job_id=1,
+            extracted_text={"name": "Alexis Walter", "address": "23407 Hawkins Lock"},
+        )
+        session.add(ocr)
+        session.commit()
+        session.refresh(ocr)
+
+        voter = RegisteredVoter(
+            region_id=test_campaign.region_id,
+            name_data={"first_name": "Alexis", "last_name": "Walter"},
+            address_data={
+                "street_number": "23407",
+                "street_name": "Hawkins Lock",
+                "zip_code": "20001",
+                "city_name": "Washington",
+            },
+        )
+        session.add(voter)
+        session.commit()
+        session.refresh(voter)
+
+        old_job = MatcherJob(
+            campaign_id=test_campaign.id,
+            current_status=JobStatus.MATCHING_COMPLETED,
+        )
+        session.add(old_job)
+        session.commit()
+        session.refresh(old_job)
+
+        stale_match = MatchResult(
+            ocr_result_id=ocr.id,
+            matcher_job_id=old_job.id,
+            rank=1,
+            voter_id=voter.id,
+            similarity_score=0.5,
+            confidence_level=ConfidenceLevel.LOW,
+            field_scores={"name": 1.0, "address": 0.0},
+        )
+        session.add(stale_match)
+        session.commit()
+
+        new_job = MatcherJob(
+            campaign_id=test_campaign.id,
+            current_status=JobStatus.MATCHING_COMPLETED,
+        )
+        session.add(new_job)
+        session.commit()
+        session.refresh(new_job)
+
+        correct_match = MatchResult(
+            ocr_result_id=ocr.id,
+            matcher_job_id=new_job.id,
+            rank=1,
+            voter_id=voter.id,
+            similarity_score=1.0,
+            confidence_level=ConfidenceLevel.HIGH,
+            field_scores={"name": 1.0, "address": 1.0},
+        )
+        session.add(correct_match)
+        session.commit()
+
+        response = client.get(f"/api/campaigns/{test_campaign.id}/results")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["total"] == 1
+        assert len(data["results"]) == 1
+
+        result = data["results"][0]
+        assert len(result["predictions"]) == 1, (
+            f"Expected 1 prediction from latest job, got {len(result['predictions'])}: "
+            f"{[p['confidence'] for p in result['predictions']]}"
+        )
+        prediction = result["predictions"][0]
+        assert prediction["confidence"] == "HIGH"
+        assert prediction["similarityScore"] == 1.0
+        assert result["jobId"] == new_job.id
