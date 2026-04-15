@@ -553,3 +553,92 @@ class TestGetSetupStatus:
 
         assert status.jobs.total == 2
         assert status.jobs.active == 1
+
+    def test_signature_count_handles_none_page_count(self, session: Session):
+        """Scenario: PetitionScan with page_count=None contributes 0 to signature_count."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region, campaign = _seed_campaign(session)
+
+        scan = PetitionScan(
+            campaign_id=campaign.id,
+            original_filename="no_pages.pdf",
+            stored_path="/tmp/no_pages.pdf",
+            file_hash="np123",
+            page_count=None,
+        )
+        session.add(scan)
+        session.commit()
+
+        service = CampaignQueryService(session)
+        status = service.get_setup_status(campaign.id)
+
+        assert status.state == "petitions_only"
+        assert status.petitions.file_count == 1
+        assert status.petitions.signature_count == 0
+
+    def test_signature_count_mixed_none_and_values(self, session: Session):
+        """Scenario: Multiple scans, some None page_count — sums only non-None."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region, campaign = _seed_campaign(session)
+
+        session.add(
+            PetitionScan(
+                campaign_id=campaign.id,
+                original_filename="a.pdf",
+                stored_path="/tmp/a.pdf",
+                file_hash="a1",
+                page_count=5,
+            )
+        )
+        session.add(
+            PetitionScan(
+                campaign_id=campaign.id,
+                original_filename="b.pdf",
+                stored_path="/tmp/b.pdf",
+                file_hash="b2",
+                page_count=None,
+            )
+        )
+        session.add(
+            PetitionScan(
+                campaign_id=campaign.id,
+                original_filename="c.pdf",
+                stored_path="/tmp/c.pdf",
+                file_hash="c3",
+                page_count=3,
+            )
+        )
+        session.commit()
+
+        service = CampaignQueryService(session)
+        status = service.get_setup_status(campaign.id)
+
+        assert status.petitions.file_count == 3
+        assert status.petitions.signature_count == 8
+
+    def test_region_name_none_when_region_deleted(self, session: Session):
+        """Scenario: Campaign FK points to deleted Region — region_name is None."""
+        from sqlmodel import delete
+
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region, campaign = _seed_campaign(session)
+
+        upload = VoterListUpload(
+            region_id=region.id,
+            original_filename="voters.csv",
+            file_size=512,
+            row_count=50,
+            status=UploadStatus.ACTIVE,
+            uploaded_at=datetime.now(UTC),
+        )
+        session.add(upload)
+        session.exec(delete(Region).where(Region.id == region.id))
+        session.commit()
+
+        service = CampaignQueryService(session)
+        status = service.get_setup_status(campaign.id)
+
+        assert status.voter_list.region_name is None

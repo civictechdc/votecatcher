@@ -1,7 +1,6 @@
 import asyncio
 from asyncio.locks import Event
 from collections.abc import AsyncGenerator
-from typing import Any
 
 import structlog
 
@@ -31,8 +30,6 @@ class DemoMatchingTaskMonitor:
         self._events: dict[str, asyncio.Event] = {}
         # job_id -> background poller task
         self._tasks: dict[str, asyncio.Task[MatchingTask]] = {}
-        # store provider-specific clients/details if needed
-        self._providers: dict[str, dict[str, Any]] = {}
 
     async def register_task(self, new_task: CreateMatchingTask) -> MatchingTask:
         registered_task: MatchingTask = await self.task_repo.register_matching_task(
@@ -70,7 +67,6 @@ class DemoMatchingTaskMonitor:
     def _cleanup_task(self, task_id: str) -> None:
         self._events.pop(task_id, None)
         self._tasks.pop(task_id, None)
-        self._providers.pop(task_id, None)
 
     async def monitor_job(self, task_id: str) -> AsyncGenerator[MatchingTask]:
         try:
@@ -96,8 +92,8 @@ class DemoMatchingTaskMonitor:
                 yield snapshot
                 if is_terminal_matching_status(snapshot.status):
                     logger.debug(
-                        f"Matching task has ended with state: {snapshot.status}. "
-                        f"Breaking out of loop."
+                        "Matching task ended",
+                        status=snapshot.status,
                     )
                     return
         finally:

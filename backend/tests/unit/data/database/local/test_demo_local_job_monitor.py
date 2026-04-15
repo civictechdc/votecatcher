@@ -70,7 +70,7 @@ class TestDemoMatchingTaskMonitorCleanup:
 
         Given a registered task
         When monitor_job yields a snapshot with terminal status
-        Then _events, _tasks, _providers are all empty
+        Then _events and _tasks are both empty
         """
         task = _make_task(status=MatchingStatus.PENDING)
         terminal_task = _make_task(status=terminal_status)
@@ -92,9 +92,6 @@ class TestDemoMatchingTaskMonitorCleanup:
         assert snapshots[-1].status == terminal_status
         assert len(monitor._events) == 0, f"_events not empty after {terminal_status}"
         assert len(monitor._tasks) == 0, f"_tasks not empty after {terminal_status}"
-        assert len(monitor._providers) == 0, (
-            f"_providers not empty after {terminal_status}"
-        )
 
     async def test_dicts_empty_after_publish_terminal_status(
         self,
@@ -105,7 +102,7 @@ class TestDemoMatchingTaskMonitorCleanup:
 
         Given a registered task
         When publish_updated_task_status is called with a terminal status
-        Then _events, _tasks, _providers are all empty
+        Then _events and _tasks are both empty
         """
         task = _make_task(status=MatchingStatus.PENDING)
         terminal_task = _make_task(status=MatchingStatus.COMPLETED)
@@ -123,4 +120,3 @@ class TestDemoMatchingTaskMonitorCleanup:
 
         assert len(monitor._events) == 0
         assert len(monitor._tasks) == 0
-        assert len(monitor._providers) == 0
