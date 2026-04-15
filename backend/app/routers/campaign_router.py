@@ -209,6 +209,7 @@ class CampaignResultResponse(ApiModel):
     extracted_address: str
     crop_id: int
     job_id: int
+    thumbnail_url: str
     predictions: list[CampaignMatchPrediction]
 
 

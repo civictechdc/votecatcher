@@ -427,6 +427,20 @@ class TestGetCampaignResults:
         assert len(result.results) == 1
         assert result.results[0].job_id == job2.id
 
+    def test_results_include_thumbnail_url(self, session: Session):
+        """Scenario: Each result includes thumbnailUrl resolved from crop_id."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region, campaign = _seed_campaign(session)
+        scan, crop, job, ocr, voter, match = _seed_full_chain(session, campaign)
+
+        service = CampaignQueryService(session)
+        result = service.get_campaign_results(campaign.id)
+
+        assert len(result.results) == 1
+        r = result.results[0]
+        assert r.thumbnail_url == f"/api/crops/{crop.id}/image"
+
 
 class TestGetSetupStatus:
     """Feature: Campaign setup status.

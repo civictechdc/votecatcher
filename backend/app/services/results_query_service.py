@@ -121,6 +121,7 @@ class ResultsQueryService:
                 else ""
             )
             crop_id = ocr_result.crop_id if ocr_result else 0
+            thumbnail_url = f"/api/crops/{crop_id}/image" if crop_id else ""
 
             predictions = predictions_by_ocr.get(ocr_id, [])[:5]
 
@@ -129,6 +130,7 @@ class ResultsQueryService:
                     ocr_result_id=ocr_id,
                     extracted_text=extracted_text,
                     crop_id=crop_id,
+                    thumbnail_url=thumbnail_url,
                     predictions=predictions,
                 )
             )

@@ -15,49 +15,59 @@ All work lives on **`feat/crops-in-results`** (branched from `origin/main` at `1
   - Bead 5a: `DemoMatchingTaskMonitor._cleanup_task()` clears dicts in `monitor_job` finally block + `publish_updated_task_status` on terminal status
   - Bead 5b: `SupabaseEngine._get_engine()` passes `pool_recycle=300, pool_pre_ping=True`
   - Bead 5c: `SSETransport._create_stream_generator()` wrapped in `asyncio.timeout(3600)`
-  - 10 new tests, 840 total passing
+  - 10 new tests
 
-- **EPIC-6 (Architecture Hygiene)** — 5 of 7 beads done
-  - Bead 6a (PredictionBuilder) — `638393a`. Extracted `PredictionBuilder.build()` from both query services. Cross-service import eliminated. 19 tests.
-  - Bead 6b (OcrTextParser) — `e1be4c4`. `format_text()` + `extract_name_and_address()`. 14 tests. All 3 call sites wired.
-  - Bead 6c (Shared Test Fixtures) — `da22b9c`. Consolidated `engine()`/`session()` into `conftest.py`. -112 lines.
-  - Bead 6d+6e (Stream CSV + Extract HTTP) — `1a9227c`, tests refined `c6f3d21`
-    - `export_results_csv` returns `(Iterator[str], str)` — no `StreamingResponse` in service
-    - Query uses `yield_per(1000)` with `order_by(ocr_result_id, rank)` for ordered streaming
-    - OCR/voter lookups cached on-demand in generator, no bulk `.all()`
-    - Router wraps result in `StreamingResponse`
-    - New `tests/unit/routers/test_results_router.py` (2 integration tests)
-    - Tests assert behavior: iterable+filename contract, `.all()` never called, incremental yield
+- **EPIC-6 (Architecture Hygiene)** — DONE (7/7 beads, roasted), committed as `6070def`
+  - Bead 6a (PredictionBuilder) — `638393a`. 19 tests.
+  - Bead 6b (OcrTextParser) — `e1be4c4`. 14 tests.
+  - Bead 6c (Shared Test Fixtures) — `da22b9c`. -112 lines.
+  - Bead 6d+6e (Stream CSV + Extract HTTP) — `1a9227c`, `c6f3d21`
   - Readability pass — `f511b8e`
-    - Replaced inline dict→string with `OcrTextParser.format_text` / `extract_name_and_address` in both query services
-    - Removed dead `CampaignQueryService._format_voter_name` / `_format_voter_address` wrappers
-    - Compacted `PredictionBuilder.format_voter_name/address` with `filter+join`
-    - Extracted `_csv_row` helper, moved `CSV_HEADER` to class constant
+  - Bead 6f (Remove _providers) + Bead 6g (Edge case tests) + roast fix — `6070def`
+  - VDD Roast: 9 findings. 1 fix applied (structlog lazy formatting). 8 deferred (known tech debt → EPIC-3, cosmetic).
 
-- **Code quality standards** — moved to `AGENTS.md → Code Quality` (`e8582c6`)
-  - Readability-first Python (PEP 20), legacy refactoring, test discipline, nesting watch
-  - Handoff references it instead of duplicating
+- **EPIC-1 (Sort Fix)** — DONE, committed as `d076d56`
+  - `sortResults` pure function in `campaign-results.ts` — sorts by confidence, name, address, score
+  - `sortConfig` state + `onSortChange` wired to Table component in results page
+  - Follows campaigns page pattern exactly (import SortConfig from Table.svelte)
+  - 14 unit tests in `campaign-results.test.ts`: ascending, descending, stable sort, null config, no predictions, empty array, unknown column
+
+- **EPIC-3 (SQL Pagination)** — DONE, committed as `0c81f50`
+  - `CampaignQueryService.get_campaign_results`: replaced `.all()` + Python pagination with `COUNT(DISTINCT)` + `LIMIT/OFFSET` subqueries. Memory O(N) → O(page_size).
+  - `ResultsQueryService.get_results`: same SQL pagination rewrite.
+  - `MetricsService._count_processed_results`: SQL `GROUP BY confidence_level` + `COUNT(DISTINCT ocr_result_id)` replaces Python grouping.
+  - Indexes on `match_results(ocr_result_id, matcher_job_id, voter_id)` and `ocr_results(crop_id, ocr_job_id)`.
+  - Supabase migration: `20250827234500_add_pagination_indexes.sql`
+  - New test: `test_pages_are_disjoint_by_ocr_result_id`
 
 - **Docs** — `0bb9855`. `matching-algorithm.md` rewritten. New `results-performance.md`.
+- **Code quality standards** — moved to `AGENTS.md → Code Quality` (`e8582c6`)
 
-### Test count: 879 passing. Lint clean.
+### Test count: 1117 backend + 41 frontend. Lint clean.
 
 ### Next Work
 
-1. **Bead 6f**: Remove dead `_providers` dict from `DemoMatchingTaskMonitor` (LOW, quick)
-2. **Bead 6g**: Add missing edge case tests for `get_setup_status` in `CampaignQueryService` (MEDIUM)
-3. **EPIC-6 VDD Roast**: Adversarial review of all EPIC-6 beads after 6f+6g complete
-4. After EPIC-6 closes: **EPIC-1 (sort) + EPIC-3 (pagination)** in parallel
-5. Then EPIC-2 (crop API), then EPIC-4 (frontend)
+1. **VDD Roast EPIC-1 + EPIC-3** — adversarial review before proceeding (per VSDD Phase 3)
+2. **EPIC-2 (Crop API endpoint)** — depends on EPIC-5 ✅, EPIC-6 ✅
+   - Bead 2a: CropStorageAdapter protocol + LocalFileAdapter
+   - Bead 2b: GET /api/crops/{crop_id}/image endpoint
+   - Bead 2c: Add thumbnail_url to CampaignResultResponse
+   - Bead 2d: Add thumbnail_url to ResultResponse (job-level)
+3. **EPIC-4 (Frontend thumbnails + accordion)** — depends on EPIC-2, EPIC-3 ✅
+   - Bead 4a: Update CampaignResultResponse interface with thumbnailUrl
+   - Bead 4b: Thumbnail column with loading=lazy
+   - Bead 4c: Accordion expand row with top-5 predictions
+   - Bead 4d: CropLightbox modal
+   - Bead 4e: Image endpoint concurrency semaphore
 
 ## Pickup Instructions
 
 1. `git checkout feat/crops-in-results`
 2. Read **`AGENTS.md → Code Quality`** — project-wide standards
-3. Load skills: `caveman` (lite), `tdd`, `vsdd`
+3. Load skills: `caveman` (lite), `tdd`, `vdd`/`vsdd`
 4. Read plan: `.agent-workspace/implementation-plan.md`
-5. **Start with bead 6f** (quick `_providers` removal), then 6g
-6. After both: run VDD adversarial roast on EPIC-6, then close it
+5. **Optional: VDD Roast EPIC-1 + EPIC-3** — fresh adversarial review of committed code
+6. **Start EPIC-2** — read plan section, decompose into beads
 7. TDD cycle (RED → DOMAIN → GREEN → DOMAIN → COMMIT) per bead
 
 ## What This Is About
@@ -66,20 +76,22 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 
 ## Execution Order
 
-1. ~~EPIC-5 (memory hygiene)~~ + ~~EPIC-6 (architecture refactor)~~ — nearly done
-2. EPIC-1 (sort fix) + EPIC-3 (SQL pagination) — can run in parallel
-3. EPIC-2 (crop API endpoint) — depends on EPIC-5, EPIC-6
-4. EPIC-4 (frontend thumbnails + accordion) — depends on EPIC-2, EPIC-3
+1. ~~EPIC-5 (memory hygiene)~~ + ~~EPIC-6 (architecture refactor)~~ — **DONE**
+2. ~~EPIC-1 (sort fix)~~ + ~~EPIC-3 (SQL pagination)~~ — **DONE**
+3. **EPIC-2 (crop API endpoint)** — ready, dependencies met
+4. EPIC-4 (frontend thumbnails + accordion) — depends on EPIC-2
 
 ## Key Decisions Made
 
 - Pattern A: Accordion expand (not side panel)
-- Client-side sort Phase 1, server-side Phase 2
+- Client-side sort Phase 1 (DONE), server-side Phase 2 (future)
 - CropStorageAdapter pattern (LocalFileAdapter now, SupabaseStorageAdapter later)
 - Sync query services + async router wrapping (not full async SQLModel migration)
 - No formal proofs needed — property-based tests sufficient
 - CSV export: service returns `(iterable, filename)`, router wraps in `StreamingResponse` (purity boundary enforced)
 - CSV streaming: `yield_per(1000)` + on-demand OCR/voter caching, never `.all()`
+- SQL pagination: `COUNT(DISTINCT)` + `DISTINCT ... ORDER BY ... LIMIT/OFFSET` subquery pattern. Never loads all rows.
+- Metrics GROUP BY: `SELECT confidence_level, COUNT(DISTINCT ocr_result_id) ... GROUP BY confidence_level WHERE rank=1`
 
 ## Code Quality Notes
 
@@ -87,10 +99,13 @@ Project-wide standards live in **`AGENTS.md → Code Quality`** section. Read it
 
 Session-specific notes:
 
-- **Nesting watch**: `_generate_csv_rows` in `results_query_service.py` had deeply nested ifs flattened to ternary/guard patterns. Re-check after EPIC-3 pagination changes. See commit `c6f3d21`.
-- **Test discipline reference**: See `TestCsvExport` in `test_results_query_behavior.py` for the behavioral-contract testing pattern.
+- **EPIC-3 SQL pattern**: Both query services use identical 3-query pattern: (1) COUNT subquery for total, (2) DISTINCT+ORDER BY+LIMIT/OFFSET for page IDs, (3) SELECT WHERE id IN (page_ids) for match results. See `campaign_query_service.py:75-104` and `results_query_service.py:63-91`.
+- **Nesting watch**: `_generate_csv_rows` in `results_query_service.py` had deeply nested ifs flattened to ternary/guard patterns. Unchanged by EPIC-3. See commit `c6f3d21`.
+- **Test discipline reference**: See `TestCsvExport` in `test_results_query_behavior.py` for behavioral-contract testing pattern. See `campaign-results.test.ts` for pure-function sort testing.
 - **basedpyright**: 2 false positives on `order_by()` args (SQLModel type stub limitation). Pre-existing errors unchanged.
-- **In-codebase examples of AGENTS.md patterns**: `PredictionBuilder.format_voter_name` (filter+join), `OcrTextParser.format_text` (extracted helper), `ResultsQueryService.CSV_HEADER` (class constant), removed `CampaignQueryService._format_voter_name` (dead wrapper).
+- **In-codebase examples of AGENTS.md patterns**: `PredictionBuilder.format_voter_name` (filter+join), `OcrTextParser.format_text` (extracted helper), `ResultsQueryService.CSV_HEADER` (class constant), `sortResults` in `campaign-results.ts` (pure sort function with switch/case value extraction).
+- **SQLite yield_per limitation**: `yield_per(chunk_size)` on SQLite dialect buffers full result set. Streaming benefit is aspirational on SQLite; real benefit on Supabase Postgres. SQL pagination (EPIC-3) solves the memory problem differently via LIMIT/OFFSET.
+- **Frontend sort pattern**: Results page follows campaigns page pattern exactly. Import `SortConfig` from `Table.svelte`, add `$state<SortConfig | null>`, define sort function, pass `sortConfig` + `onSortChange` to Table.
 
 ## Required Skills
 
@@ -171,15 +186,15 @@ Session-specific notes:
 | #7 | Bead 5a: Monitor cleanup | **DONE** |
 | #8 | Bead 5b: Pool recycle | **DONE** |
 | #9 | Bead 5c: SSE max lifetime | **DONE** |
-| #6 | EPIC-6: Architecture hygiene | In progress (5/7 beads) |
+| #6 | EPIC-6: Architecture hygiene | **DONE** (7/7 beads, roasted) |
 | #10 | Bead 6a: PredictionBuilder | **DONE** |
 | #11 | Bead 6b: OcrTextParser | **DONE** |
 | #12 | Bead 6c: Shared test fixtures | **DONE** |
 | #13 | Bead 6d: Stream CSV export | **DONE** |
 | #14 | Bead 6e: Extract HTTP concern | **DONE** |
-| #15 | Bead 6f: Remove _providers | Open |
-| #16 | Bead 6g: Edge case tests | Open |
-| #1 | EPIC-1: Sort fix | Open |
-| #2 | EPIC-2: Crop API endpoint | Open |
-| #3 | EPIC-3: SQL pagination | Open |
+| #15 | Bead 6f: Remove _providers | **DONE** |
+| #16 | Bead 6g: Edge case tests | **DONE** |
+| #1 | EPIC-1: Sort fix | **DONE** |
+| #3 | EPIC-3: SQL pagination | **DONE** |
+| #2 | EPIC-2: Crop API endpoint | **Next** |
 | #4 | EPIC-4: Frontend thumbnails | Open |

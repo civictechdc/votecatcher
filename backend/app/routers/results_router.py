@@ -31,6 +31,7 @@ class ResultResponse(ApiModel):
     ocr_result_id: int
     extracted_text: str
     crop_id: int
+    thumbnail_url: str
     predictions: list[MatchPrediction]
 
 

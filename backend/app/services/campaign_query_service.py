@@ -148,6 +148,8 @@ class CampaignQueryService:
             predictions = predictions_by_ocr.get(ocr_id, [])[:5]
             job_id = job_ids_by_ocr.get(ocr_id, 0)
 
+            thumbnail_url = f"/api/crops/{crop_id}/image" if crop_id else ""
+
             results.append(
                 CampaignResultResponse(
                     ocr_result_id=ocr_id,
@@ -155,6 +157,7 @@ class CampaignQueryService:
                     extracted_address=extracted_address,
                     crop_id=crop_id,
                     job_id=job_id,
+                    thumbnail_url=thumbnail_url,
                     predictions=predictions,
                 )
             )

@@ -336,6 +336,83 @@ class TestResultsQueryService:
         assert len(result.results[0].predictions) == 1
         assert result.results[0].predictions[0].voter_name == "John Doe"
 
+    def test_results_include_thumbnail_url(self, session: Session):
+        """Scenario: Each result includes thumbnail_url resolved from crop_id."""
+        from app.data.database.model.jobs import JobStatus, MatcherJob
+        from app.data.database.model.ocr_result import OcrResult
+        from app.data.database.model.petition_crop import PetitionCrop
+        from app.data.database.model.petition_scan import PetitionScan
+        from app.data.database.model.schema import Campaign, Region
+        from app.services.results_query_service import ResultsQueryService
+
+        region = Region(
+            region_key="DC",
+            region_name="Washington, DC",
+            country_code="US",
+        )
+        session.add(region)
+
+        campaign = Campaign(
+            unique_name="dc-2024",
+            title="DC 2024",
+            year="2024",
+            region_id=region.id,
+        )
+        session.add(campaign)
+
+        scan = PetitionScan(
+            campaign_id=campaign.id,
+            original_filename="test.pdf",
+            stored_path="/tmp/test.pdf",
+            file_hash="abc123",
+            page_count=1,
+        )
+        session.add(scan)
+        session.flush()
+
+        crop = PetitionCrop(
+            scan_id=scan.id,
+            crop_index=0,
+            stored_path="/tmp/crop.png",
+            crop_coordinates={"top": 0.0, "bottom": 0.1},
+            page_number=1,
+        )
+        session.add(crop)
+        session.flush()
+
+        job = MatcherJob(
+            id=1,
+            campaign_id=campaign.id,
+            current_status=JobStatus.MATCHING_COMPLETED,
+        )
+        session.add(job)
+
+        ocr_result = OcrResult(
+            crop_id=crop.id,
+            ocr_job_id=1,
+            extracted_text={"name": "John Doe"},
+        )
+        session.add(ocr_result)
+        session.flush()
+
+        match_result = MatchResult(
+            id=1,
+            matcher_job_id=1,
+            ocr_result_id=ocr_result.id,
+            voter_id=None,
+            rank=1,
+            similarity_score=0.90,
+            confidence_level=ConfidenceLevel.HIGH,
+        )
+        session.add(match_result)
+        session.commit()
+
+        service = ResultsQueryService(session)
+        result = service.get_results(1)
+
+        assert len(result.results) == 1
+        assert result.results[0].thumbnail_url == f"/api/crops/{crop.id}/image"
+
     def test_get_results_pagination(self, session: Session):
         """Test pagination of results."""
         from app.data.database.model.jobs import MatcherJob, JobStatus
