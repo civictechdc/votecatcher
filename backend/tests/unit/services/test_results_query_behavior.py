@@ -560,7 +560,48 @@ class TestCsvExport:
     As an API consumer
     I want to export match results as CSV
     So that I can analyze them in a spreadsheet.
+
+    The service returns a (csv_row_generator, filename) tuple.
+    HTTP StreamingResponse wrapping lives in the router.
     """
+
+    @staticmethod
+    def _collect_csv(generator) -> str:
+        return "".join(generator)
+
+    def test_export_returns_tuple_not_streaming_response(self, session):
+        """Scenario: Service returns (generator, filename) tuple, no HTTP coupling."""
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+        crop = _seed_crop(session, scan)
+        ocr = _seed_ocr_result(session, crop)
+
+        session.add(
+            MatchResult(
+                matcher_job_id=job.id,
+                ocr_result_id=ocr.id,
+                voter_id=None,
+                rank=1,
+                similarity_score=0.95,
+                confidence_level=ConfidenceLevel.HIGH,
+            )
+        )
+        session.commit()
+
+        service = ResultsQueryService(session)
+        result = service.export_results_csv(job.id)
+
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        from collections.abc import Iterator
+
+        assert isinstance(result[0], Iterator)
+        assert isinstance(result[1], str)
+        assert "job_1_results.csv" in result[1]
 
     def test_export_produces_csv_with_correct_headers(self, session):
         """Scenario: CSV has standard column headers."""
@@ -587,10 +628,14 @@ class TestCsvExport:
         session.commit()
 
         service = ResultsQueryService(session)
-        response = service.export_results_csv(job.id)
+        generator, filename = service.export_results_csv(job.id)
+        body = self._collect_csv(generator)
 
-        assert response.media_type == "text/csv"
-        assert "job_1_results.csv" in response.headers["Content-Disposition"]
+        assert "text/csv" not in repr(type(generator))
+        assert "job_1_results.csv" in filename
+        lines = body.strip().split("\n")
+        assert "Crop ID" in lines[0]
+        assert "Extracted Text" in lines[0]
 
     def test_export_raises_for_missing_job(self, session):
         """Scenario: Exporting CSV for non-existent job raises ValueError."""
@@ -601,7 +646,7 @@ class TestCsvExport:
         with pytest.raises(ValueError, match="not found"):
             service.export_results_csv(99999)
 
-    async def test_export_respects_confidence_filter(self, session):
+    def test_export_respects_confidence_filter(self, session):
         """Scenario: Export with confidence filter only includes matching results."""
         from app.services.results_query_service import ResultsQueryService
 
@@ -637,12 +682,82 @@ class TestCsvExport:
         session.commit()
 
         service = ResultsQueryService(session)
-        response = service.export_results_csv(job.id, confidence=ConfidenceLevel.HIGH)
-
-        body = ""
-        async for chunk in response.body_iterator:
-            body += chunk
+        generator, _ = service.export_results_csv(
+            job.id, confidence=ConfidenceLevel.HIGH
+        )
+        body = self._collect_csv(generator)
 
         lines = [ln for ln in body.strip().split("\n") if ln]
         assert len(lines) == 2
         assert "HIGH" in lines[1]
+
+    def test_export_uses_yield_per_for_large_result_sets(self, session):
+        """Scenario: Export streams rows via yield_per, never loads all at once."""
+        from unittest.mock import MagicMock, patch
+
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+        crop = _seed_crop(session, scan)
+        ocr = _seed_ocr_result(session, crop)
+
+        session.add(
+            MatchResult(
+                matcher_job_id=job.id,
+                ocr_result_id=ocr.id,
+                voter_id=None,
+                rank=1,
+                similarity_score=0.9,
+                confidence_level=ConfidenceLevel.HIGH,
+            )
+        )
+        session.commit()
+
+        mock_stream = MagicMock()
+        mock_stream.yield_per.return_value = mock_stream
+        mock_stream.__iter__ = MagicMock(return_value=iter([]))
+
+        with patch.object(type(session), "exec", return_value=mock_stream):
+            service = ResultsQueryService(session)
+            generator, _ = service.export_results_csv(job.id)
+            list(generator)
+
+        mock_stream.yield_per.assert_called_once_with(1000)
+
+    def test_export_streams_rows_in_chunks_not_all_at_once(self, session):
+        """Scenario: CSV rows yielded incrementally, not as single blob."""
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+
+        for i in range(3):
+            crop = _seed_crop(session, scan, index=i)
+            ocr = _seed_ocr_result(session, crop, text={"name": f"Sig {i}"})
+            session.add(
+                MatchResult(
+                    matcher_job_id=job.id,
+                    ocr_result_id=ocr.id,
+                    voter_id=None,
+                    rank=1,
+                    similarity_score=0.9,
+                    confidence_level=ConfidenceLevel.HIGH,
+                )
+            )
+        session.commit()
+
+        service = ResultsQueryService(session)
+        generator, _ = service.export_results_csv(job.id)
+
+        chunks = list(generator)
+        assert len(chunks) > 1
+
+        body = "".join(chunks)
+        lines = [ln for ln in body.strip().split("\n") if ln]
+        assert len(lines) == 4
+        assert "Crop ID" in lines[0]
