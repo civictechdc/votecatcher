@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { campaignResults, sortResults, renderThumbnailCell, type CampaignResultResponse } from '$lib/stores/campaign-results';
+	import { campaignResults, sortResults, renderThumbnailCell, renderPredictionsTable, renderExpandedCropImage, toggleAccordion, type CampaignResultResponse } from '$lib/stores/campaign-results';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Table, LoadingState, Button, ErrorDisplay } from '$lib/components/ui';
 	import type { SortConfig } from '$lib/components/ui/Table.svelte';
 
 	let campaignId = $derived($page.params.id ?? '');
 	let sortConfig = $state<SortConfig | null>(null);
+	let expandedRowId = $state<number | null>(null);
 
 	const columns = [
 		{ key: 'thumbnail', label: 'Crop', sortable: false },
@@ -53,6 +54,10 @@
 		}
 	}
 
+	function handleRowClick(rowId: string | number) {
+		expandedRowId = toggleAccordion(expandedRowId, rowId as number);
+	}
+
 	function handlePrevious() {
 		const newPage = Math.max(1, $campaignResults.page - 1);
 		campaignResults.fetchResults(campaignId, { page: newPage, pageSize: $campaignResults.pageSize });
@@ -72,6 +77,10 @@
 	let endItem = $derived(Math.min($campaignResults.page * $campaignResults.pageSize, $campaignResults.total));
 
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
+
+	function getExpandedResult(rowId: string | number): CampaignResultResponse | undefined {
+		return sortedResults.find((r) => r.ocrResultId === Number(rowId));
+	}
 </script>
 
 <svelte:head>
@@ -106,8 +115,25 @@
 						sortable={true}
 						sortConfig={sortConfig}
 						onSortChange={(config) => (sortConfig = config)}
+						onRowClick={handleRowClick}
+						expandedRowId={expandedRowId}
 						emptyMessage="No results to display"
-					/>
+					>
+						{#snippet expandedRowContent(row)}
+							{@const result = getExpandedResult(row['id'] as string | number)}
+							{#if result}
+								<div class="flex gap-6">
+									<div class="shrink-0">
+										{@html renderExpandedCropImage(result.thumbnailUrl)}
+									</div>
+									<div class="flex-1 min-w-0">
+										<h4 class="text-sm font-semibold text-slate-700 mb-2">Predictions</h4>
+										{@html renderPredictionsTable(result.predictions)}
+									</div>
+								</div>
+							{/if}
+						{/snippet}
+					</Table>
 				</div>
 			</div>
 

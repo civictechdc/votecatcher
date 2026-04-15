@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/cn';
 	import Pagination from './Pagination.svelte';
+	import type { Snippet } from 'svelte';
 
 	export interface Column {
 		key: string;
@@ -33,6 +34,9 @@
 		onSelectionChange?: (selectedIds: (string | number)[]) => void;
 		onPageChange?: (page: number) => void;
 		onPageSizeChange?: (size: number) => void;
+		onRowClick?: (rowId: string | number) => void;
+		expandedRowId?: string | number | null;
+		expandedRowContent?: Snippet<[row: Record<string, unknown>]>;
 	}
 
 	let {
@@ -54,7 +58,10 @@
 		onSortChange,
 		onSelectionChange,
 		onPageChange,
-		onPageSizeChange
+		onPageSizeChange,
+		onRowClick,
+		expandedRowId = null,
+		expandedRowContent
 	}: Props = $props();
 
 	const effectiveColumns = $derived(
@@ -206,7 +213,15 @@
 				{:else}
 					{#each rows as row}
 						{@const rowId = row[rowKey] as string | number}
-						<tr class="hover:bg-gray-50 transition-colors">
+						{@const isExpanded = expandedRowId != null && String(rowId) === String(expandedRowId)}
+						<tr
+							class={cn(
+								'transition-colors',
+								onRowClick && 'cursor-pointer hover:bg-gray-50',
+								isExpanded && 'bg-blue-50'
+							)}
+							onclick={() => onRowClick?.(rowId)}
+						>
 							{#if selectable}
 								<td role="gridcell" class="px-4 py-3">
 									<input
@@ -224,6 +239,13 @@
 								</td>
 							{/each}
 						</tr>
+						{#if isExpanded && expandedRowContent}
+							<tr class="bg-blue-50/50">
+								<td colspan={effectiveColumns.length} class="px-6 py-4">
+									{@render expandedRowContent(row)}
+								</td>
+							</tr>
+						{/if}
 					{/each}
 				{/if}
 			</tbody>
