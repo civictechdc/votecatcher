@@ -1,5 +1,5 @@
 import { Configuration } from "$lib/api/generated/runtime";
-import { PUBLIC_API_URL } from "$env/static/public";
+const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
 
 let config: Configuration | null = null;
 

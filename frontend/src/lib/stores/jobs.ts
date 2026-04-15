@@ -14,7 +14,7 @@
 import { writable } from "svelte/store";
 import { getApiClient } from "./api-client";
 import { JobsApi } from "$lib/api/generated";
-import { PUBLIC_API_URL } from "$env/static/public";
+const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
 import type { JobResponse, CreateJobRequest } from "$lib/api/generated";
 import type { JobStatusEnum } from "$lib/api/generated/models/Job";
 
