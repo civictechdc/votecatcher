@@ -94,26 +94,45 @@ class TestCropStorageAdapterProtocol:
         png_file.write_bytes(b"\x89PNG\r\n\x1a\n")
         crop_id = _seed_crop(session, stored_path=str(png_file))
 
-        adapter = LocalFileAdapter(session)
+        adapter = LocalFileAdapter(session, storage_base=tmp_path)
         result = adapter.get_image_path(crop_id)
 
         assert result is not None
         assert result == png_file
 
-    def test_get_image_path_returns_none_for_missing_crop(self, session: Session):
+    def test_get_image_path_returns_none_for_missing_crop(
+        self, session: Session, tmp_path
+    ):
         """Scenario: Crop ID not in database."""
         from app.storage.crop_storage import LocalFileAdapter
 
-        adapter = LocalFileAdapter(session)
+        adapter = LocalFileAdapter(session, storage_base=tmp_path)
         assert adapter.get_image_path(999999) is None
 
-    def test_get_image_path_returns_none_when_file_missing(self, session: Session):
+    def test_get_image_path_returns_none_when_file_missing(
+        self, session: Session, tmp_path
+    ):
         """Scenario: Crop exists in DB but file deleted from disk."""
         from app.storage.crop_storage import LocalFileAdapter
 
         crop_id = _seed_crop(session, stored_path="/nonexistent/path/crop.png")
 
-        adapter = LocalFileAdapter(session)
+        adapter = LocalFileAdapter(session, storage_base=tmp_path)
+        assert adapter.get_image_path(crop_id) is None
+
+    def test_rejects_path_traversal_attack(self, session: Session, tmp_path):
+        """Scenario: stored_path with ../ escapes storage base — must return None."""
+        from app.storage.crop_storage import LocalFileAdapter
+
+        storage_dir = tmp_path / "uploads"
+        storage_dir.mkdir()
+        outside_file = tmp_path / "secret.txt"
+        outside_file.write_text("sensitive data")
+
+        traversal = str((storage_dir / ".." / "secret.txt").resolve())
+        crop_id = _seed_crop(session, stored_path=traversal)
+
+        adapter = LocalFileAdapter(session, storage_base=storage_dir)
         assert adapter.get_image_path(crop_id) is None
 
 

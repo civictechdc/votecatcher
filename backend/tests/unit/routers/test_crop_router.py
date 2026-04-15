@@ -89,8 +89,11 @@ class TestCropImageEndpoint:
     So that I can display them in the results table.
     """
 
-    def test_returns_200_with_png_for_existing_crop(self, client, session, tmp_path):
+    def test_returns_200_with_png_for_existing_crop(
+        self, client, session, tmp_path, monkeypatch
+    ):
         """Scenario: Crop exists with valid PNG file."""
+        monkeypatch.setenv("UPLOAD_DIR", str(tmp_path))
         png_file = tmp_path / "crop_001.png"
         png_file.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)
         crop_id = _seed_crop(session, stored_path=str(png_file))
@@ -100,8 +103,9 @@ class TestCropImageEndpoint:
         assert response.status_code == 200
         assert response.headers["content-type"] == "image/png"
 
-    def test_cache_control_header_present(self, client, session, tmp_path):
+    def test_cache_control_header_present(self, client, session, tmp_path, monkeypatch):
         """Scenario: Response includes immutable cache header."""
+        monkeypatch.setenv("UPLOAD_DIR", str(tmp_path))
         png_file = tmp_path / "crop_002.png"
         png_file.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)
         crop_id = _seed_crop(session, stored_path=str(png_file))
@@ -127,8 +131,9 @@ class TestCropImageEndpoint:
 
         assert response.status_code == 404
 
-    def test_returns_actual_file_bytes(self, client, session, tmp_path):
+    def test_returns_actual_file_bytes(self, client, session, tmp_path, monkeypatch):
         """Scenario: Response body matches the file on disk."""
+        monkeypatch.setenv("UPLOAD_DIR", str(tmp_path))
         content = b"\x89PNG\r\n\x1a\n" + bytes(range(256))
         png_file = tmp_path / "crop_003.png"
         png_file.write_bytes(content)
@@ -138,3 +143,18 @@ class TestCropImageEndpoint:
 
         assert response.status_code == 200
         assert response.content == content
+
+    def test_rejects_path_traversal(self, client, session, tmp_path, monkeypatch):
+        """Scenario: stored_path escapes storage base — returns 404."""
+        storage_dir = tmp_path / "uploads"
+        storage_dir.mkdir()
+        monkeypatch.setenv("UPLOAD_DIR", str(storage_dir))
+
+        outside_file = tmp_path / "secret.txt"
+        outside_file.write_text("sensitive")
+        traversal = str((storage_dir / ".." / "secret.txt").resolve())
+        crop_id = _seed_crop(session, stored_path=traversal)
+
+        response = client.get(f"/api/crops/{crop_id}/image")
+
+        assert response.status_code == 404

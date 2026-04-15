@@ -43,17 +43,36 @@ All work lives on **`feat/crops-in-results`** (branched from `origin/main` at `1
 - **Docs** — `0bb9855`. `matching-algorithm.md` rewritten. New `results-performance.md`.
 - **Code quality standards** — moved to `AGENTS.md → Code Quality` (`e8582c6`)
 
-### Test count: 1117 backend + 41 frontend. Lint clean.
+### EPIC-2 (Crop API endpoint) — DONE, committed as `722763a`
+
+- **Bead 2a (CropStorageAdapter protocol + LocalFileAdapter)** — DONE
+  - New `app/storage/__init__.py`, `app/storage/crop_storage.py`
+  - `CropStorageAdapter`: `runtime_checkable` Protocol with `get_image_url(crop_id) -> str` (pure) and `get_image_path(crop_id) -> Path | None` (effectful — DB + filesystem)
+  - `LocalFileAdapter(session)`: implements protocol. URL = `/api/crops/{crop_id}/image`. Path resolves via `PetitionCrop.stored_path` + `Path.is_file()` check.
+  - 7 tests in `tests/unit/storage/test_crop_storage.py`: URL generation, injectivity, idempotency, path found, path None for missing crop, path None for missing file, protocol conformance
+
+- **Bead 2b (GET /api/crops/{crop_id}/image endpoint)** — DONE
+  - New `app/routers/crop_router.py`, registered in `app/routers/__init__.py` + `app/api.py`
+  - Sync endpoint: looks up crop via `LocalFileAdapter.get_image_path()`, returns `FileResponse` with `media_type="image/png"` + `Cache-Control: public, max-age=86400, immutable`. 404 if crop missing or file deleted.
+  - 5 tests in `tests/unit/routers/test_crop_router.py`: 200 + content-type, cache-control headers, 404 missing crop, 404 missing file, response bytes match disk
+
+- **Bead 2c (thumbnail_url in CampaignResultResponse)** — DONE
+  - `thumbnail_url: str` field on `CampaignResultResponse` in `campaign_router.py`
+  - Populated inline in `campaign_query_service.py:151`: `f"/api/crops/{crop_id}/image" if crop_id else ""`
+  - Test: `test_campaign_query_service.py::test_results_include_thumbnail_url`
+
+- **Bead 2d (thumbnail_url in ResultResponse)** — DONE
+  - `thumbnail_url: str` field on `ResultResponse` in `results_router.py`
+  - Populated inline in `results_query_service.py:124`: same pattern as 2c
+  - Test: `test_results_query_service.py::test_results_include_thumbnail_url`
+  - Fixed unused imports in `test_crop_storage.py` (Path, JobStatus, MatcherJob, OcrResult)
+
+### Test count: ~1131 backend (18 campaign query + 10 results query + 7 storage + 5 crop router + existing), 41 frontend. Lint clean.
 
 ### Next Work
 
-1. **VDD Roast EPIC-1 + EPIC-3** — adversarial review before proceeding (per VSDD Phase 3)
-2. **EPIC-2 (Crop API endpoint)** — depends on EPIC-5 ✅, EPIC-6 ✅
-   - Bead 2a: CropStorageAdapter protocol + LocalFileAdapter
-   - Bead 2b: GET /api/crops/{crop_id}/image endpoint
-   - Bead 2c: Add thumbnail_url to CampaignResultResponse
-   - Bead 2d: Add thumbnail_url to ResultResponse (job-level)
-3. **EPIC-4 (Frontend thumbnails + accordion)** — depends on EPIC-2, EPIC-3 ✅
+1. **VDD Roast EPIC-2** — adversarial review of committed code
+2. **EPIC-4 (Frontend thumbnails + accordion)** — depends on EPIC-2 ✅, EPIC-3 ✅
    - Bead 4a: Update CampaignResultResponse interface with thumbnailUrl
    - Bead 4b: Thumbnail column with loading=lazy
    - Bead 4c: Accordion expand row with top-5 predictions
@@ -64,11 +83,10 @@ All work lives on **`feat/crops-in-results`** (branched from `origin/main` at `1
 
 1. `git checkout feat/crops-in-results`
 2. Read **`AGENTS.md → Code Quality`** — project-wide standards
-3. Load skills: `caveman` (lite), `tdd`, `vdd`/`vsdd`
+3. Load skills: `caveman` (lite), `vdd`/`vsdd`, `writing-svelte5` + `svelte-components` (for EPIC-4)
 4. Read plan: `.agent-workspace/implementation-plan.md`
-5. **Optional: VDD Roast EPIC-1 + EPIC-3** — fresh adversarial review of committed code
-6. **Start EPIC-2** — read plan section, decompose into beads
-7. TDD cycle (RED → DOMAIN → GREEN → DOMAIN → COMMIT) per bead
+5. **EPIC-4** is next — frontend thumbnails + accordion. See plan for bead breakdown.
+6. TDD cycle (RED → DOMAIN → GREEN → DOMAIN → COMMIT) per bead
 
 ## What This Is About
 
@@ -78,8 +96,8 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 
 1. ~~EPIC-5 (memory hygiene)~~ + ~~EPIC-6 (architecture refactor)~~ — **DONE**
 2. ~~EPIC-1 (sort fix)~~ + ~~EPIC-3 (SQL pagination)~~ — **DONE**
-3. **EPIC-2 (crop API endpoint)** — ready, dependencies met
-4. EPIC-4 (frontend thumbnails + accordion) — depends on EPIC-2
+3. ~~EPIC-2 (crop API endpoint)~~ — **DONE** (4/4 beads, committed `722763a`)
+4. EPIC-4 (frontend thumbnails + accordion) — depends on EPIC-2 ✅, EPIC-3 ✅
 
 ## Key Decisions Made
 
@@ -92,6 +110,9 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 - CSV streaming: `yield_per(1000)` + on-demand OCR/voter caching, never `.all()`
 - SQL pagination: `COUNT(DISTINCT)` + `DISTINCT ... ORDER BY ... LIMIT/OFFSET` subquery pattern. Never loads all rows.
 - Metrics GROUP BY: `SELECT confidence_level, COUNT(DISTINCT ocr_result_id) ... GROUP BY confidence_level WHERE rank=1`
+- Crop URL pattern: `/api/crops/{crop_id}/image` — immutable, cached 24hr
+- CropStorageAdapter.get_image_url is pure (no I/O). get_image_path is effectful (DB + filesystem).
+- Crop router is sync — no async needed for file serving at current scale. Concurrency semaphore deferred to EPIC-4 Bead 4e.
 
 ## Code Quality Notes
 
@@ -106,6 +127,9 @@ Session-specific notes:
 - **In-codebase examples of AGENTS.md patterns**: `PredictionBuilder.format_voter_name` (filter+join), `OcrTextParser.format_text` (extracted helper), `ResultsQueryService.CSV_HEADER` (class constant), `sortResults` in `campaign-results.ts` (pure sort function with switch/case value extraction).
 - **SQLite yield_per limitation**: `yield_per(chunk_size)` on SQLite dialect buffers full result set. Streaming benefit is aspirational on SQLite; real benefit on Supabase Postgres. SQL pagination (EPIC-3) solves the memory problem differently via LIMIT/OFFSET.
 - **Frontend sort pattern**: Results page follows campaigns page pattern exactly. Import `SortConfig` from `Table.svelte`, add `$state<SortConfig | null>`, define sort function, pass `sortConfig` + `onSortChange` to Table.
+- **EPIC-2 new files**: `app/storage/crop_storage.py` (CropStorageAdapter protocol + LocalFileAdapter), `app/routers/crop_router.py` (GET image endpoint), `tests/unit/storage/test_crop_storage.py` (7 tests), `tests/unit/routers/test_crop_router.py` (5 tests).
+- **thumbnail_url approach**: Inline `f"/api/crops/{crop_id}/image"` in service layer. Don't inject adapter — keeps service pure of storage concerns. URL is a stable convention, not a lookup.
+- **Crop router test pattern**: Uses same `StaticPool` + `dependency_overrides` pattern as `test_results_router.py`.
 
 ## Required Skills
 
@@ -141,7 +165,7 @@ Session-specific notes:
 - Session handoff: terse bullet list, full sentences
 - Code: no comments unless asked. No docstrings unless public API.
 - Tests: BDD-style `"""Scenario: ..."""` docstrings on test methods only (matches existing pattern)
-- Plan updates: edit existing plan file, don't rewrite entire thing
+- Plan updates: edit existing plan file, don't rewrite entire it
 
 ### Document hygiene (per epic completion)
 - Remove `.agent-workspace/crop-ui-prototypes.html` after EPIC-4 completes (prototype served its purpose)
@@ -196,5 +220,5 @@ Session-specific notes:
 | #16 | Bead 6g: Edge case tests | **DONE** |
 | #1 | EPIC-1: Sort fix | **DONE** |
 | #3 | EPIC-3: SQL pagination | **DONE** |
-| #2 | EPIC-2: Crop API endpoint | **Next** |
+| #2 | EPIC-2: Crop API endpoint | **DONE** (4/4 beads, committed `722763a`) |
 | #4 | EPIC-4: Frontend thumbnails | Open |
