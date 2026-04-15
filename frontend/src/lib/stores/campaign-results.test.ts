@@ -107,6 +107,16 @@ describe("renderExpandedCropImage", () => {
 		const html = renderExpandedCropImage("");
 		expect(html).toBe("");
 	});
+
+	it("includes data-crop-url for lightbox click delegation", () => {
+		const html = renderExpandedCropImage("/api/crops/42/image");
+		expect(html).toContain('data-crop-url="/api/crops/42/image"');
+	});
+
+	it("includes cursor pointer for click affordance", () => {
+		const html = renderExpandedCropImage("/api/crops/42/image");
+		expect(html).toContain("cursor-pointer");
+	});
 });
 
 describe("renderPredictionsTable", () => {

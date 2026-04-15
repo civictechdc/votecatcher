@@ -132,7 +132,7 @@ export function resetCampaignResultsStore() {
 
 export function renderExpandedCropImage(thumbnailUrl: string): string {
 	if (!thumbnailUrl) return "";
-	return `<img src="${thumbnailUrl}" alt="Enlarged crop" style="max-width:400px;max-height:300px;border-radius:0.5rem;object-fit:contain" />`;
+	return `<img src="${thumbnailUrl}" alt="Enlarged crop" data-crop-url="${thumbnailUrl}" class="cursor-pointer hover:opacity-80 transition-opacity" style="max-width:400px;max-height:300px;border-radius:0.5rem;object-fit:contain" />`;
 }
 
 function getConfidenceBadgeClass(confidence: string): string {

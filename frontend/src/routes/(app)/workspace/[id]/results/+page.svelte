@@ -4,11 +4,13 @@
 	import { campaignResults, sortResults, renderThumbnailCell, renderPredictionsTable, renderExpandedCropImage, toggleAccordion, type CampaignResultResponse } from '$lib/stores/campaign-results';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Table, LoadingState, Button, ErrorDisplay } from '$lib/components/ui';
+	import CropLightbox from '$lib/components/results/CropLightbox.svelte';
 	import type { SortConfig } from '$lib/components/ui/Table.svelte';
 
 	let campaignId = $derived($page.params.id ?? '');
 	let sortConfig = $state<SortConfig | null>(null);
 	let expandedRowId = $state<number | null>(null);
+	let lightboxUrl = $state<string | null>(null);
 
 	const columns = [
 		{ key: 'thumbnail', label: 'Crop', sortable: false },
@@ -56,6 +58,15 @@
 
 	function handleRowClick(rowId: string | number) {
 		expandedRowId = toggleAccordion(expandedRowId, rowId as number);
+	}
+
+	function handleCropClick(url: string, e: MouseEvent) {
+		e.stopPropagation();
+		lightboxUrl = url;
+	}
+
+	function closeLightbox() {
+		lightboxUrl = null;
 	}
 
 	function handlePrevious() {
@@ -123,7 +134,19 @@
 							{@const result = getExpandedResult(row['id'] as string | number)}
 							{#if result}
 								<div class="flex gap-6">
-									<div class="shrink-0">
+								<div class="shrink-0" role="button" tabindex="0" aria-label="Open full-size crop image" onclick={(e) => {
+									const target = e.target as HTMLElement;
+									const url = target.getAttribute('data-crop-url') || target.closest('[data-crop-url]')?.getAttribute('data-crop-url');
+									if (url) handleCropClick(url, e);
+								}}
+								onkeydown={(e) => {
+									if (e.key === 'Enter' || e.key === ' ') {
+										e.preventDefault();
+										const target = e.target as HTMLElement;
+										const url = target.getAttribute('data-crop-url') || target.closest('[data-crop-url]')?.getAttribute('data-crop-url');
+										if (url) lightboxUrl = url;
+									}
+								}}>
 										{@html renderExpandedCropImage(result.thumbnailUrl)}
 									</div>
 									<div class="flex-1 min-w-0">
@@ -160,4 +183,10 @@
 			{/if}
 		</div>
 	{/if}
+
+	<CropLightbox
+		open={lightboxUrl !== null}
+		imageUrl={lightboxUrl ?? ''}
+		onClose={closeLightbox}
+	/>
 </div>

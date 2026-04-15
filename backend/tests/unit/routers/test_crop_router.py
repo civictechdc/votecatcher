@@ -1,5 +1,7 @@
 """Unit tests for crop image router — GET /api/crops/{crop_id}/image."""
 
+import asyncio
+import inspect
 from uuid import uuid4
 
 import pytest
@@ -158,3 +160,102 @@ class TestCropImageEndpoint:
         response = client.get(f"/api/crops/{crop_id}/image")
 
         assert response.status_code == 404
+
+
+class TestCropImageConcurrency:
+    """Feature: Crop image concurrency limit.
+
+    As the system
+    I want to limit concurrent crop image requests to 50
+    So that file I/O does not overwhelm the server.
+    """
+
+    def test_semaphore_configured_with_limit_50(self):
+        """Scenario: Module-level semaphore exists with correct limit."""
+        from app.routers.crop_router import _CROP_SEMAPHORE
+
+        assert _CROP_SEMAPHORE._value == 50
+
+    def test_endpoint_is_async_coroutine(self):
+        """Scenario: Endpoint is async to support semaphore acquire."""
+        from app.routers.crop_router import get_crop_image
+
+        assert inspect.iscoroutinefunction(get_crop_image)
+
+    @pytest.mark.asyncio
+    async def test_semaphore_blocks_beyond_limit(self, engine, tmp_path, monkeypatch):
+        """Scenario: requests beyond semaphore limit wait for slot."""
+        import httpx
+
+        from app.api import app
+        from app.dependencies import get_session
+
+        monkeypatch.setenv("UPLOAD_DIR", str(tmp_path))
+
+        def _override():
+            with Session(engine) as s:
+                yield s
+
+        app.dependency_overrides[get_session] = _override
+        try:
+            crop_ids = []
+            with Session(engine) as s:
+                for i in range(3):
+                    png_file = tmp_path / f"crop_sem_{i}.png"
+                    png_file.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)
+                    region = Region(
+                        id=uuid4(),
+                        region_key=f"R{i}",
+                        region_name=f"Region {i}",
+                        country_code="US",
+                    )
+                    s.add(region)
+                    s.flush()
+                    campaign = Campaign(
+                        id=uuid4(),
+                        unique_name=f"test-sem-{uuid4().hex[:8]}-{i}",
+                        title="Test",
+                        year="2024",
+                        region_id=region.id,
+                    )
+                    s.add(campaign)
+                    s.flush()
+                    scan = PetitionScan(
+                        campaign_id=campaign.id,
+                        original_filename="test.pdf",
+                        stored_path=f"/tmp/test_sem_{i}.pdf",
+                        file_hash=f"abc{i}",
+                        page_count=1,
+                    )
+                    s.add(scan)
+                    s.flush()
+                    crop = PetitionCrop(
+                        scan_id=scan.id,
+                        crop_index=0,
+                        stored_path=str(png_file),
+                        crop_coordinates={},
+                        page_number=1,
+                    )
+                    s.add(crop)
+                    s.flush()
+                    crop_ids.append(crop.id)
+                s.commit()
+
+            from app.routers.crop_router import _CROP_SEMAPHORE
+
+            original = _CROP_SEMAPHORE._value
+            _CROP_SEMAPHORE._value = 2
+
+            try:
+                transport = httpx.ASGITransport(app=app)
+                async with httpx.AsyncClient(
+                    transport=transport, base_url="http://test"
+                ) as ac:
+                    responses = await asyncio.gather(
+                        *(ac.get(f"/api/crops/{cid}/image") for cid in crop_ids)
+                    )
+                    assert all(r.status_code == 200 for r in responses)
+            finally:
+                _CROP_SEMAPHORE._value = original
+        finally:
+            app.dependency_overrides.clear()

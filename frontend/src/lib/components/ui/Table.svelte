@@ -211,7 +211,7 @@
 						</td>
 					</tr>
 				{:else}
-					{#each rows as row}
+					{#each rows as row (row[rowKey] as string | number)}
 						{@const rowId = row[rowKey] as string | number}
 						{@const isExpanded = expandedRowId != null && String(rowId) === String(expandedRowId)}
 						<tr
