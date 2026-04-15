@@ -77,6 +77,7 @@ Embedding OCR crop thumbnails into the match results table, fixing sort headers,
 - **Nesting watch**: `_generate_csv_rows` in `results_query_service.py` had deeply nested ifs flattened to ternary/guard patterns. Re-check after EPIC-3 pagination changes. See commit `c6f3d21`.
 - **Test discipline**: Tests assert behavioral contracts (what), not implementation details (how). No `yield_per(1000)` mock, no `repr(type(...))` checks. See `TestCsvExport` in `test_results_query_behavior.py` as reference pattern.
 - **basedpyright**: 2 new false positives on `order_by()` args (SQLModel type stub limitation). Pre-existing errors unchanged.
+- **Legacy refactoring**: When touching existing code, apply small safe cleanups in the same commit: flatten nested ifs to guards/ternary, replace `isinstance` chains with dispatched helpers, extract repeated conditionals. Don't expand scope — only refactor what's already being modified. Leave the neighbourhood cleaner than you found it.
 
 ## Required Skills
 
