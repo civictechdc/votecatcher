@@ -1,0 +1,62 @@
+OLD ALGORITHM BASELINE (commit 11b9617)
+Voters: 100000, OCR results: 50
+Scoring: harmonic_mean(fuzz.ratio(name), fuzz.ratio(address))
+Thresholds: HIGH>=0.85, MEDIUM>=0.6, LOW<0.6
+
+OCR# OCR Name                  Matched Name                Name   Addr    Comb   Conf
+------------------------------------------------------------------------------------------
+   1 Alexis Walter             Alexis Walter              1.000  1.000  1.0000   HIGH
+   2 Jenny Jones               Jenny Jones                1.000  1.000  1.0000   HIGH
+   3 Jack Stewart              Jack Stewart               1.000  1.000  1.0000   HIGH
+   4 Brady Herrera             Brady Herrera              1.000  1.000  1.0000   HIGH
+   5 Robert Ayala              Robert Ayala               1.000  1.000  1.0000   HIGH
+   6 Erik Acosta               Erik Acosta                1.000  1.000  1.0000   HIGH
+   7 William Hopkins           William Hopkins            1.000  0.898  0.9462   HIGH
+   8 Debbie Sosa               Debbie Sosa                1.000  1.000  1.0000   HIGH
+   9 Kenneth Ho                Kenneth Ho                 1.000  1.000  1.0000   HIGH
+  10 Christina Goodman         Christina Young            0.750  0.522  0.6154 MEDIUM
+  11 Cindy Garcia              Cindy Garcia               1.000  1.000  1.0000   HIGH
+  12 Patricia Holden           Patricia Holden            1.000  1.000  1.0000   HIGH
+  13 Maria Burgess             Mr. Jacob Burgess          0.733  0.667  0.6984 MEDIUM
+  14 Melinda Pierce            Melinda Pierce             1.000  1.000  1.0000   HIGH
+  15 Steven Spencer            Steven Spencer             1.000  0.982  0.9911   HIGH
+  16 Jonathon Williams         Jonathon Williams          1.000  1.000  1.0000   HIGH
+  17 Jeremy Figueroa           Jeremiah Peters            0.533  0.632  0.5783    LOW
+  18 Shelby Duncan             Shelby Duncan              1.000  1.000  1.0000   HIGH
+  19 Tina Briggs               Tina Briggs                1.000  1.000  1.0000   HIGH
+  20 Phyllis Johnson           Chris Johnson              0.786  0.514  0.6217 MEDIUM
+  21 Elizabeth Rios            Elizabeth Jones            0.828  0.571  0.6761 MEDIUM
+  22 Erin Stewart              Erin Rivera                0.609  0.702  0.6519 MEDIUM
+  23 Elaine Weaver             Elaine Weaver              1.000  1.000  1.0000   HIGH
+  24 Lance Mullen              Lance Mullen               1.000  1.000  1.0000   HIGH
+  25 Blake Davis               Blake Davis                1.000  1.000  1.0000   HIGH
+  26 Ralph Evans               Tracy Evans                0.636  0.647  0.6417 MEDIUM
+  27 Peter Harvey              Heather Harvey             0.846  0.567  0.6788 MEDIUM
+  28 Raymond Green             Raymond Green              1.000  1.000  1.0000   HIGH
+  29 Wesley Harrington         Wesley Harrington          1.000  1.000  1.0000   HIGH
+  30 Michelle Day              Michelle Day               1.000  1.000  1.0000   HIGH
+  31 Samantha Herrera          Samantha Beltran           0.750  0.604  0.6690 MEDIUM
+  32 Wanda Edwards             Wanda Edwards              1.000  1.000  1.0000   HIGH
+  33 Sergio Sawyer             Eric Sawyer                0.750  0.564  0.6439 MEDIUM
+  34 Jorge Dougherty           Jorge Dougherty            1.000  1.000  1.0000   HIGH
+  35 Jordan McDonald           Jordan Mcdonald            0.933  1.000  0.9655   HIGH
+  36 Alexis Simmons            Alexis Simmons             1.000  1.000  1.0000   HIGH
+  37 Kaitlyn Owen              Dustin Owens               0.583  0.691  0.6326 MEDIUM
+  38 Brett Bennett             Brett Bennett              1.000  1.000  1.0000   HIGH
+  39 Ronald Cole Jr.           Ronald Cole Jr.            1.000  1.000  1.0000   HIGH
+  40 Megan Nielsen             Megan Nielsen              1.000  1.000  1.0000   HIGH
+  41 Laura Nguyen              Laura Nguyen               1.000  1.000  1.0000   HIGH
+  42 Ryan Murphy               Ryan Murphy                1.000  1.000  1.0000   HIGH
+  43 Gerald Butler             Gerald Miller              0.769  0.630  0.6925 MEDIUM
+  44 Samantha Burns MD         Samantha Burns MD          1.000  1.000  1.0000   HIGH
+  45 Tim Parker                Tim Parker                 1.000  1.000  1.0000   HIGH
+  46 Lindsay Kennedy           Lindsay Kennedy            1.000  1.000  1.0000   HIGH
+  47 Adam Welch                Adam Welch                 1.000  0.929  0.9630   HIGH
+  48 John Sheppard             John Sheppard              1.000  1.000  1.0000   HIGH
+  49 William Morse Jr.         Alexa Williams             0.516  0.750  0.6115 MEDIUM
+  50 Tina Carroll              Tina Carroll               1.000  1.000  1.0000   HIGH
+
+Confidence: HIGH=37 (74%) MEDIUM=12 (24%) LOW=1 (2%)
+Exact name matches (1.0): 36/50 (72%)
+Averages: name=0.9205 addr=0.8974 combined=0.9055
+Range: combined min=0.5783 max=1.0000

@@ -8,250 +8,250 @@ total_match_weight: 2.0
 
 OCR #1: name='Alexis Walter' address='23407 Hawkins Lock'
 --------------------------------------------------------------------------------
-  SPEC   id=  1 Alexis     Walter         | sim=0.9865 conf=HIGH   | name=1.000 addr=0.973 ward=0.000
-  LEGACY id=101 Alexis     Walter         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id=  1 Alexis     Walter         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=101 Alexis     Walter         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #2: name='Jenny Jones' address='82424 Rachel Views'
 --------------------------------------------------------------------------------
-  SPEC   id=  2 Jenny      Jones          | sim=0.9865 conf=HIGH   | name=1.000 addr=0.973 ward=0.000
-  LEGACY id=102 Jenny      Jones          | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id=  2 Jenny      Jones          | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=102 Jenny      Jones          | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #3: name='Jack Stewart' address='756 Ashley Court Suite 408'
 --------------------------------------------------------------------------------
-  SPEC   id=  3 Jack       Stewart        | sim=0.9906 conf=HIGH   | name=1.000 addr=0.981 ward=0.000
-  LEGACY id=103 Jack       Stewart        | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id=  3 Jack       Stewart        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=103 Jack       Stewart        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #4: name='Brady Herrera' address='88242 Gray Well'
 --------------------------------------------------------------------------------
-  SPEC   id=  4 Brady      Herrera        | sim=0.9839 conf=HIGH   | name=1.000 addr=0.968 ward=0.000
-  LEGACY id=104 Brady      Herrera        | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id=  4 Brady      Herrera        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=104 Brady      Herrera        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #5: name='Robert Ayala' address='6563 Charles Greens Apt. 636'
 --------------------------------------------------------------------------------
-  SPEC   id=  5 Robert     Ayala          | sim=0.9912 conf=HIGH   | name=1.000 addr=0.982 ward=0.000
-  LEGACY id=105 Robert     Ayala          | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id=  5 Robert     Ayala          | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=105 Robert     Ayala          | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #6: name='Erik Acosta' address='734 William Oval'
 --------------------------------------------------------------------------------
-  SPEC   id=  6 Erik       Acosta         | sim=0.9848 conf=HIGH   | name=1.000 addr=0.970 ward=0.000
-  LEGACY id=106 Erik       Acosta         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id=  6 Erik       Acosta         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=106 Erik       Acosta         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #7: name='William Hopkins' address='1869 Catty Hews Apt. 0601'
 --------------------------------------------------------------------------------
-  SPEC   id=  7 William    Hopkins        | sim=0.9400 conf=HIGH   | name=1.000 addr=0.880 ward=0.000
-  LEGACY id=107 William    Hopkins        | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id=  7 William    Hopkins        | sim=0.9490 conf=HIGH   | name=1.000 addr=0.898 ward=0.000
+  LEGACY id=107 William    Hopkins        | sim=0.9490 conf=HIGH   | name=1.000 addr=0.898 ward=0.000
 
 OCR #8: name='Debbie Sosa' address='995 Johnson Lane Apt. 926'
 --------------------------------------------------------------------------------
-  SPEC   id=  8 Debbie     Sosa           | sim=0.9902 conf=HIGH   | name=1.000 addr=0.980 ward=0.000
-  LEGACY id=108 Debbie     Sosa           | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id=  8 Debbie     Sosa           | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=108 Debbie     Sosa           | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #9: name='Kenneth Ho' address='777 Rivera Mews Suite 338'
 --------------------------------------------------------------------------------
-  SPEC   id=  9 Kenneth    Ho             | sim=0.9902 conf=HIGH   | name=1.000 addr=0.980 ward=0.000
-  LEGACY id=109 Kenneth    Ho             | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id=  9 Kenneth    Ho             | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=109 Kenneth    Ho             | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #10: name='Christina Goodman' address='543 Melissa Ferry'
 --------------------------------------------------------------------------------
-  SPEC   id= 10 Christian  Goodman        | sim=0.6484 conf=MEDIUM | name=0.941 addr=0.356 ward=0.000
-  LEGACY id=110 Christian  Goodman        | sim=0.4706 conf=LOW    | name=0.941 addr=0.000 ward=0.000
+  SPEC   id= 10 Christian  Goodman        | sim=0.6524 conf=MEDIUM | name=0.941 addr=0.364 ward=0.000
+  LEGACY id=110 Christian  Goodman        | sim=0.6524 conf=MEDIUM | name=0.941 addr=0.364 ward=0.000
 
 OCR #11: name='Cindy Garcia' address='152 Sandra Landing Apt. 815'
 --------------------------------------------------------------------------------
-  SPEC   id= 11 Cindy      Garcia         | sim=0.9909 conf=HIGH   | name=1.000 addr=0.982 ward=0.000
-  LEGACY id=111 Cindy      Garcia         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 11 Cindy      Garcia         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=111 Cindy      Garcia         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #12: name='Patricia Holden' address='54895 Miller Mountains Suite 374'
 --------------------------------------------------------------------------------
-  SPEC   id= 12 Patricia   Holden         | sim=0.9923 conf=HIGH   | name=1.000 addr=0.985 ward=0.000
-  LEGACY id=112 Patricia   Holden         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 12 Patricia   Holden         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=112 Patricia   Holden         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #13: name='Maria Burgess' address='7016 Logan Square Apt. 184'
 --------------------------------------------------------------------------------
-  SPEC   id= 13 Marisa     Burgess        | sim=0.7456 conf=MEDIUM | name=0.963 addr=0.528 ward=0.000
-  LEGACY id=113 Marisa     Burgess        | sim=0.4815 conf=LOW    | name=0.963 addr=0.000 ward=0.000
+  SPEC   id= 13 Marisa     Burgess        | sim=0.7507 conf=MEDIUM | name=0.963 addr=0.538 ward=0.000
+  LEGACY id=113 Marisa     Burgess        | sim=0.7507 conf=MEDIUM | name=0.963 addr=0.538 ward=0.000
 
 OCR #14: name='Melinda Pierce' address='2000 Cooper Mews'
 --------------------------------------------------------------------------------
-  SPEC   id= 14 Melinda    Pierce         | sim=0.9848 conf=HIGH   | name=1.000 addr=0.970 ward=0.000
-  LEGACY id=114 Melinda    Pierce         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 14 Melinda    Pierce         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=114 Melinda    Pierce         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #15: name='Steven Spencer' address='2453 Hoffman Island Apt. 578'
 --------------------------------------------------------------------------------
-  SPEC   id= 15 Steven     Spencer        | sim=0.9912 conf=HIGH   | name=1.000 addr=0.982 ward=0.000
-  LEGACY id=115 Steven     Spencer        | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 15 Steven     Spencer        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=115 Steven     Spencer        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #16: name='Jonathon Williams' address='128 Patterson Junction Apt. 650'
 --------------------------------------------------------------------------------
-  SPEC   id= 16 Jonathon   Williams       | sim=0.9921 conf=HIGH   | name=1.000 addr=0.984 ward=0.000
-  LEGACY id=116 Jonathon   Williams       | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 16 Jonathon   Williams       | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=116 Jonathon   Williams       | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #17: name='Jeremy Figueroa' address='3890 Edward Parkway'
 --------------------------------------------------------------------------------
-  SPEC   id= 17 Jeffrey    Figueroa       | sim=0.5741 conf=LOW    | name=0.903 addr=0.245 ward=0.000
-  LEGACY id=117 Jeffrey    Figueroa       | sim=0.4516 conf=LOW    | name=0.903 addr=0.000 ward=0.000
+  SPEC   id= 17 Jeffrey    Figueroa       | sim=0.5766 conf=LOW    | name=0.903 addr=0.250 ward=0.000
+  LEGACY id=117 Jeffrey    Figueroa       | sim=0.5766 conf=LOW    | name=0.903 addr=0.250 ward=0.000
 
 OCR #18: name='Shelby Duncan' address='3047 Stephen Brook Suite 970'
 --------------------------------------------------------------------------------
-  SPEC   id= 18 Shelby     Duncan         | sim=0.9912 conf=HIGH   | name=1.000 addr=0.982 ward=0.000
-  LEGACY id=118 Shelby     Duncan         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 18 Shelby     Duncan         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=118 Shelby     Duncan         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #19: name='Tina Briggs' address='632 Jones Knolls Suite 974'
 --------------------------------------------------------------------------------
-  SPEC   id= 19 Tina       Briggs         | sim=0.9906 conf=HIGH   | name=1.000 addr=0.981 ward=0.000
-  LEGACY id=119 Tina       Briggs         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 19 Tina       Briggs         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=119 Tina       Briggs         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #20: name='Phyllis Johnson' address='9762 Wright Plaza'
 --------------------------------------------------------------------------------
-  SPEC   id= 20 Phillip    Johnson        | sim=0.6333 conf=MEDIUM | name=0.867 addr=0.400 ward=0.000
-  LEGACY id=120 Phillip    Johnson        | sim=0.4333 conf=LOW    | name=0.867 addr=0.000 ward=0.000
+  SPEC   id= 20 Phillip    Johnson        | sim=0.6392 conf=MEDIUM | name=0.867 addr=0.412 ward=0.000
+  LEGACY id=120 Phillip    Johnson        | sim=0.6392 conf=MEDIUM | name=0.867 addr=0.412 ward=0.000
 
 OCR #21: name='Elizabeth Rios' address='7982 Teresa Garden Suite 334'
 --------------------------------------------------------------------------------
-  SPEC   id= 21 Elizabeth  Ross           | sim=0.6382 conf=MEDIUM | name=0.929 addr=0.348 ward=0.000
-  LEGACY id=121 Elizabeth  Ross           | sim=0.4643 conf=LOW    | name=0.929 addr=0.000 ward=0.000
+  SPEC   id= 21 Elizabeth  Ross           | sim=0.6198 conf=MEDIUM | name=0.929 addr=0.311 ward=0.000
+  LEGACY id=121 Elizabeth  Ross           | sim=0.6198 conf=MEDIUM | name=0.929 addr=0.311 ward=0.000
 
 OCR #22: name='Erin Stewart' address='84 Taylor Brooks Suite 469'
 --------------------------------------------------------------------------------
-  SPEC   id= 22 Eric       Stewart        | sim=0.6139 conf=MEDIUM | name=0.917 addr=0.311 ward=0.000
-  LEGACY id=122 Eric       Stewart        | sim=0.4583 conf=LOW    | name=0.917 addr=0.000 ward=0.000
+  SPEC   id= 22 Eric       Stewart        | sim=0.5947 conf=LOW    | name=0.917 addr=0.273 ward=0.000
+  LEGACY id=122 Eric       Stewart        | sim=0.5947 conf=LOW    | name=0.917 addr=0.273 ward=0.000
 
 OCR #23: name='Elaine Weaver' address='8199 Castro Way'
 --------------------------------------------------------------------------------
-  SPEC   id= 23 Elaine     Weaver         | sim=0.9839 conf=HIGH   | name=1.000 addr=0.968 ward=0.000
-  LEGACY id=123 Elaine     Weaver         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 23 Elaine     Weaver         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=123 Elaine     Weaver         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #24: name='Lance Mullen' address='360 Snow Trafficway'
 --------------------------------------------------------------------------------
-  SPEC   id= 24 Lance      Mullen         | sim=0.9872 conf=HIGH   | name=1.000 addr=0.974 ward=0.000
-  LEGACY id=124 Lance      Mullen         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 24 Lance      Mullen         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=124 Lance      Mullen         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #25: name='Blake Davis' address='400 Linda Orchard Apt. 510'
 --------------------------------------------------------------------------------
-  SPEC   id= 25 Blake      Davis          | sim=0.9906 conf=HIGH   | name=1.000 addr=0.981 ward=0.000
-  LEGACY id=125 Blake      Davis          | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 25 Blake      Davis          | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=125 Blake      Davis          | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #26: name='Ralph Evans' address='94925 Simpson Roads'
 --------------------------------------------------------------------------------
-  SPEC   id= 26 Ray        Evans          | sim=0.5714 conf=LOW    | name=0.800 addr=0.343 ward=0.000
-  LEGACY id=126 Ray        Evans          | sim=0.4000 conf=LOW    | name=0.800 addr=0.000 ward=0.000
+  SPEC   id= 26 Ray        Evans          | sim=0.5765 conf=LOW    | name=0.800 addr=0.353 ward=0.000
+  LEGACY id=126 Ray        Evans          | sim=0.5765 conf=LOW    | name=0.800 addr=0.353 ward=0.000
 
 OCR #27: name='Peter Harvey' address='12239 Victoria Mountains Suite 294'
 --------------------------------------------------------------------------------
-  SPEC   id= 27 Peter      Carey          | sim=0.6385 conf=MEDIUM | name=0.870 addr=0.407 ward=0.000
-  LEGACY id=127 Peter      Carey          | sim=0.4348 conf=LOW    | name=0.870 addr=0.000 ward=0.000
+  SPEC   id= 27 Peter      Carey          | sim=0.6235 conf=MEDIUM | name=0.870 addr=0.377 ward=0.000
+  LEGACY id=127 Peter      Carey          | sim=0.6235 conf=MEDIUM | name=0.870 addr=0.377 ward=0.000
 
 OCR #28: name='Raymond Green' address='624 Williams Ville'
 --------------------------------------------------------------------------------
-  SPEC   id= 28 Raymond    Green          | sim=0.9865 conf=HIGH   | name=1.000 addr=0.973 ward=0.000
-  LEGACY id=128 Raymond    Green          | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 28 Raymond    Green          | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=128 Raymond    Green          | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #29: name='Wesley Harrington' address='5293 Maynard Gardens Apt. 407'
 --------------------------------------------------------------------------------
-  SPEC   id= 29 Wesley     Harrington     | sim=0.9915 conf=HIGH   | name=1.000 addr=0.983 ward=0.000
-  LEGACY id=129 Wesley     Harrington     | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 29 Wesley     Harrington     | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=129 Wesley     Harrington     | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #30: name='Michelle Day' address='351 Sanchez Courts Suite 250'
 --------------------------------------------------------------------------------
-  SPEC   id= 30 Michelle   Day            | sim=0.9912 conf=HIGH   | name=1.000 addr=0.982 ward=0.000
-  LEGACY id=130 Michelle   Day            | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 30 Michelle   Day            | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=130 Michelle   Day            | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #31: name='Samantha Herrera' address='4453 John Causeway Apt. 743'
 --------------------------------------------------------------------------------
-  SPEC   id= 31 Samantha   Guerrero       | sim=0.5606 conf=LOW    | name=0.848 addr=0.273 ward=0.000
-  LEGACY id=131 Samantha   Guerrero       | sim=0.4242 conf=LOW    | name=0.848 addr=0.000 ward=0.000
+  SPEC   id= 31 Samantha   Guerrero       | sim=0.5405 conf=LOW    | name=0.848 addr=0.233 ward=0.000
+  LEGACY id=131 Samantha   Guerrero       | sim=0.5405 conf=LOW    | name=0.848 addr=0.233 ward=0.000
 
 OCR #32: name='Wanda Edwards' address='100 Anderson Plains Apt. 353'
 --------------------------------------------------------------------------------
-  SPEC   id= 32 Wanda      Edwards        | sim=0.9912 conf=HIGH   | name=1.000 addr=0.982 ward=0.000
-  LEGACY id=132 Wanda      Edwards        | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 32 Wanda      Edwards        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=132 Wanda      Edwards        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #33: name='Sergio Sawyer' address='55643 Johnson Passage'
 --------------------------------------------------------------------------------
-  SPEC   id= 33 Sergio     Baker          | sim=0.5395 conf=LOW    | name=0.800 addr=0.279 ward=0.000
-  LEGACY id=133 Sergio     Baker          | sim=0.4000 conf=LOW    | name=0.800 addr=0.000 ward=0.000
+  SPEC   id= 33 Sergio     Baker          | sim=0.5429 conf=LOW    | name=0.800 addr=0.286 ward=0.000
+  LEGACY id=133 Sergio     Baker          | sim=0.5429 conf=LOW    | name=0.800 addr=0.286 ward=0.000
 
 OCR #34: name='Jorge Dougherty' address='38503 Sanchez Vista'
 --------------------------------------------------------------------------------
-  SPEC   id= 34 Jorge      Dougherty      | sim=0.9872 conf=HIGH   | name=1.000 addr=0.974 ward=0.000
-  LEGACY id=134 Jorge      Dougherty      | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 34 Jorge      Dougherty      | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=134 Jorge      Dougherty      | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #35: name='Jordan McDonald' address='165 Madison Ramp'
 --------------------------------------------------------------------------------
-  SPEC   id= 35 Jordan     Mcdonald       | sim=0.9515 conf=HIGH   | name=0.933 addr=0.970 ward=0.000
-  LEGACY id=135 Jordan     Mcdonald       | sim=0.4667 conf=LOW    | name=0.933 addr=0.000 ward=0.000
+  SPEC   id= 35 Jordan     Mcdonald       | sim=0.9667 conf=HIGH   | name=0.933 addr=1.000 ward=0.000
+  LEGACY id=135 Jordan     Mcdonald       | sim=0.9667 conf=HIGH   | name=0.933 addr=1.000 ward=0.000
 
 OCR #36: name='Alexis Simmons' address='66198 Becker Underpass'
 --------------------------------------------------------------------------------
-  SPEC   id= 36 Alexis     Simmons        | sim=0.9889 conf=HIGH   | name=1.000 addr=0.978 ward=0.000
-  LEGACY id=136 Alexis     Simmons        | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 36 Alexis     Simmons        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=136 Alexis     Simmons        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #37: name='Kaitlyn Owen' address='472 Kelly Corner Apt. 122'
 --------------------------------------------------------------------------------
-  SPEC   id= 37 Kathleen   Owen           | sim=0.6308 conf=MEDIUM | name=0.800 addr=0.462 ward=0.000
-  LEGACY id=137 Kathleen   Owen           | sim=0.4000 conf=LOW    | name=0.800 addr=0.000 ward=0.000
+  SPEC   id= 37 Kathleen   Owen           | sim=0.6105 conf=MEDIUM | name=0.800 addr=0.421 ward=0.000
+  LEGACY id=137 Kathleen   Owen           | sim=0.6105 conf=MEDIUM | name=0.800 addr=0.421 ward=0.000
 
 OCR #38: name='Brett Bennett' address='6194 Fletcher Pike'
 --------------------------------------------------------------------------------
-  SPEC   id= 38 Brett      Bennett        | sim=0.9865 conf=HIGH   | name=1.000 addr=0.973 ward=0.000
-  LEGACY id=138 Brett      Bennett        | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 38 Brett      Bennett        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=138 Brett      Bennett        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #39: name='Ronald Cole Jr.' address='184 Davis Views'
 --------------------------------------------------------------------------------
-  SPEC   id= 39 Ronald     Cole Jr.       | sim=0.9839 conf=HIGH   | name=1.000 addr=0.968 ward=0.000
-  LEGACY id=139 Ronald     Cole Jr.       | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 39 Ronald     Cole Jr.       | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=139 Ronald     Cole Jr.       | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #40: name='Megan Nielsen' address='439 Herrera Pass Apt. 790'
 --------------------------------------------------------------------------------
-  SPEC   id= 40 Megan      Nielsen        | sim=0.9902 conf=HIGH   | name=1.000 addr=0.980 ward=0.000
-  LEGACY id=140 Megan      Nielsen        | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 40 Megan      Nielsen        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=140 Megan      Nielsen        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #41: name='Laura Nguyen' address='92602 Robles Fall Suite 060'
 --------------------------------------------------------------------------------
-  SPEC   id= 41 Laura      Nguyen         | sim=0.9909 conf=HIGH   | name=1.000 addr=0.982 ward=0.000
-  LEGACY id=141 Laura      Nguyen         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 41 Laura      Nguyen         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=141 Laura      Nguyen         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #42: name='Ryan Murphy' address='270 Schwartz Island Apt. 558'
 --------------------------------------------------------------------------------
-  SPEC   id= 42 Ryan       Murphy         | sim=0.9912 conf=HIGH   | name=1.000 addr=0.982 ward=0.000
-  LEGACY id=142 Ryan       Murphy         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 42 Ryan       Murphy         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=142 Ryan       Murphy         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #43: name='Gerald Butler' address='6850 Jackson Walk Suite 914'
 --------------------------------------------------------------------------------
-  SPEC   id= 43 Gerald     Hunter         | sim=0.5838 conf=LOW    | name=0.846 addr=0.321 ward=0.000
-  LEGACY id=143 Gerald     Hunter         | sim=0.4231 conf=LOW    | name=0.846 addr=0.000 ward=0.000
+  SPEC   id= 43 Gerald     Hunter         | sim=0.5867 conf=LOW    | name=0.846 addr=0.327 ward=0.000
+  LEGACY id=143 Gerald     Hunter         | sim=0.5867 conf=LOW    | name=0.846 addr=0.327 ward=0.000
 
 OCR #44: name='Samantha Burns MD' address='514 Carlson Crescent'
 --------------------------------------------------------------------------------
-  SPEC   id= 44 Samantha   Burns MD       | sim=0.9878 conf=HIGH   | name=1.000 addr=0.976 ward=0.000
-  LEGACY id=144 Samantha   Burns MD       | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 44 Samantha   Burns MD       | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=144 Samantha   Burns MD       | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #45: name='Tim Parker' address='31448 Vazquez Path Apt. 999'
 --------------------------------------------------------------------------------
-  SPEC   id= 45 Tim        Parker         | sim=0.9909 conf=HIGH   | name=1.000 addr=0.982 ward=0.000
-  LEGACY id=145 Tim        Parker         | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 45 Tim        Parker         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=145 Tim        Parker         | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #46: name='Lindsay Kennedy' address='28661 Cross Prairie Apt. 048'
 --------------------------------------------------------------------------------
-  SPEC   id= 46 Lindsay    Kennedy        | sim=0.9912 conf=HIGH   | name=1.000 addr=0.982 ward=0.000
-  LEGACY id=146 Lindsay    Kennedy        | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 46 Lindsay    Kennedy        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=146 Lindsay    Kennedy        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #47: name='Adam Welch' address='5211 Shaw Hall'
 --------------------------------------------------------------------------------
-  SPEC   id= 47 Adam       Welch          | sim=0.9483 conf=HIGH   | name=1.000 addr=0.897 ward=0.000
-  LEGACY id=147 Adam       Welch          | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 47 Adam       Welch          | sim=0.9643 conf=HIGH   | name=1.000 addr=0.929 ward=0.000
+  LEGACY id=147 Adam       Welch          | sim=0.9643 conf=HIGH   | name=1.000 addr=0.929 ward=0.000
 
 OCR #48: name='John Sheppard' address='8704 Stacy Parks'
 --------------------------------------------------------------------------------
-  SPEC   id= 48 John       Sheppard       | sim=0.9848 conf=HIGH   | name=1.000 addr=0.970 ward=0.000
-  LEGACY id=148 John       Sheppard       | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 48 John       Sheppard       | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=148 John       Sheppard       | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
 
 OCR #49: name='William Morse Jr.' address='594 Harold Fork'
 --------------------------------------------------------------------------------
-  SPEC   id= 49 William    Case Jr.       | sim=0.5855 conf=LOW    | name=0.848 addr=0.323 ward=0.000
-  LEGACY id=149 William    Case Jr.       | sim=0.4242 conf=LOW    | name=0.848 addr=0.000 ward=0.000
+  SPEC   id= 49 William    Case Jr.       | sim=0.5576 conf=LOW    | name=0.848 addr=0.267 ward=0.000
+  LEGACY id=149 William    Case Jr.       | sim=0.5576 conf=LOW    | name=0.848 addr=0.267 ward=0.000
 
 OCR #50: name='Tina Carroll' address='733 Cantu Villages'
 --------------------------------------------------------------------------------
-  SPEC   id= 50 Tina       Carroll        | sim=0.9865 conf=HIGH   | name=1.000 addr=0.973 ward=0.000
-  LEGACY id=150 Tina       Carroll        | sim=0.5000 conf=LOW    | name=1.000 addr=0.000 ward=0.000
+  SPEC   id= 50 Tina       Carroll        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000
+  LEGACY id=150 Tina       Carroll        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000 ward=0.000

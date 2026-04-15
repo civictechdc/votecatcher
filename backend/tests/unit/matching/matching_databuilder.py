@@ -38,7 +38,9 @@ CONFIDENCE_MEDIUM = 0.60
 def load_ocr_results() -> list[dict]:
     with open(ASSETS_DIR / "live_ocr_results.json") as f:
         data = json.load(f)
-    return [{k: v for k, v in r.items() if k != "id"} for r in data["ocr_results"]]
+    if isinstance(data, list):
+        return data
+    return data["ocr_results"]
 
 
 def load_matched_voters() -> list[dict]:

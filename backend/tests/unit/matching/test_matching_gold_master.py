@@ -9,12 +9,11 @@ Locks the baseline truth for the algorithm at commit 11b9617:
 These approval tests serve as the GOLD MASTER baseline. Any future matching
 implementation must prove parity against these locked snapshots.
 
-Run with: uv run pytest tests/unit/matching/ -v --tb=short
+Uses ApprovalTests.Python (approvals/ApprovalTests.Python) for snapshot management.
 """
 
-from pathlib import Path
-
 import pytest
+from approvaltests import verify
 from rapidfuzz import fuzz
 
 from tests.unit.matching.matching_databuilder import (
@@ -27,24 +26,7 @@ from tests.unit.matching.matching_databuilder import (
     run_old_algorithm_batch,
 )
 
-APPROVAL_DIR = Path(__file__).parent
-
 pytestmark = pytest.mark.slow
-
-
-def _approve_or_compare(approval_path: Path, actual: str) -> None:
-    if approval_path.exists():
-        expected = approval_path.read_text()
-        assert actual == expected, (
-            f"Snapshot mismatch. Delete {approval_path.name} to re-approve.\n"
-            f"First diff at line: ..."
-        )
-    else:
-        approval_path.write_text(actual)
-        pytest.fail(
-            f"Created initial approval file: {approval_path.name}. Re-run to verify."
-        )
-
 
 requires_voter_csv = pytest.mark.skipif(
     not HAS_VOTER_CSV,
@@ -117,7 +99,7 @@ class TestOldAlgorithmApproval:
     def test_ocr_count(self, ocr_results):
         assert len(ocr_results) == 50
 
-    def test_old_algorithm_approval(self, voters, ocr_results, request):
+    def test_old_algorithm_approval(self, voters, ocr_results):
         results = run_old_algorithm_batch(ocr_results, voters)
 
         lines = []
@@ -165,7 +147,4 @@ class TestOldAlgorithmApproval:
         max_combined = max(r["top_match"]["combined_score"] for r in results)
         lines.append(f"Range: combined min={min_combined:.4f} max={max_combined:.4f}")
 
-        actual = "\n".join(lines) + "\n"
-
-        approval_path = APPROVAL_DIR / f"{request.node.name}.approved.txt"
-        _approve_or_compare(approval_path, actual)
+        verify("\n".join(lines))

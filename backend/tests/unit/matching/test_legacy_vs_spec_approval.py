@@ -132,7 +132,7 @@ def _legacy_voter(
         id=vid,
         region_id=uuid4(),
         name_data={"first_name": first_name, "last_name": last_name},
-        address_data={"street": street, "city": None, "state": None, "zip": zip_val},
+        address_data={"street": street, "city": "", "state": "", "zip": zip_val or ""},
         other_field_data={},
     )
 
