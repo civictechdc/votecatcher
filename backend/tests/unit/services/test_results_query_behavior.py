@@ -569,8 +569,10 @@ class TestCsvExport:
     def _collect_csv(generator) -> str:
         return "".join(generator)
 
-    def test_export_returns_tuple_not_streaming_response(self, session):
-        """Scenario: Service returns (generator, filename) tuple, no HTTP coupling."""
+    def test_export_returns_iterable_and_filename(self, session):
+        """Scenario: Service returns an iterable of CSV lines and a filename string."""
+        from collections.abc import Iterable
+
         from app.services.results_query_service import ResultsQueryService
 
         region = _seed_region(session)
@@ -595,13 +597,10 @@ class TestCsvExport:
         service = ResultsQueryService(session)
         result = service.export_results_csv(job.id)
 
-        assert isinstance(result, tuple)
-        assert len(result) == 2
-        from collections.abc import Iterator
-
-        assert isinstance(result[0], Iterator)
-        assert isinstance(result[1], str)
-        assert "job_1_results.csv" in result[1]
+        csv_lines, filename = result
+        assert isinstance(csv_lines, Iterable)
+        assert isinstance(filename, str)
+        assert f"job_{job.id}_results.csv" == filename
 
     def test_export_produces_csv_with_correct_headers(self, session):
         """Scenario: CSV has standard column headers."""
@@ -628,14 +627,13 @@ class TestCsvExport:
         session.commit()
 
         service = ResultsQueryService(session)
-        generator, filename = service.export_results_csv(job.id)
-        body = self._collect_csv(generator)
+        csv_lines, filename = service.export_results_csv(job.id)
+        body = self._collect_csv(csv_lines)
 
-        assert "text/csv" not in repr(type(generator))
-        assert "job_1_results.csv" in filename
-        lines = body.strip().split("\n")
-        assert "Crop ID" in lines[0]
-        assert "Extracted Text" in lines[0]
+        assert f"job_{job.id}_results.csv" == filename
+        header_line = body.strip().split("\n")[0]
+        for expected in ["Crop ID", "Extracted Text", "Rank", "Confidence"]:
+            assert expected in header_line
 
     def test_export_raises_for_missing_job(self, session):
         """Scenario: Exporting CSV for non-existent job raises ValueError."""
@@ -691,8 +689,8 @@ class TestCsvExport:
         assert len(lines) == 2
         assert "HIGH" in lines[1]
 
-    def test_export_uses_yield_per_for_large_result_sets(self, session):
-        """Scenario: Export streams rows via yield_per, never loads all at once."""
+    def test_export_never_loads_all_rows_at_once(self, session):
+        """Scenario: Export streams results without calling .all() on the query."""
         from unittest.mock import MagicMock, patch
 
         from app.services.results_query_service import ResultsQueryService
@@ -719,16 +717,21 @@ class TestCsvExport:
         mock_stream = MagicMock()
         mock_stream.yield_per.return_value = mock_stream
         mock_stream.__iter__ = MagicMock(return_value=iter([]))
+        mock_stream.all = MagicMock(
+            side_effect=AssertionError(
+                ".all() must not be called during streaming export"
+            )
+        )
 
         with patch.object(type(session), "exec", return_value=mock_stream):
             service = ResultsQueryService(session)
-            generator, _ = service.export_results_csv(job.id)
-            list(generator)
+            csv_lines, _ = service.export_results_csv(job.id)
+            list(csv_lines)
 
-        mock_stream.yield_per.assert_called_once_with(1000)
+        mock_stream.all.assert_not_called()
 
-    def test_export_streams_rows_in_chunks_not_all_at_once(self, session):
-        """Scenario: CSV rows yielded incrementally, not as single blob."""
+    def test_export_yields_incrementally_not_as_single_blob(self, session):
+        """Scenario: CSV output arrives as multiple pieces, not one monolithic string."""
         from app.services.results_query_service import ResultsQueryService
 
         region = _seed_region(session)
@@ -752,12 +755,12 @@ class TestCsvExport:
         session.commit()
 
         service = ResultsQueryService(session)
-        generator, _ = service.export_results_csv(job.id)
+        csv_lines, _ = service.export_results_csv(job.id)
 
-        chunks = list(generator)
+        chunks = list(csv_lines)
         assert len(chunks) > 1
 
         body = "".join(chunks)
         lines = [ln for ln in body.strip().split("\n") if ln]
+        assert lines[0].startswith("Crop ID")
         assert len(lines) == 4
-        assert "Crop ID" in lines[0]
