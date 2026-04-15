@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sortResults, renderThumbnailCell } from "./campaign-results";
+import { sortResults, renderThumbnailCell, toggleAccordion } from "./campaign-results";
 import type { CampaignResultResponse } from "./campaign-results";
 
 function makeResult(overrides: Partial<CampaignResultResponse> & { ocrResultId: number }): CampaignResultResponse {
@@ -64,6 +64,24 @@ describe("renderThumbnailCell", () => {
 		const html = renderThumbnailCell("");
 		expect(html).toContain("—");
 		expect(html).not.toContain("<img");
+	});
+});
+
+describe("toggleAccordion", () => {
+	it("expands unexpanded row", () => {
+		expect(toggleAccordion(null, 1)).toBe(1);
+	});
+
+	it("collapses expanded row on re-click", () => {
+		expect(toggleAccordion(1, 1)).toBeNull();
+	});
+
+	it("switches to different row", () => {
+		expect(toggleAccordion(1, 2)).toBe(2);
+	});
+
+	it("expands from number to different number", () => {
+		expect(toggleAccordion(42, 7)).toBe(7);
 	});
 });
 

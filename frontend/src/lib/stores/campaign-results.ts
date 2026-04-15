@@ -135,6 +135,10 @@ export function renderThumbnailCell(thumbnailUrl: string): string {
 	return `<img src="${thumbnailUrl}" loading="lazy" width="60" height="40" alt="Crop thumbnail" class="rounded object-cover" />`;
 }
 
+export function toggleAccordion(currentExpanded: number | null, clickedId: number): number | null {
+	return currentExpanded === clickedId ? null : clickedId;
+}
+
 export function sortResults(
 	results: CampaignResultResponse[],
 	config: { key: string; direction: "asc" | "desc" } | null,
