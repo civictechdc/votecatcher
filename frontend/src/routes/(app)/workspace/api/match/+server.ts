@@ -8,11 +8,10 @@ import type { MatchRow, ConfidenceThresholds, MatchResults } from "$lib/workspac
 import { MatchColumn } from "$lib/workspace-types";
 import { faker } from "@faker-js/faker";
 import { api, type ApiResult } from "$lib/api/client";
-import { OCR_PROVIDER_API_KEY, OCR_PROVIDER_NAME, OCR_PROVIDER_MODEL } from "$env/static/private";
-import { DEMO_MODE } from "$env/static/private";
+import { env } from "$env/dynamic/private";
 import type { MatchingProgressResponse } from "$lib/api/response-types";
 
-const SERVER_DEMO = DEMO_MODE === "true";
+const SERVER_DEMO = (env["DEMO_MODE"] ?? "false") === "true";
 
 const MATCH_TABLE_COLUMNS: MatchColumn[] = [
 	new MatchColumn("Registration Name", function (first: MatchRow, second: MatchRow) {
@@ -132,9 +131,9 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	if (batchEnabled) {
 		const batchResponse: ApiResult = await api.demoStartOcrRequest({
-			provider_name: OCR_PROVIDER_NAME,
-			provider_model: OCR_PROVIDER_MODEL,
-			api_key: OCR_PROVIDER_API_KEY,
+			provider_name: env["OCR_PROVIDER_NAME"] || "openai",
+			provider_model: env["OCR_PROVIDER_MODEL"] || "gpt-4o-mini",
+			api_key: env["OCR_PROVIDER_API_KEY"] || "",
 		});
 
 		if (!batchResponse.ok) {
