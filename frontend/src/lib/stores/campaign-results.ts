@@ -15,6 +15,7 @@ export interface CampaignResultResponse {
 	extractedAddress: string;
 	cropId: number;
 	jobId: number;
+	thumbnailUrl: string;
 	predictions: CampaignMatchPrediction[];
 }
 

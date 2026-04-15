@@ -8,6 +8,7 @@ function makeResult(overrides: Partial<CampaignResultResponse> & { ocrResultId: 
 		extractedAddress: "",
 		cropId: 0,
 		jobId: 0,
+		thumbnailUrl: "",
 		predictions: [],
 		...overrides,
 	};
@@ -33,6 +34,21 @@ const testResults: CampaignResultResponse[] = [
 		predictions: [{ rank: 1, voterName: "Charlie Green", voterAddress: "888 Maple Dr", similarityScore: 0.45, confidence: "LOW" }],
 	}),
 ];
+
+describe("CampaignResultResponse", () => {
+	it("includes thumbnailUrl field", () => {
+		const result = makeResult({
+			ocrResultId: 1,
+			thumbnailUrl: "/api/crops/42/image",
+		});
+		expect(result.thumbnailUrl).toBe("/api/crops/42/image");
+	});
+
+	it("defaults thumbnailUrl to empty string", () => {
+		const result = makeResult({ ocrResultId: 1 });
+		expect(result.thumbnailUrl).toBe("");
+	});
+});
 
 describe("sortResults", () => {
 	it("returns same order when config is null", () => {
