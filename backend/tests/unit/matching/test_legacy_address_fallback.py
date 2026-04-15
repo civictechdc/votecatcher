@@ -103,7 +103,7 @@ def _dc_spec() -> RegionFieldSpecConfig:
 
 def _legacy_voter(
     street: str = "23407 Hawkins Lock",
-    zip_val: str | None = None,
+    zip_val: str = "",
     first_name: str = "Alexis",
     last_name: str = "Walter",
 ) -> RegisteredVoter:
@@ -111,7 +111,7 @@ def _legacy_voter(
         id=1,
         region_id=uuid4(),
         name_data={"first_name": first_name, "last_name": last_name},
-        address_data={"street": street, "city": None, "state": None, "zip": zip_val},
+        address_data={"street": street, "city": "", "state": "", "zip": zip_val},
         other_field_data={},
     )
 
@@ -134,21 +134,21 @@ def _spec_voter() -> RegisteredVoter:
 class TestFlattenLegacyAddressData:
     """flatten_voter_data must handle legacy address_data format."""
 
-    def test_legacy_street_used_as_street_name_when_no_structured_fields(self):
-        """Legacy voter with 'street' key: '23407 Hawkins Lock' → street_name gets full value."""
-        voter = _legacy_voter(street="23407 Hawkins Lock")
-        spec = _dc_spec()
-        flat = flatten_voter_data(voter, spec.voter_reg_fields)
-        assert flat["street_name"] == "23407 Hawkins Lock"
-        assert flat["street_number"] == ""
-
-    def test_legacy_street_with_number_prefix_splits_into_street_number(self):
-        """Legacy '23407 Hawkins Lock' → street_number='23407', street_name='Hawkins Lock'."""
+    def test_legacy_street_splits_number_prefix_into_street_number(self):
+        """Legacy voter with 'street' key: '23407 Hawkins Lock' → street_number='23407', street_name='Hawkins Lock'."""
         voter = _legacy_voter(street="23407 Hawkins Lock")
         spec = _dc_spec()
         flat = flatten_voter_data(voter, spec.voter_reg_fields)
         assert flat["street_number"] == "23407"
         assert flat["street_name"] == "Hawkins Lock"
+
+    def test_legacy_street_no_number_goes_to_street_name(self):
+        """Legacy voter with 'street' key: 'Hawkins Lock' (no number) → street_name gets full value."""
+        voter = _legacy_voter(street="Hawkins Lock")
+        spec = _dc_spec()
+        flat = flatten_voter_data(voter, spec.voter_reg_fields)
+        assert flat["street_name"] == "Hawkins Lock"
+        assert flat["street_number"] == ""
 
     def test_legacy_zip_maps_to_zip_code(self):
         """Legacy 'zip' key maps to spec field 'zip_code'."""
