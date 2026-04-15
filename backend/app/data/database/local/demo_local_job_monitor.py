@@ -53,44 +53,52 @@ class DemoMatchingTaskMonitor:
         task: MatchingTask = await self.task_repo.update_matching_task_status(
             task_status
         )
-        ev: Event | None = self._events.get(task.id)
+        task_id: str = task.id
+        ev: Event | None = self._events.get(task_id)
         if ev:
             ev.set()
-            self._events[task.id] = asyncio.Event()
+            if is_terminal_matching_status(task.status):
+                self._cleanup_task(task_id)
+            else:
+                self._events[task_id] = asyncio.Event()
 
         return task
 
     async def get_task_status(self, task_id: str) -> MatchingTask:
         return await self.task_repo.get_matching_task(task_id)
 
-    async def monitor_job(self, task_id: str) -> AsyncGenerator[MatchingTask]:
-        """
-        Async generator yielding MatchingTask snapshots until the job reaches
-        a terminal state.
-        """
-        task: MatchingTask = await self.task_repo.get_matching_task(task_id)
-        yield task
-        while True:
-            ev: Event | None = self._events.get(task_id)
-            if not ev:
-                await asyncio.sleep(_POLL_INTERVAL)
-            else:
-                try:
-                    await asyncio.wait_for(ev.wait(), timeout=_POLL_INTERVAL)
-                except TimeoutError:
-                    logger.warning("Timeout error")
-                    new_task: MatchingTask = await self.task_repo.get_matching_task(
-                        task_id
-                    )
-                    yield new_task
-                    pass
+    def _cleanup_task(self, task_id: str) -> None:
+        self._events.pop(task_id, None)
+        self._tasks.pop(task_id, None)
+        self._providers.pop(task_id, None)
 
-            snapshot: MatchingTask = await self.task_repo.get_matching_task(task_id)
-            # yield await self._jobs.update_batch_job_status(snapshot)
-            yield snapshot
-            if is_terminal_matching_status(snapshot.status):
-                logger.debug(
-                    f"Matching task has ended with state: {snapshot.status}. "
-                    f"Breaking out of loop."
-                )
-                break
+    async def monitor_job(self, task_id: str) -> AsyncGenerator[MatchingTask]:
+        try:
+            task: MatchingTask = await self.task_repo.get_matching_task(task_id)
+            yield task
+            while True:
+                ev: Event | None = self._events.get(task_id)
+                if not ev:
+                    await asyncio.sleep(_POLL_INTERVAL)
+                else:
+                    try:
+                        await asyncio.wait_for(ev.wait(), timeout=_POLL_INTERVAL)
+                    except TimeoutError:
+                        logger.warning("Timeout error")
+                        new_task: MatchingTask = await self.task_repo.get_matching_task(
+                            task_id
+                        )
+                        yield new_task
+                        if is_terminal_matching_status(new_task.status):
+                            return
+
+                snapshot: MatchingTask = await self.task_repo.get_matching_task(task_id)
+                yield snapshot
+                if is_terminal_matching_status(snapshot.status):
+                    logger.debug(
+                        f"Matching task has ended with state: {snapshot.status}. "
+                        f"Breaking out of loop."
+                    )
+                    return
+        finally:
+            self._cleanup_task(task_id)
