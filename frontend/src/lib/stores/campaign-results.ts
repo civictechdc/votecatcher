@@ -128,3 +128,51 @@ export const campaignResults = createCampaignResultsStore();
 export function resetCampaignResultsStore() {
 	campaignResults.reset();
 }
+
+export function sortResults(
+	results: CampaignResultResponse[],
+	config: { key: string; direction: "asc" | "desc" } | null,
+): CampaignResultResponse[] {
+	if (!config) return results;
+
+	return [...results].sort((a, b) => {
+		let aVal: string | number;
+		let bVal: string | number;
+
+		const topA = a.predictions[0];
+		const topB = b.predictions[0];
+
+		switch (config.key) {
+			case "extracted_name":
+				aVal = a.extractedName.toLowerCase();
+				bVal = b.extractedName.toLowerCase();
+				break;
+			case "extracted_address":
+				aVal = a.extractedAddress.toLowerCase();
+				bVal = b.extractedAddress.toLowerCase();
+				break;
+			case "matched_name":
+				aVal = (topA?.voterName ?? "").toLowerCase();
+				bVal = (topB?.voterName ?? "").toLowerCase();
+				break;
+			case "matched_address":
+				aVal = (topA?.voterAddress ?? "").toLowerCase();
+				bVal = (topB?.voterAddress ?? "").toLowerCase();
+				break;
+			case "confidence":
+				aVal = topA?.confidence ?? "";
+				bVal = topB?.confidence ?? "";
+				break;
+			case "score":
+				aVal = topA?.similarityScore ?? 0;
+				bVal = topB?.similarityScore ?? 0;
+				break;
+			default:
+				return 0;
+		}
+
+		if (aVal < bVal) return config.direction === "asc" ? -1 : 1;
+		if (aVal > bVal) return config.direction === "asc" ? 1 : -1;
+		return 0;
+	});
+}

@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { campaignResults, type CampaignResultResponse } from '$lib/stores/campaign-results';
+	import { campaignResults, sortResults, type CampaignResultResponse } from '$lib/stores/campaign-results';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Table, LoadingState, Button, ErrorDisplay } from '$lib/components/ui';
+	import type { SortConfig } from '$lib/components/ui/Table.svelte';
 
 	let campaignId = $derived($page.params.id ?? '');
+	let sortConfig = $state<SortConfig | null>(null);
 
 	const columns = [
 		{ key: 'confidence', label: 'Confidence', sortable: true },
@@ -20,6 +22,8 @@
 		campaignResults.fetchResults(campaignId);
 		campaigns.fetchAll();
 	});
+
+	const sortedResults = $derived(sortResults($campaignResults.results, sortConfig));
 
 	function getTableRows(resultList: CampaignResultResponse[]) {
 		return resultList.map((result) => {
@@ -96,8 +100,10 @@
 				<div class="min-w-max">
 					<Table
 						columns={columns}
-						rows={getTableRows($campaignResults.results)}
+						rows={getTableRows(sortedResults)}
 						sortable={true}
+						sortConfig={sortConfig}
+						onSortChange={(config) => (sortConfig = config)}
 						emptyMessage="No results to display"
 					/>
 				</div>
