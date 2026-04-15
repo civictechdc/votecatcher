@@ -130,6 +130,11 @@ export function resetCampaignResultsStore() {
 	campaignResults.reset();
 }
 
+export function renderThumbnailCell(thumbnailUrl: string): string {
+	if (!thumbnailUrl) return '<span class="text-slate-400">—</span>';
+	return `<img src="${thumbnailUrl}" loading="lazy" width="60" height="40" alt="Crop thumbnail" class="rounded object-cover" />`;
+}
+
 export function sortResults(
 	results: CampaignResultResponse[],
 	config: { key: string; direction: "asc" | "desc" } | null,

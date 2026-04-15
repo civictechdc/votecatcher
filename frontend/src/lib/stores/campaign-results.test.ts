@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sortResults } from "./campaign-results";
+import { sortResults, renderThumbnailCell } from "./campaign-results";
 import type { CampaignResultResponse } from "./campaign-results";
 
 function makeResult(overrides: Partial<CampaignResultResponse> & { ocrResultId: number }): CampaignResultResponse {
@@ -47,6 +47,23 @@ describe("CampaignResultResponse", () => {
 	it("defaults thumbnailUrl to empty string", () => {
 		const result = makeResult({ ocrResultId: 1 });
 		expect(result.thumbnailUrl).toBe("");
+	});
+});
+
+describe("renderThumbnailCell", () => {
+	it("renders img with correct attributes for valid URL", () => {
+		const html = renderThumbnailCell("/api/crops/1/image");
+		expect(html).toContain('src="/api/crops/1/image"');
+		expect(html).toContain('loading="lazy"');
+		expect(html).toContain('width="60"');
+		expect(html).toContain('height="40"');
+		expect(html).toContain('alt="Crop thumbnail"');
+	});
+
+	it("renders placeholder for empty URL", () => {
+		const html = renderThumbnailCell("");
+		expect(html).toContain("—");
+		expect(html).not.toContain("<img");
 	});
 });
 

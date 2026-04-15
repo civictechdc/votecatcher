@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { campaignResults, sortResults, type CampaignResultResponse } from '$lib/stores/campaign-results';
+	import { campaignResults, sortResults, renderThumbnailCell, type CampaignResultResponse } from '$lib/stores/campaign-results';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Table, LoadingState, Button, ErrorDisplay } from '$lib/components/ui';
 	import type { SortConfig } from '$lib/components/ui/Table.svelte';
@@ -10,6 +10,7 @@
 	let sortConfig = $state<SortConfig | null>(null);
 
 	const columns = [
+		{ key: 'thumbnail', label: 'Crop', sortable: false },
 		{ key: 'confidence', label: 'Confidence', sortable: true },
 		{ key: 'extracted_name', label: 'Extracted Name', sortable: true },
 		{ key: 'matched_name', label: 'Matched Name', sortable: true },
@@ -30,6 +31,7 @@
 			const topPrediction = result.predictions[0];
 			return {
 				id: result.ocrResultId,
+				thumbnail: renderThumbnailCell(result.thumbnailUrl),
 				confidence: topPrediction?.confidence
 					? `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(topPrediction.confidence)}">${topPrediction.confidence}</span>`
 					: '-',
