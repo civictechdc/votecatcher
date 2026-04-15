@@ -2,42 +2,42 @@ OCR: name='John Smith' address='123 Main St'
 ======================================================================
 SPEC-FORMAT VOTERS:
   id=  1 John   Smith      | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000
-  id=  2 Jane   Doe        | sim=0.3030 conf=LOW    | name=0.333 addr=0.273
-  id=  3 Alexis Walter     | sim=0.3283 conf=LOW    | name=0.174 addr=0.483
+  id=  2 Jane   Doe        | sim=0.3000 conf=LOW    | name=0.333 addr=0.273
+  id=  3 Alexis Walter     | sim=0.2557 conf=LOW    | name=0.174 addr=0.483
 LEGACY-FORMAT VOTERS:
   id=101 John   Smith      | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000
-  id=102 Jane   Doe        | sim=0.3030 conf=LOW    | name=0.333 addr=0.273
-  id=103 Alexis Walter     | sim=0.3283 conf=LOW    | name=0.174 addr=0.483
+  id=102 Jane   Doe        | sim=0.3000 conf=LOW    | name=0.333 addr=0.273
+  id=103 Alexis Walter     | sim=0.2557 conf=LOW    | name=0.174 addr=0.483
 
 OCR: name='Jane Doe' address='456 Oak Ave'
 ======================================================================
 SPEC-FORMAT VOTERS:
-  id=  1 John   Smith      | sim=0.3030 conf=LOW    | name=0.333 addr=0.273
+  id=  1 John   Smith      | sim=0.3000 conf=LOW    | name=0.333 addr=0.273
   id=  2 Jane   Doe        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000
-  id=  3 Alexis Walter     | sim=0.3153 conf=LOW    | name=0.286 addr=0.345
+  id=  3 Alexis Walter     | sim=0.3125 conf=LOW    | name=0.286 addr=0.345
 LEGACY-FORMAT VOTERS:
-  id=101 John   Smith      | sim=0.3030 conf=LOW    | name=0.333 addr=0.273
+  id=101 John   Smith      | sim=0.3000 conf=LOW    | name=0.333 addr=0.273
   id=102 Jane   Doe        | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000
-  id=103 Alexis Walter     | sim=0.3153 conf=LOW    | name=0.286 addr=0.345
+  id=103 Alexis Walter     | sim=0.3125 conf=LOW    | name=0.286 addr=0.345
 
 OCR: name='Alexis Walter' address='23407 Hawkins Lock'
 ======================================================================
 SPEC-FORMAT VOTERS:
-  id=  1 John   Smith      | sim=0.3283 conf=LOW    | name=0.174 addr=0.483
-  id=  2 Jane   Doe        | sim=0.3153 conf=LOW    | name=0.286 addr=0.345
+  id=  1 John   Smith      | sim=0.2557 conf=LOW    | name=0.174 addr=0.483
+  id=  2 Jane   Doe        | sim=0.3125 conf=LOW    | name=0.286 addr=0.345
   id=  3 Alexis Walter     | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000
 LEGACY-FORMAT VOTERS:
-  id=101 John   Smith      | sim=0.3283 conf=LOW    | name=0.174 addr=0.483
-  id=102 Jane   Doe        | sim=0.3153 conf=LOW    | name=0.286 addr=0.345
+  id=101 John   Smith      | sim=0.2557 conf=LOW    | name=0.174 addr=0.483
+  id=102 Jane   Doe        | sim=0.3125 conf=LOW    | name=0.286 addr=0.345
   id=103 Alexis Walter     | sim=1.0000 conf=HIGH   | name=1.000 addr=1.000
 
 OCR: name='Unknown Person' address='999 Nowhere Blvd'
 ======================================================================
 SPEC-FORMAT VOTERS:
-  id=  1 John   Smith      | sim=0.1991 conf=LOW    | name=0.250 addr=0.148
-  id=  2 Jane   Doe        | sim=0.2475 conf=LOW    | name=0.273 addr=0.222
-  id=  3 Alexis Walter     | sim=0.1993 conf=LOW    | name=0.222 addr=0.176
+  id=  1 John   Smith      | sim=0.1860 conf=LOW    | name=0.250 addr=0.148
+  id=  2 Jane   Doe        | sim=0.2449 conf=LOW    | name=0.273 addr=0.222
+  id=  3 Alexis Walter     | sim=0.1967 conf=LOW    | name=0.222 addr=0.176
 LEGACY-FORMAT VOTERS:
-  id=101 John   Smith      | sim=0.1991 conf=LOW    | name=0.250 addr=0.148
-  id=102 Jane   Doe        | sim=0.2475 conf=LOW    | name=0.273 addr=0.222
-  id=103 Alexis Walter     | sim=0.1993 conf=LOW    | name=0.222 addr=0.176
+  id=101 John   Smith      | sim=0.1860 conf=LOW    | name=0.250 addr=0.148
+  id=102 Jane   Doe        | sim=0.2449 conf=LOW    | name=0.273 addr=0.222
+  id=103 Alexis Walter     | sim=0.1967 conf=LOW    | name=0.222 addr=0.176
