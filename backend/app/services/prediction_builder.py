@@ -28,25 +28,31 @@ class PredictionBuilder:
 
     @staticmethod
     def format_voter_name(voter: Any) -> str:
-        name_parts = []
-        if voter.name_data:
-            first = voter.name_data.get("first_name", "")
-            last = voter.name_data.get("last_name", "")
-            if first:
-                name_parts.append(first)
-            if last:
-                name_parts.append(last)
-        return " ".join(name_parts)
+        if not voter.name_data:
+            return ""
+        return " ".join(
+            filter(
+                None,
+                [
+                    voter.name_data.get("first_name", ""),
+                    voter.name_data.get("last_name", ""),
+                ],
+            )
+        )
 
     @staticmethod
     def format_voter_address(voter: Any) -> str:
-        addr_parts = []
-        if voter.address_data:
-            for key in ("street", "city", "state", "zip"):
-                val = voter.address_data.get(key, "")
-                if val:
-                    addr_parts.append(val)
-        return ", ".join(addr_parts)
+        if not voter.address_data:
+            return ""
+        return ", ".join(
+            filter(
+                None,
+                [
+                    voter.address_data.get(k, "")
+                    for k in ("street", "city", "state", "zip")
+                ],
+            )
+        )
 
     @staticmethod
     def build(
@@ -62,17 +68,15 @@ class PredictionBuilder:
 
             voter = voters_by_id.get(result.voter_id) if result.voter_id else None
 
-            voter_name = ""
-            voter_address = ""
-            if voter:
-                voter_name = PredictionBuilder.format_voter_name(voter)
-                voter_address = PredictionBuilder.format_voter_address(voter)
-
             predictions_by_ocr[ocr_id].append(
                 PredictionData(
                     rank=result.rank,
-                    voter_name=voter_name,
-                    voter_address=voter_address,
+                    voter_name=PredictionBuilder.format_voter_name(voter)
+                    if voter
+                    else "",
+                    voter_address=PredictionBuilder.format_voter_address(voter)
+                    if voter
+                    else "",
                     similarity_score=result.similarity_score,
                     confidence=result.confidence_level.value
                     if result.confidence_level

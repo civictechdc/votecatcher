@@ -19,6 +19,7 @@ from app.routers.campaign_router import (
     SetupStatusResponse,
     VoterListStatus,
 )
+from app.services.ocr_text_parser import OcrTextParser
 
 
 class CampaignQueryService:
@@ -126,11 +127,9 @@ class CampaignQueryService:
             extracted_address = ""
             crop_id = 0
             if ocr_result:
-                if isinstance(ocr_result.extracted_text, dict):
-                    extracted_name = ocr_result.extracted_text.get("name") or ""
-                    extracted_address = ocr_result.extracted_text.get("address") or ""
-                elif ocr_result.extracted_text:
-                    extracted_name = str(ocr_result.extracted_text)
+                extracted_name, extracted_address = (
+                    OcrTextParser.extract_name_and_address(ocr_result.extracted_text)
+                )
                 crop_id = ocr_result.crop_id
 
             predictions = predictions_by_ocr.get(ocr_id, [])[:5]
@@ -183,18 +182,6 @@ class CampaignQueryService:
             ]
 
         return predictions_by_ocr
-
-    @staticmethod
-    def _format_voter_name(voter) -> str:
-        from app.services.prediction_builder import PredictionBuilder
-
-        return PredictionBuilder.format_voter_name(voter)
-
-    @staticmethod
-    def _format_voter_address(voter) -> str:
-        from app.services.prediction_builder import PredictionBuilder
-
-        return PredictionBuilder.format_voter_address(voter)
 
     def get_setup_status(self, campaign_id: uuid.UUID) -> SetupStatusResponse:
         """Get campaign setup status for progress stepper.

@@ -17,6 +17,16 @@ if TYPE_CHECKING:
 class ResultsQueryService:
     """Service for querying match results."""
 
+    CSV_HEADER = [
+        "Crop ID",
+        "Extracted Text",
+        "Rank",
+        "Predicted Name",
+        "Predicted Address",
+        "Similarity Score",
+        "Confidence",
+    ]
+
     def __init__(self, session: Session):
         self._session = session
 
@@ -86,19 +96,12 @@ class ResultsQueryService:
         for ocr_id in paginated_ocr_ids:
             ocr_result = ocr_results_by_id.get(ocr_id)
 
-            extracted_text = ""
-            crop_id = 0
-            if ocr_result:
-                if isinstance(ocr_result.extracted_text, dict):
-                    text_parts = []
-                    for key in sorted(ocr_result.extracted_text.keys()):
-                        val = ocr_result.extracted_text.get(key)
-                        if val:
-                            text_parts.append(str(val))
-                    extracted_text = " ".join(text_parts)
-                elif ocr_result.extracted_text:
-                    extracted_text = str(ocr_result.extracted_text)
-                crop_id = ocr_result.crop_id
+            extracted_text = (
+                OcrTextParser.format_text(ocr_result.extracted_text)
+                if ocr_result
+                else ""
+            )
+            crop_id = ocr_result.crop_id if ocr_result else 0
 
             predictions = predictions_by_ocr.get(ocr_id, [])[:5]
 
@@ -184,25 +187,18 @@ class ResultsQueryService:
         generator = self._generate_csv_rows(statement, chunk_size)
         return generator, filename
 
+    @staticmethod
+    def _csv_row(values: list) -> str:
+        buf = io.StringIO()
+        csv.writer(buf).writerow(values)
+        return buf.getvalue()
+
     def _generate_csv_rows(self, statement, chunk_size: int) -> Iterator[str]:
         from app.data.database.model.ocr_result import OcrResult
         from app.data.database.model.registered_voter import RegisteredVoter
         from app.services.prediction_builder import PredictionBuilder
 
-        output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow(
-            [
-                "Crop ID",
-                "Extracted Text",
-                "Rank",
-                "Predicted Name",
-                "Predicted Address",
-                "Similarity Score",
-                "Confidence",
-            ]
-        )
-        yield output.getvalue()
+        yield self._csv_row(self.CSV_HEADER)
 
         stream = self._session.exec(statement).yield_per(chunk_size)
 
@@ -245,9 +241,12 @@ class ResultsQueryService:
                 voter_name = PredictionBuilder.format_voter_name(voter)
                 voter_address = PredictionBuilder.format_voter_address(voter)
 
-            row = io.StringIO()
-            row_writer = csv.writer(row)
-            row_writer.writerow(
+            confidence = (
+                match_result.confidence_level.value
+                if match_result.confidence_level
+                else "LOW"
+            )
+            yield self._csv_row(
                 [
                     crop_id,
                     extracted_text,
@@ -255,9 +254,6 @@ class ResultsQueryService:
                     voter_name,
                     voter_address,
                     match_result.similarity_score,
-                    match_result.confidence_level.value
-                    if match_result.confidence_level
-                    else "LOW",
+                    confidence,
                 ]
             )
-            yield row.getvalue()
