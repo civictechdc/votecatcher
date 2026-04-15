@@ -4,10 +4,10 @@
 	import { Button, LoadingSpinner } from '$lib/components/ui';
 	import { Key, Flag, Cpu, CheckCircle, Trash2, AlertTriangle } from 'lucide-svelte';
 	import ProviderConfigCard from '$lib/components/ProviderConfigCard.svelte';
-	import { PUBLIC_API_URL } from '$env/static/public';
 	import { getAppMode } from '$lib/utils/mode';
 
-	const BASE_URL = (PUBLIC_API_URL ?? 'http://localhost:8080') + '/api';
+	const BASE_URL: string = (import.meta.env["PUBLIC_API_URL"] ?? 'http://localhost:8080') + '/api';
+
 	const showFeatureFlags = getAppMode() !== 'production';
 	const showResetData = getAppMode() !== 'production';
 

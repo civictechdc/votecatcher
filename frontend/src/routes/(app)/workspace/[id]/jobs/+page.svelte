@@ -6,8 +6,7 @@
 	import { Button, Table, Modal } from '$lib/components/ui';
 	import type { JobResponse } from '$lib/api/generated';
 	import type { SortConfig } from '$lib/components/ui/Table.svelte';
-	import { PUBLIC_API_URL } from '$env/static/public';
-
+	const API_BASE: string = (import.meta.env["PUBLIC_API_URL"] || 'http://localhost:8080') + '/api';
 	interface ProviderConfig {
 		provider: string;
 		model: string;
@@ -32,8 +31,6 @@
 	let sortConfig = $state<SortConfig | null>({ key: 'created', direction: 'desc' });
 	let statusFilter = $state<StatusFilter>('all');
 	let hasScans = $state<boolean | null>(null);
-
-	const API_BASE = (PUBLIC_API_URL || 'http://localhost:8080') + '/api';
 
 	const CANCELABLE_STATES = ['NOT_STARTED', 'OCR_PENDING', 'OCR_STARTED'];
 

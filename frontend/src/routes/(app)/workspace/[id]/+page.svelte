@@ -6,9 +6,7 @@
 	import { jobs } from '$lib/stores/jobs';
 	import { Button, LoadingState } from '$lib/components/ui';
 	import { ConfidenceDonut, ProgressStepper } from '$lib/components/dashboard';
-	import { PUBLIC_API_URL } from '$env/static/public';
-
-	const API_BASE = PUBLIC_API_URL || 'http://localhost:8080';
+	const API_BASE: string = import.meta.env["PUBLIC_API_URL"] || 'http://localhost:8080';
 	const campaignId = $derived($page.params.id ?? '');
 
 	let metrics = $state({
