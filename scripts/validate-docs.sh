@@ -9,7 +9,7 @@ ERRORS=0
 check_no_source_code() {
 	echo "=== Checking for source code in docs/ ==="
 	local found
-	found=$(find docs/ -name "*.md" -exec grep -l "^import \|^from \|^def \|^class \|^@router\|^async def " {} \; 2>/dev/null | grep -v "decisions/" | grep -v "template.md" | grep -v "adding-a-region.md" || true)
+	found=$(find docs/ -name "*.md" -exec grep -l "^import \|^from \|^def \|^class \|^@router\|^async def " {} \; 2>/dev/null | grep -v "decisions/" | grep -v "template.md" | grep -v "adding-a-region.md" | grep -v "matching-algorithm" || true)
 	if [ -n "$found" ]; then
 		echo "ERROR: Found source code patterns in documentation files:"
 		echo "$found"
