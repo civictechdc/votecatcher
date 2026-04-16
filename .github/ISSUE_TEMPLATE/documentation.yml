@@ -1,0 +1,56 @@
+name: Documentation
+description: Report an issue with documentation
+labels: ['documentation', 'triage']
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation!
+
+  - type: textarea
+    id: what-needs-changing
+    attributes:
+      label: What needs changing
+      description: Describe the documentation issue
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: File or section that needs updating
+      placeholder: "e.g., README.md, docs/configuration-modes.md"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type-of-change
+    attributes:
+      label: Type of change
+      options:
+        - Typo/grammar fix
+        - Missing documentation
+        - Outdated information
+        - New documentation needed
+        - Unclear/confusing content
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-fix
+    attributes:
+      label: Suggested fix
+      description: If you have a specific change in mind, describe it here
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Any other relevant information
+    validations:
+      required: false

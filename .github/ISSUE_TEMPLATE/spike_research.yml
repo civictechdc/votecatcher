@@ -1,0 +1,55 @@
+name: Spike/Research
+description: Research task to investigate a question or topic
+labels: ['spike', 'triage']
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for research tasks and spikes.
+
+  - type: textarea
+    id: question-or-topic
+    attributes:
+      label: Question or topic
+      description: What question are you trying to answer?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context-and-motivation
+    attributes:
+      label: Context and motivation
+      description: Why is this research needed? What decisions depend on this?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: What constitutes a sufficient answer? What deliverables are expected?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: time-box
+    attributes:
+      label: Time-box
+      options:
+        - 1 hour
+        - 2 hours
+        - Half day
+        - Full day
+        - Multi-day
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Any other context or resources
+    validations:
+      required: false

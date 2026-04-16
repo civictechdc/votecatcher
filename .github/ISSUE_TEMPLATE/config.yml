@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Slack #vote_catcher
+    url: https://civictechdc.slack.com/archives/C04U3D9AWER
+    about: Ask questions and discuss with the community
+  - name: Contributing Guide
+    url: https://github.com/civictechdc/votecatcher/blob/main/CONTRIBUTING.md
+    about: Development setup, code standards, and PR process

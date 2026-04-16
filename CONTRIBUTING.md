@@ -202,6 +202,9 @@ just migrate-down                 # Rollback
 
 ## Getting Help
 
-- Open an issue for bugs or feature requests
-- Check [docs/](docs/) for detailed documentation
+- **Slack:** Join the conversation in [#vote_catcher](https://civictechdc.slack.com/archives/C04U3D9AWER) on the [CivicTech DC Slack](https://www.civictechdc.org/)
+- **Issues:** Open a [bug report](https://github.com/civictechdc/votecatcher/issues/new?template=bug_report.yml) or [feature request](https://github.com/civictechdc/votecatcher/issues/new?template=feature_request.yml)
+- **Security:** Report vulnerabilities privately via [GitHub Security Advisories](https://github.com/civictechdc/votecatcher/security/advisories/new) — see [SECURITY.md](SECURITY.md)
+- **Code of Conduct:** All participants must follow the [Code of Conduct](CODE_OF_CONDUCT.md)
+- **Docs:** Check [docs/](docs/) for detailed documentation
 - Run `just` to see all available commands
