@@ -86,7 +86,7 @@ describe("CampaignResultResponse", () => {
 describe("renderThumbnailCell", () => {
 	it("renders img with correct attributes for valid URL", () => {
 		const html = renderThumbnailCell("/api/crops/1/image");
-		expect(html).toContain('src="/api/crops/1/image"');
+		expect(html).toContain('src="http://localhost:8080/api/crops/1/image"');
 		expect(html).toContain('loading="lazy"');
 		expect(html).toContain('width="60"');
 		expect(html).toContain('height="40"');
@@ -139,7 +139,7 @@ function makePrediction(
 describe("renderExpandedCropImage", () => {
 	it("renders large image for valid URL", () => {
 		const html = renderExpandedCropImage("/api/crops/42/image");
-		expect(html).toContain('src="/api/crops/42/image"');
+		expect(html).toContain('src="http://localhost:8080/api/crops/42/image"');
 		expect(html).toContain("max-width");
 		expect(html).toContain("max-height");
 	});
@@ -151,7 +151,7 @@ describe("renderExpandedCropImage", () => {
 
 	it("includes data-crop-url for lightbox click delegation", () => {
 		const html = renderExpandedCropImage("/api/crops/42/image");
-		expect(html).toContain('data-crop-url="/api/crops/42/image"');
+		expect(html).toContain('data-crop-url="http://localhost:8080/api/crops/42/image"');
 	});
 
 	it("includes cursor pointer for click affordance", () => {
