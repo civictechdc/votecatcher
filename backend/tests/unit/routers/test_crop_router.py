@@ -1,6 +1,7 @@
 """Unit tests for crop image router — GET /api/crops/{crop_id}/image."""
 
 import asyncio
+import importlib
 import inspect
 from uuid import uuid4
 
@@ -12,6 +13,10 @@ from sqlmodel import Session, SQLModel, create_engine
 from app.data.database.model.petition_crop import PetitionCrop
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign, Region
+
+
+def _import_crop_module():
+    return importlib.import_module("app.routers.crop_router")
 
 
 @pytest.fixture
@@ -172,17 +177,18 @@ class TestCropImageConcurrency:
 
     def test_semaphore_configured_with_limit_50(self):
         """Scenario: Module-level semaphore exists with correct limit."""
-        import app.routers.crop_router as mod
+        mod = _import_crop_module()
 
-        sem = mod._CROP_SEMAPHORE
+        assert mod.MAX_CONCURRENT_CROP_READS == 50
+        sem = mod._crop_semaphore
         assert isinstance(sem, asyncio.Semaphore)
         assert sem._value == 50
 
     def test_endpoint_is_async_coroutine(self):
         """Scenario: Endpoint is async to support semaphore acquire."""
-        from app.routers.crop_router import get_crop_image
+        mod = _import_crop_module()
 
-        assert inspect.iscoroutinefunction(get_crop_image)
+        assert inspect.iscoroutinefunction(mod.get_crop_image)
 
     @pytest.mark.asyncio
     async def test_semaphore_blocks_beyond_limit(self, engine, tmp_path, monkeypatch):
@@ -243,9 +249,9 @@ class TestCropImageConcurrency:
                     crop_ids.append(crop.id)
                 s.commit()
 
-            import app.routers.crop_router as crop_mod
+            crop_mod = _import_crop_module()
 
-            monkeypatch.setattr(crop_mod, "_CROP_SEMAPHORE", asyncio.Semaphore(2))
+            monkeypatch.setattr(crop_mod, "_crop_semaphore", asyncio.Semaphore(2))
 
             transport = httpx.ASGITransport(app=app)
             async with httpx.AsyncClient(

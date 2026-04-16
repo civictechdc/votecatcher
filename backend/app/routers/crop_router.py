@@ -9,13 +9,15 @@ from sqlmodel import Session
 
 from app.dependencies import get_session
 
+MAX_CONCURRENT_CROP_READS = 50
+
 router = APIRouter(prefix="/crops", tags=["crops"])
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
 _CACHE_HEADERS = {"Cache-Control": "public, max-age=86400, immutable"}
 
-_CROP_SEMAPHORE = asyncio.Semaphore(50)
+_crop_semaphore = asyncio.Semaphore(MAX_CONCURRENT_CROP_READS)
 
 
 @router.get("/{crop_id}/image")
@@ -25,7 +27,7 @@ async def get_crop_image(
 ) -> FileResponse:
     from app.storage.crop_storage import LocalFileAdapter
 
-    async with _CROP_SEMAPHORE:
+    async with _crop_semaphore:
         adapter = LocalFileAdapter(session)
         path = adapter.get_image_path(crop_id)
 
