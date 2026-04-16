@@ -22,7 +22,7 @@ def truncate_predictions(
     max_predictions: int = 5,
     relative_threshold: float = 0.5,
     absolute_floor: float = 0.1,
-    gap_ratio: float = 1.5,
+    gap_ratio: float = 1.4,
 ) -> list[Scored]:
     if not predictions:
         return []
