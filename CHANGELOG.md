@@ -1,5 +1,5 @@
 # Changelog
-## [1.0.0-alpha.5] — Pre-release
+## [1.0.0-alpha.5](https://github.com/civictechdc/votecatcher/compare/v1.0.0-alpha.3..v1.0.0-alpha.5) — Pre-release
 
 ### Crop Images in Results
 
@@ -31,7 +31,7 @@ Results table now supports client-side sorting and adaptive prediction truncatio
 
 - Added SQL-level pagination and GROUP BY for results.
 
-## [1.0.0-alpha.3] — Pre-release
+## [1.0.0-alpha.3](https://github.com/civictechdc/votecatcher/compare/v1.0.0-alpha.2..v1.0.0-alpha.3) — Pre-release
 
 ### Spec-Driven Voter Matching
 
@@ -69,7 +69,7 @@ Spec-driven voter matching and region selection capabilities were added, includi
 - Switched to spec-driven voter list service.
 - Changed production code to spec-only paths.
 
-## [1.0.0-alpha.2] — Pre-release
+## [1.0.0-alpha.2](https://github.com/civictechdc/votecatcher/compare/v0.1.0-alpha.1..v1.0.0-alpha.2) — Pre-release
 
 ### Fixed
 
@@ -78,7 +78,7 @@ Spec-driven voter matching and region selection capabilities were added, includi
 - Bumped pytest to >=9.0.3 to resolve security advisory.
 - Skipped gold master tests when voter CSV unavailable.
 
-## [0.1.0-alpha.1] — Pre-release
+## [0.1.0-alpha.1](https://github.com/civictechdc/votecatcher/compare/v0.1.0-alpha.1) — Pre-release
 
 ### Svelte Frontend and Backend Integration
 

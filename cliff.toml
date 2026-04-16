@@ -23,9 +23,9 @@
 header = """# Changelog\n"""
 body = """
 {% if version %}\
-## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+## [{{ version | trim_start_matches(pat="v") }}](https://github.com/civictechdc/votecatcher/compare/{% if previous.version %}v{{ previous.version | trim_start_matches(pat="v") }}..v{{ version | trim_start_matches(pat="v") }}{% else %}v{{ version | trim_start_matches(pat="v") }}{% endif %}) - {{ timestamp | date(format="%Y-%m-%d") }}
 {% else %}\
-## [Unreleased]
+## [Unreleased](https://github.com/civictechdc/votecatcher/compare/{% if previous.version %}v{{ previous.version | trim_start_matches(pat="v") }}..HEAD{% endif %})
 {% endif %}\
 {% for group, commits in commits | group_by(attribute="group") %}
 ### {{ group | striptags | trim | upper_first }}
