@@ -150,6 +150,22 @@ Class 2 is the remaining work. Options:
 | `caveman-commit` | `.agents/skills/caveman-commit/SKILL.md` | For the commit message |
 | `verification-before-completion` | Project skills | Before marking done — run tests, verify in browser |
 
+## Backlog / Follow-up Ideas
+
+### Smart Prediction Truncation (confidence-aware display)
+
+Currently `renderPredictionsTable` shows top 5 predictions unconditionally. Should instead show only predictions that are meaningfully close to the top match.
+
+**Problem:** If top pick is 97% and #2 is 12%, showing both implies they're comparable matches. Misleading UX.
+
+**Open questions:**
+- What's a well-established approach? (e.g., relative threshold like "within 20pp of top", absolute floor like "≥30% confidence", or statistical gap detection like "show all until a gap > X")
+- How many to cap at? 3-5?
+- Should the threshold vary by confidence tier (HIGH/MEDIUM/LOW)?
+- Does Elasticsearch/fuzzy matching literature have a standard for this? (e.g., cutoff at score dropoff, max ratio between #1 and #N)
+
+**References to explore:** Lucene score normalization, MinHash/Jaccard threshold practices, deduplication literature, voter matching best practices.
+
 ## Previous Session Context
 
 The original crops-in-results work (PR #59) is complete and all VDD findings resolved. This URL architecture fix is a follow-up from smoke testing that PR. See the git log on the branch for the full commit history of the original work.
