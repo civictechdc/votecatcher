@@ -19,6 +19,10 @@ function makeResult(
 		jobId: 0,
 		thumbnailUrl: "",
 		predictions: [],
+		cropCoordinates: null,
+		pageNumber: null,
+		documentName: "",
+		scanId: null,
 		...overrides,
 	};
 }

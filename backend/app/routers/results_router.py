@@ -33,6 +33,10 @@ class ResultResponse(ApiModel):
     crop_id: int
     thumbnail_url: str
     predictions: list[MatchPrediction]
+    crop_coordinates: dict[str, float] | None = None
+    page_number: int | None = None
+    document_name: str = ""
+    scan_id: int | None = None
 
 
 class ResultsListResponse(ApiModel):

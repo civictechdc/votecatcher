@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { campaignResults, sortResults, renderThumbnailCell, renderPredictionsTable, renderExpandedCropImage, toggleAccordion, escapeHtml, getConfidenceBadgeClass, type CampaignResultResponse } from '$lib/stores/campaign-results';
+	import { campaignResults, sortResults, renderThumbnailCell, renderPredictionsTable, renderExpandedCropImage, toggleAccordion, escapeHtml, getConfidenceBadgeClass, getScanPageUrl, type CampaignResultResponse } from '$lib/stores/campaign-results';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Table, LoadingState, Button, ErrorDisplay } from '$lib/components/ui';
 	import CropLightbox from '$lib/components/results/CropLightbox.svelte';
@@ -11,6 +11,8 @@
 	let sortConfig = $state<SortConfig | null>(null);
 	let expandedRowId = $state<number | null>(null);
 	let lightboxUrl = $state<string | null>(null);
+	let sourcePanelOpen = $state<number | null>(null);
+	let sourcePageErrors = $state<Record<number, string>>({});
 
 	const columns = [
 		{ key: 'thumbnail', label: 'Crop', sortable: false },
@@ -84,6 +86,16 @@
 	function getExpandedResult(rowId: string | number): CampaignResultResponse | undefined {
 		return resultById.get(Number(rowId));
 	}
+
+	function toggleSourcePanel(ocrResultId: number) {
+		sourcePanelOpen = sourcePanelOpen === ocrResultId ? null : ocrResultId;
+		const { [ocrResultId]: _, ...rest } = sourcePageErrors;
+		sourcePageErrors = rest;
+	}
+
+	function getSourcePageStyle(coords: { top: number; bottom: number }): string {
+		return `top: ${coords.top * 100}%; height: ${(coords.bottom - coords.top) * 100}%;`;
+	}
 </script>
 
 <svelte:head>
@@ -148,6 +160,52 @@
 										{@html renderPredictionsTable(result.predictions)}
 									</div>
 								</div>
+								{#if result.cropCoordinates && result.scanId && result.pageNumber}
+									<button
+										class="mt-3 text-xs text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 py-1.5 px-3 hover:bg-blue-50 rounded transition-colors"
+										onclick={() => toggleSourcePanel(result.ocrResultId)}
+									>
+										<svg class="w-3.5 h-3.5 transition-transform {sourcePanelOpen === result.ocrResultId ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+										{sourcePanelOpen === result.ocrResultId ? 'Hide source page' : 'Show on source page'}
+									</button>
+									<div class="source-panel {sourcePanelOpen === result.ocrResultId ? 'expanded' : ''}" >
+										{#if sourcePanelOpen === result.ocrResultId}
+											<div class="mt-4 pt-4 border-t border-slate-200">
+												<div class="flex items-center justify-between mb-3">
+													<div>
+														<h4 class="text-xs font-semibold text-slate-500 uppercase">Source Page</h4>
+														<p class="text-xs text-slate-400">{result.documentName || 'Document'} · Page {result.pageNumber}</p>
+													</div>
+													<button class="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1" onclick={() => toggleSourcePanel(result.ocrResultId)}>
+														<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+														Collapse
+													</button>
+												</div>
+												<div class="bg-slate-50 rounded-lg p-4 flex items-center justify-center">
+													{#if sourcePageErrors[result.ocrResultId]}
+														<div class="text-center py-8">
+															<p class="text-sm text-red-500">{sourcePageErrors[result.ocrResultId]}</p>
+															<p class="text-xs text-slate-400 mt-1">The source PDF may not be available</p>
+														</div>
+													{:else}
+													<div class="bg-white shadow-md rounded relative inline-block" style="max-width: 400px;">
+														<img
+															src={getScanPageUrl(result.scanId!, result.pageNumber!)}
+															alt="Source page {result.pageNumber} of {result.documentName}"
+															class="rounded w-full"
+															onerror={() => { sourcePageErrors = { ...sourcePageErrors, [result.ocrResultId]: 'Failed to load source page image' }; }}
+														/>
+														<div
+															class="absolute left-0 right-0 pointer-events-none"
+															style="background: rgba(59, 130, 246, 0.15); border-top: 2px solid rgba(59, 130, 246, 0.8); border-bottom: 2px solid rgba(59, 130, 246, 0.8); {getSourcePageStyle(result.cropCoordinates!)}"
+														></div>
+													</div>
+													{/if}
+												</div>
+											</div>
+										{/if}
+									</div>
+								{/if}
 							{/if}
 						{/snippet}
 					</Table>
@@ -184,3 +242,16 @@
 		onClose={closeLightbox}
 	/>
 </div>
+
+<style>
+	.source-panel {
+		max-height: 0;
+		overflow: hidden;
+		transition: max-height 0.4s ease-out, opacity 0.3s ease;
+		opacity: 0;
+	}
+	.source-panel.expanded {
+		max-height: 800px;
+		opacity: 1;
+	}
+</style>

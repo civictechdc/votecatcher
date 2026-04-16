@@ -22,6 +22,10 @@ export interface CampaignResultResponse {
 	jobId: number;
 	thumbnailUrl: string;
 	predictions: CampaignMatchPrediction[];
+	cropCoordinates?: { top: number; bottom: number } | null;
+	pageNumber?: number | null;
+	documentName?: string;
+	scanId?: number | null;
 }
 
 interface CampaignResultsState {
@@ -196,6 +200,10 @@ export function renderThumbnailCell(thumbnailUrl: string): string {
 	if (!thumbnailUrl) return '<span class="text-slate-400">—</span>';
 	const safe = escapeHtml(toAbsoluteUrl(thumbnailUrl));
 	return `<img src="${safe}" loading="lazy" width="60" height="40" alt="Crop thumbnail" class="rounded object-cover" />`;
+}
+
+export function getScanPageUrl(scanId: number, pageNumber: number): string {
+	return `${API_BASE_URL}/api/scans/${scanId}/pages/${pageNumber}/image`;
 }
 
 export function toggleAccordion(currentExpanded: number | null, clickedId: number): number | null {

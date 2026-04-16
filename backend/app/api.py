@@ -14,6 +14,7 @@ from app.routers import (
     provider_router,
     region_router,
     results_router,
+    scan_router,
     session_router,
     upload_router,
 )
@@ -66,6 +67,7 @@ app.include_router(job_router)
 app.include_router(provider_router)
 app.include_router(region_router)
 app.include_router(results_router)
+app.include_router(scan_router)
 app.include_router(session_router)
 app.include_router(upload_router)
 

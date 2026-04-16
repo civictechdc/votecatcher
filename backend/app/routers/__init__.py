@@ -8,6 +8,7 @@ from app.routers.job_router import router as job_router
 from app.routers.provider_router import router as provider_router
 from app.routers.region_router import router as region_router
 from app.routers.results_router import router as results_router
+from app.routers.scan_router import router as scan_router
 from app.routers.session_router import router as session_router
 from app.routers.upload_router import router as upload_router
 
@@ -22,6 +23,7 @@ __all__ = [
     "provider_router",
     "region_router",
     "results_router",
+    "scan_router",
     "session_router",
     "upload_router",
 ]
