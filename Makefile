@@ -280,7 +280,8 @@ version-set:
 	@echo "Setting version to $(VERSION)..."
 	@sed -i '' 's/^version = ".*"/version = "$(VERSION)"/' backend/pyproject.toml
 	@cd frontend && node -e "const p=require('./package.json'); p.version='$(VERSION)'; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, '\t') + '\n');"
-	@echo "Updated: backend/pyproject.toml, frontend/package.json"
+	@sed -i '' 's/^version = ".*"/version = "$(VERSION)"/' .cz.toml
+	@echo "Updated: backend/pyproject.toml, frontend/package.json, .cz.toml"
 	@echo "Verify:  just version"
 
 release:
