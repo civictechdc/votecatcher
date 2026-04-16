@@ -11,6 +11,8 @@
 	let sortConfig = $state<SortConfig | null>(null);
 	let expandedRowId = $state<number | null>(null);
 	let lightboxUrl = $state<string | null>(null);
+	let lightboxClip = $state<{ top: number; bottom: number } | null>(null);
+	let sourceLightboxUrl = $state<string | null>(null);
 	let sourcePanelOpen = $state<number | null>(null);
 	let sourcePageErrors = $state<Record<number, string>>({});
 
@@ -37,7 +39,7 @@
 			const topPrediction = result.predictions[0];
 			return {
 				id: result.ocrResultId,
-				thumbnail: renderThumbnailCell(result.thumbnailUrl),
+				thumbnail: renderThumbnailCell(result.thumbnailUrl, getCropClip(result)),
 				confidence: topPrediction?.confidence
 					? `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceBadgeClass(topPrediction.confidence)}">${topPrediction.confidence}</span>`
 					: '-',
@@ -61,6 +63,7 @@
 
 	function closeLightbox() {
 		lightboxUrl = null;
+		lightboxClip = null;
 	}
 
 	function handlePrevious() {
@@ -99,6 +102,18 @@
 
 	function getHighlightCoords(result: CampaignResultResponse): { top: number; bottom: number } | null {
 		return result.entryCoordinates ?? result.cropCoordinates ?? null;
+	}
+
+	function getCropClip(result: CampaignResultResponse): { top: number; bottom: number } | null {
+		const entry = result.entryCoordinates;
+		const crop = result.cropCoordinates;
+		if (!entry || !crop) return null;
+		const cropHeight = crop.bottom - crop.top;
+		if (cropHeight <= 0) return null;
+		return {
+			top: (entry.top - crop.top) / cropHeight,
+			bottom: (entry.bottom - crop.top) / cropHeight,
+		};
 	}
 </script>
 
@@ -146,17 +161,23 @@
 								<div class="shrink-0" role="button" tabindex="0" aria-label="Open full-size crop image" onclick={(e) => {
 									const target = e.target as HTMLElement;
 									const url = target.getAttribute('data-crop-url') || target.closest('[data-crop-url]')?.getAttribute('data-crop-url');
-									if (url) handleCropClick(url, e);
+									if (url) {
+										lightboxClip = getCropClip(result);
+										handleCropClick(url, e);
+									}
 								}}
 								onkeydown={(e) => {
 									if (e.key === 'Enter' || e.key === ' ') {
 										e.preventDefault();
 										const target = e.target as HTMLElement;
 										const url = target.getAttribute('data-crop-url') || target.closest('[data-crop-url]')?.getAttribute('data-crop-url');
-										if (url) lightboxUrl = url;
+										if (url) {
+											lightboxClip = getCropClip(result);
+											lightboxUrl = url;
+										}
 									}
 								}}>
-										{@html renderExpandedCropImage(result.thumbnailUrl)}
+										{@html renderExpandedCropImage(result.thumbnailUrl, getCropClip(result))}
 									</div>
 								{/if}
 									<div class="flex-1 min-w-0">
@@ -192,7 +213,7 @@
 															<p class="text-xs text-slate-400 mt-1">The source PDF may not be available</p>
 														</div>
 													{:else}
-													<div class="bg-white shadow-md rounded relative inline-block" style="max-width: 400px;">
+													<div class="bg-white shadow-md rounded relative inline-block cursor-pointer" style="max-width: 400px;" onclick={() => { sourceLightboxUrl = getScanPageUrl(result.scanId!, result.pageNumber!); }}>
 														<img
 															src={getScanPageUrl(result.scanId!, result.pageNumber!)}
 															alt="Source page {result.pageNumber} of {result.documentName}"
@@ -244,6 +265,13 @@
 		open={lightboxUrl !== null}
 		imageUrl={lightboxUrl ?? ''}
 		onClose={closeLightbox}
+		clipCoords={lightboxClip}
+	/>
+
+	<CropLightbox
+		open={sourceLightboxUrl !== null}
+		imageUrl={sourceLightboxUrl ?? ''}
+		onClose={() => { sourceLightboxUrl = null; }}
 	/>
 </div>
 

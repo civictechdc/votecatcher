@@ -145,11 +145,17 @@ export function resetCampaignResultsStore() {
 	campaignResults.reset();
 }
 
-export function renderExpandedCropImage(thumbnailUrl: string): string {
+export function renderExpandedCropImage(
+	thumbnailUrl: string,
+	clipCoords?: { top: number; bottom: number } | null,
+): string {
 	if (!thumbnailUrl) return "";
 	const absolute = toAbsoluteUrl(thumbnailUrl);
 	const safe = escapeHtml(absolute);
-	return `<img src="${safe}" alt="Enlarged crop" data-crop-url="${safe}" class="cursor-pointer hover:opacity-80 transition-opacity" style="max-width:400px;max-height:300px;border-radius:0.5rem;object-fit:contain" />`;
+	const clip = clipCoords
+		? `clip-path:inset(${(clipCoords.top * 100).toFixed(2)}% 0 ${(100 - clipCoords.bottom * 100).toFixed(2)}% 0);`
+		: "";
+	return `<img src="${safe}" alt="Enlarged crop" data-crop-url="${safe}" class="cursor-pointer hover:opacity-80 transition-opacity" style="max-width:400px;max-height:300px;border-radius:0.5rem;object-fit:contain;${clip}" />`;
 }
 
 export function getConfidenceBadgeClass(confidence: string): string {
@@ -197,10 +203,16 @@ export function renderPredictionsTable(predictions: CampaignMatchPrediction[]): 
 	</table>`;
 }
 
-export function renderThumbnailCell(thumbnailUrl: string): string {
+export function renderThumbnailCell(
+	thumbnailUrl: string,
+	clipCoords?: { top: number; bottom: number } | null,
+): string {
 	if (!thumbnailUrl) return '<span class="text-slate-400">—</span>';
 	const safe = escapeHtml(toAbsoluteUrl(thumbnailUrl));
-	return `<img src="${safe}" loading="lazy" width="60" height="40" alt="Crop thumbnail" class="rounded object-cover" />`;
+	const clip = clipCoords
+		? `clip-path:inset(${(clipCoords.top * 100).toFixed(2)}% 0 ${(100 - clipCoords.bottom * 100).toFixed(2)}% 0);`
+		: "";
+	return `<img src="${safe}" loading="lazy" width="60" height="40" alt="Crop thumbnail" class="rounded object-cover" style="${clip}" />`;
 }
 
 export function getScanPageUrl(scanId: number, pageNumber: number): string {

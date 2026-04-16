@@ -3,9 +3,10 @@
 		open: boolean;
 		imageUrl: string;
 		onClose: () => void;
+		clipCoords?: { top: number; bottom: number } | null;
 	}
 
-	let { open, imageUrl, onClose }: Props = $props();
+	let { open, imageUrl, onClose, clipCoords }: Props = $props();
 
 	$effect(() => {
 		if (open) {
@@ -15,8 +16,19 @@
 		}
 	});
 
-	function handleBackdropClick(e: MouseEvent) {
-		if (e.target === e.currentTarget) onClose();
+	function handleDialogClick(e: MouseEvent) {
+		if (!clipCoords) {
+			e.stopPropagation();
+			return;
+		}
+		const img = (e.currentTarget as HTMLElement).querySelector("img");
+		if (!img) return;
+		const rect = img.getBoundingClientRect();
+		const visibleTop = rect.top + rect.height * clipCoords.top;
+		const visibleBottom = rect.top + rect.height * clipCoords.bottom;
+		if (e.clientY >= visibleTop && e.clientY <= visibleBottom) {
+			e.stopPropagation();
+		}
 	}
 
 	function handleKeyDown(e: KeyboardEvent) {
@@ -43,6 +55,12 @@
 			}
 		}
 	}
+
+	let clipStyle = $derived(
+		clipCoords
+			? `clip-path:inset(${(clipCoords.top * 100).toFixed(2)}% 0 ${(100 - clipCoords.bottom * 100).toFixed(2)}% 0);`
+			: ""
+	);
 </script>
 
 <svelte:window onkeydown={handleKeyDown} />
@@ -50,14 +68,14 @@
 {#if open}
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/75"
-		onclick={handleBackdropClick}
+		onclick={onClose}
 	>
 		<div
 			role="dialog"
 			aria-modal="true"
 			aria-label="Image lightbox"
 			class="relative z-10 max-w-[90vw] max-h-[90vh]"
-			onclick={(e) => e.stopPropagation()}
+			onclick={handleDialogClick}
 		>
 			<button
 				type="button"
@@ -74,6 +92,7 @@
 				src={imageUrl}
 				alt="Enlarged petition signature crop"
 				class="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
+				style={clipStyle}
 			/>
 		</div>
 	</div>
