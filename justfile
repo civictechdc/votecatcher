@@ -351,6 +351,31 @@ version-set version:
 # Auto-bump version based on conventional commits since last tag
 release:
     @cd backend && uv run cz bump --yes && git push --tags
+    @echo "Generating changelog..."
+    @just changelog
+    @echo "Release complete. If an agent is running this, run: just changelog-summarize"
+
+# Generate raw changelog from git-cliff (writes CHANGELOG.md)
+changelog:
+    @git-cliff --config cliff.toml -o CHANGELOG.md
+    @echo "Raw changelog written to CHANGELOG.md"
+
+# Generate raw changelog for a specific tag range
+changelog-range range:
+    @git-cliff --config cliff.toml {{range}}
+
+# Preview unreleased changes without writing
+changelog-preview:
+    @git-cliff --config cliff.toml --unreleased
+
+# Summarize raw changelog using GitHub Models API (Level 1 GitHub Release).
+# Uses GITHUB_TOKEN or gh auth. Set CHANGELOG_MODEL to override model.
+changelog-summarize:
+    @bash scripts/changelog-summarize.sh
+
+# Dry-run the summarization (shows config without calling API)
+changelog-summarize-dry:
+    @CHANGELOG_DRY_RUN=true bash scripts/changelog-summarize.sh
 
 # Force a specific bump level (patch, minor, major)
 release-force level:

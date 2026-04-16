@@ -3,7 +3,7 @@ name = "cz_conventional_commits"
 tag_format = "v$version"
 version_scheme = "semver"
 version = "1.0.0-alpha.5"
-update_changelog_on_bump = true
+update_changelog_on_bump = false
 major_version_zero = false
 version_files = [
     "backend/pyproject.toml:version",

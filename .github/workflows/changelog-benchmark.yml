@@ -1,0 +1,61 @@
+name: Changelog Benchmarks
+
+on:
+  schedule:
+    - cron: "0 6 1 * *" # monthly on the 1st at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Single model to test (leave empty for all)"
+        required: false
+        default: ""
+      range:
+        description: "Git tag range (e.g. v1.0.0-alpha.3..v1.0.0-alpha.5)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  models: read
+
+jobs:
+  sync-and-benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install git-cliff
+        run: curl -sfL https://github.com/orhun/git-cliff/releases/latest/download/git-cliff-linux-x86_64-unknown-linux-gnu.tar.gz | tar xz --strip-components=1 -C /usr/local/bin
+
+      - name: Install Python deps
+        run: pip install --quiet jq 2>/dev/null; which jq || apt-get install -y jq
+
+      - name: Sync free model catalog
+        run: bash scripts/changelog-models-list.sh .agent-workspace/changelog-samples/benchmarks/free-models.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run benchmarks
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.model }}" ]; then ARGS="$ARGS ${{ inputs.model }}"; fi
+          if [ -n "${{ inputs.range }}" ]; then ARGS="$ARGS --range ${{ inputs.range }}"; fi
+          python scripts/changelog-bench.py $ARGS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for changes
+        id: changes
+        run: |
+          changed=false
+          git diff --quiet -- .agent-workspace/changelog-samples/benchmarks/ || changed=true
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - name: Commit benchmark results
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .agent-workspace/changelog-samples/benchmarks/
+          git commit -m "chore: update changelog model benchmarks"
+          git push

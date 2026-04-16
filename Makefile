@@ -1,7 +1,7 @@
 # DO NOT EDIT - Generated from justfile by scripts/just-to-make.py
 # To update: python scripts/just-to-make.py > Makefile
 
-.PHONY: default stop install dev dev-backend dev-frontend dev-frontend-demo test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration security-test dast duplication duplication-frontend duplication-all complexity complexity-check dead-code dead-code-frontend fallow fallow-dead-code fallow-dupes fallow-health fallow-audit test-frontend sbom license-check edge-functions bundle-size benchmark ci-sim install-tools install-hooks validate-docs sync-makefile version version-set release release-force release-prerelease release-stable
+.PHONY: default stop install dev dev-backend dev-frontend dev-frontend-demo test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration security-test dast duplication duplication-frontend duplication-all complexity complexity-check dead-code dead-code-frontend fallow fallow-dead-code fallow-dupes fallow-health fallow-audit test-frontend sbom license-check edge-functions bundle-size benchmark ci-sim install-tools install-hooks validate-docs sync-makefile version version-set release changelog changelog-range changelog-preview changelog-summarize changelog-summarize-dry release-force release-prerelease release-stable
 
 default:
 	@just --list
@@ -289,6 +289,25 @@ version-set:
 
 release:
 	@cd backend && uv run cz bump --yes && git push --tags
+	@echo "Generating changelog..."
+	@just changelog
+	@echo "Release complete. If an agent is running this, run: just changelog-summarize"
+
+changelog:
+	@git-cliff --config cliff.toml -o CHANGELOG.md
+	@echo "Raw changelog written to CHANGELOG.md"
+
+changelog-range:
+	@git-cliff --config cliff.toml $(RANGE)
+
+changelog-preview:
+	@git-cliff --config cliff.toml --unreleased
+
+changelog-summarize:
+	@bash scripts/changelog-summarize.sh
+
+changelog-summarize-dry:
+	@CHANGELOG_DRY_RUN=true bash scripts/changelog-summarize.sh
 
 release-force:
 	@cd backend && uv run cz bump --increment-$(LEVEL) --yes && git push --tags
