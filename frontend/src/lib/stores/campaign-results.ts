@@ -23,6 +23,7 @@ export interface CampaignResultResponse {
 	thumbnailUrl: string;
 	predictions: CampaignMatchPrediction[];
 	cropCoordinates?: { top: number; bottom: number } | null;
+	entryCoordinates?: { top: number; bottom: number } | null;
 	pageNumber?: number | null;
 	documentName?: string;
 	scanId?: number | null;

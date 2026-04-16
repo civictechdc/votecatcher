@@ -19,6 +19,10 @@ ALLOWLISTED_DICT_FIELDS: set[str] = {
     "SessionResponse.snapshot_data",
     "OcrMatchResponse.stats",
     "OcrMatchResponse.results",
+    "CampaignResultResponse.crop_coordinates",
+    "CampaignResultResponse.entry_coordinates",
+    "ResultResponse.crop_coordinates",
+    "ResultResponse.entry_coordinates",
 }
 
 

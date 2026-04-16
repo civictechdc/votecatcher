@@ -21,6 +21,7 @@ from app.routers.campaign_router import (
     SetupStatusResponse,
     VoterListStatus,
 )
+from app.services.entry_coordinates import compute_entry_coordinates
 from app.services.ocr_text_parser import OcrTextParser
 
 
@@ -173,6 +174,7 @@ class CampaignQueryService:
 
             crop = crop_by_id.get(crop_id) if crop_id else None
             scan = scan_by_id.get(crop.scan_id) if crop and crop.scan_id else None
+            crop_coords = crop.crop_coordinates if crop else None
 
             results.append(
                 CampaignResultResponse(
@@ -183,7 +185,12 @@ class CampaignQueryService:
                     job_id=job_id,
                     thumbnail_url=thumbnail_url,
                     predictions=predictions,
-                    crop_coordinates=crop.crop_coordinates if crop else None,
+                    crop_coordinates=crop_coords,
+                    entry_coordinates=(
+                        compute_entry_coordinates(crop_coords, ocr_result.ocr_index)
+                        if crop_coords and ocr_result
+                        else None
+                    ),
                     page_number=crop.page_number if crop else None,
                     document_name=scan.original_filename if scan else "",
                     scan_id=crop.scan_id if crop else None,

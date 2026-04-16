@@ -96,6 +96,10 @@
 	function getSourcePageStyle(coords: { top: number; bottom: number }): string {
 		return `top: ${coords.top * 100}%; height: ${(coords.bottom - coords.top) * 100}%;`;
 	}
+
+	function getHighlightCoords(result: CampaignResultResponse): { top: number; bottom: number } | null {
+		return result.entryCoordinates ?? result.cropCoordinates ?? null;
+	}
 </script>
 
 <svelte:head>
@@ -160,7 +164,7 @@
 										{@html renderPredictionsTable(result.predictions)}
 									</div>
 								</div>
-								{#if result.cropCoordinates && result.scanId && result.pageNumber}
+								{#if (result.entryCoordinates ?? result.cropCoordinates) && result.scanId && result.pageNumber}
 									<button
 										class="mt-3 text-xs text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 py-1.5 px-3 hover:bg-blue-50 rounded transition-colors"
 										onclick={() => toggleSourcePanel(result.ocrResultId)}
@@ -197,7 +201,7 @@
 														/>
 														<div
 															class="absolute left-0 right-0 pointer-events-none"
-															style="background: rgba(59, 130, 246, 0.15); border-top: 2px solid rgba(59, 130, 246, 0.8); border-bottom: 2px solid rgba(59, 130, 246, 0.8); {getSourcePageStyle(result.cropCoordinates!)}"
+															style="background: rgba(59, 130, 246, 0.15); border-top: 2px solid rgba(59, 130, 246, 0.8); border-bottom: 2px solid rgba(59, 130, 246, 0.8); {getSourcePageStyle(getHighlightCoords(result)!)}"
 														></div>
 													</div>
 													{/if}

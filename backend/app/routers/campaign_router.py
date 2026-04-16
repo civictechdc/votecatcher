@@ -212,6 +212,7 @@ class CampaignResultResponse(ApiModel):
     thumbnail_url: str
     predictions: list[CampaignMatchPrediction]
     crop_coordinates: dict[str, float] | None = None
+    entry_coordinates: dict[str, float] | None = None
     page_number: int | None = None
     document_name: str = ""
     scan_id: int | None = None

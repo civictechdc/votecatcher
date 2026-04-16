@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlmodel import Session, select
 
 from sqlalchemy import func
+from app.services.entry_coordinates import compute_entry_coordinates
 from app.services.ocr_text_parser import OcrTextParser
 
 if TYPE_CHECKING:
@@ -146,6 +147,7 @@ class ResultsQueryService:
 
             crop = crop_by_id.get(crop_id) if crop_id else None
             scan = scan_by_id.get(crop.scan_id) if crop else None
+            crop_coords = crop.crop_coordinates if crop else None
 
             predictions = predictions_by_ocr.get(ocr_id, [])[:5]
 
@@ -156,7 +158,12 @@ class ResultsQueryService:
                     crop_id=crop_id,
                     thumbnail_url=thumbnail_url,
                     predictions=predictions,
-                    crop_coordinates=crop.crop_coordinates if crop else None,
+                    crop_coordinates=crop_coords,
+                    entry_coordinates=(
+                        compute_entry_coordinates(crop_coords, ocr_result.ocr_index)
+                        if crop_coords and ocr_result
+                        else None
+                    ),
                     page_number=crop.page_number if crop else None,
                     document_name=scan.original_filename if scan else "",
                     scan_id=crop.scan_id if crop else None,
