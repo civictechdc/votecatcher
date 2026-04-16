@@ -132,6 +132,27 @@ class CampaignQueryService:
             ).all()
             ocr_results_by_id = {o.id: o for o in ocr_results}
 
+        crop_ids = {o.crop_id for o in ocr_results_by_id.values() if o.crop_id}
+        crop_by_id: dict = {}
+        scan_by_id: dict = {}
+
+        if crop_ids:
+            from app.data.database.model.petition_crop import PetitionCrop
+
+            crops = self._session.exec(
+                select(PetitionCrop).where(PetitionCrop.id.in_(crop_ids))
+            ).all()
+            crop_by_id = {c.id: c for c in crops}
+
+            scan_ids = {c.scan_id for c in crops if c.scan_id}
+            if scan_ids:
+                from app.data.database.model.petition_scan import PetitionScan
+
+                scans = self._session.exec(
+                    select(PetitionScan).where(PetitionScan.id.in_(scan_ids))
+                ).all()
+                scan_by_id = {s.id: s for s in scans}
+
         results = []
         for ocr_id in paginated_ocr_ids:
             ocr_result = ocr_results_by_id.get(ocr_id)
@@ -150,6 +171,9 @@ class CampaignQueryService:
 
             thumbnail_url = f"/api/crops/{crop_id}/image" if crop_id else ""
 
+            crop = crop_by_id.get(crop_id) if crop_id else None
+            scan = scan_by_id.get(crop.scan_id) if crop and crop.scan_id else None
+
             results.append(
                 CampaignResultResponse(
                     ocr_result_id=ocr_id,
@@ -159,6 +183,10 @@ class CampaignQueryService:
                     job_id=job_id,
                     thumbnail_url=thumbnail_url,
                     predictions=predictions,
+                    crop_coordinates=crop.crop_coordinates if crop else None,
+                    page_number=crop.page_number if crop else None,
+                    document_name=scan.original_filename if scan else "",
+                    scan_id=crop.scan_id if crop else None,
                 )
             )
 
