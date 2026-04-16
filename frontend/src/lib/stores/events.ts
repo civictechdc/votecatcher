@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
+import { API_BASE_URL } from "$lib/api/base-url";
 
 export type EventType = "job:status_changed" | "job:progress" | "metrics:updated" | "setup:updated";
 
@@ -111,7 +111,7 @@ function createEventStore() {
 			reconnectAttempts: isReconnect ? s.reconnectAttempts : 0,
 		}));
 
-		const baseUrl = PUBLIC_API_URL || "http://localhost:8080";
+		const baseUrl = API_BASE_URL;
 		const url = `${baseUrl}/events/campaigns/${campaignId}/stream`;
 
 		eventSource = new EventSource(url);

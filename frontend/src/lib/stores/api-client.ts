@@ -1,11 +1,11 @@
 import { Configuration } from "$lib/api/generated/runtime";
-const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
+import { API_BASE_URL } from "$lib/api/base-url";
 
 let config: Configuration | null = null;
 
 export function getApiClient(): Configuration {
 	if (!config) {
-		const baseUrl = (PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
+		const baseUrl = API_BASE_URL;
 		config = new Configuration({
 			basePath: baseUrl,
 		});

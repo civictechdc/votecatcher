@@ -49,17 +49,15 @@
 
 {#if open}
 	<div
-		role="none"
-		class="fixed inset-0 z-50 flex items-center justify-center"
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/75"
 		onclick={handleBackdropClick}
 	>
-		<div class="fixed inset-0 bg-black/75" aria-hidden="true"></div>
-
 		<div
 			role="dialog"
 			aria-modal="true"
 			aria-label="Image lightbox"
 			class="relative z-10 max-w-[90vw] max-h-[90vh]"
+			onclick={(e) => e.stopPropagation()}
 		>
 			<button
 				type="button"

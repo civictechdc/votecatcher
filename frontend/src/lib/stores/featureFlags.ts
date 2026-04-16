@@ -1,6 +1,6 @@
 import { browser } from "$app/environment";
 import { writable, derived } from "svelte/store";
-const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
+import { API_BASE_URL } from "$lib/api/base-url";
 
 export interface FeatureFlags {
 	simulationMode: boolean;
@@ -19,8 +19,6 @@ const DEFAULT_FLAGS: FeatureFlags = {
 };
 
 const STORAGE_KEY = "featureFlags_overrides";
-
-const BASE_URL = (PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
 function loadOverrides(): FeatureFlagOverrides {
 	if (!browser) return {};
@@ -62,7 +60,7 @@ function createFeatureFlagStore() {
 
 		async load(): Promise<void> {
 			try {
-				const response = await fetch(`${BASE_URL}/config/features`);
+				const response = await fetch(`${API_BASE_URL}/api/config/features`);
 				if (response.ok) {
 					serverFlags = await response.json();
 					const merged = mergeFlags(serverFlags, overrides);

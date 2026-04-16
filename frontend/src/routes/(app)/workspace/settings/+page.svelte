@@ -5,8 +5,9 @@
 	import { Key, Flag, Cpu, CheckCircle, Trash2, AlertTriangle } from 'lucide-svelte';
 	import ProviderConfigCard from '$lib/components/ProviderConfigCard.svelte';
 	import { getAppMode } from '$lib/utils/mode';
+	import { API_BASE_URL } from '$lib/api/base-url';
 
-	const BASE_URL: string = (import.meta.env["PUBLIC_API_URL"] ?? 'http://localhost:8080') + '/api';
+	const BASE_URL = `${API_BASE_URL}/api`;
 
 	const showFeatureFlags = getAppMode() !== 'production';
 	const showResetData = getAppMode() !== 'production';

@@ -6,7 +6,8 @@
 	import { Button, Table, Modal } from '$lib/components/ui';
 	import type { JobResponse } from '$lib/api/generated';
 	import type { SortConfig } from '$lib/components/ui/Table.svelte';
-	const API_BASE: string = (import.meta.env["PUBLIC_API_URL"] || 'http://localhost:8080') + '/api';
+	import { API_BASE_URL } from '$lib/api/base-url';
+	const API_BASE = `${API_BASE_URL}/api`;
 	interface ProviderConfig {
 		provider: string;
 		model: string;

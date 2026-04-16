@@ -1,8 +1,17 @@
 import { describe, it, expect } from "vitest";
-import { sortResults, renderThumbnailCell, toggleAccordion, renderPredictionsTable, renderExpandedCropImage, escapeHtml } from "./campaign-results";
+import {
+	sortResults,
+	renderThumbnailCell,
+	toggleAccordion,
+	renderPredictionsTable,
+	renderExpandedCropImage,
+	escapeHtml,
+} from "./campaign-results";
 import type { CampaignResultResponse, CampaignMatchPrediction } from "./campaign-results";
 
-function makeResult(overrides: Partial<CampaignResultResponse> & { ocrResultId: number }): CampaignResultResponse {
+function makeResult(
+	overrides: Partial<CampaignResultResponse> & { ocrResultId: number },
+): CampaignResultResponse {
 	return {
 		extractedName: "",
 		extractedAddress: "",
@@ -19,19 +28,43 @@ const testResults: CampaignResultResponse[] = [
 		ocrResultId: 1,
 		extractedName: "Alice Smith",
 		extractedAddress: "123 Main St",
-		predictions: [{ rank: 1, voterName: "Bob Jones", voterAddress: "456 Oak Ave", similarityScore: 0.95, confidence: "HIGH" }],
+		predictions: [
+			{
+				rank: 1,
+				voterName: "Bob Jones",
+				voterAddress: "456 Oak Ave",
+				similarityScore: 0.95,
+				confidence: "HIGH",
+			},
+		],
 	}),
 	makeResult({
 		ocrResultId: 2,
 		extractedName: "Charlie Brown",
 		extractedAddress: "789 Pine Rd",
-		predictions: [{ rank: 1, voterName: "Alice White", voterAddress: "321 Elm Blvd", similarityScore: 0.72, confidence: "MEDIUM" }],
+		predictions: [
+			{
+				rank: 1,
+				voterName: "Alice White",
+				voterAddress: "321 Elm Blvd",
+				similarityScore: 0.72,
+				confidence: "MEDIUM",
+			},
+		],
 	}),
 	makeResult({
 		ocrResultId: 3,
 		extractedName: "Diana Prince",
 		extractedAddress: "555 Cedar Ln",
-		predictions: [{ rank: 1, voterName: "Charlie Green", voterAddress: "888 Maple Dr", similarityScore: 0.45, confidence: "LOW" }],
+		predictions: [
+			{
+				rank: 1,
+				voterName: "Charlie Green",
+				voterAddress: "888 Maple Dr",
+				similarityScore: 0.45,
+				confidence: "LOW",
+			},
+		],
 	}),
 ];
 
@@ -91,7 +124,9 @@ describe("toggleAccordion", () => {
 	});
 });
 
-function makePrediction(overrides: Partial<CampaignMatchPrediction> & { rank: number }): CampaignMatchPrediction {
+function makePrediction(
+	overrides: Partial<CampaignMatchPrediction> & { rank: number },
+): CampaignMatchPrediction {
 	return {
 		voterName: "Test Voter",
 		voterAddress: "123 Test St",
@@ -160,8 +195,18 @@ describe("escapeHtml", () => {
 describe("renderPredictionsTable", () => {
 	it("renders table with prediction rows", () => {
 		const predictions = [
-			makePrediction({ rank: 1, voterName: "Alice Smith", similarityScore: 0.95, confidence: "HIGH" }),
-			makePrediction({ rank: 2, voterName: "Bob Jones", similarityScore: 0.72, confidence: "MEDIUM" }),
+			makePrediction({
+				rank: 1,
+				voterName: "Alice Smith",
+				similarityScore: 0.95,
+				confidence: "HIGH",
+			}),
+			makePrediction({
+				rank: 2,
+				voterName: "Bob Jones",
+				similarityScore: 0.72,
+				confidence: "MEDIUM",
+			}),
 		];
 		const html = renderPredictionsTable(predictions);
 		expect(html).toContain("Alice Smith");
@@ -171,17 +216,13 @@ describe("renderPredictionsTable", () => {
 	});
 
 	it("renders score as percentage", () => {
-		const predictions = [
-			makePrediction({ rank: 1, similarityScore: 0.856 }),
-		];
+		const predictions = [makePrediction({ rank: 1, similarityScore: 0.856 })];
 		const html = renderPredictionsTable(predictions);
 		expect(html).toContain("85.6%");
 	});
 
 	it("renders confidence badge with color class", () => {
-		const predictions = [
-			makePrediction({ rank: 1, confidence: "HIGH" }),
-		];
+		const predictions = [makePrediction({ rank: 1, confidence: "HIGH" })];
 		const html = renderPredictionsTable(predictions);
 		expect(html).toContain("bg-green-100");
 		expect(html).toContain("text-green-800");
@@ -194,7 +235,7 @@ describe("renderPredictionsTable", () => {
 
 	it("limits to 5 predictions", () => {
 		const predictions = Array.from({ length: 7 }, (_, i) =>
-			makePrediction({ rank: i + 1, voterName: `Voter ${i + 1}` })
+			makePrediction({ rank: i + 1, voterName: `Voter ${i + 1}` }),
 		);
 		const html = renderPredictionsTable(predictions);
 		expect(html).toContain("Voter 5");
@@ -203,18 +244,14 @@ describe("renderPredictionsTable", () => {
 	});
 
 	it("escapes XSS in voterName", () => {
-		const predictions = [
-			makePrediction({ rank: 1, voterName: '<script>alert("xss")</script>' }),
-		];
+		const predictions = [makePrediction({ rank: 1, voterName: '<script>alert("xss")</script>' })];
 		const html = renderPredictionsTable(predictions);
 		expect(html).not.toContain("<script>");
 		expect(html).toContain("&lt;script&gt;");
 	});
 
 	it("escapes XSS in voterAddress", () => {
-		const predictions = [
-			makePrediction({ rank: 1, voterAddress: '<img src=x onerror=alert(1)>' }),
-		];
+		const predictions = [makePrediction({ rank: 1, voterAddress: "<img src=x onerror=alert(1)>" })];
 		const html = renderPredictionsTable(predictions);
 		expect(html).not.toContain("<img");
 		expect(html).toContain("&lt;img");
@@ -269,18 +306,33 @@ describe("sortResults", () => {
 
 	it("handles results with no predictions", () => {
 		const noPredictionResult = makeResult({ ocrResultId: 4, extractedName: "Zara" });
-		const sorted = sortResults(
-			[noPredictionResult, testResults[0]!],
-			{ key: "score", direction: "asc" },
-		);
+		const sorted = sortResults([noPredictionResult, testResults[0]!], {
+			key: "score",
+			direction: "asc",
+		});
 		expect(sorted[0]!.ocrResultId).toBe(4);
 	});
 
 	it("is stable — equal keys preserve original order", () => {
 		const sameScore = [
-			makeResult({ ocrResultId: 1, predictions: [{ rank: 1, voterName: "A", voterAddress: "", similarityScore: 0.8, confidence: "HIGH" }] }),
-			makeResult({ ocrResultId: 2, predictions: [{ rank: 1, voterName: "B", voterAddress: "", similarityScore: 0.8, confidence: "HIGH" }] }),
-			makeResult({ ocrResultId: 3, predictions: [{ rank: 1, voterName: "C", voterAddress: "", similarityScore: 0.8, confidence: "HIGH" }] }),
+			makeResult({
+				ocrResultId: 1,
+				predictions: [
+					{ rank: 1, voterName: "A", voterAddress: "", similarityScore: 0.8, confidence: "HIGH" },
+				],
+			}),
+			makeResult({
+				ocrResultId: 2,
+				predictions: [
+					{ rank: 1, voterName: "B", voterAddress: "", similarityScore: 0.8, confidence: "HIGH" },
+				],
+			}),
+			makeResult({
+				ocrResultId: 3,
+				predictions: [
+					{ rank: 1, voterName: "C", voterAddress: "", similarityScore: 0.8, confidence: "HIGH" },
+				],
+			}),
 		];
 		const sorted = sortResults(sameScore, { key: "score", direction: "asc" });
 		expect(sorted.map((r) => r.ocrResultId)).toEqual([1, 2, 3]);

@@ -1,119 +1,155 @@
-# Session Handoff — Crops in Results: Final Polish
+# Session Handoff — Frontend URL Architecture Fix: IN PROGRESS
 
 > **You are a fresh agent picking up this work. Read this file first.**
 
 ## Branch
 
-All work lives on **`feat/crops-in-results`** (branched from `origin/main` at `11cef67`). `main` is clean and even with origin.
+**`feat/crops-in-results`** — PR #59 open. All changes below are **uncommitted** on this branch.
 
-## Current State
+## What Happened
 
-All 6 epics complete. VDD findings addressed. Ready for merge after remaining LOW fixes.
+Smoke testing revealed two categories of bugs with the same root cause: **no single source of truth for the backend API URL**. Each store/page independently resolved `PUBLIC_API_URL` with its own fallback — half used `localhost:8000` (stale), half used `localhost:8080` (correct).
 
-### Completed (all epics)
+### Bug 1: Wrong port (8000 vs 8080) — FIXED, uncommitted
+Multiple stores/pages hardcoded `localhost:8000` as fallback. Backend runs on `8080`.
 
-- **EPIC-5 (Memory Hygiene)** — `6b0d67b`
-- **EPIC-6 (Architecture Hygiene)** — `6070def`
-- **EPIC-1 (Sort Fix)** — `d076d56`
-- **EPIC-3 (SQL Pagination)** — `0c81f50`
-- **EPIC-2 (Crop API endpoint)** — `722763a`, path traversal fix `7632e93`
-- **EPIC-4 (Frontend thumbnails + accordion)** — `7d21c59`..`d3d024a`
+### Bug 2: Relative URLs from backend hit SvelteKit origin — NOT FIXED
+Backend returns relative URLs like `/api/crops/1/image` in response data. Browser resolves these against the page origin (`localhost:5173`) instead of the backend (`localhost:8080`). Crop thumbnails 404.
 
-### VDD Finding Fixes — committed as `14f78d1`
+## Changes Made (uncommitted, 22 files)
 
-- **HIGH #1 XSS**: Added `escapeHtml()` utility in `campaign-results.ts`. Applied to `renderPredictionsTable` (voterName/voterAddress), `renderThumbnailCell` (URL), `renderExpandedCropImage` (URL), `getTableRows` in results page (all voter fields + extracted fields). 10 new tests.
-- **HIGH #2 Focus trap**: CropLightbox now traps Tab/Shift+Tab within dialog. 2 tests.
-- **MED #3 Svelte syntax**: `on:keydown` → `onkeydown` in CropLightbox.
-- **MED #4 Empty thumb a11y**: `{#if result.thumbnailUrl}` guards the `role="button"` container.
-- **MED #5 Dedup**: Exported `getConfidenceBadgeClass` from `campaign-results.ts`, removed page-local `getConfidenceColor` duplicate.
-- **LOW #9 Unsanitized src**: Resolved by HIGH #1.
+### New file
+- `frontend/src/lib/api/base-url.ts` — single source of truth for `API_BASE_URL`
 
-### Remaining: LOW #6, #7, #8
+### Refactored to import from `base-url.ts`
+All of these now import `API_BASE_URL` instead of doing their own `import.meta.env` resolution:
 
-These are minor polish. Each is <15 lines changed. Assess if worth doing before merge:
+| File | Before |
+|---|---|
+| `frontend/src/lib/api/client.ts` | own `BASE_URL` with 8080 |
+| `frontend/src/lib/api/auth.ts` | weird `BASE` with empty fallback |
+| `frontend/src/lib/api/openapi-client.ts` | `VITE_API_BASE_URL` (different env var!) |
+| `frontend/src/lib/stores/api-client.ts` | `PUBLIC_API_URL \|\| localhost:8000` |
+| `frontend/src/lib/stores/featureFlags.ts` | empty string fallback → hit 5173 |
+| `frontend/src/lib/stores/settings.ts` | `localhost:8000/api` |
+| `frontend/src/lib/stores/campaign-results.ts` | `localhost:8000` |
+| `frontend/src/lib/stores/uploads.ts` | `localhost:8000` (2 places) |
+| `frontend/src/lib/stores/auth.svelte.ts` | hardcoded `localhost:8000` |
+| `frontend/src/lib/stores/jobs.ts` | `PUBLIC_API_URL \|\| localhost:8080` |
+| `frontend/src/lib/stores/events.ts` | `PUBLIC_API_URL \|\| localhost:8080` |
+| `frontend/src/routes/.../match-status/[job_id]/+server.ts` | own `PUBLIC_API_URL` |
+| `frontend/src/routes/.../[id]/+page.svelte` | own inline resolution |
+| `frontend/src/routes/.../[id]/upload/+page.svelte` | own inline resolution |
+| `frontend/src/routes/.../[id]/jobs/+page.svelte` | own inline resolution |
+| `frontend/src/routes/.../[id]/jobs/new/+page.svelte` | own inline resolution |
+| `frontend/src/routes/.../settings/+page.svelte` | own inline resolution |
 
-#### LOW #6 — Semaphore test mutates internal `_value`
-- **File**: `backend/tests/unit/routers/test_crop_router.py:224`
-- **Problem**: Test sets `_CROP_SEMAPHORE._value = 2` directly — asserts on internal state.
-- **Fix**: Extract semaphore as factory (`make_semaphore(limit)`) or pass as dependency. ~10 lines in router + test.
-- **Effort**: Small. Violates AGENTS.md test discipline but functionally correct.
+### Tests updated
+- `frontend/src/lib/stores/api-client.test.ts`
+- `frontend/src/lib/stores/demo.test.ts`
+- `frontend/src/lib/stores/sessions.test.ts`
 
-#### LOW #7 — No body scroll lock in CropLightbox
-- **File**: `frontend/src/lib/components/results/CropLightbox.svelte`
-- **Problem**: Background scrolls when lightbox is open on long pages.
-- **Fix**: `$effect(() => { document.body.style.overflow = open ? 'hidden' : '' })`. Restore on close. ~5 lines + 1 test.
-- **Effort**: Trivial.
+### Env typing
+- `frontend/src/app.d.ts` — added `ImportMetaEnv` interface for all env vars
 
-#### LOW #8 — O(N) linear scan in `getExpandedResult`
-- **File**: `frontend/src/routes/(app)/workspace/[id]/results/+page.svelte:92`
-- **Problem**: `sortedResults.find()` called per expanded row render. O(N) at page size 50 = negligible.
-- **Fix**: Build `Map<number, CampaignResultResponse>` from `sortedResults`. O(1) lookup. ~3 lines.
-- **Effort**: Trivial. Only matters if page size grows significantly.
+### Settings store path fix
+- `frontend/src/lib/stores/settings.ts` — changed `/config/settings` → `/api/config/settings`
+- Backend endpoint confirmed: `GET http://localhost:8080/api/config/settings` returns 200
 
-## Pickup Instructions
+## What Still Needs Fixing
 
-1. `git checkout feat/crops-in-results`
-2. Read **`AGENTS.md → Code Quality`** — project-wide standards
-3. Load skills: `caveman` (lite), `vdd`/`vsdd`, `tdd`
-4. Read plan: `.agent-workspace/implementation-plan.md`
-5. Fix LOW #6, #7, #8 (or decide to skip — all cosmetic at current scale)
-6. After fixes: commit, squash-merge to main, or create PR
+### 1. Relative URL problem (crop images 404) — HIGH
 
-## Key Decisions Made
+Backend returns `thumbnailUrl: "/api/crops/1/image"`. These are rendered as `<img src="/api/crops/1/image">` in `campaign-results.ts`. Browser resolves against page origin (5173).
 
-- Pattern A: Accordion expand (not side panel)
-- Client-side sort Phase 1 (DONE), server-side Phase 2 (future)
-- CropStorageAdapter pattern (LocalFileAdapter now, SupabaseStorageAdapter later)
-- Sync query services + async router wrapping (not full async SQLModel migration)
-- No formal proofs needed — property-based tests sufficient
-- `escapeHtml` is a pure utility function with zero dependencies — no DOMPurify needed
-- `getConfidenceBadgeClass` is the canonical function, exported from `campaign-results.ts`
-- CropLightbox is standalone (not reusing Modal.svelte) — Modal has fixed max-w sizes
-- Table expandable rows use Svelte 5 named snippets
-- Table `{#each}` keyed for DOM diffing on re-sort
-- Crop click uses event delegation via `data-crop-url` attribute
-- Crop container guarded by `{#if thumbnailUrl}` — no empty interactive element
+**Fix needed in `frontend/src/lib/stores/campaign-results.ts`:**
+- `renderThumbnailCell()` (line ~186)
+- `renderExpandedCropImage()` (line ~142)
+- Both inject relative URLs into `<img src="">`. Need to prepend `API_BASE_URL` when URL starts with `/`.
 
-## Code Quality Notes
+**Also check the results page directly:**
+- `frontend/src/routes/(app)/workspace/[id]/results/+page.svelte` — line 143 uses `renderExpandedCropImage(result.thumbnailUrl)`, line 38 uses `renderThumbnailCell(result.thumbnailUrl)`
 
-Project-wide standards live in **`AGENTS.md → Code Quality`**.
+**Pattern to apply:**
+```typescript
+function toAbsoluteUrl(url: string): string {
+  if (!url || url.startsWith('http')) return url;
+  return `${API_BASE_URL}${url}`;
+}
+```
 
-Session-specific notes:
+Use this in both render functions before passing to `escapeHtml()`.
 
-- **escapeHtml**: `& → &amp;`, `< → &lt;`, `> → &gt;`, `" → &quot;`, `' → &#39;`. Applied at every point where user-controlled data enters an HTML attribute or text content via `{@html}`.
-- **Focus trap**: CropLightbox `handleKeyDown` catches Tab on `svelte:window`, queries focusable elements in `[role="dialog"]`, wraps focus. `!` assertion safe because length guard precedes access.
-- **Frontend test count**: 51 tests in campaign-results + CropLightbox. 1136 backend.
-- **basedpyright**: 2 false positives on `order_by()` args (pre-existing, unchanged).
-- **Svelte event syntax**: All components use Svelte 5 `onkeydown`/`onclick`/`onchange`. No Svelte 4 `on:` directives remain.
+**Also audit ALL places where backend response data contains URLs** — any relative URL from the backend used as `src`, `href`, or `fetch()` target has this bug. Check:
+- Upload URLs in `uploads.ts`
+- SSE URLs in `events.ts` and `jobs.ts`
+- Any other API response fields that contain paths
+
+### 2. Broader relative URL audit
+
+Search the entire codebase for patterns where backend response data is used as `src=` or `href=` without the backend origin. The backend should ideally return absolute URLs, but the frontend needs to be defensive.
+
+Check if the backend has any other response fields with relative paths:
+```bash
+curl -s 'http://localhost:8080/api/campaigns/<id>/results?page=1&page_size=1' | python3 -m json.tool
+```
+
+### 3. Run tests
+
+Tests were not verified due to vitest timeout issues. Run before committing:
+```bash
+cd frontend && npx vitest run
+```
+
+### 4. Verify settings page loads
+
+`http://localhost:5173/workspace/settings` — the `settings.ts` store now fetches from `${API_BASE_URL}/api/config/settings`. Confirm this works in browser.
+
+### 5. Commit
+
+Once all fixes verified:
+```
+git add -A
+git commit  # use caveman-commit
+```
+
+Single commit covering the URL architecture fix is appropriate — it's one coherent change.
+
+## Decisions Made
+
+- **One canonical `API_BASE_URL`** in `$lib/api/base-url.ts` — no more scattered env resolution
+- **Default port is 8080** — matching actual backend
+- **`app.d.ts` typed env vars** — helps CI and IDE autocomplete
+- **`openapi-client.ts` uses `/api` suffix** via `${API_BASE_URL}/api` — backend OpenAPI endpoints are under `/api`
+- **`settings.ts` uses `/api/config/settings`** — backend route is `/api/config/settings`, not `/config/settings`
+- **`auth.ts` empty string fallback removed** — was causing auth requests to hit SvelteKit origin
+
+## Files to Not Touch
+
+- `frontend/.env`, `.env.test`, `.env.example` — already correct (`PUBLIC_API_URL=http://localhost:8080`)
+- Test files that mock `api-client` — already updated to use `API_BASE_URL`
+- Backend code — no changes needed, backend returns correct data
+
+## Key Architecture Insight
+
+The frontend has **two classes of API consumers**:
+
+1. **Code that constructs URLs** (stores, pages) — these now all use `API_BASE_URL`. Fixed.
+2. **Code that receives URLs from backend responses** (`thumbnailUrl` in results) — these are relative. NOT fixed.
+
+Class 2 is the remaining work. Options:
+- **Option A (recommended):** Backend returns absolute URLs — backend knows its own origin
+- **Option B:** Frontend normalizes all backend-returned URLs through `toAbsoluteUrl()` helper
+- **Option C:** Both — backend returns absolute, frontend normalizes defensively
 
 ## Required Skills
 
-### Installed (global)
-| Skill | Location | Purpose |
+| Skill | Location | When to Use |
 |---|---|---|
-| `tdd` | `~/.agents/skills/tdd/SKILL.md` | Red-green-refactor 5-step cycle |
-| `vdd` | `.agents/skills/vdd/SKILL.md` (project) | Builder/Adversary loop |
-| `vsdd` | `.agents/skills/vsdd/SKILL.md` (project) | Full VSDD pipeline |
+| `vdd` | `.agents/skills/vdd/SKILL.md` | After fixing — adversarial review of the URL architecture |
+| `caveman-commit` | `.agents/skills/caveman-commit/SKILL.md` | For the commit message |
+| `verification-before-completion` | Project skills | Before marking done — run tests, verify in browser |
 
-### Project-level skills (in repo)
-| Skill | Location | Purpose |
-|---|---|---|
-| `caveman` | `.agents/skills/caveman/SKILL.md` | Ultra-compressed comms (always-on lite) |
-| `caveman-commit` | `.agents/skills/caveman-commit/SKILL.md` | Conventional commit messages |
+## Previous Session Context
 
-### Token efficiency rules (mandatory)
-- Caveman **lite** mode active.
-- Commit messages: use `caveman-commit` — subject ≤50 chars, body only when "why" non-obvious
-- Code: no comments unless asked. No docstrings unless public API.
-- Tests: BDD-style `"""Scenario: ..."""` docstrings on test methods only
-
-## Crosslink Issue Map
-
-| Crosslink ID | Epic/Bead | Status |
-|---|---|---|
-| #5 | EPIC-5: Memory hygiene | **DONE** |
-| #6 | EPIC-6: Architecture hygiene | **DONE** |
-| #1 | EPIC-1: Sort fix | **DONE** |
-| #3 | EPIC-3: SQL pagination | **DONE** |
-| #2 | EPIC-2: Crop API endpoint | **DONE** |
-| #4 | EPIC-4: Frontend thumbnails | **DONE** |
+The original crops-in-results work (PR #59) is complete and all VDD findings resolved. This URL architecture fix is a follow-up from smoke testing that PR. See the git log on the branch for the full commit history of the original work.

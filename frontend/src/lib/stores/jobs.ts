@@ -14,7 +14,7 @@
 import { writable } from "svelte/store";
 import { getApiClient } from "./api-client";
 import { JobsApi } from "$lib/api/generated";
-const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
+import { API_BASE_URL } from "$lib/api/base-url";
 import type { JobResponse, CreateJobRequest } from "$lib/api/generated";
 import type { JobStatusEnum } from "$lib/api/generated/models/Job";
 
@@ -160,7 +160,7 @@ function createJobsStore() {
 			update((s) => ({ ...s, loading: true, error: null }));
 
 			try {
-				const baseUrl = PUBLIC_API_URL || "http://localhost:8080";
+				const baseUrl = API_BASE_URL;
 				const response = await fetch(`${baseUrl}/api/jobs/${id}/start`, {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
@@ -229,7 +229,7 @@ function createJobsStore() {
 				eventSource.close();
 			}
 
-			const baseUrl = PUBLIC_API_URL || "http://localhost:8080";
+			const baseUrl = API_BASE_URL;
 			eventSource = new EventSource(`${baseUrl}/api/jobs/${jobId}/status`);
 
 			eventSource.onopen = () => {

@@ -3,7 +3,8 @@
 	import { page } from '$app/stores';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { Button } from '$lib/components/ui';
-	const API_BASE: string = import.meta.env["PUBLIC_API_URL"] || 'http://localhost:8080';
+	import { API_BASE_URL } from '$lib/api/base-url';
+	const API_BASE = API_BASE_URL;
 
 	let campaignId = $derived($page.params.id ?? '');
 

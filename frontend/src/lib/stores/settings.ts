@@ -1,7 +1,5 @@
 import { writable } from "svelte/store";
-const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
-
-const BASE_URL = PUBLIC_API_URL ?? "http://localhost:8000/api";
+import { API_BASE_URL } from "$lib/api/base-url";
 
 export interface FeatureFlags {
 	simulationMode: boolean;
@@ -36,7 +34,7 @@ function createSettingsStore() {
 		update((s) => ({ ...s, loading: true, error: null }));
 
 		try {
-			const response = await fetch(`${BASE_URL}/config/settings`);
+			const response = await fetch(`${API_BASE_URL}/api/config/settings`);
 			if (!response.ok) {
 				throw new Error(`HTTP ${response.status}`);
 			}

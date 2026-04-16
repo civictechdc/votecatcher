@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
+import { API_BASE_URL } from "$lib/api/base-url";
 
 export interface UploadResult {
 	scanId: string;
@@ -42,7 +42,7 @@ function createUploadsStore() {
 				formData.append("campaign_id", campaignId);
 
 				const response = await fetch(
-					`${PUBLIC_API_URL || "http://localhost:8000"}/api/upload/voter-list`,
+					`${API_BASE_URL}/api/upload/voter-list`,
 					{
 						method: "POST",
 						body: formData,
@@ -82,7 +82,7 @@ function createUploadsStore() {
 				formData.append("campaign_id", campaignId);
 
 				const response = await fetch(
-					`${PUBLIC_API_URL || "http://localhost:8000"}/api/upload/petition`,
+					`${API_BASE_URL}/api/upload/petition`,
 					{
 						method: "POST",
 						body: formData,

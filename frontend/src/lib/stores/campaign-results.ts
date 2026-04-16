@@ -1,5 +1,10 @@
 import { writable } from "svelte/store";
-const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
+import { API_BASE_URL } from "$lib/api/base-url";
+
+function toAbsoluteUrl(url: string): string {
+	if (!url || url.startsWith("http")) return url;
+	return `${API_BASE_URL}${url}`;
+}
 
 export interface CampaignMatchPrediction {
 	rank: number;
@@ -34,10 +39,6 @@ interface FetchOptions {
 	page?: number;
 	pageSize?: number;
 	confidence?: string;
-}
-
-function getBaseUrl(): string {
-	return (PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
 }
 
 function createCampaignResultsStore() {
@@ -79,7 +80,7 @@ function createCampaignResultsStore() {
 				}
 
 				const response = await fetch(
-					`${getBaseUrl()}/api/campaigns/${campaignId}/results?${params.toString()}`,
+					`${API_BASE_URL}/api/campaigns/${campaignId}/results?${params.toString()}`,
 				);
 
 				if (!response.ok) {
@@ -141,16 +142,21 @@ export function resetCampaignResultsStore() {
 
 export function renderExpandedCropImage(thumbnailUrl: string): string {
 	if (!thumbnailUrl) return "";
-	const safe = escapeHtml(thumbnailUrl);
+	const absolute = toAbsoluteUrl(thumbnailUrl);
+	const safe = escapeHtml(absolute);
 	return `<img src="${safe}" alt="Enlarged crop" data-crop-url="${safe}" class="cursor-pointer hover:opacity-80 transition-opacity" style="max-width:400px;max-height:300px;border-radius:0.5rem;object-fit:contain" />`;
 }
 
 export function getConfidenceBadgeClass(confidence: string): string {
 	switch (confidence) {
-		case "HIGH": return "bg-green-100 text-green-800";
-		case "MEDIUM": return "bg-yellow-100 text-yellow-800";
-		case "LOW": return "bg-red-100 text-red-800";
-		default: return "bg-gray-100 text-gray-800";
+		case "HIGH":
+			return "bg-green-100 text-green-800";
+		case "MEDIUM":
+			return "bg-yellow-100 text-yellow-800";
+		case "LOW":
+			return "bg-red-100 text-red-800";
+		default:
+			return "bg-gray-100 text-gray-800";
 	}
 }
 
@@ -159,18 +165,21 @@ export function renderPredictionsTable(predictions: CampaignMatchPrediction[]): 
 		return '<p class="text-sm text-gray-500 italic">No predictions available</p>';
 	}
 
-	const rows = predictions.slice(0, 5).map((p) => {
-		const badge = getConfidenceBadgeClass(p.confidence);
-		const score = `${(p.similarityScore * 100).toFixed(1)}%`;
-		const name = escapeHtml(p.voterName || "-");
-		const address = escapeHtml(p.voterAddress || "-");
-		return `<tr class="border-t border-gray-100">
+	const rows = predictions
+		.slice(0, 5)
+		.map((p) => {
+			const badge = getConfidenceBadgeClass(p.confidence);
+			const score = `${(p.similarityScore * 100).toFixed(1)}%`;
+			const name = escapeHtml(p.voterName || "-");
+			const address = escapeHtml(p.voterAddress || "-");
+			return `<tr class="border-t border-gray-100">
 			<td class="px-3 py-2 text-sm">${name}</td>
 			<td class="px-3 py-2 text-sm">${address}</td>
 			<td class="px-3 py-2 text-sm"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${badge}">${p.confidence}</span></td>
 			<td class="px-3 py-2 text-sm">${score}</td>
 		</tr>`;
-	}).join("");
+		})
+		.join("");
 
 	return `<table class="w-full text-left">
 		<thead><tr class="text-xs text-gray-500 uppercase">
@@ -185,7 +194,7 @@ export function renderPredictionsTable(predictions: CampaignMatchPrediction[]): 
 
 export function renderThumbnailCell(thumbnailUrl: string): string {
 	if (!thumbnailUrl) return '<span class="text-slate-400">—</span>';
-	const safe = escapeHtml(thumbnailUrl);
+	const safe = escapeHtml(toAbsoluteUrl(thumbnailUrl));
 	return `<img src="${safe}" loading="lazy" width="60" height="40" alt="Crop thumbnail" class="rounded object-cover" />`;
 }
 

@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { get } from "svelte/store";
 import { sessions, resetSessionsStore, type Session } from "./sessions";
+import { API_BASE_URL } from "$lib/api/base-url";
 
 vi.mock("./api-client", () => ({
 	getApiClient: vi.fn(() => ({
-		basePath: "http://localhost:8000/api",
+		basePath: `${API_BASE_URL}/api`,
 	})),
 }));
 
@@ -189,7 +190,7 @@ describe("Sessions Store", () => {
 
 			await sessions.export(1);
 
-			expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/api/sessions/1/export");
+			expect(global.fetch).toHaveBeenCalledWith(`${API_BASE_URL}/api/sessions/1/export`);
 		});
 	});
 
