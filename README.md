@@ -9,10 +9,11 @@ Automate ballot signature recognition and validation. Put powerful organizing to
 [![CI](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml)
 [![Security](https://github.com/civictechdc/votecatcher/actions/workflows/security.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/security.yml)
 [![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcivictechdc%2Fvotecatcher%2Fmain%2Fbackend%2Fpyproject.toml&query=%24.project.version&label=version&color=green)](https://github.com/civictechdc/votecatcher/releases)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![SvelteKit](https://img.shields.io/badge/SvelteKit-5-FF3E00.svg?logo=svelte&logoColor=white)](https://kit.svelte.dev)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Slack](https://img.shields.io/badge/Slack-%23vote__catcher-4A154B.svg?logo=slack&logoColor=white)](https://civictechdc.slack.com/archives/C04U3D9AWER)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 </div>
 
@@ -232,6 +233,17 @@ For full configuration details, see [Configuration Modes](docs/configuration-mod
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code standards, and PR process.
+
+## Community
+
+VoteCatcher is a [CivicTech DC](https://www.civictechdc.org/) project. We're building open source campaign infrastructure to put powerful organizing tools in the hands of grassroots campaigns.
+
+| Resource | Link |
+|----------|------|
+| Project page | [civictechdc.org/projects/ballot-initiative](https://www.civictechdc.org/projects/ballot-initiative.html) |
+| Slack channel | [#vote_catcher on CivicTech DC Slack](https://civictechdc.slack.com/archives/C04U3D9AWER) |
+| Code of Conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
+| Security | [SECURITY.md](SECURITY.md) |
 
 ## License
 

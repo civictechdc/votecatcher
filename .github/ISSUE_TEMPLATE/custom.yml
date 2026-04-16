@@ -1,0 +1,26 @@
+name: Custom issue
+description: Use this template for any other type of issue
+labels: ['triage']
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for issues that don't fit the other categories.
+
+  - type: input
+    id: title
+    attributes:
+      label: Title
+      description: A brief title for your issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Provide a detailed description of your issue
+    validations:
+      required: true

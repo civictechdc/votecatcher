@@ -1,0 +1,71 @@
+name: Sync Code of Conduct
+
+on:
+  schedule:
+    - cron: '0 0 1 */3 *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-coc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch upstream Code of Conduct
+        id: fetch
+        run: |
+          UPSTREAM_CONTENT=$(gh api repos/civictechdc/code-of-conduct/contents/CodeofConduct.md --jq '.content' | base64 -d)
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$UPSTREAM_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compare with local
+        id: compare
+        run: |
+          LOCAL_CONTENT=$(cat CODE_OF_CONDUCT.md)
+          UPSTREAM_CONTENT="${{ steps.fetch.outputs.content }}"
+
+          if [ "$LOCAL_CONTENT" = "$UPSTREAM_CONTENT" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes detected"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Changes detected"
+            echo "$UPSTREAM_CONTENT" > CODE_OF_CONDUCT.md
+          fi
+
+      - name: Create PR if changed
+        if: steps.compare.outputs.changed == 'true'
+        run: |
+          BRANCH="sync/code-of-conduct-$(date +%Y%m%d)"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$BRANCH"
+          git add CODE_OF_CONDUCT.md
+          git commit -m 'chore: update Code of Conduct from upstream'
+          git push origin "$BRANCH"
+
+          DIFF=$(git diff main.."$BRANCH" -- CODE_OF_CONDUCT.md)
+          gh pr create \
+            --title 'chore: update Code of Conduct from upstream' \
+            --body "Updates CODE_OF_CONDUCT.md from [civictechdc/code-of-conduct](https://github.com/civictechdc/code-of-conduct).
+
+          <details><summary>Diff</summary>
+
+          \`\`\`diff
+          ${DIFF}
+          \`\`\`
+
+          </details>" \
+            --base main \
+            --head "$BRANCH" \
+            --label 'documentation'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
