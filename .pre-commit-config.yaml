@@ -44,3 +44,10 @@ repos:
         language: system
         files: ^docs/
         pass_filenames: false
+
+      - id: reject-internal-dirs
+        name: Reject internal directories
+        entry: bash scripts/reject-internal-dirs.sh
+        language: system
+        pass_filenames: false
+        always_run: true
