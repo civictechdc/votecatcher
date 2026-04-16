@@ -37,7 +37,7 @@ dev:
 
 # Start backend development server
 dev-backend:
-    cd backend && uv run python -m app --env local
+    cd backend && uv run python main.py --env local
 
 # Start frontend development server
 dev-frontend:

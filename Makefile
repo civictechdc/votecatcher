@@ -25,7 +25,7 @@ dev:
 	docker compose up --build
 
 dev-backend:
-	cd backend && uv run python -m app --env local
+	cd backend && uv run python main.py --env local
 
 dev-frontend:
 	cd frontend && bun run dev
