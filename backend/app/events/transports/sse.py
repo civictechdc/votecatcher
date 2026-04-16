@@ -18,18 +18,23 @@ class SSETransport(EventTransport):
     def __init__(self):
         self._active_subscriptions: dict[asyncio.Queue, str] = {}
 
+    _MAX_LIFETIME_SECONDS = 3600
+
     async def _create_stream_generator(self, topic: str, queue: asyncio.Queue):
         """Create SSE generator for a topic subscription."""
         try:
-            while True:
-                try:
-                    message = await asyncio.wait_for(queue.get(), timeout=30.0)
-                    if message is None:
-                        break
-                    yield f"data: {message}\n\n"
-                except TimeoutError:
-                    yield ": heartbeat\n\n"
+            async with asyncio.timeout(self._MAX_LIFETIME_SECONDS):
+                while True:
+                    try:
+                        message = await asyncio.wait_for(queue.get(), timeout=30.0)
+                        if message is None:
+                            break
+                        yield f"data: {message}\n\n"
+                    except TimeoutError:
+                        yield ": heartbeat\n\n"
         except asyncio.CancelledError:
+            pass
+        except TimeoutError:
             pass
         finally:
             event_bus.unsubscribe(topic, queue)

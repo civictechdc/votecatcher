@@ -31,7 +31,13 @@ class ResultResponse(ApiModel):
     ocr_result_id: int
     extracted_text: str
     crop_id: int
+    thumbnail_url: str
     predictions: list[MatchPrediction]
+    crop_coordinates: dict[str, float] | None = None
+    entry_coordinates: dict[str, float] | None = None
+    page_number: int | None = None
+    document_name: str = ""
+    scan_id: int | None = None
 
 
 class ResultsListResponse(ApiModel):
@@ -68,8 +74,14 @@ def export_results_csv(
     from app.services.results_query_service import ResultsQueryService
 
     try:
-        return ResultsQueryService(session).export_results_csv(
+        generator, filename = ResultsQueryService(session).export_results_csv(
             job_id, confidence=confidence
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+    return StreamingResponse(
+        generator,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

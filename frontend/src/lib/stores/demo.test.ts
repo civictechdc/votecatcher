@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { get } from "svelte/store";
+import { API_BASE_URL } from "$lib/api/base-url";
 
 vi.mock("./api-client", () => ({
 	getApiClient: vi.fn(() => ({
-		basePath: "http://localhost:8000/api",
+		basePath: `${API_BASE_URL}/api`,
 	})),
 }));
 
@@ -74,7 +75,7 @@ describe("Demo Store", () => {
 			await demo.resetData();
 
 			expect(global.fetch).toHaveBeenCalledWith(
-				"http://localhost:8000/api/demo/reset",
+				`${API_BASE_URL}/api/demo/reset`,
 				expect.objectContaining({ method: "POST" }),
 			);
 
@@ -116,7 +117,7 @@ describe("Demo Store", () => {
 			const result = await demo.loadPrebaked("dc-petition-2024");
 
 			expect(global.fetch).toHaveBeenCalledWith(
-				"http://localhost:8000/api/demo/sessions/dc-petition-2024/load",
+				`${API_BASE_URL}/api/demo/sessions/dc-petition-2024/load`,
 				expect.objectContaining({ method: "POST" }),
 			);
 			expect(result).toEqual(mockSession);

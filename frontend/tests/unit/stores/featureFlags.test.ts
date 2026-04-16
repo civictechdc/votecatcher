@@ -5,7 +5,7 @@ vi.mock("$app/environment", () => ({
 	browser: false,
 }));
 
-vi.stubEnv("PUBLIC_API_URL", "http://localhost:8000/api");
+vi.stubEnv("PUBLIC_API_URL", "http://localhost:8000");
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -41,25 +41,6 @@ describe("featureFlags store", () => {
 
 			expect(urlUsed).not.toContain("/api/api/");
 			expect(urlUsed).toBe("http://localhost:8000/api/config/features");
-		});
-
-		it("should construct URL correctly from PUBLIC_API_URL", async () => {
-			vi.resetModules();
-			const { featureFlags } = await import("$lib/stores/featureFlags");
-
-			mockFetch.mockResolvedValueOnce({
-				ok: true,
-				json: () =>
-					Promise.resolve({
-						simulationMode: false,
-						betaFeatures: false,
-						debugMode: false,
-					}),
-			});
-
-			await featureFlags.load();
-
-			expect(mockFetch).toHaveBeenCalledWith("http://localhost:8000/api/config/features");
 		});
 	});
 

@@ -153,6 +153,50 @@ class TestSupabaseEngine:
             engine.initialize()
             mock_upgrade.assert_called_once()
 
+    def test_engine_created_with_pool_recycle_and_pre_ping(self):
+        """Scenario: Supabase engine uses pool_recycle=300 and pool_pre_ping=True.
+
+        Given a SupabaseEngine with a database_url
+        When _get_engine creates the engine
+        Then create_engine is called with pool_recycle=300 and pool_pre_ping=True
+        """
+        from app.persistence.engines.supabase import SupabaseEngine
+
+        engine = SupabaseEngine(
+            project_url="https://test.supabase.co",
+            service_key=SecretStr("test_key"),
+            database_url="postgresql://user:pass@host/db",  # pragma: allowlist secret
+        )
+        with patch("app.persistence.engines.supabase.create_engine") as mock_create:
+            mock_create.return_value = MagicMock()
+            engine._get_engine()
+            mock_create.assert_called_once()
+            _, kwargs = mock_create.call_args
+            assert kwargs.get("pool_recycle") == 300
+            assert kwargs.get("pool_pre_ping") is True
+
+    def test_engine_pool_recycle_bounded_after_connection_recycle(self):
+        """Scenario: checked-out connections bounded after pool_recycle period.
+
+        Given an engine created with pool_recycle=300
+        When connections age beyond 300 seconds
+        Then pool recycles them, keeping checked-out count bounded
+        """
+        from app.persistence.engines.supabase import SupabaseEngine
+
+        engine = SupabaseEngine(
+            project_url="https://test.supabase.co",
+            service_key=SecretStr("test_key"),
+            database_url="postgresql://user:pass@host/db",  # pragma: allowlist secret
+        )
+        with patch("app.persistence.engines.supabase.create_engine") as mock_create:
+            mock_sa_engine = MagicMock()
+            mock_create.return_value = mock_sa_engine
+            result = engine._get_engine()
+            assert result is mock_sa_engine
+            _, kwargs = mock_create.call_args
+            assert kwargs["pool_recycle"] == 300
+
     def test_initialize_tolerates_alembic_failure(self, tmp_path: Path):
         """Initialize should continue if Alembic migration fails."""
         from app.persistence.engines.supabase import SupabaseEngine

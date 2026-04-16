@@ -9,7 +9,7 @@ import uuid
 from datetime import UTC, datetime
 
 import pytest
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session
 
 from app.data.database.model.jobs import JobStatus, MatcherJob
 from app.data.database.model.match_result import ConfidenceLevel, MatchResult
@@ -19,19 +19,6 @@ from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.schema import Campaign, Region
 from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
-
-
-@pytest.fixture
-def engine():
-    engine = create_engine("sqlite:///:memory:", echo=False)
-    SQLModel.metadata.create_all(engine)
-    return engine
-
-
-@pytest.fixture
-def session(engine):
-    with Session(engine) as session:
-        yield session
 
 
 def _seed_campaign(session: Session) -> tuple[Region, Campaign]:
@@ -304,6 +291,76 @@ class TestGetCampaignResults:
         for r in result.results:
             assert r.predictions[0].confidence == "HIGH"
 
+    def test_pages_are_disjoint_by_ocr_result_id(self, session: Session):
+        """Scenario: Paginated pages never share the same ocr_result_id."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region, campaign = _seed_campaign(session)
+
+        scan = PetitionScan(
+            campaign_id=campaign.id,
+            original_filename="disjoint.pdf",
+            stored_path="/tmp/disjoint.pdf",
+            file_hash="dj123",
+            page_count=1,
+        )
+        session.add(scan)
+        session.flush()
+
+        job = MatcherJob(
+            campaign_id=campaign.id,
+            current_status=JobStatus.MATCHING_COMPLETED,
+        )
+        session.add(job)
+        session.flush()
+
+        for i in range(7):
+            crop = PetitionCrop(
+                scan_id=scan.id,
+                crop_index=i,
+                stored_path=f"/tmp/crop_d{i}.png",
+                crop_coordinates={},
+                page_number=1,
+            )
+            session.add(crop)
+            session.flush()
+
+            ocr = OcrResult(
+                crop_id=crop.id,
+                ocr_job_id=1,
+                extracted_text={"name": f"Name {i}"},
+            )
+            session.add(ocr)
+            session.flush()
+
+            match = MatchResult(
+                ocr_result_id=ocr.id,
+                matcher_job_id=job.id,
+                rank=1,
+                similarity_score=0.5,
+                confidence_level=ConfidenceLevel.LOW,
+            )
+            session.add(match)
+        session.commit()
+
+        service = CampaignQueryService(session)
+
+        page_size = 3
+        all_ids: set[int] = set()
+        page = 1
+        while True:
+            result = service.get_campaign_results(
+                campaign.id, page=page, page_size=page_size
+            )
+            page_ids = {r.ocr_result_id for r in result.results}
+            assert page_ids.isdisjoint(all_ids), f"Page {page} overlaps previous pages"
+            all_ids |= page_ids
+            if len(all_ids) >= result.total:
+                break
+            page += 1
+
+        assert all_ids == set(range(1, 8)) or len(all_ids) == 7
+
     def test_multi_job_campaign_returns_only_latest_job_results(self, session: Session):
         """Scenario: Two jobs in same campaign, only latest job's results returned."""
         from app.services.campaign_query_service import CampaignQueryService
@@ -369,6 +426,20 @@ class TestGetCampaignResults:
         assert result.total == 1
         assert len(result.results) == 1
         assert result.results[0].job_id == job2.id
+
+    def test_results_include_thumbnail_url(self, session: Session):
+        """Scenario: Each result includes thumbnailUrl resolved from crop_id."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region, campaign = _seed_campaign(session)
+        scan, crop, job, ocr, voter, match = _seed_full_chain(session, campaign)
+
+        service = CampaignQueryService(session)
+        result = service.get_campaign_results(campaign.id)
+
+        assert len(result.results) == 1
+        r = result.results[0]
+        assert r.thumbnail_url == f"/api/crops/{crop.id}/image"
 
 
 class TestGetSetupStatus:
@@ -566,3 +637,92 @@ class TestGetSetupStatus:
 
         assert status.jobs.total == 2
         assert status.jobs.active == 1
+
+    def test_signature_count_handles_none_page_count(self, session: Session):
+        """Scenario: PetitionScan with page_count=None contributes 0 to signature_count."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region, campaign = _seed_campaign(session)
+
+        scan = PetitionScan(
+            campaign_id=campaign.id,
+            original_filename="no_pages.pdf",
+            stored_path="/tmp/no_pages.pdf",
+            file_hash="np123",
+            page_count=None,
+        )
+        session.add(scan)
+        session.commit()
+
+        service = CampaignQueryService(session)
+        status = service.get_setup_status(campaign.id)
+
+        assert status.state == "petitions_only"
+        assert status.petitions.file_count == 1
+        assert status.petitions.signature_count == 0
+
+    def test_signature_count_mixed_none_and_values(self, session: Session):
+        """Scenario: Multiple scans, some None page_count — sums only non-None."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region, campaign = _seed_campaign(session)
+
+        session.add(
+            PetitionScan(
+                campaign_id=campaign.id,
+                original_filename="a.pdf",
+                stored_path="/tmp/a.pdf",
+                file_hash="a1",
+                page_count=5,
+            )
+        )
+        session.add(
+            PetitionScan(
+                campaign_id=campaign.id,
+                original_filename="b.pdf",
+                stored_path="/tmp/b.pdf",
+                file_hash="b2",
+                page_count=None,
+            )
+        )
+        session.add(
+            PetitionScan(
+                campaign_id=campaign.id,
+                original_filename="c.pdf",
+                stored_path="/tmp/c.pdf",
+                file_hash="c3",
+                page_count=3,
+            )
+        )
+        session.commit()
+
+        service = CampaignQueryService(session)
+        status = service.get_setup_status(campaign.id)
+
+        assert status.petitions.file_count == 3
+        assert status.petitions.signature_count == 8
+
+    def test_region_name_none_when_region_deleted(self, session: Session):
+        """Scenario: Campaign FK points to deleted Region — region_name is None."""
+        from sqlmodel import delete
+
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region, campaign = _seed_campaign(session)
+
+        upload = VoterListUpload(
+            region_id=region.id,
+            original_filename="voters.csv",
+            file_size=512,
+            row_count=50,
+            status=UploadStatus.ACTIVE,
+            uploaded_at=datetime.now(UTC),
+        )
+        session.add(upload)
+        session.exec(delete(Region).where(Region.id == region.id))
+        session.commit()
+
+        service = CampaignQueryService(session)
+        status = service.get_setup_status(campaign.id)
+
+        assert status.voter_list.region_name is None

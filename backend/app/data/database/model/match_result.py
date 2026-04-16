@@ -19,10 +19,14 @@ class MatchResult(SQLModel, table=True):
     __tablename__ = "match_results"
 
     id: int | None = Field(default=None, primary_key=True)
-    ocr_result_id: int = Field(foreign_key="ocr_results.id", nullable=False)
-    matcher_job_id: int = Field(foreign_key="matcher_jobs.id", nullable=False)
+    ocr_result_id: int = Field(foreign_key="ocr_results.id", nullable=False, index=True)
+    matcher_job_id: int = Field(
+        foreign_key="matcher_jobs.id", nullable=False, index=True
+    )
     rank: int = Field(ge=1, le=5, nullable=False)
-    voter_id: int | None = Field(default=None, foreign_key="registered_voters.id")
+    voter_id: int | None = Field(
+        default=None, foreign_key="registered_voters.id", index=True
+    )
     similarity_score: float = Field(nullable=False)
     confidence_level: ConfidenceLevel = Field(nullable=False)
     field_scores: dict = Field(default={}, sa_column=Column(JSON))

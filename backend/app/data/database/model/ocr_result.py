@@ -10,8 +10,8 @@ class OcrResult(SQLModel, table=True):
     __tablename__ = "ocr_results"
 
     id: int | None = Field(default=None, primary_key=True)
-    crop_id: int = Field(foreign_key="petition_crops.id", nullable=False)
-    ocr_job_id: int = Field(foreign_key="ocr_jobs.id", nullable=False)
+    crop_id: int = Field(foreign_key="petition_crops.id", nullable=False, index=True)
+    ocr_job_id: int = Field(foreign_key="ocr_jobs.id", nullable=False, index=True)
     ocr_index: int = Field(
         default=0, description="Index of OCR entry within crop (0-4 for 5 signatures)"
     )

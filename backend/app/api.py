@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import (
     campaign_router,
     config_router,
+    crop_router,
     database_router,
     demo_router,
     events_router,
@@ -13,6 +14,7 @@ from app.routers import (
     provider_router,
     region_router,
     results_router,
+    scan_router,
     session_router,
     upload_router,
 )
@@ -57,6 +59,7 @@ app.add_middleware(
 
 app.include_router(campaign_router)
 app.include_router(config_router)
+app.include_router(crop_router)
 app.include_router(database_router)
 app.include_router(demo_router)
 app.include_router(events_router)
@@ -64,6 +67,7 @@ app.include_router(job_router)
 app.include_router(provider_router)
 app.include_router(region_router)
 app.include_router(results_router)
+app.include_router(scan_router)
 app.include_router(session_router)
 app.include_router(upload_router)
 

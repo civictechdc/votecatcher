@@ -7,7 +7,6 @@ confidence breakdowns, and progress calculations.
 from datetime import UTC, datetime
 
 import pytest
-from sqlmodel import Session, SQLModel, create_engine
 
 from app.data.database.model.jobs import (
     JobStatus,
@@ -22,19 +21,6 @@ from app.data.database.model.schema import Campaign, Region
 
 class TestMetricsService:
     """Test suite for MetricsService."""
-
-    @pytest.fixture
-    def engine(self):
-        """Create in-memory SQLite engine for testing."""
-        engine = create_engine("sqlite:///:memory:", echo=False)
-        SQLModel.metadata.create_all(engine)
-        return engine
-
-    @pytest.fixture
-    def session(self, engine):
-        """Create database session for each test."""
-        with Session(engine) as session:
-            yield session
 
     @pytest.fixture
     def sample_region(self, session):

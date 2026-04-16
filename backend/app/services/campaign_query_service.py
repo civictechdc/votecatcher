@@ -10,6 +10,8 @@ from sqlmodel import Session, select
 if TYPE_CHECKING:
     from app.data.database.model.match_result import MatchResult
 
+from sqlalchemy import func
+
 from app.routers.campaign_router import (
     CampaignMatchPrediction,
     CampaignResultResponse,
@@ -19,6 +21,8 @@ from app.routers.campaign_router import (
     SetupStatusResponse,
     VoterListStatus,
 )
+from app.services.entry_coordinates import compute_entry_coordinates
+from app.services.ocr_text_parser import OcrTextParser
 
 
 class CampaignQueryService:
@@ -78,29 +82,40 @@ class CampaignQueryService:
             except ValueError:
                 confidence_filter = None
 
-        total_statement = select(MatchResult).where(
-            MatchResult.matcher_job_id == latest_job_id
-        )
+        base_where = [MatchResult.matcher_job_id == latest_job_id]
         if confidence_filter:
-            total_statement = total_statement.where(
-                MatchResult.confidence_level == confidence_filter
-            )
+            base_where.append(MatchResult.confidence_level == confidence_filter)
 
-        all_match_results = self._session.exec(total_statement).all()
-        total = len({r.ocr_result_id for r in all_match_results})
+        total = self._session.exec(
+            select(func.count()).select_from(
+                select(func.distinct(MatchResult.ocr_result_id))
+                .where(*base_where)
+                .subquery()
+            )
+        ).one()
 
         if total == 0:
             return CampaignResultsListResponse(
                 results=[], total=0, page=page, page_size=page_size
             )
 
-        ocr_result_ids = sorted({r.ocr_result_id for r in all_match_results})
-        offset = (page - 1) * page_size
-        paginated_ocr_ids = ocr_result_ids[offset : offset + page_size]
+        paginated_ocr_ids = list(
+            self._session.exec(
+                select(MatchResult.ocr_result_id)
+                .where(*base_where)
+                .distinct()
+                .order_by(MatchResult.ocr_result_id)
+                .offset((page - 1) * page_size)
+                .limit(page_size)
+            ).all()
+        )
 
-        page_match_results = [
-            r for r in all_match_results if r.ocr_result_id in paginated_ocr_ids
-        ]
+        page_match_results = self._session.exec(
+            select(MatchResult).where(
+                MatchResult.ocr_result_id.in_(paginated_ocr_ids),
+                MatchResult.matcher_job_id == latest_job_id,
+            )
+        ).all()
 
         predictions_by_ocr = self._build_campaign_predictions(page_match_results)
 
@@ -118,6 +133,27 @@ class CampaignQueryService:
             ).all()
             ocr_results_by_id = {o.id: o for o in ocr_results}
 
+        crop_ids = {o.crop_id for o in ocr_results_by_id.values() if o.crop_id}
+        crop_by_id: dict = {}
+        scan_by_id: dict = {}
+
+        if crop_ids:
+            from app.data.database.model.petition_crop import PetitionCrop
+
+            crops = self._session.exec(
+                select(PetitionCrop).where(PetitionCrop.id.in_(crop_ids))
+            ).all()
+            crop_by_id = {c.id: c for c in crops}
+
+            scan_ids = {c.scan_id for c in crops if c.scan_id}
+            if scan_ids:
+                from app.data.database.model.petition_scan import PetitionScan
+
+                scans = self._session.exec(
+                    select(PetitionScan).where(PetitionScan.id.in_(scan_ids))
+                ).all()
+                scan_by_id = {s.id: s for s in scans}
+
         results = []
         for ocr_id in paginated_ocr_ids:
             ocr_result = ocr_results_by_id.get(ocr_id)
@@ -126,15 +162,19 @@ class CampaignQueryService:
             extracted_address = ""
             crop_id = 0
             if ocr_result:
-                if isinstance(ocr_result.extracted_text, dict):
-                    extracted_name = ocr_result.extracted_text.get("name") or ""
-                    extracted_address = ocr_result.extracted_text.get("address") or ""
-                elif ocr_result.extracted_text:
-                    extracted_name = str(ocr_result.extracted_text)
+                extracted_name, extracted_address = (
+                    OcrTextParser.extract_name_and_address(ocr_result.extracted_text)
+                )
                 crop_id = ocr_result.crop_id
 
             predictions = predictions_by_ocr.get(ocr_id, [])[:5]
             job_id = job_ids_by_ocr.get(ocr_id, 0)
+
+            thumbnail_url = f"/api/crops/{crop_id}/image" if crop_id else ""
+
+            crop = crop_by_id.get(crop_id) if crop_id else None
+            scan = scan_by_id.get(crop.scan_id) if crop and crop.scan_id else None
+            crop_coords = crop.crop_coordinates if crop else None
 
             results.append(
                 CampaignResultResponse(
@@ -143,7 +183,17 @@ class CampaignQueryService:
                     extracted_address=extracted_address,
                     crop_id=crop_id,
                     job_id=job_id,
+                    thumbnail_url=thumbnail_url,
                     predictions=predictions,
+                    crop_coordinates=crop_coords,
+                    entry_coordinates=(
+                        compute_entry_coordinates(crop_coords, ocr_result.ocr_index)
+                        if crop_coords and ocr_result
+                        else None
+                    ),
+                    page_number=crop.page_number if crop else None,
+                    document_name=scan.original_filename if scan else "",
+                    scan_id=crop.scan_id if crop else None,
                 )
             )
 
@@ -156,6 +206,7 @@ class CampaignQueryService:
     ) -> dict[int, list[CampaignMatchPrediction]]:
         """Build predictions grouped by OCR result ID for campaign results."""
         from app.data.database.model.registered_voter import RegisteredVoter
+        from app.services.prediction_builder import PredictionBuilder
 
         voter_ids = {r.voter_id for r in match_results if r.voter_id}
         voters_by_id: dict[int, RegisteredVoter] = {}
@@ -166,59 +217,22 @@ class CampaignQueryService:
             ).all()
             voters_by_id = {v.id: v for v in voters}
 
+        raw_predictions = PredictionBuilder.build(match_results, voters_by_id)
+
         predictions_by_ocr: dict[int, list[CampaignMatchPrediction]] = {}
-
-        for result in match_results:
-            ocr_id = result.ocr_result_id
-            if ocr_id not in predictions_by_ocr:
-                predictions_by_ocr[ocr_id] = []
-
-            voter = voters_by_id.get(result.voter_id) if result.voter_id else None
-
-            voter_name = ""
-            voter_address = ""
-            if voter:
-                voter_name = self._format_voter_name(voter)
-                voter_address = self._format_voter_address(voter)
-
-            predictions_by_ocr[ocr_id].append(
+        for ocr_id, preds in raw_predictions.items():
+            predictions_by_ocr[ocr_id] = [
                 CampaignMatchPrediction(
-                    rank=result.rank,
-                    voter_name=voter_name,
-                    voter_address=voter_address,
-                    similarity_score=result.similarity_score,
-                    confidence=result.confidence_level.value
-                    if result.confidence_level
-                    else "LOW",
+                    rank=p.rank,
+                    voter_name=p.voter_name,
+                    voter_address=p.voter_address,
+                    similarity_score=p.similarity_score,
+                    confidence=p.confidence,
                 )
-            )
-
-        for ocr_id in predictions_by_ocr:
-            predictions_by_ocr[ocr_id].sort(key=lambda p: p.rank)
+                for p in preds
+            ]
 
         return predictions_by_ocr
-
-    @staticmethod
-    def _format_voter_name(voter) -> str:
-        name_parts = []
-        if voter.name_data:
-            first = voter.name_data.get("first_name", "")
-            last = voter.name_data.get("last_name", "")
-            if first:
-                name_parts.append(first)
-            if last:
-                name_parts.append(last)
-        return " ".join(name_parts)
-
-    @staticmethod
-    def _format_voter_address(voter) -> str:
-        addr_parts = []
-        if voter.address_data:
-            for key in ("street", "city", "state", "zip"):
-                val = voter.address_data.get(key, "")
-                if val:
-                    addr_parts.append(val)
-        return ", ".join(addr_parts)
 
     def get_setup_status(self, campaign_id: uuid.UUID) -> SetupStatusResponse:
         """Get campaign setup status for progress stepper.

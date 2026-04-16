@@ -2,9 +2,14 @@
 
 import csv
 import io
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Optional
 
 from sqlmodel import Session, select
+
+from sqlalchemy import func
+from app.services.entry_coordinates import compute_entry_coordinates
+from app.services.ocr_text_parser import OcrTextParser
 
 if TYPE_CHECKING:
     from app.data.database.model.match_result import ConfidenceLevel, MatchResult
@@ -13,6 +18,16 @@ if TYPE_CHECKING:
 
 class ResultsQueryService:
     """Service for querying match results."""
+
+    CSV_HEADER = [
+        "Crop ID",
+        "Extracted Text",
+        "Rank",
+        "Predicted Name",
+        "Predicted Address",
+        "Similarity Score",
+        "Confidence",
+    ]
 
     def __init__(self, session: Session):
         self._session = session
@@ -47,24 +62,42 @@ class ResultsQueryService:
         if not job:
             raise ValueError(f"Job {job_id} not found")
 
-        total_statement = select(MatchResult).where(
-            MatchResult.matcher_job_id == job_id
-        )
+        base_where = [MatchResult.matcher_job_id == job_id]
         if confidence:
-            total_statement = total_statement.where(
-                MatchResult.confidence_level == confidence
+            base_where.append(MatchResult.confidence_level == confidence)
+
+        total = self._session.exec(
+            select(func.count()).select_from(
+                select(func.distinct(MatchResult.ocr_result_id))
+                .where(*base_where)
+                .subquery()
+            )
+        ).one()
+
+        if total == 0:
+            from app.routers.results_router import ResultsListResponse
+
+            return ResultsListResponse(
+                results=[], total=0, page=page, page_size=page_size
             )
 
-        all_match_results = self._session.exec(total_statement).all()
-        total = len({r.ocr_result_id for r in all_match_results})
+        paginated_ocr_ids = list(
+            self._session.exec(
+                select(MatchResult.ocr_result_id)
+                .where(*base_where)
+                .distinct()
+                .order_by(MatchResult.ocr_result_id)
+                .offset((page - 1) * page_size)
+                .limit(page_size)
+            ).all()
+        )
 
-        ocr_result_ids = sorted({r.ocr_result_id for r in all_match_results})
-        offset = (page - 1) * page_size
-        paginated_ocr_ids = ocr_result_ids[offset : offset + page_size]
-
-        page_match_results = [
-            r for r in all_match_results if r.ocr_result_id in paginated_ocr_ids
-        ]
+        page_match_results = self._session.exec(
+            select(MatchResult).where(
+                MatchResult.ocr_result_id.in_(paginated_ocr_ids),
+                MatchResult.matcher_job_id == job_id,
+            )
+        ).all()
 
         predictions_by_ocr = self._build_predictions_from_match_results(
             page_match_results
@@ -79,23 +112,42 @@ class ResultsQueryService:
             ).all()
             ocr_results_by_id = {o.id: o for o in ocr_results}
 
+        crop_ids = {o.crop_id for o in ocr_results_by_id.values() if o.crop_id}
+        crop_by_id: dict[int, "PetitionCrop"] = {}
+        scan_by_id: dict[int, "PetitionScan"] = {}
+
+        if crop_ids:
+            from app.data.database.model.petition_crop import PetitionCrop
+
+            crops = self._session.exec(
+                select(PetitionCrop).where(PetitionCrop.id.in_(crop_ids))
+            ).all()
+            crop_by_id = {c.id: c for c in crops}
+
+            scan_ids = {c.scan_id for c in crops}
+            if scan_ids:
+                from app.data.database.model.petition_scan import PetitionScan
+
+                scans = self._session.exec(
+                    select(PetitionScan).where(PetitionScan.id.in_(scan_ids))
+                ).all()
+                scan_by_id = {s.id: s for s in scans}
+
         results = []
         for ocr_id in paginated_ocr_ids:
             ocr_result = ocr_results_by_id.get(ocr_id)
 
-            extracted_text = ""
-            crop_id = 0
-            if ocr_result:
-                if isinstance(ocr_result.extracted_text, dict):
-                    text_parts = []
-                    for key in sorted(ocr_result.extracted_text.keys()):
-                        val = ocr_result.extracted_text.get(key)
-                        if val:
-                            text_parts.append(str(val))
-                    extracted_text = " ".join(text_parts)
-                elif ocr_result.extracted_text:
-                    extracted_text = str(ocr_result.extracted_text)
-                crop_id = ocr_result.crop_id
+            extracted_text = (
+                OcrTextParser.format_text(ocr_result.extracted_text)
+                if ocr_result
+                else ""
+            )
+            crop_id = ocr_result.crop_id if ocr_result else 0
+            thumbnail_url = f"/api/crops/{crop_id}/image" if crop_id else ""
+
+            crop = crop_by_id.get(crop_id) if crop_id else None
+            scan = scan_by_id.get(crop.scan_id) if crop else None
+            crop_coords = crop.crop_coordinates if crop else None
 
             predictions = predictions_by_ocr.get(ocr_id, [])[:5]
 
@@ -104,7 +156,17 @@ class ResultsQueryService:
                     ocr_result_id=ocr_id,
                     extracted_text=extracted_text,
                     crop_id=crop_id,
+                    thumbnail_url=thumbnail_url,
                     predictions=predictions,
+                    crop_coordinates=crop_coords,
+                    entry_coordinates=(
+                        compute_entry_coordinates(crop_coords, ocr_result.ocr_index)
+                        if crop_coords and ocr_result
+                        else None
+                    ),
+                    page_number=crop.page_number if crop else None,
+                    document_name=scan.original_filename if scan else "",
+                    scan_id=crop.scan_id if crop else None,
                 )
             )
 
@@ -128,7 +190,7 @@ class ResultsQueryService:
         """
         from app.data.database.model.registered_voter import RegisteredVoter
         from app.routers.results_router import MatchPrediction
-        from app.services.campaign_query_service import CampaignQueryService
+        from app.services.prediction_builder import PredictionBuilder
 
         voter_ids = {r.voter_id for r in match_results if r.voter_id}
         voters_by_id: dict[int, RegisteredVoter] = {}
@@ -139,34 +201,20 @@ class ResultsQueryService:
             ).all()
             voters_by_id = {v.id: v for v in voters}
 
+        raw_predictions = PredictionBuilder.build(match_results, voters_by_id)
+
         predictions_by_ocr: dict[int, list[MatchPrediction]] = {}
-
-        for result in match_results:
-            ocr_id = result.ocr_result_id
-            if ocr_id not in predictions_by_ocr:
-                predictions_by_ocr[ocr_id] = []
-
-            voter = voters_by_id.get(result.voter_id) if result.voter_id else None
-
-            voter_name = CampaignQueryService._format_voter_name(voter) if voter else ""
-            voter_address = (
-                CampaignQueryService._format_voter_address(voter) if voter else ""
-            )
-
-            predictions_by_ocr[ocr_id].append(
+        for ocr_id, preds in raw_predictions.items():
+            predictions_by_ocr[ocr_id] = [
                 MatchPrediction(
-                    rank=result.rank,
-                    voter_name=voter_name,
-                    voter_address=voter_address,
-                    similarity_score=result.similarity_score,
-                    confidence=result.confidence_level.value
-                    if result.confidence_level
-                    else "LOW",
+                    rank=p.rank,
+                    voter_name=p.voter_name,
+                    voter_address=p.voter_address,
+                    similarity_score=p.similarity_score,
+                    confidence=p.confidence,
                 )
-            )
-
-        for ocr_id in predictions_by_ocr:
-            predictions_by_ocr[ocr_id].sort(key=lambda p: p.rank)
+                for p in preds
+            ]
 
         return predictions_by_ocr
 
@@ -174,82 +222,94 @@ class ResultsQueryService:
         self,
         job_id: int,
         confidence: Optional["ConfidenceLevel"] = None,
-    ):
-        from fastapi.responses import StreamingResponse
-
+        chunk_size: int = 1000,
+    ) -> tuple[Iterator[str], str]:
         from app.data.database.model.jobs import MatcherJob
         from app.data.database.model.match_result import MatchResult
-        from app.data.database.model.ocr_result import OcrResult
 
         job = self._session.get(MatcherJob, job_id)
         if not job:
             raise ValueError(f"Job {job_id} not found")
 
-        statement = select(MatchResult).where(MatchResult.matcher_job_id == job_id)
+        statement = (
+            select(MatchResult)
+            .where(MatchResult.matcher_job_id == job_id)
+            .order_by(MatchResult.ocr_result_id, MatchResult.rank)
+        )
         if confidence:
             statement = statement.where(MatchResult.confidence_level == confidence)
 
-        match_results = self._session.exec(statement).all()
-        predictions_by_ocr = self._build_predictions_from_match_results(match_results)
+        filename = f"job_{job_id}_results.csv"
+        generator = self._generate_csv_rows(statement, chunk_size)
+        return generator, filename
 
-        ocr_ids_to_fetch = {r.ocr_result_id for r in match_results}
-        ocr_results_by_id: dict[int, OcrResult] = {}
-        if ocr_ids_to_fetch:
-            ocr_results = self._session.exec(
-                select(OcrResult).where(OcrResult.id.in_(ocr_ids_to_fetch))
-            ).all()
-            ocr_results_by_id = {o.id: o for o in ocr_results}
+    @staticmethod
+    def _csv_row(values: list) -> str:
+        buf = io.StringIO()
+        csv.writer(buf).writerow(values)
+        return buf.getvalue()
 
-        output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow(
-            [
-                "Crop ID",
-                "Extracted Text",
-                "Rank",
-                "Predicted Name",
-                "Predicted Address",
-                "Similarity Score",
-                "Confidence",
-            ]
-        )
+    def _generate_csv_rows(self, statement, chunk_size: int) -> Iterator[str]:
+        from app.data.database.model.ocr_result import OcrResult
+        from app.data.database.model.registered_voter import RegisteredVoter
+        from app.services.prediction_builder import PredictionBuilder
 
-        for ocr_id in sorted(predictions_by_ocr.keys()):
-            ocr_result = ocr_results_by_id.get(ocr_id)
+        yield self._csv_row(self.CSV_HEADER)
 
-            extracted_text = ""
-            crop_id = ""
-            if ocr_result:
-                if isinstance(ocr_result.extracted_text, dict):
-                    text_parts = []
-                    for key in sorted(ocr_result.extracted_text.keys()):
-                        val = ocr_result.extracted_text.get(key)
-                        if val:
-                            text_parts.append(str(val))
-                    extracted_text = " ".join(text_parts)
-                elif ocr_result.extracted_text:
-                    extracted_text = str(ocr_result.extracted_text)
-                crop_id = str(ocr_result.crop_id)
+        stream = self._session.exec(statement).yield_per(chunk_size)
 
-            predictions = predictions_by_ocr.get(ocr_id, [])[:5]
-            for pred in predictions:
-                writer.writerow(
-                    [
-                        crop_id,
-                        extracted_text,
-                        pred.rank,
-                        pred.voter_name,
-                        pred.voter_address,
-                        pred.similarity_score,
-                        pred.confidence,
-                    ]
+        current_ocr_id = None
+        extracted_text = ""
+        crop_id = ""
+
+        ocr_cache: dict[int, OcrResult] = {}
+        voter_cache: dict[int, RegisteredVoter] = {}
+
+        for match_result in stream:
+            if match_result.ocr_result_id != current_ocr_id:
+                current_ocr_id = match_result.ocr_result_id
+                if current_ocr_id not in ocr_cache:
+                    fetched = self._session.get(OcrResult, current_ocr_id)
+                    if fetched:
+                        ocr_cache[current_ocr_id] = fetched
+
+                ocr_result = ocr_cache.get(current_ocr_id)
+                extracted_text = (
+                    OcrTextParser.format_text(ocr_result.extracted_text)
+                    if ocr_result
+                    else ""
                 )
+                crop_id = str(ocr_result.crop_id) if ocr_result else ""
 
-        output.seek(0)
-        return StreamingResponse(
-            iter([output.getvalue()]),
-            media_type="text/csv",
-            headers={
-                "Content-Disposition": f"attachment; filename=job_{job_id}_results.csv"
-            },
-        )
+            voter_name = ""
+            voter_address = ""
+            if match_result.voter_id and match_result.voter_id not in voter_cache:
+                fetched = self._session.get(RegisteredVoter, match_result.voter_id)
+                if fetched:
+                    voter_cache[match_result.voter_id] = fetched
+
+            voter = (
+                voter_cache.get(match_result.voter_id)
+                if match_result.voter_id
+                else None
+            )
+            if voter:
+                voter_name = PredictionBuilder.format_voter_name(voter)
+                voter_address = PredictionBuilder.format_voter_address(voter)
+
+            confidence = (
+                match_result.confidence_level.value
+                if match_result.confidence_level
+                else "LOW"
+            )
+            yield self._csv_row(
+                [
+                    crop_id,
+                    extracted_text,
+                    match_result.rank,
+                    voter_name,
+                    voter_address,
+                    match_result.similarity_score,
+                    confidence,
+                ]
+            )

@@ -6,11 +6,10 @@ import {
 	ResultsApi,
 	SessionsApi,
 } from "./generated";
-
-const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] || "http://localhost:8080/api";
+import { API_BASE_URL } from "./base-url";
 
 const config = new Configuration({
-	basePath: API_BASE_URL,
+	basePath: `${API_BASE_URL}/api`,
 });
 
 export const campaignsApi = new CampaignsApi(config);

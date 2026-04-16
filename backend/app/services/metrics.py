@@ -136,9 +136,8 @@ class MetricsService:
     ) -> tuple[int, dict[ConfidenceLevel, int]]:
         """Count processed results and group by confidence.
 
-        After BUG-14 fix, each crop can have multiple OCR results (ocr_index 0-4).
-        This method deduplicates by ocr_result_id to count unique OCR results,
-        preventing confidence percentages from exceeding 100%.
+        Uses SQL GROUP BY to count distinct OCR results per confidence level
+        without loading all match results into memory.
 
         Args:
                 campaign_id: Campaign UUID
@@ -155,26 +154,21 @@ class MetricsService:
 
         latest_job_id = max(job_ids)
 
-        results = self.session.exec(
-            select(MatchResult)
+        rows = self.session.exec(
+            select(
+                MatchResult.confidence_level,
+                func.count(func.distinct(MatchResult.ocr_result_id)),
+            )
             .where(MatchResult.matcher_job_id == latest_job_id)
             .where(MatchResult.rank == 1)
+            .group_by(MatchResult.confidence_level)
         ).all()
 
-        unique_ocr_ids: set[int] = set()
-        ocr_to_confidence: dict[int, ConfidenceLevel] = {}
-
-        for result in results:
-            if result.ocr_result_id in unique_ocr_ids:
-                continue
-            unique_ocr_ids.add(result.ocr_result_id)
-            ocr_to_confidence[result.ocr_result_id] = result.confidence_level
-
         confidence_counts: dict[ConfidenceLevel, int] = {}
-        for level in ocr_to_confidence.values():
-            confidence_counts[level] = confidence_counts.get(level, 0) + 1
+        for level, count in rows:
+            confidence_counts[level] = count
 
-        return len(unique_ocr_ids), confidence_counts
+        return sum(confidence_counts.values()), confidence_counts
 
     def _calculate_progress(self, total: int, processed: int) -> float:
         """Calculate progress percentage.

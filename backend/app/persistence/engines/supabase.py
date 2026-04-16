@@ -41,7 +41,9 @@ class SupabaseEngine(BaseEngine):
             url = self._database_url
             if url.startswith("postgresql://") and "+psycopg" not in url:
                 url = url.replace("postgresql://", "postgresql+psycopg://", 1)
-            self._engine = create_engine(url, echo=False)
+            self._engine = create_engine(
+                url, echo=False, pool_recycle=300, pool_pre_ping=True
+            )
         return self._engine
 
     @property

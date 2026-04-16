@@ -9,24 +9,11 @@ import uuid
 from datetime import UTC, datetime
 
 import pytest
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session
 
 from app.data.database.model.jobs import JobStatus, MatcherJob
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign, Region
-
-
-@pytest.fixture
-def engine():
-    engine = create_engine("sqlite:///:memory:", echo=False)
-    SQLModel.metadata.create_all(engine)
-    return engine
-
-
-@pytest.fixture
-def session(engine):
-    with Session(engine) as session:
-        yield session
 
 
 def _seed_campaign(session: Session) -> tuple[Region, Campaign]:

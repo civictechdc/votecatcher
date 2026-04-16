@@ -13,6 +13,7 @@ Guides for local development and contribution.
 | [Field Spec Schema](./field-spec-schema.md) | JSON5 regional spec file format reference |
 | [Adding a Region](./adding-a-region.md) | Tutorial: add a new voter region |
 | [Testing Guide](./testing.md) | Testing patterns including approval tests |
+| [Results Performance](./results-performance.md) | Query pagination, crop serving, and scaling at 10k+ results |
 
 ## Quick Start
 

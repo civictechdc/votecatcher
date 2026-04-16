@@ -45,6 +45,7 @@ describe("Frontend type contract BDD tests (Session 14)", () => {
 				extractedAddress: "123 Main St",
 				cropId: 1,
 				jobId: 1,
+				thumbnailUrl: "/api/crops/1/image",
 				predictions: [],
 			};
 			expect(result.extractedName).toBe("John Smith");

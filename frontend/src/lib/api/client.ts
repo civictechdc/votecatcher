@@ -9,9 +9,7 @@ import type {
 	ProvisionResult,
 } from "$lib/api/database-types";
 
-const BASE_URL = (import.meta.env["PUBLIC_API_URL"] ?? "http://localhost:8080")
-	.toString()
-	.replace(/\/$/, "");
+import { API_BASE_URL } from "./base-url";
 
 export type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -91,7 +89,7 @@ export async function fetchRaw(
 ) {
 	const resolved = path.startsWith("http")
 		? path
-		: `${BASE_URL}${path.startsWith("/") ? path : "/" + path}`;
+		: `${API_BASE_URL}${path.startsWith("/") ? path : "/" + path}`;
 
 	// normalize init - cast body since we handle stringifying below
 	let init: RequestInit = {
@@ -158,7 +156,7 @@ export async function request<T = unknown>(
 				query && Object.keys(query).length > 0 ? "?" + new URLSearchParams(query).toString() : "";
 			resolvedPath = base_url
 				? `${base_url}${pathStr}${queryString}`
-				: `${BASE_URL}${pathStr}${queryString}`;
+				: `${API_BASE_URL}${pathStr}${queryString}`;
 			requestOpts = reqOpts;
 		}
 
@@ -190,7 +188,7 @@ export async function request<T = unknown>(
 
 // Convenience API surface
 export const api = {
-	getWorkspace: (id: string) => request(`${BASE_URL}/api/workspace/${id}`, { method: "GET" }),
+	getWorkspace: (id: string) => request(`${API_BASE_URL}/api/workspace/${id}`, { method: "GET" }),
 	getSession: () =>
 		request<{ user?: { id: string; email?: string } }>("/api/session", { method: "GET" }),
 	storeApiKey: (provider: string, apiKey: string) =>
@@ -202,25 +200,25 @@ export const api = {
 
 	// high-level (returns ApiResult)
 	demoUploadVoters: (formData: FormData) =>
-		request(`${BASE_URL}/api/upload/voter-list`, { method: "POST", body: formData }),
+		request(`${API_BASE_URL}/api/upload/voter-list`, { method: "POST", body: formData }),
 
 	// low-level raw fetch (useful in +server to forward response)
 	demoUploadVotersRaw: (formData: FormData) =>
-		fetchRaw(`${BASE_URL}/api/upload/voter-list`, { method: "POST", body: formData }),
+		fetchRaw(`${API_BASE_URL}/api/upload/voter-list`, { method: "POST", body: formData }),
 
 	// high-level (returns ApiResult)
 	demoUploadPetitions: (formData: FormData) =>
-		request(`${BASE_URL}/api/upload/petition`, { method: "POST", body: formData }),
+		request(`${API_BASE_URL}/api/upload/petition`, { method: "POST", body: formData }),
 
 	// low-level raw fetch (useful in +server to forward response)
 	demoUploadPetitionsRaw: (formData: FormData) =>
-		fetchRaw(`${BASE_URL}/api/upload/petition`, { method: "POST", body: formData }),
+		fetchRaw(`${API_BASE_URL}/api/upload/petition`, { method: "POST", body: formData }),
 
 	triggerProcessFile: (payload: { filePath: string; campaignId: string }) =>
 		request("/api/process-voter-file", { method: "POST", body: payload }),
 
 	fetchMatchFields: (id: string) =>
-		request(`${BASE_URL}/api/config/match-fields/${id}`, {
+		request(`${API_BASE_URL}/api/config/match-fields/${id}`, {
 			method: "GET",
 		}),
 
@@ -229,7 +227,7 @@ export const api = {
 		provider_model: string;
 		api_key: string;
 	}) =>
-		request(`${BASE_URL}/api/workspace/ocr/demo`, {
+		request(`${API_BASE_URL}/api/workspace/ocr/demo`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: payload,
@@ -240,24 +238,24 @@ export const api = {
 		provider_model: string;
 		api_key: string;
 	}) =>
-		request<MatchingProgressResponse>(`${BASE_URL}/api/workspace/ocr/demo_batch`, {
+		request<MatchingProgressResponse>(`${API_BASE_URL}/api/workspace/ocr/demo_batch`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: payload,
 		}),
 
 	demoGetOcrStatus: (job_id: string) =>
-		request<MatchingProgressResponse>(`${BASE_URL}/api/workspace/ocr/batch/${job_id}/status`, {
+		request<MatchingProgressResponse>(`${API_BASE_URL}/api/workspace/ocr/batch/${job_id}/status`, {
 			method: "GET",
 			headers: { "Content-Type": "application/json" },
 		}),
 	demoObserveOcrStatus: (job_id: string) => {
-		const url = `${BASE_URL}/workspace/api/match/status/id/${encodeURIComponent(job_id)}`;
+		const url = `${API_BASE_URL}/workspace/api/match/status/id/${encodeURIComponent(job_id)}`;
 		return new EventSource(url);
 	},
 	demoGetMatchingResults: (job_id: string) =>
 		request<MatchResponse>(
-			`${BASE_URL}/api/workspace/ocr/results/demo/${encodeURIComponent(job_id)}`,
+			`${API_BASE_URL}/api/workspace/ocr/results/demo/${encodeURIComponent(job_id)}`,
 			{
 				method: "GET",
 				headers: { "Content-Type": "application/json" },

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { API_BASE_URL } from "$lib/api/base-url";
 
 describe("API Client", () => {
 	beforeEach(() => {
@@ -13,11 +14,11 @@ describe("API Client", () => {
 		expect(typeof client.basePath).toBe("string");
 	});
 
-	it("uses PUBLIC_API_URL when available", async () => {
+	it("uses API_BASE_URL", async () => {
 		const { getApiClient } = await import("./api-client");
 		const client = getApiClient();
 		expect(client).toBeDefined();
-		expect(client.basePath).toBe("http://localhost:8000");
+		expect(client.basePath).toBe(API_BASE_URL);
 	});
 
 	it("returns singleton instance", async () => {

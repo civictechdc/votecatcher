@@ -180,6 +180,44 @@ class TestSSETransport:
             pytest.fail("Generator did not exit after close() - sentinel not working")
 
     @pytest.mark.asyncio
+    async def test_sse_generator_has_max_lifetime(self):
+        """Scenario: SSE generator terminates after max lifetime.
+
+        Given an SSE subscription
+        When the generator runs for longer than MAX_LIFETIME_SECONDS
+        Then the generator exits cleanly
+        """
+        from unittest.mock import patch
+
+        transport = SSETransport()
+        response = await transport.subscribe_to_campaign("max-lifetime-test")
+        gen = response.body_iterator
+
+        called_with_timeout = False
+
+        original_timeout = asyncio.timeout
+
+        def fake_timeout(delay):
+            nonlocal called_with_timeout
+            if delay == 3600:
+                called_with_timeout = True
+            return original_timeout(delay)
+
+        with patch("asyncio.timeout", side_effect=fake_timeout):
+            read_task = asyncio.create_task(
+                asyncio.wait_for(gen.__anext__(), timeout=2.0)
+            )
+            try:
+                await read_task
+            except (TimeoutError, StopAsyncIteration):
+                pass
+
+        await transport.close()
+        assert called_with_timeout, (
+            "SSE generator should use asyncio.timeout(3600) for max lifetime"
+        )
+
+    @pytest.mark.asyncio
     async def test_close_generator_exits_quickly_not_waiting_for_timeout(self):
         transport = SSETransport()
         campaign_id = f"quick-exit-test-{id(transport)}"

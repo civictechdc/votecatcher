@@ -1,13 +1,11 @@
 import type { RequestHandler } from "./$types";
-const PUBLIC_API_URL: string = import.meta.env["PUBLIC_API_URL"] || "";
-const BASE_URL = PUBLIC_API_URL ?? "";
+import { API_BASE_URL } from "$lib/api/base-url";
 
 export const GET: RequestHandler = async ({ params }) => {
 	try {
-		// Step 2: SvelteKit server makes the call to the FastAPI endpoint
 		const job_id = params.job_id;
 		const eventResponse = await fetch(
-			`${BASE_URL}workspace/ocr/batch/${encodeURIComponent(job_id)}/status`,
+			`${API_BASE_URL}/workspace/ocr/batch/${encodeURIComponent(job_id)}/status`,
 		);
 
 		if (!eventResponse.ok || !eventResponse.body) {

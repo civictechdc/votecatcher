@@ -9,6 +9,11 @@ This is EXTREMELY IMPORTANT:
 - Ask questions if something is not clear and you need to make a choice. Don't choose randomly if it's important for what we're doing
 - When you show me a potential error or miss, start your response with❗️emoji
 
+## Active Work
+
+When picking up the crops-in-results implementation, start here:
+**`.agent-workspace/SESSION-HANDOFF.md`** — entry point for the implementing agent.
+
 ## Version Bumping
 
 Version is stored in two files and must stay in sync:
@@ -37,6 +42,43 @@ Version is stored in two files and must stay in sync:
 ### Version Files
 
 When adding a new package to the repo, ensure its version is added to the `version-set` recipe in `justfile`.
+
+## Code Quality
+
+Project-wide standards for readability, testing, and refactoring. Every session, every language, every epic.
+
+### Readability-First Python (PEP 20 / Hitchhiker's Guide)
+
+Apply these patterns when reading or writing Python in this project:
+
+- **Flat over nested** — Guard clauses and early returns over deep if/else nesting.
+- **`filter(None, ...) + join`** — `' '.join(filter(None, [first, last]))` is idiomatic for building delimited strings from optional parts. Prefer over imperative append loops.
+- **Extract before duplicating** — When you see the same 5-line block twice, extract a shared helper. Don't wait for a third occurrence.
+- **Ternary for two-branch defaults** — `value if condition else default` over 4-line if/else. Reserve if/else for branches with side effects or complex logic.
+- **Dead wrappers are dead weight** — If a method just delegates to another with no added logic, remove it and call the target directly.
+- **Constants over inline literals** — Class-level constants over repeated inline lists/strings. Named constants are searchable, DRY, and self-documenting.
+
+### Legacy Refactoring
+
+When touching existing code, apply small safe cleanups in the same commit. Don't expand scope — only refactor what's already being modified. Leave the neighbourhood cleaner than you found it. Specific techniques:
+
+- Flatten nested ifs to guards/ternary
+- Replace `isinstance` chains with dispatched helpers
+- Extract repeated conditionals into shared functions
+- Remove dead wrappers and unused imports
+
+### Test Discipline
+
+Tests assert **behavioral contracts** (what), not **implementation details** (how):
+
+- No asserting specific internal method calls (e.g., `yield_per(1000)` mock)
+- No `repr(type(...))` string checks
+- No coupling to return type structure beyond the public contract (iterable vs tuple vs generator is irrelevant if it yields the same values)
+- Prefer asserting "X must not happen" (e.g., `.all()` never called) over "X must happen via method Y"
+
+### Nesting Watch
+
+Watch for deeply nested if/else in loops. Prefer ternary, guard, or early-return patterns. When you see 3+ levels of nesting in a loop body, pause and flatten before continuing. Re-check after any refactoring that changes loop structure.
 
 <skills_system priority="1">
 
