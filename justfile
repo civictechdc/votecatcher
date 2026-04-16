@@ -43,6 +43,10 @@ dev-backend:
 dev-frontend:
     cd frontend && bun run dev
 
+# Start frontend in demo mode (loads .env.demo)
+dev-frontend-demo:
+    cd frontend && MODE=demo bun run dev
+
 # Run all tests (backend pytest, frontend vitest)
 test:
     cd backend && uv run pytest
