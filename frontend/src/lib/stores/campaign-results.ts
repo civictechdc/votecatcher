@@ -177,7 +177,6 @@ export function renderPredictionsTable(predictions: CampaignMatchPrediction[]): 
 	}
 
 	const rows = predictions
-		.slice(0, 5)
 		.map((p) => {
 			const badge = getConfidenceBadgeClass(p.confidence);
 			const score = `${(p.similarityScore * 100).toFixed(1)}%`;

@@ -10,6 +10,7 @@ from sqlmodel import Session, select
 from sqlalchemy import func
 from app.services.entry_coordinates import compute_entry_coordinates
 from app.services.ocr_text_parser import OcrTextParser
+from app.services.prediction_truncation import truncate_predictions
 
 if TYPE_CHECKING:
     from app.data.database.model.match_result import ConfidenceLevel, MatchResult
@@ -149,7 +150,7 @@ class ResultsQueryService:
             scan = scan_by_id.get(crop.scan_id) if crop else None
             crop_coords = crop.crop_coordinates if crop else None
 
-            predictions = predictions_by_ocr.get(ocr_id, [])[:5]
+            predictions = truncate_predictions(predictions_by_ocr.get(ocr_id, []))
 
             results.append(
                 ResultResponse(

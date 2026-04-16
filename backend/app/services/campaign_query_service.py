@@ -23,6 +23,7 @@ from app.routers.campaign_router import (
 )
 from app.services.entry_coordinates import compute_entry_coordinates
 from app.services.ocr_text_parser import OcrTextParser
+from app.services.prediction_truncation import truncate_predictions
 
 
 class CampaignQueryService:
@@ -167,7 +168,7 @@ class CampaignQueryService:
                 )
                 crop_id = ocr_result.crop_id
 
-            predictions = predictions_by_ocr.get(ocr_id, [])[:5]
+            predictions = truncate_predictions(predictions_by_ocr.get(ocr_id, []))
             job_id = job_ids_by_ocr.get(ocr_id, 0)
 
             thumbnail_url = f"/api/crops/{crop_id}/image" if crop_id else ""

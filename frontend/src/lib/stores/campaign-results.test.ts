@@ -237,14 +237,14 @@ describe("renderPredictionsTable", () => {
 		expect(html).toContain("No predictions");
 	});
 
-	it("limits to 5 predictions", () => {
+	it("renders all predictions received (truncation is server-side)", () => {
 		const predictions = Array.from({ length: 7 }, (_, i) =>
 			makePrediction({ rank: i + 1, voterName: `Voter ${i + 1}` }),
 		);
 		const html = renderPredictionsTable(predictions);
 		expect(html).toContain("Voter 5");
-		expect(html).not.toContain("Voter 6");
-		expect(html).not.toContain("Voter 7");
+		expect(html).toContain("Voter 6");
+		expect(html).toContain("Voter 7");
 	});
 
 	it("escapes XSS in voterName", () => {
