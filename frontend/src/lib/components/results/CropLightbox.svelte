@@ -7,6 +7,14 @@
 
 	let { open, imageUrl, onClose }: Props = $props();
 
+	$effect(() => {
+		if (open) {
+			const prev = document.body.style.overflow;
+			document.body.style.overflow = "hidden";
+			return () => { document.body.style.overflow = prev; };
+		}
+	});
+
 	function handleBackdropClick(e: MouseEvent) {
 		if (e.target === e.currentTarget) onClose();
 	}

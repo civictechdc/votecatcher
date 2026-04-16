@@ -62,6 +62,23 @@ describe("CropLightbox", () => {
 	});
 
 	describe("Accessibility", () => {
+		it("locks body scroll when open", () => {
+			render(CropLightbox, {
+				props: { open: true, imageUrl: "/api/crops/1/image", onClose: () => {} },
+			});
+			expect(document.body.style.overflow).toBe("hidden");
+		});
+
+		it("restores body scroll on unmount", () => {
+			document.body.style.overflow = "auto";
+			const { unmount } = render(CropLightbox, {
+				props: { open: true, imageUrl: "/api/crops/1/image", onClose: () => {} },
+			});
+			expect(document.body.style.overflow).toBe("hidden");
+			unmount();
+			expect(document.body.style.overflow).toBe("auto");
+		});
+
 		it("has dialog role", () => {
 			const { getByRole } = render(CropLightbox, {
 				props: { open: true, imageUrl: "/api/crops/1/image", onClose: () => {} },

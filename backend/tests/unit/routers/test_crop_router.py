@@ -172,9 +172,11 @@ class TestCropImageConcurrency:
 
     def test_semaphore_configured_with_limit_50(self):
         """Scenario: Module-level semaphore exists with correct limit."""
-        from app.routers.crop_router import _CROP_SEMAPHORE
+        import app.routers.crop_router as mod
 
-        assert _CROP_SEMAPHORE._value == 50
+        sem = mod._CROP_SEMAPHORE
+        assert isinstance(sem, asyncio.Semaphore)
+        assert sem._value == 50
 
     def test_endpoint_is_async_coroutine(self):
         """Scenario: Endpoint is async to support semaphore acquire."""
@@ -241,21 +243,17 @@ class TestCropImageConcurrency:
                     crop_ids.append(crop.id)
                 s.commit()
 
-            from app.routers.crop_router import _CROP_SEMAPHORE
+            import app.routers.crop_router as crop_mod
 
-            original = _CROP_SEMAPHORE._value
-            _CROP_SEMAPHORE._value = 2
+            monkeypatch.setattr(crop_mod, "_CROP_SEMAPHORE", asyncio.Semaphore(2))
 
-            try:
-                transport = httpx.ASGITransport(app=app)
-                async with httpx.AsyncClient(
-                    transport=transport, base_url="http://test"
-                ) as ac:
-                    responses = await asyncio.gather(
-                        *(ac.get(f"/api/crops/{cid}/image") for cid in crop_ids)
-                    )
-                    assert all(r.status_code == 200 for r in responses)
-            finally:
-                _CROP_SEMAPHORE._value = original
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as ac:
+                responses = await asyncio.gather(
+                    *(ac.get(f"/api/crops/{cid}/image") for cid in crop_ids)
+                )
+                assert all(r.status_code == 200 for r in responses)
         finally:
             app.dependency_overrides.clear()

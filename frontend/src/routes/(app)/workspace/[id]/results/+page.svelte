@@ -28,6 +28,7 @@
 	});
 
 	const sortedResults = $derived(sortResults($campaignResults.results, sortConfig));
+	const resultById = $derived(new Map(sortedResults.map(r => [r.ocrResultId, r])));
 
 	function getTableRows(resultList: CampaignResultResponse[]) {
 		return resultList.map((result) => {
@@ -81,7 +82,7 @@
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
 
 	function getExpandedResult(rowId: string | number): CampaignResultResponse | undefined {
-		return sortedResults.find((r) => r.ocrResultId === Number(rowId));
+		return resultById.get(Number(rowId));
 	}
 </script>
 
