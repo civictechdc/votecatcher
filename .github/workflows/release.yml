@@ -38,6 +38,40 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  summarize-changelog:
+    needs: generate-sbom
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      models: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install git-cliff
+        run: curl -sfL https://github.com/orhun/git-cliff/releases/latest/download/git-cliff-linux-x86_64-unknown-linux-gnu.tar.gz | tar xz --strip-components=1 -C /usr/local/bin
+
+      - name: Generate raw changelog
+        run: git-cliff --config cliff.toml -o CHANGELOG.md
+
+      - name: Summarize with GitHub Models
+        run: bash scripts/changelog-summarize.sh CHANGELOG.md scripts/changelog-prompt.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGELOG_MODEL: ${{ vars.CHANGELOG_MODEL || 'deepseek/deepseek-v3-0324' }}
+          CHANGELOG_MIN_COMMITS: ${{ vars.CHANGELOG_MIN_COMMITS || '6' }}
+
+      - name: Commit summarized changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "docs: summarize changelog for ${{ github.ref_name }}"
+          git push
+
   edge-functions-check:
     runs-on: ubuntu-latest
     steps:

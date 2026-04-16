@@ -141,7 +141,7 @@ name = "cz_conventional_commits"
 tag_format = "v$version"
 version_scheme = "semver"
 version = "1.0.0-alpha.1"
-update_changelog_on_bump = true
+update_changelog_on_bump = false
 version_files = [
     "backend/pyproject.toml:version",
     "frontend/package.json:\"version\"",

@@ -77,8 +77,8 @@ temp/
 # Plans (local development only)
 plans/
 
-# Agent workspace (local development only)
-.agent-workspace/
+# Agent workspace — blocked by pre-commit hook (reject-internal-dirs.sh), not gitignored
+# .agent-workspace/ files are tracked so samples/artifacts survive across sessions
 .agent/
 
 # Handover docs (local session state)
