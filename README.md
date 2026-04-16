@@ -240,8 +240,8 @@ VoteCatcher is a [CivicTech DC](https://www.civictechdc.org/) project. We're bui
 
 | Resource | Link |
 |----------|------|
-| Project page | [civictechdc.org/projects/ballot-initiative](https://www.civictechdc.org/projects/ballot-initiative.html) |
-| Slack channel | [#vote_catcher on CivicTech DC Slack](https://civictechdc.slack.com/archives/C04U3D9AWER) |
+| Project page | https://www.civictechdc.org/projects/ballot-initiative.html |
+| Slack channel | [#vote_catcher](https://civictechdc.slack.com/archives/C04U3D9AWER) |
 | Code of Conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
 | Security | [SECURITY.md](SECURITY.md) |
 
