@@ -152,6 +152,63 @@ Class 2 is the remaining work. Options:
 
 ## Backlog / Follow-up Ideas
 
+### Crop Coordinates in Results Table
+
+Show users where each crop came from in the source documents:
+
+- **Entry number** — position within the document (1-based for display, 0-based internally)
+- **Document index** — which document in the upload (1-based display, 0-based internal)
+- **Document name** — original filename from upload (e.g., `petition_pack_page_3.pdf`)
+
+These fields likely map to existing `PetitionCrop` and `PetitionScan` columns:
+- `crop_index` (0-based) → display as `Entry {crop_index + 1}`
+- `scan_id` → join to `PetitionScan` for document info
+- `PetitionScan.original_filename` → document name
+- Need a document sequence number (scan order within campaign) → display as `Document {order + 1}`
+
+**Pixel coordinates:** `crop_coordinates` stores `{"top": float, "bottom": float}` — relative
+vertical bounds (fraction of page height), not pixel coords. These define the horizontal
+strip where the signature appears on the page.
+
+### Crop Coordinate Strip Highlight — Progressive Reveal
+
+**Chosen approach:** Progressive reveal — crop + predictions shown first in accordion row,
+"Show on source page" button expands the source page below with highlighted strip. No
+second lightbox needed. Preview at `.agent-workspace/preview-progressive-reveal.html`.
+
+**Spec-based cropping compatibility:**
+
+Current state: `file_service.py` uses hardcoded `DC_CROP_REGION = {"top": 0.385, "bottom": 0.725}`
+for both `crop_petition()` (line 91) and the upload flow (line 384). Meanwhile, `CropConfig`
+in the field spec system has `top_crop` / `bottom_crop` (same relative 0-1 format) and is
+used by `ocr_config.py::get_current_crop_config()`. The two are currently **not connected** —
+the file service doesn't read from the spec.
+
+What `crop_coordinates` actually stores: `{"top": 0.385, "bottom": 0.725}` — always top/bottom
+relative vertical bounds, full page width. No left/right, no pixel coords.
+
+**Impact on progressive reveal:**
+- Highlight strip is straightforward — draw a div from `top%` to `bottom%` of the source page
+- Works with any region's crop config since it's always top/bottom relative coords
+- When spec-based cropping is connected to file_service, the coordinates will vary per region
+  but the format stays the same — progressive reveal is agnostic
+
+**Backend changes needed:**
+- `CampaignResultResponse` needs new fields: `crop_coordinates`, `page_number`,
+  `document_name` (from PetitionScan), `crop_index`
+- Join OcrResult → PetitionCrop → PetitionScan to get these
+- Add endpoint to serve original page image (or derive from existing stored_path)
+
+**Frontend changes needed:**
+- Add "Show on source page" button in expanded accordion row
+- Load source page image, overlay highlight strip using `crop_coordinates`
+- Smooth expand/collapse animation
+
+Open questions:
+- Does the backend already return scan/document info in the results API, or does it need to be added?
+- Should this be columns in the table, or shown in the expanded accordion row?
+- How to handle multi-page PDFs — is a "document" a file or a page?
+
 ### Smart Prediction Truncation (confidence-aware display)
 
 Currently `renderPredictionsTable` shows top 5 predictions unconditionally. Should instead show only predictions that are meaningfully close to the top match.
