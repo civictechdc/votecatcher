@@ -3,6 +3,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.middleware.cors import build_cors_config
+from app.middleware.rate_limit import RateLimitConfig, create_rate_limiter
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.routers import (
     campaign_router,
     config_router,
@@ -18,6 +21,7 @@ from app.routers import (
     session_router,
     upload_router,
 )
+from app.settings.settings import get_settings
 from app.startup import ApplicationStartup
 
 
@@ -44,18 +48,27 @@ async def lifespan(_application: FastAPI):
 
 app = FastAPI(root_path="/api", lifespan=lifespan)
 
-origins = [
-    "http://localhost",
-    "http://localhost:5173",
-]
+settings = get_settings()
+
+is_production = settings.environment == "production"
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    SecurityHeadersMiddleware,
+    is_production=is_production,
 )
+
+cors_config = build_cors_config(settings.environment, settings.cors_origins)
+app.add_middleware(CORSMiddleware, **cors_config)
+
+rate_limit_config = RateLimitConfig(
+    enabled=settings.rate_limit_enabled,
+    default_limit=settings.rate_limit_default,
+    upload_limit=settings.rate_limit_upload,
+    job_create_limit=settings.rate_limit_job_create,
+)
+limiter = create_rate_limiter(rate_limit_config)
+if limiter is not None:
+    app.state.limiter = limiter
 
 app.include_router(campaign_router)
 app.include_router(config_router)

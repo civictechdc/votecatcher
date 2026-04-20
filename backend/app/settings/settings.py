@@ -106,6 +106,13 @@ class Settings(BaseSettings):
 
     matching_engine: str = Field(default="harmonic", alias="MATCHING_ENGINE")
 
+    environment: str = Field(default="development", alias="ENVIRONMENT")
+    cors_origins: str = Field(default="", alias="CORS_ORIGINS")
+    rate_limit_enabled: bool = Field(default=True, alias="RATE_LIMIT_ENABLED")
+    rate_limit_default: str = Field(default="60/minute", alias="RATE_LIMIT_DEFAULT")
+    rate_limit_upload: str = Field(default="10/minute", alias="RATE_LIMIT_UPLOAD")
+    rate_limit_job_create: str = Field(default="10/minute", alias="RATE_LIMIT_JOB_CREATE")
+
     clear_runtime_on_launch: bool = Field(
         default=False, alias="DEV_CLEAR_RUNTIME_ON_LAUNCH"
     )
