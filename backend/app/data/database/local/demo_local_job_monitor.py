@@ -1,4 +1,5 @@
 import asyncio
+import time
 from asyncio.locks import Event
 from collections.abc import AsyncGenerator
 
@@ -28,8 +29,8 @@ class DemoMatchingTaskMonitor:
         self.ocr_provider_repo: OcrProviderRepository = ocr_provider_repository
 
         self._events: dict[str, asyncio.Event] = {}
-        # job_id -> background poller task
         self._tasks: dict[str, asyncio.Task[MatchingTask]] = {}
+        self._registered_at: dict[str, float] = {}
 
     async def register_task(self, new_task: CreateMatchingTask) -> MatchingTask:
         registered_task: MatchingTask = await self.task_repo.register_matching_task(
@@ -41,6 +42,7 @@ class DemoMatchingTaskMonitor:
         self._tasks[task_id] = asyncio.create_task(
             self.task_repo.get_matching_task(task_id)
         )
+        self._registered_at[task_id] = time.monotonic()
         logger.debug("Registered task")
         return registered_task
 
@@ -67,6 +69,16 @@ class DemoMatchingTaskMonitor:
     def _cleanup_task(self, task_id: str) -> None:
         self._events.pop(task_id, None)
         self._tasks.pop(task_id, None)
+        self._registered_at.pop(task_id, None)
+
+    async def cleanup_stale(self, max_age_seconds: float = 3600) -> int:
+        now = time.monotonic()
+        stale_ids = [
+            tid for tid, ts in self._registered_at.items() if now - ts > max_age_seconds
+        ]
+        for tid in stale_ids:
+            self._cleanup_task(tid)
+        return len(stale_ids)
 
     async def monitor_job(self, task_id: str) -> AsyncGenerator[MatchingTask]:
         try:

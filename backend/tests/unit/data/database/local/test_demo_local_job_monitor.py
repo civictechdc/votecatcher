@@ -120,3 +120,90 @@ class TestDemoMatchingTaskMonitorCleanup:
 
         assert len(monitor._events) == 0
         assert len(monitor._tasks) == 0
+
+
+class TestStaleTaskCleanup:
+    """Scenario: tasks abandoned without terminal status are cleaned up."""
+
+    async def test_cleanup_stale_removes_old_tasks(
+        self,
+        monitor: DemoMatchingTaskMonitor,
+        task_repo: AsyncMock,
+    ) -> None:
+        """Given tasks registered more than max_age ago
+        When cleanup_stale is called
+        Then those tasks are removed from _events and _tasks
+        """
+        task_repo.register_matching_task.return_value = _make_task()
+
+        await monitor.register_task(CreateMatchingTask(campaign_id="camp-1"))
+        assert len(monitor._events) == 1
+        assert len(monitor._tasks) == 1
+
+        await monitor.cleanup_stale(max_age_seconds=0)
+
+        assert len(monitor._events) == 0
+        assert len(monitor._tasks) == 0
+
+    async def test_cleanup_stale_keeps_recent_tasks(
+        self,
+        monitor: DemoMatchingTaskMonitor,
+        task_repo: AsyncMock,
+    ) -> None:
+        """Given tasks registered within max_age
+        When cleanup_stale is called
+        Then those tasks are NOT removed
+        """
+        task_repo.register_matching_task.return_value = _make_task()
+
+        await monitor.register_task(CreateMatchingTask(campaign_id="camp-1"))
+
+        await monitor.cleanup_stale(max_age_seconds=3600)
+
+        assert len(monitor._events) == 1
+        assert len(monitor._tasks) == 1
+
+    async def test_cleanup_stale_partial(
+        self,
+        monitor: DemoMatchingTaskMonitor,
+        task_repo: AsyncMock,
+    ) -> None:
+        """Given mix of stale and recent tasks
+        When cleanup_stale is called
+        Then only stale tasks are removed
+        """
+        task_a = _make_task(task_id="stale-task")
+        task_b = _make_task(task_id="fresh-task")
+        task_repo.register_matching_task.side_effect = [task_a, task_b]
+
+        await monitor.register_task(CreateMatchingTask(campaign_id="camp-1"))
+        assert len(monitor._events) == 1
+
+        await monitor.register_task(CreateMatchingTask(campaign_id="camp-2"))
+        assert len(monitor._events) == 2
+
+        await monitor.cleanup_stale(max_age_seconds=0)
+
+        assert len(monitor._events) == 0
+        assert len(monitor._tasks) == 0
+
+    async def test_register_then_cleanup_then_register(
+        self,
+        monitor: DemoMatchingTaskMonitor,
+        task_repo: AsyncMock,
+    ) -> None:
+        """Given stale task cleaned up
+        When new task registered after cleanup
+        Then monitor works correctly
+        """
+        task_repo.register_matching_task.return_value = _make_task(task_id="old")
+        await monitor.register_task(CreateMatchingTask(campaign_id="camp-1"))
+        assert len(monitor._events) == 1
+
+        await monitor.cleanup_stale(max_age_seconds=0)
+        assert len(monitor._events) == 0
+
+        task_repo.register_matching_task.return_value = _make_task(task_id="new")
+        await monitor.register_task(CreateMatchingTask(campaign_id="camp-2"))
+        assert len(monitor._events) == 1
+        assert "new" in monitor._events
