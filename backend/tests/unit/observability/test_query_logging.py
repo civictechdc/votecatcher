@@ -5,6 +5,7 @@ Contract: slow queries logged at WARNING, all queries at DEBUG when LOG_SQL=true
 """
 
 import pytest
+import time
 from unittest.mock import MagicMock, patch
 import logging
 
@@ -70,8 +71,12 @@ class TestBeforeCursorExecute:
 
     def test_does_not_raise(self):
         conn = MagicMock()
-        conn.info = {}
-        conn.info.__setitem__ = MagicMock(side_effect=Exception("boom"))
+
+        class ExplodingDict(dict):
+            def __setitem__(self, key, value):
+                raise RuntimeError("boom")
+
+        conn.info = ExplodingDict()
         before_cursor_execute(conn, None, "SELECT 1", None, None, None)
 
 
@@ -96,7 +101,7 @@ class TestAfterCursorExecute:
         mock_logger = MagicMock()
         mock_get_logger.return_value = mock_logger
         conn = MagicMock()
-        conn.info = {"query_start_time": 0}
+        conn.info = {"query_start_time": time.monotonic()}
         after_cursor_execute(
             conn, None, "SELECT 1", None, None, None,
             threshold_ms=5000,
