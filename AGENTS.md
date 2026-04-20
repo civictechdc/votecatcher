@@ -11,8 +11,7 @@ This is EXTREMELY IMPORTANT:
 
 ## Active Work
 
-When picking up the crops-in-results implementation, start here:
-**`.agent-workspace/SESSION-HANDOFF.md`** — entry point for the implementing agent.
+**`.crosslink/handover.md`** — single source of truth for session handoff. Read this first when starting a new session.
 
 ## Version Bumping
 
