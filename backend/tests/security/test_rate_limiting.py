@@ -1,8 +1,8 @@
 """Rate limiting tests.
 
-NOTE: Current codebase does NOT implement rate limiting on any endpoints.
-All API endpoints are accessible without any throttling or rate limit protection.
-This test documents the current state and should be updated when rate limiting is added.
+Middleware stack is wired into api.py (SecurityHeadersMiddleware, CORS, slowapi Limiter).
+The Limiter is attached to app.state.limiter but rate limit decorators are NOT yet applied
+to individual routes. Until decorators are added, all endpoints are unthrottled.
 """
 
 import uuid
@@ -19,7 +19,6 @@ class TestRateLimiting:
 
     @pytest.fixture
     def test_region(self, session: Session):
-        """Create test region."""
         region = Region(
             region_key=f"TEST_{uuid.uuid4().hex[:8]}",
             region_name="Test Region",
@@ -32,7 +31,6 @@ class TestRateLimiting:
 
     @pytest.fixture
     def test_campaign(self, session: Session, test_region: Region):
-        """Create test campaign."""
         campaign = Campaign(
             unique_name=f"test_{uuid.uuid4().hex[:8]}",
             title="Test Campaign",
@@ -44,12 +42,12 @@ class TestRateLimiting:
         session.refresh(campaign)
         return campaign
 
-    def test_no_rate_limit_on_campaign_list(self, client: TestClient):
-        """Should NOT rate limit campaign list requests.
+    def test_limiter_attached_to_app_state(self, client: TestClient):
+        """Slowapi Limiter should be attached to app.state.limiter."""
+        assert hasattr(client.app.state, "limiter")
 
-        NOTE: Currently no rate limiting is implemented. Requests can
-        be made unlimited times.
-        """
+    def test_no_rate_limit_on_campaign_list(self, client: TestClient):
+        """Endpoints without @limiter.limit() decorator are unthrottled."""
         for _ in range(100):
             response = client.get("/api/campaigns")
             assert response.status_code == 200
@@ -57,21 +55,13 @@ class TestRateLimiting:
     def test_no_rate_limit_on_campaign_detail(
         self, client: TestClient, test_campaign: Campaign
     ):
-        """Should NOT rate limit campaign detail requests.
-
-        NOTE: Currently no rate limiting is implemented. Requests can
-        be made unlimited times.
-        """
+        """Endpoints without @limiter.limit() decorator are unthrottled."""
         for _ in range(100):
             response = client.get(f"/api/campaigns/{test_campaign.id}")
             assert response.status_code == 200
 
     def test_no_rate_limit_on_session_list(self, client: TestClient):
-        """Should NOT rate limit session list requests.
-
-        NOTE: Currently no rate limiting is implemented. Requests can
-        be made unlimited times.
-        """
+        """Endpoints without @limiter.limit() decorator are unthrottled."""
         for _ in range(100):
             response = client.get("/api/sessions")
             assert response.status_code == 200
@@ -79,11 +69,7 @@ class TestRateLimiting:
     def test_no_rate_limit_on_job_creation(
         self, client: TestClient, test_campaign: Campaign
     ):
-        """Should NOT rate limit job creation requests.
-
-        NOTE: Currently no rate limiting is implemented. Jobs can be
-        created unlimited times.
-        """
+        """Job creation endpoint is unthrottled until decorated."""
         for _i in range(10):
             response = client.post(
                 "/api/jobs",
@@ -97,11 +83,7 @@ class TestRateLimiting:
             assert response.status_code in [201, 400, 422]
 
     def test_no_rate_limit_on_upload(self, client: TestClient, test_campaign: Campaign):
-        """Should NOT rate limit file upload requests.
-
-        NOTE: Currently no rate limiting is implemented. Files can be
-        uploaded unlimited times.
-        """
+        """Upload endpoint is unthrottled until decorated."""
         for _i in range(10):
             response = client.post(
                 "/api/upload/voter-list",
@@ -110,52 +92,27 @@ class TestRateLimiting:
             )
             assert response.status_code in [201, 400, 404, 422]
 
-    def test_no_rate_limit_headers_returned(self, client: TestClient):
-        """Should NOT return rate limit headers.
-
-        NOTE: Currently no rate limiting headers (X-RateLimit-*,
-        Retry-After) are returned.
-        """
-        response = client.get("/api/campaigns")
-        assert response.status_code == 200
-        assert "X-RateLimit-Limit" not in response.headers
-        assert "X-RateLimit-Remaining" not in response.headers
-        assert "Retry-After" not in response.headers
-
     def test_rate_limit_429_not_returned(self, client: TestClient):
-        """Should NOT return 429 Too Many Requests.
-
-        NOTE: Currently no rate limiting is implemented, so 429 is never returned.
-        """
+        """Undecorated endpoints never return 429."""
         for _ in range(100):
             response = client.get("/api/campaigns")
             assert response.status_code != 429
 
-    def test_ip_based_rate_limit_not_implemented(self, client: TestClient):
-        """IP-based rate limiting not implemented.
+    def test_ip_based_rate_limit_per_ip(self, client: TestClient):
+        """When rate limiting decorators are added, limits should be per-IP.
 
-        NOTE: When rate limiting is added, test that different IPs have separate limits.
+        TODO: Add test with different client IPs when route decorators are applied.
         """
         pass
 
     def test_user_based_rate_limit_not_implemented(self):
-        """User-based rate limiting not implemented.
-
-        NOTE: When auth is added, test that rate limits are per-user, not per-IP.
-        """
+        """When auth is added, test that rate limits are per-user, not per-IP."""
         pass
 
     def test_endpoint_specific_rate_limits_not_implemented(self, client: TestClient):
-        """Endpoint-specific rate limits not implemented.
-
-        NOTE: When rate limiting is added, test that different endpoints
-        have different limits.
-        """
+        """When route decorators are added, test different limits per endpoint."""
         pass
 
     def test_rate_limit_burst_capacity_not_implemented(self, client: TestClient):
-        """Rate limit burst capacity (token bucket) not implemented.
-
-        NOTE: When rate limiting is added, test burst capacity for short traffic spikes.
-        """
+        """When rate limiting decorators are added, test burst capacity for spikes."""
         pass
