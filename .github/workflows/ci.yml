@@ -223,7 +223,29 @@ jobs:
 
       - name: Security scan (bun audit)
         id: security-scan
-        run: cd frontend && bun audit --ignore GHSA-4w7w-66w2-5vf9 --ignore GHSA-v2wj-q39q-566r --ignore GHSA-p9ff-h696-f583 --ignore GHSA-chqc-8p9q-pq6q --ignore GHSA-36xv-jgw5-4q75 --ignore GHSA-3f6h-2hrp-w5wx --ignore GHSA-2crg-3p73-43xp --ignore GHSA-3p68-rc4w-qgx5 --ignore GHSA-fvcv-3m26-pcqx --ignore GHSA-6v7q-wjvx-w8wg
+        # Ignores are per-advisory (not per-package). New vulns in same packages WILL still fail CI.
+        # Remove individual ignores when transitive deps are updated or direct deps are removed.
+        # openapi-generator-cli transitive chain (proxy-agent > pac-proxy-agent > get-uri > basic-ftp):
+        #   GHSA-rp42-5vxx-qpwr GHSA-6v7q-wjvx-w8wg GHSA-chqc-8p9q-pq6q
+        # openapi-generator-cli transitive chain (> axios > @nestjs):
+        #   GHSA-3p68-rc4w-qgx5 GHSA-fvcv-3m26-pcqx GHSA-36xv-jgw5-4q75
+        # vite (dev server only, not in production build):
+        #   GHSA-4w7w-66w2-5vf9 GHSA-v2wj-q39q-566r GHSA-p9ff-h696-f583
+        # sveltejs/kit (upgrade pending):
+        #   GHSA-3f6h-2hrp-w5wx GHSA-2crg-3p73-43xp
+        run: >-
+          cd frontend && bun audit
+          --ignore GHSA-rp42-5vxx-qpwr
+          --ignore GHSA-6v7q-wjvx-w8wg
+          --ignore GHSA-chqc-8p9q-pq6q
+          --ignore GHSA-3p68-rc4w-qgx5
+          --ignore GHSA-fvcv-3m26-pcqx
+          --ignore GHSA-36xv-jgw5-4q75
+          --ignore GHSA-4w7w-66w2-5vf9
+          --ignore GHSA-v2wj-q39q-566r
+          --ignore GHSA-p9ff-h696-f583
+          --ignore GHSA-3f6h-2hrp-w5wx
+          --ignore GHSA-2crg-3p73-43xp
 
       - name: Frontend failure summary
         if: failure()
