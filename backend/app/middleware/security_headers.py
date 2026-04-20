@@ -37,9 +37,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if "x-request-id" not in response.headers:
             response.headers["x-request-id"] = str(uuid.uuid4())
 
-        is_production = self._is_production
-
-        if is_production:
+        if self._is_production:
             if "strict-transport-security" not in response.headers:
                 response.headers["strict-transport-security"] = (
                     "max-age=63072000; includeSubDomains; preload"
