@@ -2,12 +2,6 @@ import json
 from dataclasses import dataclass
 from typing import Any, List, override
 
-from langchain_openai import ChatOpenAI
-from langchain_mistralai import ChatMistralAI
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.runnables import (
-    Runnable,
-)
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
@@ -95,44 +89,6 @@ class OCREntry(BaseModel):
 
 class OCRData(BaseModel):
     Data: List[OCREntry]
-
-
-def _create_ocr_client() -> Runnable:
-    """
-    Create an AI client with the appropriate settings.
-
-    Returns:
-        Runnable: An AI client for OCR extraction.
-    """
-
-    ocr_config = get_settings().ocr
-
-    client: Runnable = None
-
-    match ocr_config.provider_name.lower():
-        case "openai":
-            client = ChatOpenAI(
-                api_key=ocr_config.api_key.get_secret_value(),
-                temperature=1,
-                openai_api_base="https://oai.helicone.ai/v1",
-                model=ocr_config.model,
-            ).with_structured_output(OCRData)
-        case "mistral":
-            client = ChatMistralAI(
-                api_key=ocr_config.api_key.get_secret_value(),
-                temperature=0.0,
-                model_name=ocr_config.model,
-            ).with_structured_output(OCRData)
-        case "gemini" | "google":
-            client = ChatGoogleGenerativeAI(
-                api_key=ocr_config.api_key.get_secret_value(),
-                temperature=0.0,
-                model=ocr_config.model,
-            ).with_structured_output(OCRData)
-
-    logger.debug(f"Creating client for provider={ocr_config.provider_name}")
-
-    return client
 
 
 async def _extract_openai(
