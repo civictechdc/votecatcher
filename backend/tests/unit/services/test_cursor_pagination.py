@@ -530,3 +530,134 @@ class TestAdversarialFindings:
         assert result.total == 2
         assert len(result.results) == 2
         assert result.next_cursor is None
+
+
+class TestCachedTotalCount:
+    """Feature: Cached total count in job metadata.
+
+    As the system
+    I want to cache the distinct OCR count on job completion
+    So that pagination queries skip the expensive COUNT(DISTINCT) query.
+    """
+
+    def test_cached_count_used_as_total(self, session):
+        """Scenario: Job with distinct_ocr_count set skips COUNT query."""
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+        _build_ocr_chain(session, job, scan, 5)
+
+        job.distinct_ocr_count = 42
+        session.add(job)
+        session.commit()
+
+        service = ResultsQueryService(session)
+        result = service.get_results(job.id, cursor=None, page_size=3)
+
+        assert result.total == 42
+
+    def test_uncached_job_runs_count_query(self, session):
+        """Scenario: Job without distinct_ocr_count falls back to COUNT query."""
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+        _build_ocr_chain(session, job, scan, 7)
+
+        service = ResultsQueryService(session)
+        result = service.get_results(job.id, cursor=None, page_size=3)
+
+        assert result.total == 7
+
+    def test_campaign_uses_cached_count(self, session):
+        """Scenario: Campaign endpoint uses cached count from latest job."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+        _build_ocr_chain(session, job, scan, 5)
+
+        job.distinct_ocr_count = 99
+        session.add(job)
+        session.commit()
+
+        service = CampaignQueryService(session)
+        result = service.get_campaign_results(campaign.id, cursor=None, page_size=3)
+
+        assert result.total == 99
+
+    def test_campaign_uncached_runs_count(self, session):
+        """Scenario: Campaign endpoint without cache runs COUNT query."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+        _build_ocr_chain(session, job, scan, 3)
+
+        service = CampaignQueryService(session)
+        result = service.get_campaign_results(campaign.id, cursor=None, page_size=10)
+
+        assert result.total == 3
+
+    def test_cached_count_with_confidence_filter_ignored(self, session):
+        """Scenario: Cached count ignored when confidence filter applied.
+
+        Cached count is total unfiltered. Confidence-filtered queries
+        must still run COUNT to get the filtered total.
+        """
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+
+        for i in range(4):
+            crop = PetitionCrop(
+                scan_id=scan.id,
+                crop_index=i,
+                stored_path=f"/tmp/crop_{i}.png",
+                crop_coordinates={"top": 0.0, "bottom": 0.1},
+                page_number=1,
+            )
+            session.add(crop)
+            session.flush()
+            ocr = OcrResult(
+                crop_id=crop.id,
+                ocr_job_id=1,
+                extracted_text={"name": f"Sig {i}"},
+            )
+            session.add(ocr)
+            session.flush()
+            level = ConfidenceLevel.HIGH if i < 2 else ConfidenceLevel.LOW
+            session.add(
+                MatchResult(
+                    matcher_job_id=job.id,
+                    ocr_result_id=ocr.id,
+                    voter_id=None,
+                    rank=1,
+                    similarity_score=0.85,
+                    confidence_level=level,
+                )
+            )
+        session.commit()
+
+        job.distinct_ocr_count = 4
+        session.add(job)
+        session.commit()
+
+        service = ResultsQueryService(session)
+        result = service.get_results(
+            job.id, cursor=None, page_size=10, confidence=ConfidenceLevel.HIGH
+        )
+
+        assert result.total == 2

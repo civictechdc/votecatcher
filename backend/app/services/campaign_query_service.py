@@ -67,13 +67,18 @@ class CampaignQueryService:
         if confidence:
             base_where.append(MatchResult.confidence_level == confidence)
 
-        total = self._session.exec(
-            select(func.count()).select_from(
-                select(func.distinct(MatchResult.ocr_result_id))
-                .where(*base_where)
-                .subquery()
-            )
-        ).one()
+        latest_job = self._session.get(MatcherJob, latest_job_id)
+
+        if confidence is None and latest_job and latest_job.distinct_ocr_count is not None:
+            total = latest_job.distinct_ocr_count
+        else:
+            total = self._session.exec(
+                select(func.count()).select_from(
+                    select(func.distinct(MatchResult.ocr_result_id))
+                    .where(*base_where)
+                    .subquery()
+                )
+            ).one()
 
         if total == 0:
             return CampaignResultsListResponse(

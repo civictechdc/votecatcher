@@ -264,6 +264,16 @@ class JobWorker:
         previous_status = job.current_status.value if job.current_status else None
         job.current_status = JobStatus.MATCHING_COMPLETED
         job.ended_on = datetime.now(UTC)
+
+        distinct_count = session.exec(
+            select(func.count()).select_from(
+                select(func.distinct(MatchResult.ocr_result_id))
+                .where(MatchResult.matcher_job_id == job.id)
+                .subquery()
+            )
+        ).one()
+        job.distinct_ocr_count = distinct_count
+
         session.commit()
 
         await event_bus.publish(

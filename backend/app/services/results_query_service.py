@@ -58,13 +58,16 @@ class ResultsQueryService:
         if confidence:
             base_where.append(MatchResult.confidence_level == confidence)
 
-        total = self._session.exec(
-            select(func.count()).select_from(
-                select(func.distinct(MatchResult.ocr_result_id))
-                .where(*base_where)
-                .subquery()
-            )
-        ).one()
+        if confidence is None and job.distinct_ocr_count is not None:
+            total = job.distinct_ocr_count
+        else:
+            total = self._session.exec(
+                select(func.count()).select_from(
+                    select(func.distinct(MatchResult.ocr_result_id))
+                    .where(*base_where)
+                    .subquery()
+                )
+            ).one()
 
         if total == 0:
             from app.routers.results_router import ResultsListResponse
