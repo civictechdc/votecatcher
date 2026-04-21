@@ -83,7 +83,6 @@ plans/
 
 # Handover docs (local session state)
 .crosslink/
-.chainlink/
 
 # Agent skills (tooling config, not application source)
 .agents/
@@ -143,6 +142,7 @@ supabase/.env
 !.zed/debug.json
 !.zed/tasks.json
 !.vscode/settings.json
+!.devcontainer/devcontainer.json
 !.vscode/extensions.json
 !.vscode/launch.json
 !.vscode/tasks.json

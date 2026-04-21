@@ -69,8 +69,9 @@
 	let cursorHistory = $state<number[]>([]);
 
 	function handlePrevious() {
-		const prevCursor = cursorHistory.length > 0 ? cursorHistory.pop()! : null;
-		cursorHistory = cursorHistory;
+		if (cursorHistory.length === 0) return;
+		const prevCursor = cursorHistory.pop()!;
+		cursorHistory = [...cursorHistory];
 		campaignResults.fetchResults(campaignId, { cursor: prevCursor, pageSize: $campaignResults.pageSize });
 	}
 

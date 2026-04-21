@@ -17,6 +17,18 @@
 		"TypeScript": {
 			"inlay_hints": {
 				"enabled": true
+			},
+			"formatter": {
+				"language_server": {
+					"name": "oxfmt"
+				}
+			}
+		},
+		"JavaScript": {
+			"formatter": {
+				"language_server": {
+					"name": "oxfmt"
+				}
 			}
 		},
 		"Svelte": {

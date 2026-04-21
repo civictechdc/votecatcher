@@ -65,6 +65,7 @@ Spec-driven voter matching and region selection capabilities were added, includi
 - Updated featureFlags/settings/demo/database tests to use vi.stubEnv.
 
 ### Changed
+- Deduplicate db service between docker-compose and override
 - Impl: CSV export batched OCR lookups (#60)
 - Test: CSV batch lookup tests (#53)
 
