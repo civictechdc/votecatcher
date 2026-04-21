@@ -812,15 +812,11 @@ class TestCsvExport:
 
         service = ResultsQueryService(session)
 
-        with patch.object(
-            type(session), "get", wraps=session.get
-        ) as mock_get:
+        with patch.object(type(session), "get", wraps=session.get) as mock_get:
             generator, _ = service.export_results_csv(job.id)
             list(generator)
 
-            ocr_get_calls = [
-                c for c in mock_get.call_args_list if c[0][0] is OcrResult
-            ]
+            ocr_get_calls = [c for c in mock_get.call_args_list if c[0][0] is OcrResult]
             assert len(ocr_get_calls) == 0, (
                 f"Expected no session.get(OcrResult, ...) calls, "
                 f"got {len(ocr_get_calls)}"
@@ -860,15 +856,12 @@ class TestCsvExport:
 
         service = ResultsQueryService(session)
 
-        with patch.object(
-            type(session), "get", wraps=session.get
-        ) as mock_get:
+        with patch.object(type(session), "get", wraps=session.get) as mock_get:
             generator, _ = service.export_results_csv(job.id)
             list(generator)
 
             voter_get_calls = [
-                c for c in mock_get.call_args_list
-                if c[0][0] is RegisteredVoter
+                c for c in mock_get.call_args_list if c[0][0] is RegisteredVoter
             ]
             assert len(voter_get_calls) == 0, (
                 f"Expected no session.get(RegisteredVoter, ...) calls, "

@@ -167,9 +167,7 @@ class ResultsQueryService:
         next_cursor = None
         if len(paginated_ocr_ids) == page_size:
             last_id = paginated_ocr_ids[-1]
-            next_page_where = list(base_where) + [
-                MatchResult.ocr_result_id > last_id
-            ]
+            next_page_where = list(base_where) + [MatchResult.ocr_result_id > last_id]
             count_after = self._session.exec(
                 select(func.count()).select_from(
                     select(func.distinct(MatchResult.ocr_result_id))
@@ -298,11 +296,11 @@ class ResultsQueryService:
 
             voter = voter_cache.get(mr.voter_id) if mr.voter_id else None
             voter_name = PredictionBuilder.format_voter_name(voter) if voter else ""
-            voter_address = PredictionBuilder.format_voter_address(voter) if voter else ""
-
-            confidence = (
-                mr.confidence_level.value if mr.confidence_level else "LOW"
+            voter_address = (
+                PredictionBuilder.format_voter_address(voter) if voter else ""
             )
+
+            confidence = mr.confidence_level.value if mr.confidence_level else "LOW"
             yield self._csv_row(
                 [
                     crop_id,

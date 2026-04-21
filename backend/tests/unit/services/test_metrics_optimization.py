@@ -17,9 +17,7 @@ from app.data.database.model.schema import Campaign, Region
 
 
 def _seed_campaign_with_data(session: Session, n_ocr: int = 10):
-    region = Region(
-        region_key="DC", region_name="Washington, DC", country_code="US"
-    )
+    region = Region(region_key="DC", region_name="Washington, DC", country_code="US")
     session.add(region)
     session.flush()
 
@@ -136,9 +134,7 @@ class TestMetricsQueryOptimization:
             return original_exec(*args, **kwargs)
 
         with patch.object(type(session), "exec", side_effect=counting_exec):
-            processed, confidence_counts = service._count_processed_results(
-                campaign.id
-            )
+            processed, confidence_counts = service._count_processed_results(campaign.id)
 
         assert processed == 10
         assert call_count == 1, (

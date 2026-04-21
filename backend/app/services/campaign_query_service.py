@@ -54,9 +54,7 @@ class CampaignQueryService:
             raise ValueError(f"Campaign {campaign_id} not found")
 
         latest_job_id = self._session.exec(
-            select(func.max(MatcherJob.id)).where(
-                MatcherJob.campaign_id == campaign_id
-            )
+            select(func.max(MatcherJob.id)).where(MatcherJob.campaign_id == campaign_id)
         ).one()
 
         if latest_job_id is None:

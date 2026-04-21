@@ -221,12 +221,16 @@ class TestGetCampaignResults:
         assert page1.page_size == 2
         assert page1.next_cursor is not None
 
-        page2 = service.get_campaign_results(campaign.id, cursor=page1.next_cursor, page_size=2)
+        page2 = service.get_campaign_results(
+            campaign.id, cursor=page1.next_cursor, page_size=2
+        )
         assert page2.total == 5
         assert len(page2.results) == 2
         assert page2.next_cursor is not None
 
-        page3 = service.get_campaign_results(campaign.id, cursor=page2.next_cursor, page_size=2)
+        page3 = service.get_campaign_results(
+            campaign.id, cursor=page2.next_cursor, page_size=2
+        )
         assert page3.total == 5
         assert len(page3.results) == 1
         assert page3.next_cursor is None

@@ -142,9 +142,7 @@ class TestKeysetPaginationJobResults:
         page2 = service.get_results(job.id, cursor=last_ocr_id, page_size=3)
 
         assert len(page2.results) == 3
-        assert all(
-            r.ocr_result_id > last_ocr_id for r in page2.results
-        )
+        assert all(r.ocr_result_id > last_ocr_id for r in page2.results)
 
     def test_cursor_returns_empty_beyond_last_page(self, session):
         """Scenario: Cursor beyond all results returns empty with null next_cursor."""
@@ -329,9 +327,7 @@ class TestKeysetPaginationCampaignResults:
         region, campaign, job = self._build_campaign_chain(session, 10)
 
         service = CampaignQueryService(session)
-        result = service.get_campaign_results(
-            campaign.id, cursor=None, page_size=3
-        )
+        result = service.get_campaign_results(campaign.id, cursor=None, page_size=3)
 
         assert len(result.results) == 3
         assert result.total == 10
@@ -343,13 +339,9 @@ class TestKeysetPaginationCampaignResults:
         region, campaign, job = self._build_campaign_chain(session, 10)
 
         service = CampaignQueryService(session)
-        page1 = service.get_campaign_results(
-            campaign.id, cursor=None, page_size=3
-        )
+        page1 = service.get_campaign_results(campaign.id, cursor=None, page_size=3)
         cursor = page1.results[-1].ocr_result_id
-        page2 = service.get_campaign_results(
-            campaign.id, cursor=cursor, page_size=3
-        )
+        page2 = service.get_campaign_results(campaign.id, cursor=cursor, page_size=3)
 
         assert len(page2.results) == 3
         assert all(r.ocr_result_id > cursor for r in page2.results)
@@ -361,9 +353,7 @@ class TestKeysetPaginationCampaignResults:
         region, campaign, job = self._build_campaign_chain(session, 10)
 
         service = CampaignQueryService(session)
-        result = service.get_campaign_results(
-            campaign.id, cursor=None, page_size=3
-        )
+        result = service.get_campaign_results(campaign.id, cursor=None, page_size=3)
 
         assert result.next_cursor is not None
         assert result.next_cursor == result.results[-1].ocr_result_id
@@ -428,9 +418,7 @@ class TestAdversarialFindings:
 
         service = CampaignQueryService(session)
         with pytest.raises(ValueError, match="Invalid confidence"):
-            service.get_campaign_results(
-                campaign.id, confidence="INVALID", page_size=3
-            )
+            service.get_campaign_results(campaign.id, confidence="INVALID", page_size=3)
 
     def test_campaign_uses_latest_job_only(self, session):
         """Scenario: Campaign results reflect only the latest (max ID) job, not all jobs."""
