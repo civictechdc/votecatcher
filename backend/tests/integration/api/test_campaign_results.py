@@ -28,7 +28,6 @@ class TestCampaignResultsAPI:
 
         assert data["results"] == []
         assert data["total"] == 0
-        assert data["page"] == 1
         assert data["pageSize"] == 50
 
     def test_results_campaign_not_found(self, client: TestClient):
@@ -192,7 +191,7 @@ class TestCampaignResultsAPI:
 
         response = client.get(
             f"/api/campaigns/{test_campaign.id}/results",
-            params={"page": 1, "page_size": 2},
+            params={"page_size": 2},
         )
 
         assert response.status_code == 200
@@ -200,12 +199,12 @@ class TestCampaignResultsAPI:
 
         assert data["total"] == 5
         assert len(data["results"]) == 2
-        assert data["page"] == 1
         assert data["pageSize"] == 2
+        assert data["nextCursor"] is not None
 
         response2 = client.get(
             f"/api/campaigns/{test_campaign.id}/results",
-            params={"page": 2, "page_size": 2},
+            params={"cursor": data["nextCursor"], "page_size": 2},
         )
 
         assert response2.status_code == 200
@@ -213,7 +212,6 @@ class TestCampaignResultsAPI:
 
         assert data2["total"] == 5
         assert len(data2["results"]) == 2
-        assert data2["page"] == 2
 
     def test_results_confidence_filter(
         self,

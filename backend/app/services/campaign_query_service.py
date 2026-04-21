@@ -36,23 +36,14 @@ class CampaignQueryService:
         self,
         campaign_id: uuid.UUID,
         confidence: str | None = None,
-        page: int = 1,
+        cursor: int | None = None,
         page_size: int = 50,
     ) -> CampaignResultsListResponse:
-        """Get match results for all jobs in a campaign.
+        if cursor is not None and cursor < 0:
+            raise ValueError("cursor must be non-negative")
+        if not 1 <= page_size <= 1000:
+            raise ValueError("page_size must be between 1 and 1000")
 
-        Args:
-            campaign_id: Campaign UUID
-            confidence: Filter by confidence level (HIGH/MEDIUM/LOW, optional)
-            page: Page number (1-indexed)
-            page_size: Items per page
-
-        Returns:
-            Paginated match results for the campaign
-
-        Raises:
-            ValueError: If campaign not found
-        """
         from app.data.database.model.jobs import MatcherJob
         from app.data.database.model.match_result import ConfidenceLevel, MatchResult
         from app.data.database.model.ocr_result import OcrResult
@@ -62,26 +53,24 @@ class CampaignQueryService:
         if not campaign:
             raise ValueError(f"Campaign {campaign_id} not found")
 
-        job_ids_statement = (
-            select(MatcherJob.id)
-            .where(MatcherJob.campaign_id == campaign_id)
-            .order_by(MatcherJob.id.desc())
-        )
-        job_ids: list[int] = list(self._session.exec(job_ids_statement).all())
+        latest_job_id = self._session.exec(
+            select(func.max(MatcherJob.id)).where(MatcherJob.campaign_id == campaign_id)
+        ).one()
 
-        if not job_ids:
+        if latest_job_id is None:
             return CampaignResultsListResponse(
-                results=[], total=0, page=page, page_size=page_size
+                results=[], total=0, page_size=page_size, next_cursor=None
             )
-
-        latest_job_id = job_ids[0]
 
         confidence_filter = None
         if confidence:
             try:
                 confidence_filter = ConfidenceLevel(confidence.upper())
             except ValueError:
-                confidence_filter = None
+                raise ValueError(
+                    f"Invalid confidence level: {confidence!r}. "
+                    f"Must be one of: {[e.value for e in ConfidenceLevel]}"
+                )
 
         base_where = [MatchResult.matcher_job_id == latest_job_id]
         if confidence_filter:
@@ -97,16 +86,19 @@ class CampaignQueryService:
 
         if total == 0:
             return CampaignResultsListResponse(
-                results=[], total=0, page=page, page_size=page_size
+                results=[], total=0, page_size=page_size, next_cursor=None
             )
+
+        cursor_where = list(base_where)
+        if cursor is not None and cursor > 0:
+            cursor_where.append(MatchResult.ocr_result_id > cursor)
 
         paginated_ocr_ids = list(
             self._session.exec(
                 select(MatchResult.ocr_result_id)
-                .where(*base_where)
+                .where(*cursor_where)
                 .distinct()
                 .order_by(MatchResult.ocr_result_id)
-                .offset((page - 1) * page_size)
                 .limit(page_size)
             ).all()
         )
@@ -198,8 +190,32 @@ class CampaignQueryService:
                 )
             )
 
+        next_cursor = None
+        if len(paginated_ocr_ids) == page_size:
+            last_id = paginated_ocr_ids[-1]
+            next_page_where = [
+                MatchResult.matcher_job_id == latest_job_id,
+                MatchResult.ocr_result_id > last_id,
+            ]
+            if confidence_filter:
+                next_page_where.append(
+                    MatchResult.confidence_level == confidence_filter
+                )
+            count_after = self._session.exec(
+                select(func.count()).select_from(
+                    select(func.distinct(MatchResult.ocr_result_id))
+                    .where(*next_page_where)
+                    .subquery()
+                )
+            ).one()
+            if count_after:
+                next_cursor = last_id
+
         return CampaignResultsListResponse(
-            results=results, total=total, page=page, page_size=page_size
+            results=results,
+            total=total,
+            page_size=page_size,
+            next_cursor=next_cursor,
         )
 
     def _build_campaign_predictions(

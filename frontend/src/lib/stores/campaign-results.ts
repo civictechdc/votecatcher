@@ -32,7 +32,8 @@ export interface CampaignResultResponse {
 interface CampaignResultsState {
 	results: CampaignResultResponse[];
 	total: number;
-	page: number;
+	cursor: number | null;
+	nextCursor: number | null;
 	pageSize: number;
 	confidence?: string;
 	loading: boolean;
@@ -41,7 +42,7 @@ interface CampaignResultsState {
 }
 
 interface FetchOptions {
-	page?: number;
+	cursor?: number | null;
 	pageSize?: number;
 	confidence?: string;
 }
@@ -50,7 +51,8 @@ function createCampaignResultsStore() {
 	const { subscribe, set, update } = writable<CampaignResultsState>({
 		results: [],
 		total: 0,
-		page: 1,
+		cursor: null,
+		nextCursor: null,
 		pageSize: 50,
 		confidence: undefined,
 		loading: false,
@@ -62,7 +64,7 @@ function createCampaignResultsStore() {
 		subscribe,
 
 		async fetchResults(campaignId: string, options: FetchOptions = {}) {
-			const page = options.page ?? 1;
+			const cursor = options.cursor ?? null;
 			const pageSize = options.pageSize ?? 50;
 			const confidence = options.confidence;
 
@@ -70,16 +72,18 @@ function createCampaignResultsStore() {
 				...s,
 				loading: true,
 				error: null,
-				page,
+				cursor,
 				pageSize,
 				confidence,
 			}));
 
 			try {
 				const params = new URLSearchParams({
-					page: String(page),
 					page_size: String(pageSize),
 				});
+				if (cursor) {
+					params.append("cursor", String(cursor));
+				}
 				if (confidence) {
 					params.append("confidence", confidence);
 				}
@@ -98,6 +102,7 @@ function createCampaignResultsStore() {
 					...s,
 					results: data.results,
 					total: data.total,
+					nextCursor: data.nextCursor ?? null,
 					loading: false,
 					initialized: true,
 				}));
@@ -119,7 +124,8 @@ function createCampaignResultsStore() {
 			set({
 				results: [],
 				total: 0,
-				page: 1,
+				cursor: null,
+				nextCursor: null,
 				pageSize: 50,
 				confidence: undefined,
 				loading: false,

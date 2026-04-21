@@ -236,7 +236,6 @@ class TestResultsQueryService:
 
         assert result.total == 0
         assert result.results == []
-        assert result.page == 1
         assert result.page_size == 50
 
     def test_get_results_with_data(self, session: Session):
@@ -499,18 +498,22 @@ class TestResultsQueryService:
 
         service = ResultsQueryService(session)
 
-        page1 = service.get_results(1, page=1, page_size=3)
+        page1 = service.get_results(1, page_size=3)
         assert page1.total == 10
         assert len(page1.results) == 3
+        assert page1.next_cursor is not None
 
-        page2 = service.get_results(1, page=2, page_size=3)
+        page2 = service.get_results(1, cursor=page1.next_cursor, page_size=3)
         assert page2.total == 10
         assert len(page2.results) == 3
+        assert page2.next_cursor is not None
 
-        page3 = service.get_results(1, page=3, page_size=3)
+        page3 = service.get_results(1, cursor=page2.next_cursor, page_size=3)
         assert page3.total == 10
         assert len(page3.results) == 3
+        assert page3.next_cursor is not None
 
-        page4 = service.get_results(1, page=4, page_size=3)
+        page4 = service.get_results(1, cursor=page3.next_cursor, page_size=3)
         assert page4.total == 10
         assert len(page4.results) == 1
+        assert page4.next_cursor is None

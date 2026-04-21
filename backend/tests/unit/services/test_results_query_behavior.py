@@ -152,7 +152,6 @@ class TestGetResultsPagination:
 
         assert result.total == 0
         assert result.results == []
-        assert result.page == 1
         assert result.page_size == 50
 
     def test_returns_correct_total_as_unique_ocr_results(self, session):
@@ -208,9 +207,11 @@ class TestGetResultsPagination:
 
         service = ResultsQueryService(session)
 
-        page1 = service.get_results(job.id, page=1, page_size=3)
-        page2 = service.get_results(job.id, page=2, page_size=3)
-        page4 = service.get_results(job.id, page=4, page_size=3)
+        page1 = service.get_results(job.id, page_size=3)
+        page2 = service.get_results(job.id, cursor=page1.next_cursor, page_size=3)
+        page4_cursor = page2.next_cursor
+        page3 = service.get_results(job.id, cursor=page4_cursor, page_size=3)
+        page4 = service.get_results(job.id, cursor=page3.next_cursor, page_size=3)
 
         assert len(page1.results) == 3
         assert len(page2.results) == 3
@@ -689,9 +690,10 @@ class TestCsvExport:
         assert len(lines) == 2
         assert "HIGH" in lines[1]
 
-    def test_export_never_loads_all_rows_at_once(self, session):
-        """Scenario: Export streams results without calling .all() on the query."""
-        from unittest.mock import MagicMock, patch
+    def test_export_materializes_match_results_and_batch_fetches_related(self, session):
+        """Scenario: Export materializes match results via yield_per, then
+        batch-fetches OcrResult and RegisteredVoter — no per-row lookups."""
+        from unittest.mock import patch
 
         from app.services.results_query_service import ResultsQueryService
 
@@ -714,21 +716,31 @@ class TestCsvExport:
         )
         session.commit()
 
-        mock_stream = MagicMock()
-        mock_stream.yield_per.return_value = mock_stream
-        mock_stream.__iter__ = MagicMock(return_value=iter([]))
-        mock_stream.all = MagicMock(
-            side_effect=AssertionError(
-                ".all() must not be called during streaming export"
-            )
-        )
+        real_exec = session.exec
 
-        with patch.object(type(session), "exec", return_value=mock_stream):
+        batch_lookups = {"ocr": 0, "voter": 0}
+        match_materializations = 0
+
+        def tracking_exec(statement):
+            nonlocal match_materializations, batch_lookups
+            result = real_exec(statement)
+            stmt_str = str(statement)
+            if "match_result" in stmt_str.lower():
+                match_materializations += 1
+            elif "ocr_result" in stmt_str.lower():
+                batch_lookups["ocr"] += 1
+            elif "registered_voter" in stmt_str.lower():
+                batch_lookups["voter"] += 1
+            return result
+
+        with patch.object(type(session), "exec", side_effect=tracking_exec):
             service = ResultsQueryService(session)
             csv_lines, _ = service.export_results_csv(job.id)
             list(csv_lines)
 
-        mock_stream.all.assert_not_called()
+        assert match_materializations == 1
+        assert batch_lookups["ocr"] == 1
+        assert batch_lookups["voter"] == 0
 
     def test_export_yields_incrementally_not_as_single_blob(self, session):
         """Scenario: CSV output arrives as multiple pieces, not one monolithic string."""
@@ -764,3 +776,133 @@ class TestCsvExport:
         lines = [ln for ln in body.strip().split("\n") if ln]
         assert lines[0].startswith("Crop ID")
         assert len(lines) == 4
+
+    def test_export_uses_batched_ocr_lookup_not_per_row_get(self, session):
+        """Scenario: CSV export batch-fetches OcrResults instead of per-row session.get.
+
+        The export must not call session.get(OcrResult, ...) for each unique
+        ocr_result_id. Instead it should bulk-fetch in batches.
+        """
+        from unittest.mock import patch
+
+        from app.data.database.model.ocr_result import OcrResult
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+
+        ocr_ids = []
+        for i in range(5):
+            crop = _seed_crop(session, scan, index=i)
+            ocr = _seed_ocr_result(session, crop, text={"name": f"Sig {i}"})
+            ocr_ids.append(ocr.id)
+            session.add(
+                MatchResult(
+                    matcher_job_id=job.id,
+                    ocr_result_id=ocr.id,
+                    voter_id=None,
+                    rank=1,
+                    similarity_score=0.9,
+                    confidence_level=ConfidenceLevel.HIGH,
+                )
+            )
+        session.commit()
+
+        service = ResultsQueryService(session)
+
+        with patch.object(type(session), "get", wraps=session.get) as mock_get:
+            generator, _ = service.export_results_csv(job.id)
+            list(generator)
+
+            ocr_get_calls = [c for c in mock_get.call_args_list if c[0][0] is OcrResult]
+            assert len(ocr_get_calls) == 0, (
+                f"Expected no session.get(OcrResult, ...) calls, "
+                f"got {len(ocr_get_calls)}"
+            )
+
+    def test_export_uses_batched_voter_lookup_not_per_row_get(self, session):
+        """Scenario: CSV export batch-fetches RegisteredVoters instead of per-row session.get.
+
+        The export must not call session.get(RegisteredVoter, ...) for each
+        unique voter_id. Instead it should bulk-fetch in batches.
+        """
+        from unittest.mock import patch
+
+        from app.data.database.model.registered_voter import RegisteredVoter
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+        crop = _seed_crop(session, scan)
+        ocr = _seed_ocr_result(session, crop)
+
+        voters = [_seed_voter(session, region, first_name=f"V{i}") for i in range(5)]
+        for i, voter in enumerate(voters):
+            session.add(
+                MatchResult(
+                    matcher_job_id=job.id,
+                    ocr_result_id=ocr.id,
+                    voter_id=voter.id,
+                    rank=i + 1,
+                    similarity_score=0.9,
+                    confidence_level=ConfidenceLevel.HIGH,
+                )
+            )
+        session.commit()
+
+        service = ResultsQueryService(session)
+
+        with patch.object(type(session), "get", wraps=session.get) as mock_get:
+            generator, _ = service.export_results_csv(job.id)
+            list(generator)
+
+            voter_get_calls = [
+                c for c in mock_get.call_args_list if c[0][0] is RegisteredVoter
+            ]
+            assert len(voter_get_calls) == 0, (
+                f"Expected no session.get(RegisteredVoter, ...) calls, "
+                f"got {len(voter_get_calls)}"
+            )
+
+    def test_batched_export_produces_correct_output(self, session):
+        """Scenario: Batched lookup refactor preserves CSV content correctness.
+
+        Multiple match results with different OCR results and voters must
+        produce identical CSV output to the per-row version.
+        """
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+
+        for i in range(3):
+            crop = _seed_crop(session, scan, index=i)
+            ocr = _seed_ocr_result(session, crop, text={"name": f"Sig {i}"})
+            voter = _seed_voter(session, region, first_name=f"V{i}")
+            session.add(
+                MatchResult(
+                    matcher_job_id=job.id,
+                    ocr_result_id=ocr.id,
+                    voter_id=voter.id,
+                    rank=1,
+                    similarity_score=0.9,
+                    confidence_level=ConfidenceLevel.HIGH,
+                )
+            )
+        session.commit()
+
+        service = ResultsQueryService(session)
+        generator, _ = service.export_results_csv(job.id)
+        body = self._collect_csv(generator)
+
+        lines = [ln for ln in body.strip().split("\n") if ln]
+        assert len(lines) == 4
+        assert lines[0].startswith("Crop ID")
+        for line in lines[1:]:
+            assert "HIGH" in line

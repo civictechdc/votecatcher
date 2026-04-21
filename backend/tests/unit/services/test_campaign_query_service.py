@@ -124,7 +124,6 @@ class TestGetCampaignResults:
 
         assert result.total == 0
         assert result.results == []
-        assert result.page == 1
         assert result.page_size == 50
 
     def test_campaign_not_found_raises_value_error(self, session: Session):
@@ -216,20 +215,25 @@ class TestGetCampaignResults:
 
         service = CampaignQueryService(session)
 
-        page1 = service.get_campaign_results(campaign.id, page=1, page_size=2)
+        page1 = service.get_campaign_results(campaign.id, page_size=2)
         assert page1.total == 5
         assert len(page1.results) == 2
-        assert page1.page == 1
         assert page1.page_size == 2
+        assert page1.next_cursor is not None
 
-        page2 = service.get_campaign_results(campaign.id, page=2, page_size=2)
+        page2 = service.get_campaign_results(
+            campaign.id, cursor=page1.next_cursor, page_size=2
+        )
         assert page2.total == 5
         assert len(page2.results) == 2
-        assert page2.page == 2
+        assert page2.next_cursor is not None
 
-        page3 = service.get_campaign_results(campaign.id, page=3, page_size=2)
+        page3 = service.get_campaign_results(
+            campaign.id, cursor=page2.next_cursor, page_size=2
+        )
         assert page3.total == 5
         assert len(page3.results) == 1
+        assert page3.next_cursor is None
 
     def test_confidence_filter_excludes_non_matching(self, session: Session):
         """Scenario: Filtering by HIGH excludes LOW/MEDIUM results."""
@@ -347,19 +351,19 @@ class TestGetCampaignResults:
 
         page_size = 3
         all_ids: set[int] = set()
-        page = 1
+        cursor = None
         while True:
             result = service.get_campaign_results(
-                campaign.id, page=page, page_size=page_size
+                campaign.id, cursor=cursor, page_size=page_size
             )
             page_ids = {r.ocr_result_id for r in result.results}
-            assert page_ids.isdisjoint(all_ids), f"Page {page} overlaps previous pages"
+            assert page_ids.isdisjoint(all_ids), "Cursor page overlaps previous pages"
             all_ids |= page_ids
-            if len(all_ids) >= result.total:
+            if not result.next_cursor:
                 break
-            page += 1
+            cursor = result.next_cursor
 
-        assert all_ids == set(range(1, 8)) or len(all_ids) == 7
+        assert len(all_ids) == 7
 
     def test_multi_job_campaign_returns_only_latest_job_results(self, session: Session):
         """Scenario: Two jobs in same campaign, only latest job's results returned."""

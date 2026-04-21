@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from enum import Enum
 
-from sqlalchemy import JSON, Column
+from sqlalchemy import JSON, Column, Index
 from sqlmodel import Field, SQLModel
 
 
@@ -31,6 +31,15 @@ class MatchResult(SQLModel, table=True):
     confidence_level: ConfidenceLevel = Field(nullable=False)
     field_scores: dict = Field(default={}, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+__table_args__ = (
+    Index(
+        "ix_match_results_job_ocr",
+        "matcher_job_id",
+        "ocr_result_id",
+    ),
+)
 
 
 class MatchResultCreate(SQLModel):

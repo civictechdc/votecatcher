@@ -16,6 +16,6 @@ export interface ResultResponse {
 export interface ResultsListResponse {
 	results: ResultResponse[];
 	total: number;
-	page: number;
 	pageSize: number;
+	nextCursor: number | null;
 }
