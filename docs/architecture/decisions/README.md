@@ -17,6 +17,7 @@ An ADR is a document that captures an important architectural decision along wit
 | 0005 | [Dual SSE Architecture](./0005-dual-sse-architecture.md) | Accepted | 2026-03-25 |
 | 0006 | [Spec-Driven Field Configuration](./0006-spec-driven-field-configuration.md) | Accepted | 2026-04-13 |
 | 0008 | [Template-Based Field Rendering](./0008-template-based-field-rendering.md) | Accepted | 2026-04-13 |
+| 0009 | [Observability Signal Catalog](./0009-observability-signal-catalog.md) | Accepted | 2026-04-21 |
 
 ## Creating a New ADR
 

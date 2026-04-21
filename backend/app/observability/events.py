@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import logging
+
 import structlog
 from typing import NotRequired, TypedDict
+
+_fallback_log = logging.getLogger(__name__)
 
 
 class OcrApiCallEvent(TypedDict, total=False):
@@ -59,4 +63,4 @@ def log_ocr_call(
         else:
             log.info("ocr_api_call", **kwargs)
     except Exception:
-        pass
+        _fallback_log.debug("ocr_logging_failed", exc_info=True)

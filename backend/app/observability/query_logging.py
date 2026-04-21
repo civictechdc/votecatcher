@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass
 from typing import Any
 
 import structlog
 from sqlalchemy import event
+
+_fallback_log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -33,7 +36,7 @@ def before_cursor_execute(
     try:
         conn.info["query_start_time"] = time.monotonic()
     except Exception:
-        pass
+        _fallback_log.debug("query_timing_start_failed", exc_info=True)
 
 
 def after_cursor_execute(
@@ -69,7 +72,7 @@ def after_cursor_execute(
                 duration_ms=round(duration_ms, 2),
             )
     except Exception:
-        pass
+        _fallback_log.debug("query_logging_failed", exc_info=True)
 
 
 def attach_query_logging(
