@@ -4,8 +4,7 @@ Crosslink #29 — Spec: Sentry Integration.
 Contract: optional init, no-op without DSN, PII scrubbing.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from app.observability.sentry import init_sentry, should_scrub_pii
 

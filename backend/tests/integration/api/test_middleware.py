@@ -4,7 +4,6 @@ Verifies that SecurityHeadersMiddleware, CORS config, and rate limiter
 are wired correctly into the FastAPI app via TestClient.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 
@@ -27,15 +26,15 @@ class TestSecurityHeadersIntegration:
         response = client.get("/api/health")
         assert "camera=()" in response.headers["permissions-policy"]
 
-    def test_request_id_present(self, client: TestClient):
+    def test_correlation_id_present(self, client: TestClient):
         response = client.get("/api/health")
-        assert "x-request-id" in response.headers
-        assert len(response.headers["x-request-id"]) == 36
+        assert "x-correlation-id" in response.headers
+        assert len(response.headers["x-correlation-id"]) == 32
 
-    def test_request_id_unique_per_request(self, client: TestClient):
+    def test_correlation_id_unique_per_request(self, client: TestClient):
         r1 = client.get("/api/health")
         r2 = client.get("/api/health")
-        assert r1.headers["x-request-id"] != r2.headers["x-request-id"]
+        assert r1.headers["x-correlation-id"] != r2.headers["x-correlation-id"]
 
     def test_hsts_not_set_in_dev(self, client: TestClient):
         response = client.get("/api/health")

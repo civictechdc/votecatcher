@@ -4,7 +4,6 @@ Crosslink #18 — Spec: CORS Hardening.
 Contract: environment-aware CORS with explicit methods, production origin validation.
 """
 
-import pytest
 
 from app.middleware.cors import build_cors_config
 

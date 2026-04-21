@@ -4,10 +4,8 @@ Crosslink #30 — Spec: DB Query Logging.
 Contract: slow queries logged at WARNING, all queries at DEBUG when LOG_SQL=true.
 """
 
-import pytest
 import time
 from unittest.mock import MagicMock, patch
-import logging
 
 from app.observability.query_logging import (
     QueryLogEntry,

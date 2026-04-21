@@ -4,9 +4,7 @@ Crosslink #31 — Spec: OCR API Call Logging.
 Contract: structured logging with gen_ai.* OTel naming at provider boundary.
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
-import time
 
 from app.observability.events import (
     OcrApiCallEvent,

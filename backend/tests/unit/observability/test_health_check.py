@@ -5,10 +5,9 @@ Contract: /health returns structured status with dependency checks.
 Three states: ok, degraded, unhealthy.
 """
 
-import pytest
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
 
 from app.observability.health import (
     HealthCheckResult,
@@ -23,8 +22,12 @@ def _create_health_app(checker: HealthChecker) -> FastAPI:
     @app.get("/health")
     async def health():
         result = checker.check()
-        status_code = 200 if result.status != "unhealthy" else 503
-        return result.to_dict(), status_code
+        status_code = 503 if result.status == CheckStatus.UNHEALTHY else 200
+        return JSONResponse(
+            content=result.to_dict(),
+            status_code=status_code,
+            headers={"cache-control": "no-cache"},
+        )
 
     return app
 
