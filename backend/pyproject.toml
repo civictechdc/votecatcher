@@ -47,6 +47,7 @@ dependencies = [
     "tomli-w>=1.2.0",
     "json5>=0.14.0",
     "slowapi>=0.1.9",
+    "sentry-sdk[fastapi]>=2.57.0",
 ]
 
 [dependency-groups]

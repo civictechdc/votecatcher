@@ -8,7 +8,6 @@ Environment-conditional: HSTS (production only), CSP report-only (dev).
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from starlette.requests import Request
 from starlette.responses import PlainTextResponse
 
 from app.middleware.security_headers import SecurityHeadersMiddleware
@@ -17,9 +16,7 @@ from app.middleware.security_headers import SecurityHeadersMiddleware
 def _create_test_app(is_production: bool = False) -> FastAPI:
     app = FastAPI()
 
-    app.add_middleware(
-        SecurityHeadersMiddleware, is_production=is_production
-    )
+    app.add_middleware(SecurityHeadersMiddleware, is_production=is_production)
 
     @app.get("/test")
     async def test_endpoint():
@@ -62,15 +59,13 @@ class TestSecurityHeadersAlwaysPresent:
         assert "microphone=()" in policy
         assert "geolocation=()" in policy
 
-    def test_x_request_id_present_and_uuid(self, client: TestClient):
+    def test_no_x_request_id_in_security_middleware(self, client: TestClient):
         response = client.get("/test")
-        request_id = response.headers["x-request-id"]
-        assert len(request_id) == 36
-        assert request_id.count("-") == 4
+        assert "x-request-id" not in response.headers
 
-    def test_x_request_id_unique_per_request(self, client: TestClient):
-        ids = {client.get("/test").headers["x-request-id"] for _ in range(10)}
-        assert len(ids) == 10
+    def test_correlation_id_not_in_security_middleware(self, client: TestClient):
+        response = client.get("/test")
+        assert "x-correlation-id" not in response.headers
 
     def test_headers_on_health_endpoint(self, client: TestClient):
         response = client.get("/health")

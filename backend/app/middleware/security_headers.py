@@ -4,8 +4,6 @@ Injects OWASP-recommended security headers on every HTTP response.
 Environment-conditional: HSTS (production only), CSP report-only (dev).
 """
 
-import uuid
-
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
@@ -19,7 +17,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         super().__init__(app, **kwargs)
         self._is_production = is_production
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         response = await call_next(request)
 
         if "x-content-type-options" not in response.headers:
@@ -34,9 +34,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if "permissions-policy" not in response.headers:
             response.headers["permissions-policy"] = _PERMISSIONS_POLICY
 
-        if "x-request-id" not in response.headers:
-            response.headers["x-request-id"] = str(uuid.uuid4())
-
         if self._is_production:
             if "strict-transport-security" not in response.headers:
                 response.headers["strict-transport-security"] = (
@@ -46,6 +43,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 response.headers["content-security-policy"] = _PRODUCTION_CSP
         else:
             if "content-security-policy-report-only" not in response.headers:
-                response.headers["content-security-policy-report-only"] = _PRODUCTION_CSP
+                response.headers["content-security-policy-report-only"] = (
+                    _PRODUCTION_CSP
+                )
 
         return response

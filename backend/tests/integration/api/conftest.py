@@ -43,6 +43,9 @@ def client(session: Session):
         def create_session(self):
             return Session(test_engine)
 
+        def health_check(self) -> bool:
+            return True
+
     def override_get_session():
         yield session
 

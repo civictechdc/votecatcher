@@ -12,7 +12,9 @@ _EXPLICIT_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
 _PRODUCTION_HEADERS = ["Authorization", "Content-Type", "X-API-Key"]
 
 
-def build_cors_config(environment: str, cors_origins: str) -> dict[str, list[str] | bool]:
+def build_cors_config(
+    environment: str, cors_origins: str
+) -> dict[str, list[str] | bool]:
     is_production = environment == "production"
 
     if is_production:

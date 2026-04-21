@@ -131,11 +131,14 @@ def configure_logger(debug_enabled: bool = False) -> None:
 
 
 def configure_dev_logging() -> None:
+    from app.observability.event_validation import validate_event_schema
+
     structlog.configure(
         wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG),
         processors=[
             structlog.contextvars.merge_contextvars,
             redact_api_keys,
+            validate_event_schema,
             structlog.processors.add_log_level,
             structlog.processors.StackInfoRenderer(),
             structlog.dev.set_exc_info,

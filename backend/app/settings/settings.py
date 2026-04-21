@@ -111,7 +111,16 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = Field(default=True, alias="RATE_LIMIT_ENABLED")
     rate_limit_default: str = Field(default="60/minute", alias="RATE_LIMIT_DEFAULT")
     rate_limit_upload: str = Field(default="10/minute", alias="RATE_LIMIT_UPLOAD")
-    rate_limit_job_create: str = Field(default="10/minute", alias="RATE_LIMIT_JOB_CREATE")
+    rate_limit_job_create: str = Field(
+        default="10/minute", alias="RATE_LIMIT_JOB_CREATE"
+    )
+
+    sentry_dsn: str = Field(default="", alias="SENTRY_DSN")
+    sentry_traces_sample_rate: float = Field(
+        default=0.1, alias="SENTRY_TRACES_SAMPLE_RATE"
+    )
+    slow_query_threshold_ms: float = Field(default=500, alias="SLOW_QUERY_THRESHOLD_MS")
+    log_sql: bool = Field(default=False, alias="LOG_SQL")
 
     clear_runtime_on_launch: bool = Field(
         default=False, alias="DEV_CLEAR_RUNTIME_ON_LAUNCH"

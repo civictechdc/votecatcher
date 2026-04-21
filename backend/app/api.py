@@ -1,11 +1,16 @@
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.middleware.cors import build_cors_config
+from app.middleware.correlation import CorrelationIdMiddleware
 from app.middleware.rate_limit import RateLimitConfig, create_rate_limiter
 from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.observability.health import HealthChecker
+from app.observability.query_logging import attach_query_logging
+from app.observability.sentry import init_sentry as _init_sentry_lib
 from app.routers import (
     campaign_router,
     config_router,
@@ -21,7 +26,7 @@ from app.routers import (
     session_router,
     upload_router,
 )
-from app.settings.settings import get_settings
+from app.settings.settings import Settings, get_settings
 from app.startup import ApplicationStartup
 
 
@@ -39,11 +44,50 @@ def _default_spec_loader():
 _startup = ApplicationStartup(spec_loader=_default_spec_loader)
 
 
+def _db_latency_check() -> float:
+    from app.persistence.session import get_engine
+
+    engine = get_engine()
+    start = time.monotonic()
+    healthy = engine.health_check()
+    if not healthy:
+        raise RuntimeError("Database health check failed")
+    return (time.monotonic() - start) * 1000
+
+
+_health_checker = HealthChecker(db_check_fn=_db_latency_check)
+
+
 @asynccontextmanager
 async def lifespan(_application: FastAPI):
+    s = get_settings()
     await _startup.startup()
+    _init_sentry(s)
+    _attach_query_logging(s)
     yield
     await _startup.shutdown()
+
+
+def _init_sentry(s: Settings) -> None:
+    _init_sentry_lib(
+        dsn=s.sentry_dsn or None,
+        environment=s.environment,
+        traces_sample_rate=s.sentry_traces_sample_rate,
+    )
+
+
+def _attach_query_logging(s: Settings) -> None:
+    from app.persistence.session import get_engine
+
+    engine = get_engine()
+    raw = getattr(engine, "raw_engine", None)
+    if raw is None:
+        return
+    attach_query_logging(
+        raw,
+        threshold_ms=s.slow_query_threshold_ms,
+        log_all=s.log_sql,
+    )
 
 
 app = FastAPI(root_path="/api", lifespan=lifespan)
@@ -59,6 +103,8 @@ app.add_middleware(
 
 cors_config = build_cors_config(settings.environment, settings.cors_origins)
 app.add_middleware(CORSMiddleware, **cors_config)
+
+app.add_middleware(CorrelationIdMiddleware)
 
 rate_limit_config = RateLimitConfig(
     enabled=settings.rate_limit_enabled,
@@ -87,4 +133,10 @@ app.include_router(upload_router)
 
 @app.get("/health", tags=["health"])
 async def health_check():
-    return {"status": "ok"}
+    from fastapi.responses import JSONResponse
+
+    result = _health_checker.check()
+    return JSONResponse(
+        content=result.to_dict(),
+        headers={"cache-control": "no-cache"},
+    )
