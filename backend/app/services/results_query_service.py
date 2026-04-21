@@ -278,60 +278,56 @@ class ResultsQueryService:
 
         yield self._csv_row(self.CSV_HEADER)
 
-        stream = self._session.exec(statement).yield_per(chunk_size)
+        match_results = list(self._session.exec(statement).yield_per(chunk_size))
 
-        current_ocr_id = None
-        extracted_text = ""
-        crop_id = ""
+        ocr_ids = {mr.ocr_result_id for mr in match_results}
+        voter_ids = {mr.voter_id for mr in match_results if mr.voter_id}
 
         ocr_cache: dict[int, OcrResult] = {}
+        if ocr_ids:
+            for batch in self._chunk(sorted(ocr_ids), chunk_size):
+                rows = self._session.exec(
+                    select(OcrResult).where(OcrResult.id.in_(batch))
+                ).all()
+                ocr_cache.update({r.id: r for r in rows})
+
         voter_cache: dict[int, RegisteredVoter] = {}
+        if voter_ids:
+            for batch in self._chunk(sorted(voter_ids), chunk_size):
+                rows = self._session.exec(
+                    select(RegisteredVoter).where(RegisteredVoter.id.in_(batch))
+                ).all()
+                voter_cache.update({r.id: r for r in rows})
 
-        for match_result in stream:
-            if match_result.ocr_result_id != current_ocr_id:
-                current_ocr_id = match_result.ocr_result_id
-                if current_ocr_id not in ocr_cache:
-                    fetched = self._session.get(OcrResult, current_ocr_id)
-                    if fetched:
-                        ocr_cache[current_ocr_id] = fetched
-
-                ocr_result = ocr_cache.get(current_ocr_id)
-                extracted_text = (
-                    OcrTextParser.format_text(ocr_result.extracted_text)
-                    if ocr_result
-                    else ""
-                )
-                crop_id = str(ocr_result.crop_id) if ocr_result else ""
-
-            voter_name = ""
-            voter_address = ""
-            if match_result.voter_id and match_result.voter_id not in voter_cache:
-                fetched = self._session.get(RegisteredVoter, match_result.voter_id)
-                if fetched:
-                    voter_cache[match_result.voter_id] = fetched
-
-            voter = (
-                voter_cache.get(match_result.voter_id)
-                if match_result.voter_id
-                else None
+        for mr in match_results:
+            ocr_result = ocr_cache.get(mr.ocr_result_id)
+            extracted_text = (
+                OcrTextParser.format_text(ocr_result.extracted_text)
+                if ocr_result
+                else ""
             )
-            if voter:
-                voter_name = PredictionBuilder.format_voter_name(voter)
-                voter_address = PredictionBuilder.format_voter_address(voter)
+            crop_id = str(ocr_result.crop_id) if ocr_result else ""
+
+            voter = voter_cache.get(mr.voter_id) if mr.voter_id else None
+            voter_name = PredictionBuilder.format_voter_name(voter) if voter else ""
+            voter_address = PredictionBuilder.format_voter_address(voter) if voter else ""
 
             confidence = (
-                match_result.confidence_level.value
-                if match_result.confidence_level
-                else "LOW"
+                mr.confidence_level.value if mr.confidence_level else "LOW"
             )
             yield self._csv_row(
                 [
                     crop_id,
                     extracted_text,
-                    match_result.rank,
+                    mr.rank,
                     voter_name,
                     voter_address,
-                    match_result.similarity_score,
+                    mr.similarity_score,
                     confidence,
                 ]
             )
+
+    @staticmethod
+    def _chunk(ids: list[int], size: int) -> Iterator[list[int]]:
+        for i in range(0, len(ids), size):
+            yield ids[i : i + size]
