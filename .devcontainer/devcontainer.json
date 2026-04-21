@@ -44,10 +44,9 @@
         "ms-python.python",
         "ms-python.vscode-pylance",
         "charliermarsh.ruff",
-        "oxc.oxlint-vscode",
+        "oxc.oxc-vscode",
         "svelte.svelte-vscode",
         "bradlc.vscode-tailwindcss",
-        "esbenp.prettier-vscode",
         "dbaeumer.vscode-eslint",
         "ms-azuretools.vscode-docker",
         "GitHub.vscode-pull-request-github",
@@ -64,35 +63,35 @@
         "python.testing.pytestArgs": ["backend/tests"],
         "python.analysis.typeCheckingMode": "basic",
         "editor.formatOnSave": true,
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.defaultFormatter": "oxc.oxc-vscode",
         "editor.codeActionsOnSave": {
-          "source.fixAll.eslint": "explicit",
-          "source.organizeImports": "explicit"
+          "source.fixAll.oxc": "always",
+          "source.fixAll.eslint": "explicit"
         },
         "[python]": {
           "editor.defaultFormatter": "charliermarsh.ruff",
           "editor.formatOnSave": true
         },
         "[typescript]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.defaultFormatter": "oxc.oxc-vscode",
           "editor.formatOnSave": true
         },
         "[javascript]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.defaultFormatter": "oxc.oxc-vscode",
           "editor.formatOnSave": true
         },
         "[svelte]": {
-          "editor.defaultFormatter": "svelte.svelte-vscode",
+          "editor.defaultFormatter": "oxc.oxc-vscode",
           "editor.formatOnSave": true
         },
         "[json]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode"
+          "editor.defaultFormatter": "oxc.oxc-vscode"
         },
         "[yaml]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode"
+          "editor.defaultFormatter": "oxc.oxc-vscode"
         },
         "[markdown]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.defaultFormatter": "oxc.oxc-vscode",
           "editor.wordWrap": "on",
           "editor.quickSuggestions": {
             "comments": "off",

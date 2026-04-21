@@ -1,16 +1,18 @@
 {
   "editor.formatOnSave": true,
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "always",
+    "source.fixAll.eslint": "explicit"
+  },
   "[python]": {
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
     },
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
-  "[typescript]": {
-    "editor.defaultFormatter": "oxc.oxlint-vscode"
-  },
   "[svelte]": {
-    "editor.defaultFormatter": "svelte.svelte-vscode"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "ruff.configurationPreference": "filesystemFirst",
   "ruff.format.backend": "uv",
@@ -18,5 +20,12 @@
   "ruff.format.enable": true,
   "basedpyright.analysis.diagnosticMode": "openFilesOnly",
   "basedpyright.importStrategy": "useBundled",
-  "basedpyright.disableOrganizeImports": true
+  "basedpyright.disableOrganizeImports": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "svelte"
+  ]
 }
