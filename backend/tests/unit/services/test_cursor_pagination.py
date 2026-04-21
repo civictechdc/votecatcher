@@ -439,6 +439,10 @@ class TestAdversarialFindings:
         region = _seed_region(session)
         campaign = _seed_campaign(session, region)
         scan1 = _seed_scan(session, campaign)
+
+        job1 = _seed_job(session, campaign)
+        ocrs1 = _build_ocr_chain(session, job1, scan1, 3)
+
         scan2 = PetitionScan(
             campaign_id=campaign.id,
             original_filename="test2.pdf",
@@ -449,11 +453,35 @@ class TestAdversarialFindings:
         session.add(scan2)
         session.flush()
 
-        job1 = _seed_job(session, campaign)
-        _build_ocr_chain(session, job1, scan1, 3)
-
         job2 = _seed_job(session, campaign)
-        _build_ocr_chain(session, job2, scan2, 5)
+        for i in range(5):
+            crop = PetitionCrop(
+                scan_id=scan2.id,
+                crop_index=i,
+                stored_path=f"/tmp/scan2_crop_{i}.png",
+                crop_coordinates={"top": 0.0, "bottom": 0.1},
+                page_number=1,
+            )
+            session.add(crop)
+            session.flush()
+            ocr = OcrResult(
+                crop_id=crop.id,
+                ocr_job_id=1,
+                extracted_text={"name": f"Scan2 Sig {i}"},
+            )
+            session.add(ocr)
+            session.flush()
+            session.add(
+                MatchResult(
+                    matcher_job_id=job2.id,
+                    ocr_result_id=ocr.id,
+                    voter_id=None,
+                    rank=1,
+                    similarity_score=0.85,
+                    confidence_level=ConfidenceLevel.HIGH,
+                )
+            )
+        session.commit()
 
         service = CampaignQueryService(session)
         result = service.get_campaign_results(campaign.id, cursor=None, page_size=50)

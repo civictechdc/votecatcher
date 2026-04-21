@@ -40,20 +40,11 @@ class ResultsQueryService:
         cursor: Optional[int] = None,
         page_size: int = 50,
     ) -> "ResultsListResponse":
-        """Get match results for a job.
+        if cursor is not None and cursor < 0:
+            raise ValueError("cursor must be non-negative")
+        if not 1 <= page_size <= 1000:
+            raise ValueError("page_size must be between 1 and 1000")
 
-        Args:
-            job_id: Job ID
-            confidence: Filter by confidence level (optional)
-            cursor: ocr_result_id to start after (keyset pagination). None starts from beginning.
-            page_size: Items per page
-
-        Returns:
-            Paginated match results with next_cursor for keyset pagination
-
-        Raises:
-            ValueError: If job not found
-        """
         from app.data.database.model.jobs import MatcherJob
         from app.data.database.model.match_result import MatchResult
         from app.data.database.model.ocr_result import OcrResult
@@ -176,12 +167,9 @@ class ResultsQueryService:
         next_cursor = None
         if len(paginated_ocr_ids) == page_size:
             last_id = paginated_ocr_ids[-1]
-            next_page_where = [
-                MatchResult.matcher_job_id == job_id,
-                MatchResult.ocr_result_id > last_id,
+            next_page_where = list(base_where) + [
+                MatchResult.ocr_result_id > last_id
             ]
-            if confidence:
-                next_page_where.append(MatchResult.confidence_level == confidence)
             count_after = self._session.exec(
                 select(func.count()).select_from(
                     select(func.distinct(MatchResult.ocr_result_id))

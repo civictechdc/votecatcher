@@ -39,20 +39,11 @@ class CampaignQueryService:
         cursor: int | None = None,
         page_size: int = 50,
     ) -> CampaignResultsListResponse:
-        """Get match results for all jobs in a campaign.
+        if cursor is not None and cursor < 0:
+            raise ValueError("cursor must be non-negative")
+        if not 1 <= page_size <= 1000:
+            raise ValueError("page_size must be between 1 and 1000")
 
-        Args:
-            campaign_id: Campaign UUID
-            confidence: Filter by confidence level (HIGH/MEDIUM/LOW, optional)
-            cursor: ocr_result_id to start after (keyset pagination). None starts from beginning.
-            page_size: Items per page
-
-        Returns:
-            Paginated match results for the campaign with next_cursor
-
-        Raises:
-            ValueError: If campaign not found
-        """
         from app.data.database.model.jobs import MatcherJob
         from app.data.database.model.match_result import ConfidenceLevel, MatchResult
         from app.data.database.model.ocr_result import OcrResult
@@ -62,26 +53,26 @@ class CampaignQueryService:
         if not campaign:
             raise ValueError(f"Campaign {campaign_id} not found")
 
-        job_ids_statement = (
-            select(MatcherJob.id)
-            .where(MatcherJob.campaign_id == campaign_id)
-            .order_by(MatcherJob.id.desc())
-        )
-        job_ids: list[int] = list(self._session.exec(job_ids_statement).all())
+        latest_job_id = self._session.exec(
+            select(func.max(MatcherJob.id)).where(
+                MatcherJob.campaign_id == campaign_id
+            )
+        ).one()
 
-        if not job_ids:
+        if latest_job_id is None:
             return CampaignResultsListResponse(
                 results=[], total=0, page_size=page_size, next_cursor=None
             )
-
-        latest_job_id = job_ids[0]
 
         confidence_filter = None
         if confidence:
             try:
                 confidence_filter = ConfidenceLevel(confidence.upper())
             except ValueError:
-                confidence_filter = None
+                raise ValueError(
+                    f"Invalid confidence level: {confidence!r}. "
+                    f"Must be one of: {[e.value for e in ConfidenceLevel]}"
+                )
 
         base_where = [MatchResult.matcher_job_id == latest_job_id]
         if confidence_filter:
