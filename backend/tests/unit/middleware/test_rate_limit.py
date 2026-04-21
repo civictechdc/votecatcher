@@ -24,7 +24,10 @@ class TestRateLimitConfig:
 
     def test_custom_values(self):
         config = RateLimitConfig(
-            enabled=False, default_limit="100/minute", upload_limit="20/minute", job_create_limit="15/minute"
+            enabled=False,
+            default_limit="100/minute",
+            upload_limit="20/minute",
+            job_create_limit="15/minute",
         )
         assert config.enabled is False
         assert config.default_limit == "100/minute"
@@ -36,7 +39,10 @@ class TestRateLimiting:
     @pytest.fixture
     def rate_limited_client(self):
         config = RateLimitConfig(
-            enabled=True, default_limit="5/minute", upload_limit="3/minute", job_create_limit="3/minute"
+            enabled=True,
+            default_limit="5/minute",
+            upload_limit="3/minute",
+            job_create_limit="3/minute",
         )
         app = FastAPI()
         limiter = create_rate_limiter(config)
@@ -81,7 +87,9 @@ class TestRateLimiting:
         body = response.json()
         assert "error" in body or "detail" in body or "message" in body
 
-    def test_successful_response_has_ratelimit_headers(self, rate_limited_client: TestClient):
+    def test_successful_response_has_ratelimit_headers(
+        self, rate_limited_client: TestClient
+    ):
         response = rate_limited_client.get("/api/test")
         assert response.status_code == 200
 

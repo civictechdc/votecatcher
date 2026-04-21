@@ -56,4 +56,6 @@ class HealthChecker:
         checks: dict = {}
         checks["database"] = _check_database(self.db_check_fn)
         status = _determine_status(checks)
-        return HealthCheckResult(status=status, checks=checks, _start_time=self._start_time)
+        return HealthCheckResult(
+            status=status, checks=checks, _start_time=self._start_time
+        )

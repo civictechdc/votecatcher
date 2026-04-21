@@ -4,7 +4,6 @@ Crosslink #18 — Spec: CORS Hardening.
 Contract: environment-aware CORS with explicit methods, production origin validation.
 """
 
-
 from app.middleware.cors import build_cors_config
 
 
@@ -41,7 +40,8 @@ class TestCORSProduction:
 
     def test_origins_from_env_var(self):
         config = build_cors_config(
-            environment="production", cors_origins="https://app.example.com,https://admin.example.com"
+            environment="production",
+            cors_origins="https://app.example.com,https://admin.example.com",
         )
         assert config["allow_origins"] == [
             "https://app.example.com",
@@ -92,7 +92,5 @@ class TestCORSConfigurationValidation:
         assert config["allow_origins"] == ["https://single.example.com"]
 
     def test_empty_string_origins_split_handled(self):
-        config = build_cors_config(
-            environment="production", cors_origins=",,,"
-        )
+        config = build_cors_config(environment="production", cors_origins=",,,")
         assert config["allow_origins"] == []

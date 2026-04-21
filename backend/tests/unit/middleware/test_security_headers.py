@@ -16,9 +16,7 @@ from app.middleware.security_headers import SecurityHeadersMiddleware
 def _create_test_app(is_production: bool = False) -> FastAPI:
     app = FastAPI()
 
-    app.add_middleware(
-        SecurityHeadersMiddleware, is_production=is_production
-    )
+    app.add_middleware(SecurityHeadersMiddleware, is_production=is_production)
 
     @app.get("/test")
     async def test_endpoint():

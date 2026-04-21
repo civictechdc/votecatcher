@@ -11,13 +11,15 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-PII_FIELDS = frozenset({
-    "voter_name",
-    "address",
-    "email",
-    "phone",
-    "date_of_birth",
-})
+PII_FIELDS = frozenset(
+    {
+        "voter_name",
+        "address",
+        "email",
+        "phone",
+        "date_of_birth",
+    }
+)
 
 
 def should_scrub_pii(event: dict, hint: dict) -> dict:

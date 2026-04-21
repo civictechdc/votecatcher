@@ -86,7 +86,12 @@ def attach_query_logging(
 
     def _after(conn, cursor, statement, parameters, context, executemany):
         after_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany,
+            conn,
+            cursor,
+            statement,
+            parameters,
+            context,
+            executemany,
             threshold_ms=threshold_ms,
             log_all=log_all,
         )

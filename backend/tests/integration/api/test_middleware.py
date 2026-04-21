@@ -58,7 +58,9 @@ class TestCORSIntegration:
             },
         )
         assert response.status_code == 200
-        assert "http://localhost:5173" in response.headers.get("access-control-allow-origin", "")
+        assert "http://localhost:5173" in response.headers.get(
+            "access-control-allow-origin", ""
+        )
 
     def test_cors_actual_request(self, client: TestClient):
         response = client.get(

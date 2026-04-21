@@ -88,7 +88,12 @@ class TestAfterCursorExecute:
         conn = MagicMock()
         conn.info = {"query_start_time": 0}
         after_cursor_execute(
-            conn, None, "SELECT * FROM large_table", None, None, None,
+            conn,
+            None,
+            "SELECT * FROM large_table",
+            None,
+            None,
+            None,
             threshold_ms=0,
             log_all=False,
         )
@@ -101,7 +106,12 @@ class TestAfterCursorExecute:
         conn = MagicMock()
         conn.info = {"query_start_time": time.monotonic()}
         after_cursor_execute(
-            conn, None, "SELECT 1", None, None, None,
+            conn,
+            None,
+            "SELECT 1",
+            None,
+            None,
+            None,
             threshold_ms=5000,
             log_all=True,
         )
@@ -113,9 +123,15 @@ class TestAfterCursorExecute:
         mock_get_logger.return_value = mock_logger
         conn = MagicMock()
         import time
+
         conn.info = {"query_start_time": time.time()}
         after_cursor_execute(
-            conn, None, "SELECT 1", None, None, None,
+            conn,
+            None,
+            "SELECT 1",
+            None,
+            None,
+            None,
             threshold_ms=5000,
             log_all=False,
         )
@@ -128,7 +144,12 @@ class TestAfterCursorExecute:
         conn = MagicMock()
         conn.info = {"query_start_time": 0}
         after_cursor_execute(
-            conn, None, "SELECT 1", None, None, None,
+            conn,
+            None,
+            "SELECT 1",
+            None,
+            None,
+            None,
             threshold_ms=0,
             log_all=False,
         )

@@ -3,26 +3,30 @@ from __future__ import annotations
 import sys
 from typing import Any
 
-_OCR_API_CALL_FIELDS = frozenset({
-    "event",
-    "gen_ai_system",
-    "gen_ai_request_model",
-    "latency_ms",
-    "gen_ai_usage_input_tokens",
-    "gen_ai_usage_output_tokens",
-    "gen_ai_response_finish_reason",
-    "job_id",
-    "error_type",
-    "status_code",
-    "retry_attempt",
-})
+_OCR_API_CALL_FIELDS = frozenset(
+    {
+        "event",
+        "gen_ai_system",
+        "gen_ai_request_model",
+        "latency_ms",
+        "gen_ai_usage_input_tokens",
+        "gen_ai_usage_output_tokens",
+        "gen_ai_response_finish_reason",
+        "job_id",
+        "error_type",
+        "status_code",
+        "retry_attempt",
+    }
+)
 
-_SLOW_QUERY_FIELDS = frozenset({
-    "event",
-    "statement",
-    "duration_ms",
-    "threshold_ms",
-})
+_SLOW_QUERY_FIELDS = frozenset(
+    {
+        "event",
+        "statement",
+        "duration_ms",
+        "threshold_ms",
+    }
+)
 
 _EVENT_SCHEMAS: dict[str, frozenset[str]] = {
     "ocr_api_call": _OCR_API_CALL_FIELDS,
@@ -31,14 +35,16 @@ _EVENT_SCHEMAS: dict[str, frozenset[str]] = {
     "query": _SLOW_QUERY_FIELDS,
 }
 
-_STRUCTLOG_META = frozenset({
-    "event",
-    "_record",
-    "_from_structlog",
-    "timestamp",
-    "level",
-    "request_id",
-})
+_STRUCTLOG_META = frozenset(
+    {
+        "event",
+        "_record",
+        "_from_structlog",
+        "timestamp",
+        "level",
+        "request_id",
+    }
+)
 
 
 def validate_event_schema(
