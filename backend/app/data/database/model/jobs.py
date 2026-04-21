@@ -47,6 +47,7 @@ class MatcherJob(SQLModel, table=True):
     error_data: dict = Field(default={}, sa_column=Column(JSON))
     success_data: dict = Field(default={}, sa_column=Column(JSON))
     started_by: int | None = Field(default=None, foreign_key="users.id")
+    distinct_ocr_count: int | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 

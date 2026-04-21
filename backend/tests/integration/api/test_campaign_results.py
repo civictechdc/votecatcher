@@ -403,3 +403,20 @@ class TestCampaignResultsAPI:
         assert prediction["confidence"] == "HIGH"
         assert prediction["similarityScore"] == 1.0
         assert result["jobId"] == new_job.id
+
+    def test_invalid_confidence_returns_422(
+        self,
+        client: TestClient,
+        test_campaign: Campaign,
+    ):
+        """Should return 422 for invalid confidence value, not 404.
+
+        Regression guard: confidence parameter typed as ConfidenceLevel enum,
+        so FastAPI validates before the service layer sees bad input.
+        """
+        response = client.get(
+            f"/api/campaigns/{test_campaign.id}/results",
+            params={"confidence": "INVALID"},
+        )
+
+        assert response.status_code == 422

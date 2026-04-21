@@ -24,7 +24,7 @@ class MatchPrediction(ApiModel):
     voter_name: str
     voter_address: str
     similarity_score: float
-    confidence: str
+    confidence: ConfidenceLevel
 
 
 class ResultResponse(ApiModel):

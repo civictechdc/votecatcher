@@ -9,6 +9,8 @@ if TYPE_CHECKING:
     from app.data.database.model.match_result import MatchResult
     from app.data.database.model.registered_voter import RegisteredVoter
 
+from app.data.database.model.match_result import ConfidenceLevel
+
 
 @dataclass(frozen=True)
 class PredictionData:
@@ -16,7 +18,7 @@ class PredictionData:
     voter_name: str
     voter_address: str
     similarity_score: float
-    confidence: str
+    confidence: ConfidenceLevel
 
 
 class PredictionBuilder:
@@ -78,9 +80,9 @@ class PredictionBuilder:
                     if voter
                     else "",
                     similarity_score=result.similarity_score,
-                    confidence=result.confidence_level.value
+                    confidence=result.confidence_level
                     if result.confidence_level
-                    else "LOW",
+                    else ConfidenceLevel.LOW,
                 )
             )
 

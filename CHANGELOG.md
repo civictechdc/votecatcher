@@ -65,6 +65,8 @@ Spec-driven voter matching and region selection capabilities were added, includi
 - Updated featureFlags/settings/demo/database tests to use vi.stubEnv.
 
 ### Changed
+- Impl: CSV export batched OCR lookups (#60)
+- Test: CSV batch lookup tests (#53)
 
 - Switched to spec-driven voter list service.
 - Changed production code to spec-only paths.
