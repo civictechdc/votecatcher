@@ -225,6 +225,7 @@ class CampaignResultsListResponse(ApiModel):
     total: int
     page: int
     page_size: int
+    next_cursor: int | None = None
 
 
 @router.get("/{campaign_id}/results", response_model=CampaignResultsListResponse)
@@ -232,6 +233,7 @@ def get_campaign_results(
     campaign_id: uuid.UUID,
     session: SessionDep,
     confidence: str | None = None,
+    cursor: int | None = None,
     page: int = 1,
     page_size: int = 50,
 ) -> CampaignResultsListResponse:
@@ -240,7 +242,11 @@ def get_campaign_results(
 
     try:
         return CampaignQueryService(session).get_campaign_results(
-            campaign_id, confidence=confidence, page=page, page_size=page_size
+            campaign_id,
+            confidence=confidence,
+            cursor=cursor,
+            page=page,
+            page_size=page_size,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e

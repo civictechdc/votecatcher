@@ -36,6 +36,7 @@ class CampaignQueryService:
         self,
         campaign_id: uuid.UUID,
         confidence: str | None = None,
+        cursor: int | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> CampaignResultsListResponse:
@@ -44,11 +45,12 @@ class CampaignQueryService:
         Args:
             campaign_id: Campaign UUID
             confidence: Filter by confidence level (HIGH/MEDIUM/LOW, optional)
-            page: Page number (1-indexed)
+            cursor: ocr_result_id to start after (keyset pagination). Takes precedence over page.
+            page: Page number (1-indexed). Ignored when cursor is set.
             page_size: Items per page
 
         Returns:
-            Paginated match results for the campaign
+            Paginated match results for the campaign with next_cursor
 
         Raises:
             ValueError: If campaign not found
@@ -71,7 +73,7 @@ class CampaignQueryService:
 
         if not job_ids:
             return CampaignResultsListResponse(
-                results=[], total=0, page=page, page_size=page_size
+                results=[], total=0, page=page, page_size=page_size, next_cursor=None
             )
 
         latest_job_id = job_ids[0]
@@ -97,16 +99,19 @@ class CampaignQueryService:
 
         if total == 0:
             return CampaignResultsListResponse(
-                results=[], total=0, page=page, page_size=page_size
+                results=[], total=0, page=page, page_size=page_size, next_cursor=None
             )
+
+        cursor_where = list(base_where)
+        if cursor is not None and cursor > 0:
+            cursor_where.append(MatchResult.ocr_result_id > cursor)
 
         paginated_ocr_ids = list(
             self._session.exec(
                 select(MatchResult.ocr_result_id)
-                .where(*base_where)
+                .where(*cursor_where)
                 .distinct()
                 .order_by(MatchResult.ocr_result_id)
-                .offset((page - 1) * page_size)
                 .limit(page_size)
             ).all()
         )
@@ -198,8 +203,33 @@ class CampaignQueryService:
                 )
             )
 
+        next_cursor = None
+        if len(paginated_ocr_ids) == page_size:
+            last_id = paginated_ocr_ids[-1]
+            next_page_where = [
+                MatchResult.matcher_job_id == latest_job_id,
+                MatchResult.ocr_result_id > last_id,
+            ]
+            if confidence_filter:
+                next_page_where.append(
+                    MatchResult.confidence_level == confidence_filter
+                )
+            count_after = self._session.exec(
+                select(func.count()).select_from(
+                    select(func.distinct(MatchResult.ocr_result_id))
+                    .where(*next_page_where)
+                    .subquery()
+                )
+            ).one()
+            if count_after:
+                next_cursor = last_id
+
         return CampaignResultsListResponse(
-            results=results, total=total, page=page, page_size=page_size
+            results=results,
+            total=total,
+            page=page,
+            page_size=page_size,
+            next_cursor=next_cursor,
         )
 
     def _build_campaign_predictions(

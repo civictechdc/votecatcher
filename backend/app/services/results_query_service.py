@@ -37,6 +37,7 @@ class ResultsQueryService:
         self,
         job_id: int,
         confidence: Optional["ConfidenceLevel"] = None,
+        cursor: Optional[int] = None,
         page: int = 1,
         page_size: int = 50,
     ) -> "ResultsListResponse":
@@ -45,11 +46,12 @@ class ResultsQueryService:
         Args:
             job_id: Job ID
             confidence: Filter by confidence level (optional)
-            page: Page number (1-indexed)
+            cursor: ocr_result_id to start after (keyset pagination). Takes precedence over page.
+            page: Page number (1-indexed). Ignored when cursor is set.
             page_size: Items per page
 
         Returns:
-            Paginated match results
+            Paginated match results with next_cursor for keyset pagination
 
         Raises:
             ValueError: If job not found
@@ -79,8 +81,11 @@ class ResultsQueryService:
             from app.routers.results_router import ResultsListResponse
 
             return ResultsListResponse(
-                results=[], total=0, page=page, page_size=page_size
+                results=[], total=0, page=page, page_size=page_size, next_cursor=None
             )
+
+        if cursor is not None and cursor > 0:
+            base_where.append(MatchResult.ocr_result_id > cursor)
 
         paginated_ocr_ids = list(
             self._session.exec(
@@ -88,7 +93,6 @@ class ResultsQueryService:
                 .where(*base_where)
                 .distinct()
                 .order_by(MatchResult.ocr_result_id)
-                .offset((page - 1) * page_size)
                 .limit(page_size)
             ).all()
         )
@@ -171,11 +175,35 @@ class ResultsQueryService:
                 )
             )
 
+        next_cursor = None
+        if len(paginated_ocr_ids) == page_size:
+            last_id = paginated_ocr_ids[-1]
+            next_page_where = [
+                MatchResult.matcher_job_id == job_id,
+                MatchResult.ocr_result_id > last_id,
+            ]
+            if confidence:
+                next_page_where.append(MatchResult.confidence_level == confidence)
+            count_after = self._session.exec(
+                select(func.count()).select_from(
+                    select(func.distinct(MatchResult.ocr_result_id))
+                    .where(*next_page_where)
+                    .subquery()
+                )
+            ).one()
+            if count_after:
+                next_cursor = last_id
+
+        effective_page = page
+        if cursor is not None and cursor > 0:
+            effective_page = page
+
         return ResultsListResponse(
             results=results,
             total=total,
-            page=page,
+            page=effective_page,
             page_size=page_size,
+            next_cursor=next_cursor,
         )
 
     def _build_predictions_from_match_results(

@@ -95,38 +95,22 @@ class MetricsService:
         return metrics.to_dict()
 
     def _count_total_signatures(self, campaign_id: UUID) -> int:
-        """Count total OCR results (individual signatures) for a campaign.
-
-        After BUG-14 fix, each crop can have up to 5 OCR results (ocr_index 0-4),
-        representing individual signatures extracted from a petition page.
-        This counts OCR results (signatures), not crops, to align with 'processed'.
+        """Count total OCR results for a campaign using a single JOIN query.
 
         Args:
                 campaign_id: Campaign UUID
 
         Returns:
-                Total number of OCR results (individual signatures) across all crops
+                Total number of OCR results across all crops in the campaign
         """
         from app.data.database.model.ocr_result import OcrResult
-
-        scan_ids = self.session.exec(
-            select(PetitionScan.id).where(PetitionScan.campaign_id == campaign_id)
-        ).all()
-
-        if not scan_ids:
-            return 0
-
-        crop_ids = self.session.exec(
-            select(PetitionCrop.id).where(PetitionCrop.scan_id.in_(scan_ids))
-        ).all()
-
-        if not crop_ids:
-            return 0
 
         count = self.session.exec(
             select(func.count())
             .select_from(OcrResult)
-            .where(OcrResult.crop_id.in_(crop_ids))
+            .join(PetitionCrop, OcrResult.crop_id == PetitionCrop.id)
+            .join(PetitionScan, PetitionCrop.scan_id == PetitionScan.id)
+            .where(PetitionScan.campaign_id == campaign_id)
         ).one()
 
         return count or 0
@@ -134,10 +118,9 @@ class MetricsService:
     def _count_processed_results(
         self, campaign_id: UUID
     ) -> tuple[int, dict[ConfidenceLevel, int]]:
-        """Count processed results and group by confidence.
+        """Count processed results grouped by confidence using a single query.
 
-        Uses SQL GROUP BY to count distinct OCR results per confidence level
-        without loading all match results into memory.
+        Uses a subquery to find the latest job ID and aggregates in one pass.
 
         Args:
                 campaign_id: Campaign UUID
@@ -145,24 +128,25 @@ class MetricsService:
         Returns:
                 Tuple of (processed_count, confidence_counts_dict)
         """
-        job_ids = self.session.exec(
-            select(MatcherJob.id).where(MatcherJob.campaign_id == campaign_id)
-        ).all()
-
-        if not job_ids:
-            return 0, {}
-
-        latest_job_id = max(job_ids)
+        latest_job_subquery = (
+            select(func.max(MatcherJob.id))
+            .where(MatcherJob.campaign_id == campaign_id)
+            .correlate(MatcherJob)
+            .scalar_subquery()
+        )
 
         rows = self.session.exec(
             select(
                 MatchResult.confidence_level,
                 func.count(func.distinct(MatchResult.ocr_result_id)),
             )
-            .where(MatchResult.matcher_job_id == latest_job_id)
+            .where(MatchResult.matcher_job_id == latest_job_subquery)
             .where(MatchResult.rank == 1)
             .group_by(MatchResult.confidence_level)
         ).all()
+
+        if not rows:
+            return 0, {}
 
         confidence_counts: dict[ConfidenceLevel, int] = {}
         for level, count in rows:
