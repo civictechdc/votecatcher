@@ -35,13 +35,16 @@ def should_scrub_pii(event: dict, hint: dict) -> dict:
     return event
 
 
+_default_sample_rate: float = 0.1
+
+
 def traces_sampler(sampling_context: dict) -> float:
     transaction_name = sampling_context.get("transaction_context", {}).get("name", "")
     if "/health" in transaction_name:
         return 0
     if sampling_context.get("parent_sampled") is not None:
         return 1.0 if sampling_context["parent_sampled"] else 0.0
-    return 0.1
+    return _default_sample_rate
 
 
 def init_sentry(
@@ -51,6 +54,9 @@ def init_sentry(
 ) -> None:
     if not dsn:
         return
+
+    global _default_sample_rate
+    _default_sample_rate = traces_sample_rate
 
     try:
         sentry_sdk.init(

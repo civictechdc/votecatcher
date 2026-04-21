@@ -49,6 +49,10 @@ class TestHealthCheckIntegration:
         db_check = body["checks"]["database"]
         assert db_check["status"] == "ok"
 
+    def test_health_returns_cache_control_no_cache(self, client: TestClient):
+        response = client.get("/api/health")
+        assert response.headers.get("cache-control") == "no-cache"
+
 
 class TestCorrelationIdIntegration:
     """CorrelationIdMiddleware wired as outermost middleware."""

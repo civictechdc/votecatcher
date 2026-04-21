@@ -83,6 +83,22 @@ class TestSentryTracesSampler:
         result = traces_sampler(sampling_context)
         assert result > 0
 
+    def test_sampler_uses_configured_rate(self):
+        import app.observability.sentry as sentry_mod
+
+        with patch("app.observability.sentry.sentry_sdk"):
+            init_sentry(
+                dsn="https://key@sentry.io/123",
+                environment="production",
+                traces_sample_rate=0.3,
+            )
+
+        sampling_context = {
+            "transaction_context": {"name": "POST /api/upload"},
+        }
+        result = sentry_mod.traces_sampler(sampling_context)
+        assert result == 0.3
+
 
 class TestPIIScrubbing:
     """PII fields must be scrubbed before sending to Sentry."""

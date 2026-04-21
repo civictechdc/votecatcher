@@ -133,5 +133,10 @@ app.include_router(upload_router)
 
 @app.get("/health", tags=["health"])
 async def health_check():
+    from fastapi.responses import JSONResponse
+
     result = _health_checker.check()
-    return result.to_dict()
+    return JSONResponse(
+        content=result.to_dict(),
+        headers={"cache-control": "no-cache"},
+    )
