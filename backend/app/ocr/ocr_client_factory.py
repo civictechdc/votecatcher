@@ -1,4 +1,5 @@
 import json
+import time
 from dataclasses import dataclass
 from typing import Any, List, override
 
@@ -6,6 +7,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 from app.data.database.model.llm_provider_config import LlmProviderConfig
+from app.observability.events import log_ocr_call
 from app.settings import get_settings
 from app.utils.app_logger import logger
 
@@ -222,10 +224,24 @@ async def extract_from_encoding_async(
 
         logger.debug(f"Extracting with provider {config}")
 
+        start = time.monotonic()
         parsed_list = await extractor(config, base64_image)
+        latency_ms = (time.monotonic() - start) * 1000
+
+        log_ocr_call(
+            provider=config.provider,
+            model=config.model,
+            latency_ms=latency_ms,
+        )
         logger.info(f"Successfully extracted {len(parsed_list)} entries from image")
         return parsed_list
 
     except Exception as e:
+        log_ocr_call(
+            provider=config.provider if config else "unknown",
+            model=config.model if config else "unknown",
+            latency_ms=0,
+            error_type=type(e).__name__,
+        )
         logger.error(f"Error in OCR extraction: {str(e)}")
         raise
