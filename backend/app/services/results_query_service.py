@@ -8,9 +8,14 @@ from typing import TYPE_CHECKING, Optional
 from sqlmodel import Session, select
 
 from sqlalchemy import func
-from app.services.entry_coordinates import compute_entry_coordinates
 from app.services.ocr_text_parser import OcrTextParser
 from app.services.prediction_truncation import truncate_predictions
+from app.services.results_shared import (
+    build_predictions,
+    compute_next_cursor,
+    enrich_ocr_lookup,
+    validate_pagination_params,
+)
 
 if TYPE_CHECKING:
     from app.data.database.model.match_result import ConfidenceLevel, MatchResult
@@ -40,15 +45,15 @@ class ResultsQueryService:
         cursor: Optional[int] = None,
         page_size: int = 50,
     ) -> "ResultsListResponse":
-        if cursor is not None and cursor < 0:
-            raise ValueError("cursor must be non-negative")
-        if not 1 <= page_size <= 1000:
-            raise ValueError("page_size must be between 1 and 1000")
+        validate_pagination_params(cursor, page_size)
 
         from app.data.database.model.jobs import MatcherJob
         from app.data.database.model.match_result import MatchResult
-        from app.data.database.model.ocr_result import OcrResult
-        from app.routers.results_router import ResultResponse, ResultsListResponse
+        from app.routers.results_router import (
+            MatchPrediction,
+            ResultResponse,
+            ResultsListResponse,
+        )
 
         job = self._session.get(MatcherJob, job_id)
         if not job:
@@ -70,19 +75,18 @@ class ResultsQueryService:
             ).one()
 
         if total == 0:
-            from app.routers.results_router import ResultsListResponse
-
             return ResultsListResponse(
                 results=[], total=0, page_size=page_size, next_cursor=None
             )
 
+        cursor_where = list(base_where)
         if cursor is not None and cursor > 0:
-            base_where.append(MatchResult.ocr_result_id > cursor)
+            cursor_where.append(MatchResult.ocr_result_id > cursor)
 
         paginated_ocr_ids = list(
             self._session.exec(
                 select(MatchResult.ocr_result_id)
-                .where(*base_where)
+                .where(*cursor_where)
                 .distinct()
                 .order_by(MatchResult.ocr_result_id)
                 .limit(page_size)
@@ -96,78 +100,40 @@ class ResultsQueryService:
             )
         ).all()
 
-        predictions_by_ocr = self._build_predictions_from_match_results(
-            page_match_results
-        )
-
-        ocr_ids_to_fetch = {r.ocr_result_id for r in page_match_results}
-        ocr_results_by_id: dict[int, OcrResult] = {}
-
-        if ocr_ids_to_fetch:
-            ocr_results = self._session.exec(
-                select(OcrResult).where(OcrResult.id.in_(ocr_ids_to_fetch))
-            ).all()
-            ocr_results_by_id = {o.id: o for o in ocr_results}
-
-        crop_ids = {o.crop_id for o in ocr_results_by_id.values() if o.crop_id}
-        crop_by_id: dict[int, "PetitionCrop"] = {}
-        scan_by_id: dict[int, "PetitionScan"] = {}
-
-        if crop_ids:
-            from app.data.database.model.petition_crop import PetitionCrop
-
-            crops = self._session.exec(
-                select(PetitionCrop).where(PetitionCrop.id.in_(crop_ids))
-            ).all()
-            crop_by_id = {c.id: c for c in crops}
-
-            scan_ids = {c.scan_id for c in crops}
-            if scan_ids:
-                from app.data.database.model.petition_scan import PetitionScan
-
-                scans = self._session.exec(
-                    select(PetitionScan).where(PetitionScan.id.in_(scan_ids))
-                ).all()
-                scan_by_id = {s.id: s for s in scans}
+        predictions_by_ocr = build_predictions(self._session, page_match_results)
+        enrichment_by_ocr = enrich_ocr_lookup(self._session, paginated_ocr_ids)
 
         results = []
         for ocr_id in paginated_ocr_ids:
-            ocr_result = ocr_results_by_id.get(ocr_id)
-
-            extracted_text = (
-                OcrTextParser.format_text(ocr_result.extracted_text)
-                if ocr_result
-                else ""
-            )
-            crop_id = ocr_result.crop_id if ocr_result else 0
-            thumbnail_url = f"/api/crops/{crop_id}/image" if crop_id else ""
-
-            crop = crop_by_id.get(crop_id) if crop_id else None
-            scan = scan_by_id.get(crop.scan_id) if crop else None
-            crop_coords = crop.crop_coordinates if crop else None
-
-            predictions = truncate_predictions(predictions_by_ocr.get(ocr_id, []))
+            enrichment = enrichment_by_ocr.get(ocr_id)
+            raw_preds = truncate_predictions(predictions_by_ocr.get(ocr_id, []))
+            predictions = [
+                MatchPrediction(
+                    rank=p.rank,
+                    voter_name=p.voter_name,
+                    voter_address=p.voter_address,
+                    similarity_score=p.similarity_score,
+                    confidence=p.confidence,
+                )
+                for p in raw_preds
+            ]
 
             results.append(
                 ResultResponse(
                     ocr_result_id=ocr_id,
-                    extracted_text=extracted_text,
-                    crop_id=crop_id,
-                    thumbnail_url=thumbnail_url,
+                    extracted_text=enrichment.extracted_text if enrichment else "",
+                    crop_id=enrichment.crop_id if enrichment else 0,
+                    thumbnail_url=enrichment.thumbnail_url if enrichment else "",
                     predictions=predictions,
-                    crop_coordinates=crop_coords,
-                    entry_coordinates=(
-                        compute_entry_coordinates(crop_coords, ocr_result.ocr_index)
-                        if crop_coords and ocr_result
-                        else None
-                    ),
-                    page_number=crop.page_number if crop else None,
-                    document_name=scan.original_filename if scan else "",
-                    scan_id=crop.scan_id if crop else None,
+                    crop_coordinates=enrichment.crop_coordinates if enrichment else None,
+                    entry_coordinates=enrichment.entry_coordinates if enrichment else None,
+                    page_number=enrichment.page_number if enrichment else None,
+                    document_name=enrichment.document_name if enrichment else "",
+                    scan_id=enrichment.scan_id if enrichment else None,
                 )
             )
 
-        next_cursor = None
+        count_after = 0
         if len(paginated_ocr_ids) == page_size:
             last_id = paginated_ocr_ids[-1]
             next_page_where = list(base_where) + [MatchResult.ocr_result_id > last_id]
@@ -178,8 +144,8 @@ class ResultsQueryService:
                     .subquery()
                 )
             ).one()
-            if count_after:
-                next_cursor = last_id
+
+        next_cursor = compute_next_cursor(paginated_ocr_ids, page_size, count_after)
 
         return ResultsListResponse(
             results=results,
@@ -191,31 +157,13 @@ class ResultsQueryService:
     def _build_predictions_from_match_results(
         self, match_results: list["MatchResult"]
     ) -> dict[int, list["MatchPrediction"]]:
-        """Build predictions grouped by OCR result ID.
-
-        Args:
-            match_results: List of MatchResult records
-
-        Returns:
-            Dict mapping ocr_result_id to list of predictions
-        """
-        from app.data.database.model.registered_voter import RegisteredVoter
+        """Build predictions grouped by OCR result ID."""
         from app.routers.results_router import MatchPrediction
-        from app.services.prediction_builder import PredictionBuilder
 
-        voter_ids = {r.voter_id for r in match_results if r.voter_id}
-        voters_by_id: dict[int, RegisteredVoter] = {}
-
-        if voter_ids:
-            voters = self._session.exec(
-                select(RegisteredVoter).where(RegisteredVoter.id.in_(voter_ids))
-            ).all()
-            voters_by_id = {v.id: v for v in voters}
-
-        raw_predictions = PredictionBuilder.build(match_results, voters_by_id)
+        raw = build_predictions(self._session, match_results)
 
         predictions_by_ocr: dict[int, list[MatchPrediction]] = {}
-        for ocr_id, preds in raw_predictions.items():
+        for ocr_id, preds in raw.items():
             predictions_by_ocr[ocr_id] = [
                 MatchPrediction(
                     rank=p.rank,

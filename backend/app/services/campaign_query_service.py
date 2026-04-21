@@ -22,9 +22,14 @@ from app.routers.campaign_router import (
     SetupStatusResponse,
     VoterListStatus,
 )
-from app.services.entry_coordinates import compute_entry_coordinates
 from app.services.ocr_text_parser import OcrTextParser
 from app.services.prediction_truncation import truncate_predictions
+from app.services.results_shared import (
+    build_predictions,
+    compute_next_cursor,
+    enrich_ocr_lookup,
+    validate_pagination_params,
+)
 
 
 class CampaignQueryService:
@@ -40,14 +45,10 @@ class CampaignQueryService:
         cursor: int | None = None,
         page_size: int = 50,
     ) -> CampaignResultsListResponse:
-        if cursor is not None and cursor < 0:
-            raise ValueError("cursor must be non-negative")
-        if not 1 <= page_size <= 1000:
-            raise ValueError("page_size must be between 1 and 1000")
+        validate_pagination_params(cursor, page_size)
 
         from app.data.database.model.jobs import MatcherJob
         from app.data.database.model.match_result import MatchResult
-        from app.data.database.model.ocr_result import OcrResult
         from app.data.database.model.schema import Campaign
 
         campaign = self._session.get(Campaign, campaign_id)
@@ -107,86 +108,45 @@ class CampaignQueryService:
         ).all()
 
         predictions_by_ocr = self._build_campaign_predictions(page_match_results)
+        enrichment_by_ocr = enrich_ocr_lookup(self._session, paginated_ocr_ids)
 
         job_ids_by_ocr: dict[int, int] = {}
         for result in page_match_results:
             if result.ocr_result_id not in job_ids_by_ocr:
                 job_ids_by_ocr[result.ocr_result_id] = result.matcher_job_id
 
-        ocr_ids_to_fetch = set(paginated_ocr_ids)
-        ocr_results_by_id: dict[int, OcrResult] = {}
-
-        if ocr_ids_to_fetch:
-            ocr_results = self._session.exec(
-                select(OcrResult).where(OcrResult.id.in_(ocr_ids_to_fetch))
-            ).all()
-            ocr_results_by_id = {o.id: o for o in ocr_results}
-
-        crop_ids = {o.crop_id for o in ocr_results_by_id.values() if o.crop_id}
-        crop_by_id: dict = {}
-        scan_by_id: dict = {}
-
-        if crop_ids:
-            from app.data.database.model.petition_crop import PetitionCrop
-
-            crops = self._session.exec(
-                select(PetitionCrop).where(PetitionCrop.id.in_(crop_ids))
-            ).all()
-            crop_by_id = {c.id: c for c in crops}
-
-            scan_ids = {c.scan_id for c in crops if c.scan_id}
-            if scan_ids:
-                from app.data.database.model.petition_scan import PetitionScan
-
-                scans = self._session.exec(
-                    select(PetitionScan).where(PetitionScan.id.in_(scan_ids))
-                ).all()
-                scan_by_id = {s.id: s for s in scans}
-
         results = []
         for ocr_id in paginated_ocr_ids:
-            ocr_result = ocr_results_by_id.get(ocr_id)
+            enrichment = enrichment_by_ocr.get(ocr_id)
 
             extracted_name = ""
             extracted_address = ""
-            crop_id = 0
-            if ocr_result:
+            if enrichment and enrichment.raw_extracted_text:
                 extracted_name, extracted_address = (
-                    OcrTextParser.extract_name_and_address(ocr_result.extracted_text)
+                    OcrTextParser.extract_name_and_address(enrichment.raw_extracted_text)
                 )
-                crop_id = ocr_result.crop_id
 
             predictions = truncate_predictions(predictions_by_ocr.get(ocr_id, []))
             job_id = job_ids_by_ocr.get(ocr_id, 0)
-
-            thumbnail_url = f"/api/crops/{crop_id}/image" if crop_id else ""
-
-            crop = crop_by_id.get(crop_id) if crop_id else None
-            scan = scan_by_id.get(crop.scan_id) if crop and crop.scan_id else None
-            crop_coords = crop.crop_coordinates if crop else None
 
             results.append(
                 CampaignResultResponse(
                     ocr_result_id=ocr_id,
                     extracted_name=extracted_name,
                     extracted_address=extracted_address,
-                    crop_id=crop_id,
+                    crop_id=enrichment.crop_id if enrichment else 0,
                     job_id=job_id,
-                    thumbnail_url=thumbnail_url,
+                    thumbnail_url=enrichment.thumbnail_url if enrichment else "",
                     predictions=predictions,
-                    crop_coordinates=crop_coords,
-                    entry_coordinates=(
-                        compute_entry_coordinates(crop_coords, ocr_result.ocr_index)
-                        if crop_coords and ocr_result
-                        else None
-                    ),
-                    page_number=crop.page_number if crop else None,
-                    document_name=scan.original_filename if scan else "",
-                    scan_id=crop.scan_id if crop else None,
+                    crop_coordinates=enrichment.crop_coordinates if enrichment else None,
+                    entry_coordinates=enrichment.entry_coordinates if enrichment else None,
+                    page_number=enrichment.page_number if enrichment else None,
+                    document_name=enrichment.document_name if enrichment else "",
+                    scan_id=enrichment.scan_id if enrichment else None,
                 )
             )
 
-        next_cursor = None
+        count_after = 0
         if len(paginated_ocr_ids) == page_size:
             last_id = paginated_ocr_ids[-1]
             next_page_where = [
@@ -202,8 +162,8 @@ class CampaignQueryService:
                     .subquery()
                 )
             ).one()
-            if count_after:
-                next_cursor = last_id
+
+        next_cursor = compute_next_cursor(paginated_ocr_ids, page_size, count_after)
 
         return CampaignResultsListResponse(
             results=results,
@@ -216,22 +176,10 @@ class CampaignQueryService:
         self, match_results: list[MatchResult]
     ) -> dict[int, list[CampaignMatchPrediction]]:
         """Build predictions grouped by OCR result ID for campaign results."""
-        from app.data.database.model.registered_voter import RegisteredVoter
-        from app.services.prediction_builder import PredictionBuilder
-
-        voter_ids = {r.voter_id for r in match_results if r.voter_id}
-        voters_by_id: dict[int, RegisteredVoter] = {}
-
-        if voter_ids:
-            voters = self._session.exec(
-                select(RegisteredVoter).where(RegisteredVoter.id.in_(voter_ids))
-            ).all()
-            voters_by_id = {v.id: v for v in voters}
-
-        raw_predictions = PredictionBuilder.build(match_results, voters_by_id)
+        raw = build_predictions(self._session, match_results)
 
         predictions_by_ocr: dict[int, list[CampaignMatchPrediction]] = {}
-        for ocr_id, preds in raw_predictions.items():
+        for ocr_id, preds in raw.items():
             predictions_by_ocr[ocr_id] = [
                 CampaignMatchPrediction(
                     rank=p.rank,
