@@ -2,10 +2,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.middleware.cors import build_cors_config
+from app.middleware.correlation import CorrelationIdMiddleware
 from app.middleware.rate_limit import RateLimitConfig, create_rate_limiter
 from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.observability.health import HealthChecker
+from app.observability.sentry import init_sentry as _init_sentry_lib
 from app.routers import (
     campaign_router,
     config_router,
@@ -42,8 +46,18 @@ _startup = ApplicationStartup(spec_loader=_default_spec_loader)
 @asynccontextmanager
 async def lifespan(_application: FastAPI):
     await _startup.startup()
+    _init_sentry(_application)
     yield
     await _startup.shutdown()
+
+
+def _init_sentry(application: FastAPI) -> None:
+    s = get_settings()
+    _init_sentry_lib(
+        dsn=s.sentry_dsn or None,
+        environment=s.environment,
+        traces_sample_rate=s.sentry_traces_sample_rate,
+    )
 
 
 app = FastAPI(root_path="/api", lifespan=lifespan)
