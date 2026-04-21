@@ -10,7 +10,7 @@ class PetitionCrop(SQLModel, table=True):
     __tablename__ = "petition_crops"
 
     id: int | None = Field(default=None, primary_key=True)
-    scan_id: int = Field(foreign_key="petition_scans.id", nullable=False)
+    scan_id: int = Field(foreign_key="petition_scans.id", nullable=False, index=True)
     crop_index: int = Field(nullable=False)
     stored_path: str = Field(nullable=False, unique=True)
     crop_coordinates: dict = Field(default={}, sa_column=Column(JSON))
