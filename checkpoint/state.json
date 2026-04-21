@@ -18,12 +18,16 @@
     "76": {
       "agent_id": "qJ2u",
       "claimed_at": "2026-04-21T23:12:53.926045Z"
+    },
+    "77": {
+      "agent_id": "qJ2u",
+      "claimed_at": "2026-04-21T23:13:09.678991Z"
     }
   },
   "issues": {},
   "watermark": {
-    "timestamp": "2026-04-21T23:12:53.926045Z",
+    "timestamp": "2026-04-21T23:13:09.678991Z",
     "agent_id": "qJ2u",
-    "agent_seq": 4
+    "agent_seq": 5
   }
 }
