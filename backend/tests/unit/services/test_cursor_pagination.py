@@ -6,6 +6,7 @@ All tests must FAIL until implementation is added.
 
 from uuid import uuid4
 
+import pytest
 from sqlmodel import Session
 
 from app.data.database.model.jobs import JobStatus, MatcherJob
@@ -366,3 +367,146 @@ class TestKeysetPaginationCampaignResults:
 
         assert result.next_cursor is not None
         assert result.next_cursor == result.results[-1].ocr_result_id
+
+
+class TestAdversarialFindings:
+    """Tests from adversarial review (#61) — edge cases and validation gaps.
+
+    RED phase: These tests expose bugs found during adversarial review.
+    """
+
+    def test_negative_cursor_rejected(self, session):
+        """Scenario: Negative cursor raises ValueError instead of returning page 1."""
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+        _build_ocr_chain(session, job, scan, 5)
+
+        service = ResultsQueryService(session)
+        with pytest.raises(ValueError, match="cursor must be non-negative"):
+            service.get_results(job.id, cursor=-1, page_size=3)
+
+    def test_page_size_above_max_rejected(self, session):
+        """Scenario: page_size > 1000 raises ValueError."""
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+        _build_ocr_chain(session, job, scan, 5)
+
+        service = ResultsQueryService(session)
+        with pytest.raises(ValueError, match="page_size must be between"):
+            service.get_results(job.id, page_size=10000)
+
+    def test_page_size_zero_rejected(self, session):
+        """Scenario: page_size=0 raises ValueError."""
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+
+        service = ResultsQueryService(session)
+        with pytest.raises(ValueError, match="page_size must be between"):
+            service.get_results(job.id, page_size=0)
+
+    def test_campaign_invalid_confidence_rejected(self, session):
+        """Scenario: Invalid confidence string raises ValueError, not silently ignored."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+        _build_ocr_chain(session, job, scan, 5)
+
+        service = CampaignQueryService(session)
+        with pytest.raises(ValueError, match="Invalid confidence"):
+            service.get_campaign_results(
+                campaign.id, confidence="INVALID", page_size=3
+            )
+
+    def test_campaign_uses_latest_job_only(self, session):
+        """Scenario: Campaign results reflect only the latest (max ID) job, not all jobs."""
+        from app.services.campaign_query_service import CampaignQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan1 = _seed_scan(session, campaign)
+        scan2 = PetitionScan(
+            campaign_id=campaign.id,
+            original_filename="test2.pdf",
+            stored_path="/tmp/test2.pdf",
+            file_hash="def456",
+            page_count=1,
+        )
+        session.add(scan2)
+        session.flush()
+
+        job1 = _seed_job(session, campaign)
+        _build_ocr_chain(session, job1, scan1, 3)
+
+        job2 = _seed_job(session, campaign)
+        _build_ocr_chain(session, job2, scan2, 5)
+
+        service = CampaignQueryService(session)
+        result = service.get_campaign_results(campaign.id, cursor=None, page_size=50)
+
+        assert result.total == 5
+        assert len(result.results) == 5
+
+    def test_next_cursor_with_confidence_filter_no_false_positive(self, session):
+        """Scenario: next_cursor is None when filtered results exhausted, even if
+        unfiltered results remain."""
+        from app.services.results_query_service import ResultsQueryService
+
+        region = _seed_region(session)
+        campaign = _seed_campaign(session, region)
+        scan = _seed_scan(session, campaign)
+        job = _seed_job(session, campaign)
+
+        for i in range(4):
+            crop = PetitionCrop(
+                scan_id=scan.id,
+                crop_index=i,
+                stored_path=f"/tmp/crop_{i}.png",
+                crop_coordinates={},
+                page_number=1,
+            )
+            session.add(crop)
+            session.flush()
+            ocr = OcrResult(
+                crop_id=crop.id,
+                ocr_job_id=1,
+                extracted_text={"name": f"Sig {i}"},
+            )
+            session.add(ocr)
+            session.flush()
+
+            level = ConfidenceLevel.HIGH if i < 2 else ConfidenceLevel.LOW
+            session.add(
+                MatchResult(
+                    matcher_job_id=job.id,
+                    ocr_result_id=ocr.id,
+                    voter_id=None,
+                    rank=1,
+                    similarity_score=0.85,
+                    confidence_level=level,
+                )
+            )
+        session.commit()
+
+        service = ResultsQueryService(session)
+        result = service.get_results(
+            job.id, cursor=None, page_size=10, confidence=ConfidenceLevel.HIGH
+        )
+
+        assert result.total == 2
+        assert len(result.results) == 2
+        assert result.next_cursor is None
