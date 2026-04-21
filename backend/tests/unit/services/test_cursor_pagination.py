@@ -409,7 +409,7 @@ class TestAdversarialFindings:
 
         region = _seed_region(session)
         campaign = _seed_campaign(session, region)
-        scan = _seed_scan(session, campaign)
+        _seed_scan(session, campaign)
         job = _seed_job(session, campaign)
 
         service = ResultsQueryService(session)
@@ -441,7 +441,7 @@ class TestAdversarialFindings:
         scan1 = _seed_scan(session, campaign)
 
         job1 = _seed_job(session, campaign)
-        ocrs1 = _build_ocr_chain(session, job1, scan1, 3)
+        _build_ocr_chain(session, job1, scan1, 3)
 
         scan2 = PetitionScan(
             campaign_id=campaign.id,
