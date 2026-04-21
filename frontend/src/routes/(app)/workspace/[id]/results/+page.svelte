@@ -66,23 +66,29 @@
 		lightboxClip = null;
 	}
 
+	let cursorHistory = $state<number[]>([]);
+
 	function handlePrevious() {
-		const newPage = Math.max(1, $campaignResults.page - 1);
-		campaignResults.fetchResults(campaignId, { page: newPage, pageSize: $campaignResults.pageSize });
+		const prevCursor = cursorHistory.length > 0 ? cursorHistory.pop()! : null;
+		cursorHistory = cursorHistory;
+		campaignResults.fetchResults(campaignId, { cursor: prevCursor, pageSize: $campaignResults.pageSize });
 	}
 
 	function handleNext() {
-		const newPage = $campaignResults.page + 1;
-		campaignResults.fetchResults(campaignId, { page: newPage, pageSize: $campaignResults.pageSize });
+		if ($campaignResults.nextCursor !== null) {
+			if ($campaignResults.cursor !== null) {
+				cursorHistory = [...cursorHistory, $campaignResults.cursor];
+			}
+			campaignResults.fetchResults(campaignId, { cursor: $campaignResults.nextCursor, pageSize: $campaignResults.pageSize });
+		}
 	}
 
 	function handleRetry() {
+		cursorHistory = [];
 		campaignResults.fetchResults(campaignId);
 	}
 
-	let totalPages = $derived(Math.ceil($campaignResults.total / $campaignResults.pageSize));
-	let startItem = $derived(($campaignResults.page - 1) * $campaignResults.pageSize + 1);
-	let endItem = $derived(Math.min($campaignResults.page * $campaignResults.pageSize, $campaignResults.total));
+	let shownCount = $derived($campaignResults.results.length);
 
 	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
 
@@ -240,19 +246,19 @@
 			{#if $campaignResults.total > 0}
 				<div class="flex items-center justify-between border-t border-slate-200 px-4 py-3">
 					<p class="text-sm text-slate-600">
-						Showing {startItem} to {endItem} of {$campaignResults.total} results
+						Showing {shownCount} of {$campaignResults.total} results
 					</p>
 					<div class="flex gap-2">
 						<Button
 							variant="secondary"
 							text="Previous"
-							disabled={$campaignResults.page <= 1}
+							disabled={cursorHistory.length === 0}
 							onclick={handlePrevious}
 						/>
 						<Button
 							variant="secondary"
 							text="Next"
-							disabled={$campaignResults.page >= totalPages}
+							disabled={$campaignResults.nextCursor === null}
 							onclick={handleNext}
 						/>
 					</div>

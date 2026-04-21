@@ -9,12 +9,12 @@ export class ResultsApi {
 
 	async getResultsJobsJobIdResultsGet(params: {
 		jobId: number;
-		page?: number;
+		cursor?: number | null;
 		pageSize?: number;
 		confidence?: string | null;
 	}): Promise<ResultsListResponse> {
 		const query: Record<string, unknown> = {};
-		if (params.page !== undefined) query["page"] = params.page;
+		if (params.cursor) query["cursor"] = params.cursor;
 		if (params.pageSize !== undefined) query["page_size"] = params.pageSize;
 		if (params.confidence) query["confidence"] = params.confidence;
 		const qs = new URLSearchParams(
