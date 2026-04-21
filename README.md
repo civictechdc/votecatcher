@@ -7,6 +7,7 @@
 Automate ballot signature recognition and validation. Put powerful organizing tools in the hands of grassroots campaigns.
 
 [![CI](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/civictechdc/votecatcher/badges/coverage.json)](https://github.com/civictechdc/votecatcher/actions/workflows/ci.yml)
 [![Security](https://github.com/civictechdc/votecatcher/actions/workflows/security.yml/badge.svg)](https://github.com/civictechdc/votecatcher/actions/workflows/security.yml)
 [![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcivictechdc%2Fvotecatcher%2Fmain%2Fbackend%2Fpyproject.toml&query=%24.project.version&label=version&color=green)](https://github.com/civictechdc/votecatcher/releases)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)

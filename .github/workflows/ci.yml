@@ -137,12 +137,27 @@ jobs:
         id: security-tests
         run: cd backend && uv run pytest tests/security/ -v --tb=short
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        if: always() && steps.test.outcome != 'skipped'
-        with:
-          files: backend/coverage.xml
-          fail_ci_if_error: false
+      - name: Update coverage badge
+        if: always() && steps.test.outcome == 'success' && github.ref == 'refs/heads/main'
+        run: |
+          COVERAGE=$(python3 -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('backend/coverage.xml')
+          rate = tree.getroot().attrib['line-rate']
+          print(f'{float(rate) * 100:.0f}')
+          ")
+          COLOR=$(python3 -c "print({'9':'brightgreen','8':'green','7':'yellowgreen','6':'yellow','5':'orange'}.get('${COVERAGE:0:1}','red'))")
+          cat > /tmp/coverage.json <<EOF
+          {"schemaVersion":1,"label":"coverage","message":"${COVERAGE}%","color":"${COLOR}"}
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan badges
+          git rm -rf . 2>/dev/null || true
+          cp /tmp/coverage.json coverage.json
+          git add coverage.json
+          git commit -m "update coverage badge: ${COVERAGE}%" --allow-empty
+          git push origin badges --force
 
       - name: Backend failure summary
         if: failure()
