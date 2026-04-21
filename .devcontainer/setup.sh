@@ -10,12 +10,25 @@ cd /workspace
 echo "Checking prerequisites..."
 if ! command -v just &>/dev/null; then
 	echo "Installing just..."
-	curl -fsSL https://pkg.mondoolabs.com/setup.sh | sudo bash
-	sudo apt-get install -y just
+	JUST_VERSION="1.40.0"
+	curl -fsSL "https://github.com/casey/just/releases/download/${JUST_VERSION}/just-${JUST_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
+		| sudo tar xz -C /usr/local/bin just
+	echo "✓ just v${JUST_VERSION} installed"
 fi
 
 echo "Checking just installation..."
 just --version
+
+echo "Installing osv-scanner..."
+if ! command -v osv-scanner &>/dev/null; then
+	OSV_VERSION="1.9.2"
+	curl -fsSL "https://github.com/google/osv-scanner/releases/download/v${OSV_VERSION}/osv-scanner_linux_amd64" \
+		-o /usr/local/bin/osv-scanner
+	sudo chmod +x /usr/local/bin/osv-scanner
+	echo "✓ osv-scanner v${OSV_VERSION} installed"
+else
+	echo "✓ osv-scanner already installed"
+fi
 
 echo ""
 echo "=== Running justfile-based setup ==="

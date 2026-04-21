@@ -29,14 +29,7 @@ services:
 
   # Development database with enhanced configuration
   db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
     environment:
-      POSTGRES_USER: votecatcher
-      POSTGRES_PASSWORD: votecatcher_dev  # pragma: allowlist secret
-      POSTGRES_DB: votecatcher
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - votecatcher-postgres-data:/var/lib/postgresql/data
