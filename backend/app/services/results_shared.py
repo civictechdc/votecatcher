@@ -44,9 +44,7 @@ class OcrEnrichment:
     raw_extracted_text: dict | None = None
 
 
-def validate_pagination_params(
-    cursor: int | None, page_size: int
-) -> None:
+def validate_pagination_params(cursor: int | None, page_size: int) -> None:
     if cursor is not None and cursor < 0:
         raise ValueError("cursor must be non-negative")
     if not MIN_PAGE_SIZE <= page_size <= MAX_PAGE_SIZE:
@@ -101,9 +99,7 @@ def enrich_ocr_lookup(
     if not ocr_ids:
         return {}
 
-    ocr_results = session.exec(
-        select(OcrResult).where(OcrResult.id.in_(ocr_ids))
-    ).all()
+    ocr_results = session.exec(select(OcrResult).where(OcrResult.id.in_(ocr_ids))).all()
     ocr_by_id = {o.id: o for o in ocr_results}
 
     crop_ids = {o.crop_id for o in ocr_results if o.crop_id}
@@ -126,9 +122,7 @@ def enrich_ocr_lookup(
     result: dict[int, OcrEnrichment] = {}
     for ocr_id in ocr_ids:
         ocr = ocr_by_id.get(ocr_id)
-        extracted_text = (
-            OcrTextParser.format_text(ocr.extracted_text) if ocr else ""
-        )
+        extracted_text = OcrTextParser.format_text(ocr.extracted_text) if ocr else ""
         crop_id = ocr.crop_id if ocr else 0
         thumbnail_url = f"/api/crops/{crop_id}/image" if crop_id else ""
 

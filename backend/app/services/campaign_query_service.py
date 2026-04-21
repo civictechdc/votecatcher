@@ -70,7 +70,11 @@ class CampaignQueryService:
 
         latest_job = self._session.get(MatcherJob, latest_job_id)
 
-        if confidence is None and latest_job and latest_job.distinct_ocr_count is not None:
+        if (
+            confidence is None
+            and latest_job
+            and latest_job.distinct_ocr_count is not None
+        ):
             total = latest_job.distinct_ocr_count
         else:
             total = self._session.exec(
@@ -123,7 +127,9 @@ class CampaignQueryService:
             extracted_address = ""
             if enrichment and enrichment.raw_extracted_text:
                 extracted_name, extracted_address = (
-                    OcrTextParser.extract_name_and_address(enrichment.raw_extracted_text)
+                    OcrTextParser.extract_name_and_address(
+                        enrichment.raw_extracted_text
+                    )
                 )
 
             predictions = truncate_predictions(predictions_by_ocr.get(ocr_id, []))
@@ -138,8 +144,12 @@ class CampaignQueryService:
                     job_id=job_id,
                     thumbnail_url=enrichment.thumbnail_url if enrichment else "",
                     predictions=predictions,
-                    crop_coordinates=enrichment.crop_coordinates if enrichment else None,
-                    entry_coordinates=enrichment.entry_coordinates if enrichment else None,
+                    crop_coordinates=enrichment.crop_coordinates
+                    if enrichment
+                    else None,
+                    entry_coordinates=enrichment.entry_coordinates
+                    if enrichment
+                    else None,
                     page_number=enrichment.page_number if enrichment else None,
                     document_name=enrichment.document_name if enrichment else "",
                     scan_id=enrichment.scan_id if enrichment else None,

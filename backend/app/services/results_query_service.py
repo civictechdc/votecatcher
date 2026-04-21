@@ -125,8 +125,12 @@ class ResultsQueryService:
                     crop_id=enrichment.crop_id if enrichment else 0,
                     thumbnail_url=enrichment.thumbnail_url if enrichment else "",
                     predictions=predictions,
-                    crop_coordinates=enrichment.crop_coordinates if enrichment else None,
-                    entry_coordinates=enrichment.entry_coordinates if enrichment else None,
+                    crop_coordinates=enrichment.crop_coordinates
+                    if enrichment
+                    else None,
+                    entry_coordinates=enrichment.entry_coordinates
+                    if enrichment
+                    else None,
                     page_number=enrichment.page_number if enrichment else None,
                     document_name=enrichment.document_name if enrichment else "",
                     scan_id=enrichment.scan_id if enrichment else None,

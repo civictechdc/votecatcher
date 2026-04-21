@@ -19,9 +19,7 @@ from app.data.database.model.schema import Campaign, Region
 
 
 def _seed_region(session: Session) -> Region:
-    region = Region(
-        region_key="DC", region_name="Washington, DC", country_code="US"
-    )
+    region = Region(region_key="DC", region_name="Washington, DC", country_code="US")
     session.add(region)
     session.flush()
     return region
@@ -137,7 +135,12 @@ class TestBuildPredictions:
         voter = RegisteredVoter(
             region_id=region.id,
             name_data={"first_name": "Alice", "last_name": "Smith"},
-            address_data={"street": "1 Oak St", "city": "DC", "state": "DC", "zip": "20001"},
+            address_data={
+                "street": "1 Oak St",
+                "city": "DC",
+                "state": "DC",
+                "zip": "20001",
+            },
             data_hash="h1",
         )
         session.add(voter)
