@@ -690,9 +690,10 @@ class TestCsvExport:
         assert len(lines) == 2
         assert "HIGH" in lines[1]
 
-    def test_export_never_loads_all_rows_at_once(self, session):
-        """Scenario: Export streams results without calling .all() on the query."""
-        from unittest.mock import MagicMock, patch
+    def test_export_materializes_match_results_and_batch_fetches_related(self, session):
+        """Scenario: Export materializes match results via yield_per, then
+        batch-fetches OcrResult and RegisteredVoter — no per-row lookups."""
+        from unittest.mock import patch
 
         from app.services.results_query_service import ResultsQueryService
 
@@ -715,21 +716,31 @@ class TestCsvExport:
         )
         session.commit()
 
-        mock_stream = MagicMock()
-        mock_stream.yield_per.return_value = mock_stream
-        mock_stream.__iter__ = MagicMock(return_value=iter([]))
-        mock_stream.all = MagicMock(
-            side_effect=AssertionError(
-                ".all() must not be called during streaming export"
-            )
-        )
+        real_exec = session.exec
 
-        with patch.object(type(session), "exec", return_value=mock_stream):
+        batch_lookups = {"ocr": 0, "voter": 0}
+        match_materializations = 0
+
+        def tracking_exec(statement):
+            nonlocal match_materializations, batch_lookups
+            result = real_exec(statement)
+            stmt_str = str(statement)
+            if "match_result" in stmt_str.lower():
+                match_materializations += 1
+            elif "ocr_result" in stmt_str.lower():
+                batch_lookups["ocr"] += 1
+            elif "registered_voter" in stmt_str.lower():
+                batch_lookups["voter"] += 1
+            return result
+
+        with patch.object(type(session), "exec", side_effect=tracking_exec):
             service = ResultsQueryService(session)
             csv_lines, _ = service.export_results_csv(job.id)
             list(csv_lines)
 
-        mock_stream.all.assert_not_called()
+        assert match_materializations == 1
+        assert batch_lookups["ocr"] == 1
+        assert batch_lookups["voter"] == 0
 
     def test_export_yields_incrementally_not_as_single_blob(self, session):
         """Scenario: CSV output arrives as multiple pieces, not one monolithic string."""
