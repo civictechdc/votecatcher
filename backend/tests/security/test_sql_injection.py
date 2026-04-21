@@ -27,12 +27,12 @@ class TestSQLInjection:
     def test_campaign_results_safe_with_special_chars(
         self, client: TestClient, test_campaign: Campaign
     ):
-        """Should handle special characters in query parameters safely."""
+        """Should reject invalid confidence values (typed enum rejects injection strings)."""
         response = client.get(
             f"/api/campaigns/{test_campaign.id}/results?confidence=HIGH' OR '1'='1"
         )
 
-        assert response.status_code in [200, 404]
+        assert response.status_code == 422
 
     def test_list_campaigns_with_negative_offset(self, client: TestClient):
         """Should handle negative offset gracefully."""

@@ -406,8 +406,9 @@ class TestAdversarialFindings:
         with pytest.raises(ValueError, match="page_size must be between"):
             service.get_results(job.id, page_size=0)
 
-    def test_campaign_invalid_confidence_rejected(self, session):
-        """Scenario: Invalid confidence string raises ValueError, not silently ignored."""
+    def test_campaign_confidence_filter_with_enum(self, session):
+        """Scenario: Confidence filter accepts ConfidenceLevel enum values."""
+        from app.data.database.model.match_result import ConfidenceLevel
         from app.services.campaign_query_service import CampaignQueryService
 
         region = _seed_region(session)
@@ -417,8 +418,11 @@ class TestAdversarialFindings:
         _build_ocr_chain(session, job, scan, 5)
 
         service = CampaignQueryService(session)
-        with pytest.raises(ValueError, match="Invalid confidence"):
-            service.get_campaign_results(campaign.id, confidence="INVALID", page_size=3)
+        result = service.get_campaign_results(
+            campaign.id, confidence=ConfidenceLevel.HIGH, page_size=3
+        )
+        for r in result.results:
+            assert r.predictions[0].confidence == "HIGH"
 
     def test_campaign_uses_latest_job_only(self, session):
         """Scenario: Campaign results reflect only the latest (max ID) job, not all jobs."""

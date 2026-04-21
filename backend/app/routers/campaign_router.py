@@ -9,6 +9,7 @@ from pydantic import Field
 from sqlmodel import Session
 
 from app.api_models import ApiModel
+from app.data.database.model.match_result import ConfidenceLevel
 from app.dependencies import get_session
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
@@ -198,7 +199,7 @@ class CampaignMatchPrediction(ApiModel):
     voter_name: str
     voter_address: str
     similarity_score: float
-    confidence: str
+    confidence: ConfidenceLevel
 
 
 class CampaignResultResponse(ApiModel):
@@ -231,7 +232,7 @@ class CampaignResultsListResponse(ApiModel):
 def get_campaign_results(
     campaign_id: uuid.UUID,
     session: SessionDep,
-    confidence: str | None = None,
+    confidence: ConfidenceLevel | None = None,
     cursor: int | None = None,
     page_size: int = 50,
 ) -> CampaignResultsListResponse:

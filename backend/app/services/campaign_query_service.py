@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 from sqlalchemy import func
 
+from app.data.database.model.match_result import ConfidenceLevel
 from app.routers.campaign_router import (
     CampaignMatchPrediction,
     CampaignResultResponse,
@@ -35,7 +36,7 @@ class CampaignQueryService:
     def get_campaign_results(
         self,
         campaign_id: uuid.UUID,
-        confidence: str | None = None,
+        confidence: ConfidenceLevel | None = None,
         cursor: int | None = None,
         page_size: int = 50,
     ) -> CampaignResultsListResponse:
@@ -45,7 +46,7 @@ class CampaignQueryService:
             raise ValueError("page_size must be between 1 and 1000")
 
         from app.data.database.model.jobs import MatcherJob
-        from app.data.database.model.match_result import ConfidenceLevel, MatchResult
+        from app.data.database.model.match_result import MatchResult
         from app.data.database.model.ocr_result import OcrResult
         from app.data.database.model.schema import Campaign
 
@@ -62,19 +63,9 @@ class CampaignQueryService:
                 results=[], total=0, page_size=page_size, next_cursor=None
             )
 
-        confidence_filter = None
-        if confidence:
-            try:
-                confidence_filter = ConfidenceLevel(confidence.upper())
-            except ValueError:
-                raise ValueError(
-                    f"Invalid confidence level: {confidence!r}. "
-                    f"Must be one of: {[e.value for e in ConfidenceLevel]}"
-                )
-
         base_where = [MatchResult.matcher_job_id == latest_job_id]
-        if confidence_filter:
-            base_where.append(MatchResult.confidence_level == confidence_filter)
+        if confidence:
+            base_where.append(MatchResult.confidence_level == confidence)
 
         total = self._session.exec(
             select(func.count()).select_from(
@@ -197,10 +188,8 @@ class CampaignQueryService:
                 MatchResult.matcher_job_id == latest_job_id,
                 MatchResult.ocr_result_id > last_id,
             ]
-            if confidence_filter:
-                next_page_where.append(
-                    MatchResult.confidence_level == confidence_filter
-                )
+            if confidence:
+                next_page_where.append(MatchResult.confidence_level == confidence)
             count_after = self._session.exec(
                 select(func.count()).select_from(
                     select(func.distinct(MatchResult.ocr_result_id))

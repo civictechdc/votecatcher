@@ -289,7 +289,9 @@ class TestGetCampaignResults:
         session.commit()
 
         service = CampaignQueryService(session)
-        result = service.get_campaign_results(campaign.id, confidence="HIGH")
+        result = service.get_campaign_results(
+            campaign.id, confidence=ConfidenceLevel.HIGH
+        )
 
         assert result.total == 2
         for r in result.results:
