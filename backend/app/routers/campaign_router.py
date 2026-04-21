@@ -223,7 +223,6 @@ class CampaignResultsListResponse(ApiModel):
 
     results: list[CampaignResultResponse]
     total: int
-    page: int
     page_size: int
     next_cursor: int | None = None
 
@@ -234,7 +233,6 @@ def get_campaign_results(
     session: SessionDep,
     confidence: str | None = None,
     cursor: int | None = None,
-    page: int = 1,
     page_size: int = 50,
 ) -> CampaignResultsListResponse:
     """Get match results for all jobs in a campaign."""
@@ -245,7 +243,6 @@ def get_campaign_results(
             campaign_id,
             confidence=confidence,
             cursor=cursor,
-            page=page,
             page_size=page_size,
         )
     except ValueError as e:

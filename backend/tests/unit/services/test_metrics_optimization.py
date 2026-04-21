@@ -6,7 +6,6 @@ and _count_processed_results uses exactly 1 SQL query.
 
 from datetime import UTC, datetime
 
-import pytest
 from sqlmodel import Session
 
 from app.data.database.model.jobs import JobStatus, MatcherJob

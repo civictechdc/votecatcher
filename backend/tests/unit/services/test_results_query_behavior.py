@@ -152,7 +152,6 @@ class TestGetResultsPagination:
 
         assert result.total == 0
         assert result.results == []
-        assert result.page == 1
         assert result.page_size == 50
 
     def test_returns_correct_total_as_unique_ocr_results(self, session):
@@ -208,9 +207,11 @@ class TestGetResultsPagination:
 
         service = ResultsQueryService(session)
 
-        page1 = service.get_results(job.id, page=1, page_size=3)
-        page2 = service.get_results(job.id, page=2, page_size=3)
-        page4 = service.get_results(job.id, page=4, page_size=3)
+        page1 = service.get_results(job.id, page_size=3)
+        page2 = service.get_results(job.id, cursor=page1.next_cursor, page_size=3)
+        page4_cursor = page2.next_cursor
+        page3 = service.get_results(job.id, cursor=page4_cursor, page_size=3)
+        page4 = service.get_results(job.id, cursor=page3.next_cursor, page_size=3)
 
         assert len(page1.results) == 3
         assert len(page2.results) == 3

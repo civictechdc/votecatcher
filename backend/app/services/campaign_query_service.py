@@ -37,7 +37,6 @@ class CampaignQueryService:
         campaign_id: uuid.UUID,
         confidence: str | None = None,
         cursor: int | None = None,
-        page: int = 1,
         page_size: int = 50,
     ) -> CampaignResultsListResponse:
         """Get match results for all jobs in a campaign.
@@ -45,8 +44,7 @@ class CampaignQueryService:
         Args:
             campaign_id: Campaign UUID
             confidence: Filter by confidence level (HIGH/MEDIUM/LOW, optional)
-            cursor: ocr_result_id to start after (keyset pagination). Takes precedence over page.
-            page: Page number (1-indexed). Ignored when cursor is set.
+            cursor: ocr_result_id to start after (keyset pagination). None starts from beginning.
             page_size: Items per page
 
         Returns:
@@ -73,7 +71,7 @@ class CampaignQueryService:
 
         if not job_ids:
             return CampaignResultsListResponse(
-                results=[], total=0, page=page, page_size=page_size, next_cursor=None
+                results=[], total=0, page_size=page_size, next_cursor=None
             )
 
         latest_job_id = job_ids[0]
@@ -99,7 +97,7 @@ class CampaignQueryService:
 
         if total == 0:
             return CampaignResultsListResponse(
-                results=[], total=0, page=page, page_size=page_size, next_cursor=None
+                results=[], total=0, page_size=page_size, next_cursor=None
             )
 
         cursor_where = list(base_where)
@@ -227,7 +225,6 @@ class CampaignQueryService:
         return CampaignResultsListResponse(
             results=results,
             total=total,
-            page=page,
             page_size=page_size,
             next_cursor=next_cursor,
         )

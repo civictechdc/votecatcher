@@ -38,7 +38,6 @@ class ResultsQueryService:
         job_id: int,
         confidence: Optional["ConfidenceLevel"] = None,
         cursor: Optional[int] = None,
-        page: int = 1,
         page_size: int = 50,
     ) -> "ResultsListResponse":
         """Get match results for a job.
@@ -46,8 +45,7 @@ class ResultsQueryService:
         Args:
             job_id: Job ID
             confidence: Filter by confidence level (optional)
-            cursor: ocr_result_id to start after (keyset pagination). Takes precedence over page.
-            page: Page number (1-indexed). Ignored when cursor is set.
+            cursor: ocr_result_id to start after (keyset pagination). None starts from beginning.
             page_size: Items per page
 
         Returns:
@@ -81,7 +79,7 @@ class ResultsQueryService:
             from app.routers.results_router import ResultsListResponse
 
             return ResultsListResponse(
-                results=[], total=0, page=page, page_size=page_size, next_cursor=None
+                results=[], total=0, page_size=page_size, next_cursor=None
             )
 
         if cursor is not None and cursor > 0:
@@ -194,14 +192,9 @@ class ResultsQueryService:
             if count_after:
                 next_cursor = last_id
 
-        effective_page = page
-        if cursor is not None and cursor > 0:
-            effective_page = page
-
         return ResultsListResponse(
             results=results,
             total=total,
-            page=effective_page,
             page_size=page_size,
             next_cursor=next_cursor,
         )

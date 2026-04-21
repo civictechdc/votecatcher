@@ -6,7 +6,6 @@ All tests must FAIL until implementation is added.
 
 from uuid import uuid4
 
-import pytest
 from sqlmodel import Session
 
 from app.data.database.model.jobs import JobStatus, MatcherJob
@@ -14,7 +13,6 @@ from app.data.database.model.match_result import ConfidenceLevel, MatchResult
 from app.data.database.model.ocr_result import OcrResult
 from app.data.database.model.petition_crop import PetitionCrop
 from app.data.database.model.petition_scan import PetitionScan
-from app.data.database.model.registered_voter import RegisteredVoter
 from app.data.database.model.schema import Campaign, Region
 
 
@@ -134,7 +132,7 @@ class TestKeysetPaginationJobResults:
         campaign = _seed_campaign(session, region)
         scan = _seed_scan(session, campaign)
         job = _seed_job(session, campaign)
-        ocr_results = _build_ocr_chain(session, job, scan, 10)
+        _build_ocr_chain(session, job, scan, 10)
 
         service = ResultsQueryService(session)
         page1 = service.get_results(job.id, cursor=None, page_size=3)

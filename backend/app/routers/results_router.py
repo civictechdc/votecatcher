@@ -43,7 +43,6 @@ class ResultResponse(ApiModel):
 class ResultsListResponse(ApiModel):
     results: list[ResultResponse]
     total: int
-    page: int
     page_size: int
     next_cursor: int | None = None
 
@@ -54,14 +53,13 @@ def get_results(
     session: SessionDep,
     confidence: ConfidenceLevel | None = None,
     cursor: int | None = None,
-    page: int = 1,
     page_size: int = 50,
 ) -> ResultsListResponse:
     from app.services.results_query_service import ResultsQueryService
 
     try:
         return ResultsQueryService(session).get_results(
-            job_id, confidence=confidence, cursor=cursor, page=page, page_size=page_size
+            job_id, confidence=confidence, cursor=cursor, page_size=page_size
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
