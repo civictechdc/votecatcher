@@ -4,8 +4,6 @@ Injects OWASP-recommended security headers on every HTTP response.
 Environment-conditional: HSTS (production only), CSP report-only (dev).
 """
 
-import uuid
-
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
@@ -33,9 +31,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         if "permissions-policy" not in response.headers:
             response.headers["permissions-policy"] = _PERMISSIONS_POLICY
-
-        if "x-request-id" not in response.headers:
-            response.headers["x-request-id"] = str(uuid.uuid4())
 
         if self._is_production:
             if "strict-transport-security" not in response.headers:
