@@ -1,0 +1,10 @@
+{
+  "uuid": "5f53e35e-7436-4028-9a61-03f562ecfcef",
+  "issue_uuid": "577d08ce-3e8d-4f35-84c6-e5fed16aca5e",
+  "author": "qJ2u",
+  "content": "## Spike Results: Python 3.14 Compatibility — COMPLETE\n\n### Baseline (3.13.9): ALL GREEN\n- 1335 passed, 8 skipped, 11 warnings in 124s\n\n### Python 3.14.4: FAILS AT DEPENDENCY INSTALL\nRoot cause: multiple native packages lack cp314 wheels for their pinned versions.\n\n| Package | Pinned | Latest | cp314 @ pinned | cp314 @ latest |\n|---|---|---|---|---|\n| watchfiles | 1.0.5 | 1.1.1 | 0 | 23 |\n| pydantic-core | 2.41.5 | 2.46.3 | 28 | 30 |\n| rapidfuzz | 3.13.0 | 3.14.5 | 0 | 22 |\n| numpy | 2.2.4 | 2.4.4 | 0 | 21 |\n| scikit-learn | 1.6.1 | 1.8.0 | 0 | 12 |\n| pymupdf | 1.25.5 | 1.27.2.2 | 0 | 1 |\n| scipy | 1.15.2 | 1.17.1 | 0 | 20 |\n\nBuild failures: watchfiles (PyO3 0.24 max 3.13), scipy (meson fails from source), numpy/rapidfuzz/scikit-learn (no cp314 wheels).\n\nRecommendation: Pin to 3.13 now. Revisit Q3 2026. GH issue #130 tracks the migration.",
+  "created_at": "2026-04-23T22:56:05.294408Z",
+  "kind": "note",
+  "signed_by": "SHA256:pbm1G1vGzSofxnCO3SFeDJyBAkNByLKJbqPqfD6qybI",
+  "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgAoAiM2+wI21k8W2C+VqaXa7LeNdUFSeAkGcmWiZ09A8AAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAGI07YZER1u4hJKgXXfISd6432UXqllK72S7mFTXe9xVx1qxSpq2WNd8vkfaBrm/gOl8kzjrF654LU6VxGIGuAA=="
+}
