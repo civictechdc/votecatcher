@@ -1,0 +1,11 @@
+{
+  "uuid": "8d2ccc93-8cfe-4af7-b001-0401d1a1889b",
+  "display_id": 3,
+  "title": "Bug: provider_job_id never persisted after OpenAI batch creation",
+  "description": "Steps to reproduce:\n1. \n\nExpected: \nActual: \n\n## Problem\nIn worker.py _run_batch_ocr(), after the OpenAI batch is created (line 686), the batch ID is only logged (lines 687-692) but never written back to ocr_job.provider_job_id. The ID lives only in the in-memory batch_status variable used by the polling loop.\n\nIf the worker dies after create_batch_job succeeds but before polling completes, the OpenAI batch exists remotely but the DB has no record of it (provider_job_id=NULL). The batch becomes orphaned on OpenAI's side with no way to recover or cancel it.\n\n## Fix\nAfter line 692 in worker.py, add:\n```python\nocr_job.provider_job_id = batch_status.ocr_job_id\nsession.commit()\n```\n\n## Location\nworker.py:686-692 in _run_batch_ocr()\n\n## Related\n- GH-129: runtime orphan recovery for stuck OCR jobs\n- Crosslink #1: job 1 stuck in OCR_STARTED (this was the root cause)",
+  "status": "open",
+  "priority": "high",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-23T04:40:00.843200Z",
+  "updated_at": "2026-04-23T04:40:00.843200Z"
+}
