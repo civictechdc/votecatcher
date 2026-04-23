@@ -7,8 +7,9 @@
   "priority": "high",
   "created_by": "qJ2u",
   "created_at": "2026-04-23T00:36:59.240982Z",
-  "updated_at": "2026-04-23T00:36:59.378161Z",
+  "updated_at": "2026-04-23T00:36:59.447558Z",
   "labels": [
-    "bug"
+    "bug",
+    "area:backend,area:ocr,area:worker"
   ]
 }
