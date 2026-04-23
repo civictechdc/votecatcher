@@ -7,7 +7,18 @@ echo ""
 
 cd /workspace
 
-echo "Checking prerequisites..."
+GIT_MIN_VERSION="2.54"
+GIT_VERSION=$(git --version | grep -oP '\d+\.\d+.\d+' | head -1)
+GIT_MAJOR=$(echo "$GIT_VERSION" | cut -d. -f1)
+GIT_MINOR=$(echo "$GIT_VERSION" | cut -d. -f2)
+GIT_REQ_MAJOR=$(echo "$GIT_MIN_VERSION" | cut -d. -f1)
+GIT_REQ_MINOR=$(echo "$GIT_MIN_VERSION" | cut -d. -f1-2 | cut -d. -f2)
+if [ "$GIT_MAJOR" -lt "$GIT_REQ_MAJOR" ] || { [ "$GIT_MAJOR" -eq "$GIT_REQ_MAJOR" ] && [ "$GIT_MINOR" -lt "$GIT_REQ_MINOR" ]; }; then
+	echo "ERROR: git >= ${GIT_MIN_VERSION} required (found ${GIT_VERSION}) for pre-commit maintenance configs"
+	exit 1
+fi
+echo "✓ git ${GIT_VERSION} >= ${GIT_MIN_VERSION}"
+
 if ! command -v just &>/dev/null; then
 	echo "Installing just..."
 	JUST_VERSION="1.40.0"
