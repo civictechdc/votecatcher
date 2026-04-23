@@ -1,0 +1,10 @@
+{
+  "uuid": "27238445-c62d-42b3-92c9-4e533dd1c750",
+  "issue_uuid": "7ab33367-2d8f-4a62-a38c-cb742702b26a",
+  "author": "qJ2u",
+  "content": "[action] Investigated job 1 OCR status mismatch. Found: 0 crops for campaign cf239b96 (crops are under scan_id=1 for different campaign). provider_job_id is NULL - no OpenAI batch was ever created. Job is orphaned in OCR_STARTED. Worker only picks up NOT_STARTED jobs. Filed issue #1.",
+  "created_at": "2026-04-23T00:37:07.187204Z",
+  "kind": "note",
+  "signed_by": "SHA256:pbm1G1vGzSofxnCO3SFeDJyBAkNByLKJbqPqfD6qybI",
+  "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgAoAiM2+wI21k8W2C+VqaXa7LeNdUFSeAkGcmWiZ09A8AAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAAhQBOUO8zZV6w9Q+w5dOhjrdeCODO5G9s5qnwMU4z2ZQJ5T1l2ZwAZcqNeXHP48j0Ug4bPSHC2+p+jhMEvUbAQ=="
+}
