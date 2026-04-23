@@ -3,11 +3,12 @@
   "display_id": 1,
   "title": "Bug: Job 1 stuck in OCR_STARTED - no crops linked to campaign, provider_job_id never set",
   "description": "Steps to reproduce:\n1. \n\nExpected: \nActual: \n\n## Findings (session #16)\n\nJob 1 is stuck at OCR_STARTED. Root cause investigation:\n\n### State\n- MatcherJob 1: status=OCR_STARTED, campaign=cf239b96, provider=openai, model=gpt-4o, force_reprocess=true\n- OcrJob 1: status=OCR_STARTED, provider_job_id=NULL\n- batch_temp/job_1/ocr_result dir exists but empty\n\n### Root Cause\n1. Campaign cf239b96 has a petition_scan (id=2) but crops are under scan_id=1 (campaign 6d3ca64a)\n2. Worker query at worker.py:221-230 joins crops->scans and filters by campaign_id - returns 0 crops for this campaign\n3. The no-crops guard (lines 232-249) should have caught this and set MATCHING_ERROR, but the job stayed in OCR_STARTED - possible race condition or the guard was bypassed\n4. provider_job_id is NULL - the OpenAI batch was never created, so no remote job exists to poll\n5. Worker only picks up NOT_STARTED jobs (line 174), so it will not retry OCR_STARTED jobs\n\n### Fix Options\n- Option A: Fix the data - ensure crops are linked to the correct scan for campaign cf239b96\n- Option B: Add a manual reset endpoint or justfile command to reset a stuck job back to NOT_STARTED\n- Option C: Make the worker also handle OCR_STARTED orphan recovery at runtime (not just startup)\n\n### Additional Issue\n- GET /api/jobs/1 returns invalid JSON (control characters in campaign_name Demo) - separate serialization bug",
-  "status": "open",
+  "status": "closed",
   "priority": "high",
   "created_by": "qJ2u",
   "created_at": "2026-04-23T00:36:59.240982Z",
-  "updated_at": "2026-04-23T00:36:59.447558Z",
+  "updated_at": "2026-04-23T04:29:42.300022Z",
+  "closed_at": "2026-04-23T04:29:42.300022Z",
   "labels": [
     "bug",
     "area:backend,area:ocr,area:worker"
