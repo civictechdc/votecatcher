@@ -1,0 +1,10 @@
+{
+  "uuid": "570390e0-1cf9-4b41-8a3d-b6e6f850091b",
+  "issue_uuid": "7ab33367-2d8f-4a62-a38c-cb742702b26a",
+  "author": "qJ2u",
+  "content": "[action] CORRECTED: Crops DO exist for campaign cf239b96 (10 crops ids 11-20, scan_id=2). Initial crop count query was wrong. Actual root cause: worker process died mid-execution after setting OCR_STARTED but before OpenAI batch submission. provider_job_id stayed NULL. Job orphaned because worker only picks up NOT_STARTED jobs and orphan detector only runs at startup. Fix: populated simulated OCR results, reset to NOT_STARTED with force_reprocess=false, relinked ocr_results.ocr_job_id to worker-created OcrJob, restarted server. Job completed: MATCHING_COMPLETED, 10 OCR results, 50 match results (top 5 each), matching_duration=41.35s. Architectural gap remains: no runtime orphan recovery or status-refresh endpoint.",
+  "created_at": "2026-04-23T04:29:36.209386Z",
+  "kind": "note",
+  "signed_by": "SHA256:pbm1G1vGzSofxnCO3SFeDJyBAkNByLKJbqPqfD6qybI",
+  "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgAoAiM2+wI21k8W2C+VqaXa7LeNdUFSeAkGcmWiZ09A8AAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABArlOrJ6VAdqBZ1V5oqehplZ0NpuhAIQ00u33gjQZv9b1O/KhlNJr/Nhj7IHox/LA19WJfEQQL4aNNWjtgCs9lCA=="
+}
