@@ -7,6 +7,10 @@
       "agent_id": "qJ2u",
       "claimed_at": "2026-04-23T04:36:54.442168Z"
     },
+    "3": {
+      "agent_id": "qJ2u",
+      "claimed_at": "2026-04-23T04:40:01.270616Z"
+    },
     "73": {
       "agent_id": "qJ2u",
       "claimed_at": "2026-04-21T23:11:50.720306Z"
@@ -38,8 +42,8 @@
   },
   "issues": {},
   "watermark": {
-    "timestamp": "2026-04-23T04:36:54.442168Z",
+    "timestamp": "2026-04-23T04:40:01.270616Z",
     "agent_id": "qJ2u",
-    "agent_seq": 10
+    "agent_seq": 11
   }
 }
