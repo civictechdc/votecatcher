@@ -3,11 +3,12 @@
   "display_id": 4,
   "title": "Spike: dependency upgrades and Python 3.14 compatibility",
   "description": "Goal: \n\nAcceptance criteria:\n- \n\n## Context\n- pyproject.toml pins python >=3.12,<4\n- .python-version pins 3.13\n- Devcontainer installs python 3.13 via feature\n- Local mise resolved to 3.14.4 (user's machine)\n- Backend is running and passing tests on 3.14 locally, but compatibility is unverified\n\n## Questions to Answer\n1. Do all dependencies (sqlmodel, fastapi, openai, langchain, etc.) support Python 3.14?\n2. Are there any 3.14-specific deprecation warnings or breaking changes in our deps?\n3. Should we pin to 3.13 for stability or adopt 3.14?\n\n## Tasks\n- [ ] Run uv pip audit / dependency review for outdated packages\n- [ ] Run full test suite (1327 tests) on Python 3.14 and note any failures\n- [ ] Run full test suite on Python 3.13 as baseline comparison\n- [ ] Check pydantic v2, sqlmodel, openai SDK, fastapi changelogs for 3.14 support\n- [ ] Update .python-version and devcontainer if adopting 3.14\n- [ ] Update pyproject.toml requires-python if pinning to 3.13\n\n## Recommendation\nIf 3.14 is clean, adopt it (performance improvements, free-threading opt-in later). If any deps fail, pin to 3.13 and revisit next quarter.",
-  "status": "open",
+  "status": "closed",
   "priority": "medium",
   "created_by": "qJ2u",
   "created_at": "2026-04-23T06:19:05.696724Z",
-  "updated_at": "2026-04-23T06:19:05.882791Z",
+  "updated_at": "2026-04-23T23:07:05.383712Z",
+  "closed_at": "2026-04-23T23:07:05.383712Z",
   "labels": [
     "feature",
     "area:backend,area:infra"
