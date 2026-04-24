@@ -1,0 +1,10 @@
+{
+  "uuid": "cbea19f6-2899-4bce-9dd8-e402130c6c8e",
+  "issue_uuid": "9b2ae876-bbd6-4551-b8b9-a160c03f6bf3",
+  "author": "qJ2u",
+  "content": "Fix committed and pushed (af8c42b). node:20-slim (Bookworm) → node:22-trixie-slim (Trixie). Added cross-spawn and glob overrides. Key discovery: node:22-slim is also Bookworm — must use explicit -trixie-slim suffix. Awaiting CI green.",
+  "created_at": "2026-04-24T23:31:08.975216Z",
+  "kind": "note",
+  "signed_by": "SHA256:pbm1G1vGzSofxnCO3SFeDJyBAkNByLKJbqPqfD6qybI",
+  "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgAoAiM2+wI21k8W2C+VqaXa7LeNdUFSeAkGcmWiZ09A8AAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAjnN/EFrsElB/WvSk/rsPy4bsCuVeXEGYw6zhaWmuGGMlwLy3mTEbWqhpYO+0Tz55ZTsp4AFxk0muvx0OzERfCQ=="
+}
