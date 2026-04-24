@@ -7,9 +7,10 @@
   "priority": "high",
   "created_by": "qJ2u",
   "created_at": "2026-04-24T22:20:49.398041Z",
-  "updated_at": "2026-04-24T22:20:49.665626Z",
+  "updated_at": "2026-04-24T22:20:49.749203Z",
   "labels": [
     "bug",
-    "ci"
+    "ci",
+    "security"
   ]
 }
