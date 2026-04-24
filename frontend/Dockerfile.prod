@@ -22,6 +22,8 @@ RUN bun run build
 FROM node:20-slim AS runner
 WORKDIR /app
 
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
