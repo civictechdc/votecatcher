@@ -132,7 +132,7 @@ wheels = [
 
 [[package]]
 name = "ballot-petition-signature-verifier"
-version = "1.0.0a6"
+version = "1.0.0a7"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
