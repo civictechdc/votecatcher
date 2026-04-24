@@ -34,6 +34,7 @@
 		"esbuild": "^0.28.0",
 		"lucide-svelte": "^0.576.0",
 		"path-to-regexp": "^8.4.2",
+		"postcss": "^8.5.10",
 		"postgres": "^3.4.9",
 		"tailwind-merge": "^3.5.0"
 	},
@@ -88,6 +89,7 @@
 	"overrides": {
 		"cookie": ">=0.7.0",
 		"esbuild": ">=0.25.0",
+		"postcss": ">=8.5.10",
 		"follow-redirects": ">=1.16.0",
 		"minimatch": ">=10.2.3",
 		"path-to-regexp": ">=8.4.0",
