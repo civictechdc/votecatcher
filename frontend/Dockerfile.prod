@@ -22,7 +22,10 @@ RUN bun run build
 FROM node:20-slim AS runner
 WORKDIR /app
 
-RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+RUN echo "deb http://deb.debian.org/debian trixie main" > /etc/apt/sources.list.d/trixie.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends -t trixie libssl3t64 openssl-provider-legacy \
+    && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/trixie.list
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
