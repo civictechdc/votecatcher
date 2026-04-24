@@ -25,7 +25,7 @@ WORKDIR /app
 RUN echo "deb http://deb.debian.org/debian trixie main" > /etc/apt/sources.list.d/trixie.list \
     && echo "deb http://deb.debian.org/debian-security trixie-security main" >> /etc/apt/sources.list.d/trixie.list \
     && apt-get update \
-    && apt-get install -y --no-install-recommends -t trixie libssl3t64 openssl-provider-legacy \
+    && apt-get install -y --no-install-recommends libssl3t64 openssl-provider-legacy \
     && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/trixie.list
 
 ENV NODE_ENV=production
