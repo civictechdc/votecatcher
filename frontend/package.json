@@ -88,8 +88,10 @@
 	},
 	"overrides": {
 		"cookie": ">=0.7.0",
+		"cross-spawn": ">=7.0.5",
 		"esbuild": ">=0.25.0",
 		"follow-redirects": ">=1.16.0",
+		"glob": ">=10.5.0",
 		"minimatch": ">=10.2.3",
 		"path-to-regexp": ">=8.4.0",
 		"picomatch": ">=4.0.4",
