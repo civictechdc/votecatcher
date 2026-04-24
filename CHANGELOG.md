@@ -20,6 +20,7 @@ Results table now supports client-side sorting and adaptive prediction truncatio
 - Added adaptive score-based prediction truncation.
 
 ### Fixed
+- Bug: Job 1 stuck in OCR_STARTED - no crops linked to campaign, provider_job_id never set (#1)
 
 - Secured resolved crop image paths against storage base.
 - Sanitized HTML output, added focus trap, and addressed security findings.

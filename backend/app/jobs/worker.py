@@ -691,6 +691,9 @@ class JobWorker:
                 status=batch_status.task_status,
             )
 
+            ocr_job.provider_job_id = batch_status.ocr_job_id
+            session.commit()
+
             poll_interval = 60
             max_wait_minutes = 30
             elapsed = 0

@@ -30,6 +30,7 @@ def is_terminal_matching_status(status: MatchingStatus) -> bool:
         MatchingStatus.COMPLETED,
         MatchingStatus.CANCELLED,
         MatchingStatus.OCR_CANCELLED,
+        MatchingStatus.OCR_COMPLETED,
         MatchingStatus.OCR_FAILED,
         MatchingStatus.MATCHING_FAILED,
         MatchingStatus.OCR_TIMED_OUT,
