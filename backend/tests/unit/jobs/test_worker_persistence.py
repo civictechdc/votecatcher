@@ -1,7 +1,8 @@
-"""Unit tests for worker data persistence contracts.
+"""Unit tests for worker data persistence and polling contracts.
 
 Tests that the worker persists critical identifiers at the right time,
 preventing orphaned resources if the process crashes mid-operation.
+Also tests that the batch OCR polling loop terminates for terminal statuses.
 """
 
 from pathlib import Path
@@ -208,4 +209,109 @@ class TestBatchOcrPersistsProviderJobId:
             assert create_idx < first_commit, "create must happen before commit"
             assert first_commit < (fetch_indices[0] if fetch_indices else float("inf")), (
                 "provider_job_id must be committed before polling starts"
+            )
+
+
+class TestBatchOcrPollingTermination:
+    """The batch OCR polling loop must stop as soon as a terminal status is observed.
+
+    Previously, OCR_COMPLETED was not classified as terminal, causing the
+    worker to poll for up to 30 minutes even after OCR finished successfully.
+    """
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "terminal_status",
+        [
+            MatchingStatus.OCR_COMPLETED,
+            MatchingStatus.COMPLETED,
+            MatchingStatus.OCR_FAILED,
+            MatchingStatus.OCR_TIMED_OUT,
+            MatchingStatus.OCR_CANCELLED,
+        ],
+    )
+    async def test_polling_stops_on_terminal_status(self, terminal_status):
+        """When fetch_job_status returns a terminal status, polling must not continue.
+
+        If the first fetch returns a terminal status, the loop should exit
+        without calling fetch_job_status again.
+        """
+        from app.data.database.model.jobs import MatcherJob
+        from app.jobs.worker import JobWorker
+        from app.ocr.ocr_manager import OcrResult
+
+        with TemporaryDirectory() as tmpdir:
+            crop_path = Path(tmpdir) / "crop_0.png"
+            crop_path.write_bytes(b"fake_image")
+            crop = MagicMock(spec=PetitionCrop)
+            crop.id = 1
+            crop.stored_path = str(crop_path)
+            crop.scan_id = "scan-1"
+
+            job = MagicMock(spec=MatcherJob)
+            job.id = 1
+            job.campaign_id = "camp-123"
+            ocr_job = MagicMock(spec=OcrJob)
+            ocr_job.id = 10
+
+            mock_config = MagicMock()
+            mock_config.provider = "openai"
+            mock_config.api_key = "test-key"
+            mock_config.model = "gpt-4o"
+
+            mock_client = AsyncMock()
+            mock_client.create_batch_job.return_value = OcrJobStatus(
+                ocr_job_id="batch-term",
+                campaign_id="camp-123",
+                task_id="task-123",
+                ocr_provider_id="openai",
+                task_status=MatchingStatus.OCR_IN_PROGRESS,
+            )
+            mock_client.fetch_job_status.return_value = OcrJobStatus(
+                ocr_job_id="batch-term",
+                campaign_id="camp-123",
+                task_id="task-123",
+                ocr_provider_id="openai",
+                task_status=terminal_status,
+            )
+
+            has_results = terminal_status in {
+                MatchingStatus.OCR_COMPLETED,
+                MatchingStatus.COMPLETED,
+            }
+            if has_results:
+                mock_client.get_ocr_results.return_value = _AsyncIterator(
+                    [
+                        OcrResult(
+                            job_id="batch-term",
+                            campaign_id="camp-123",
+                            document_path="crop_0.png",
+                            page_num=0,
+                            row_num=0,
+                            result_parts=[
+                                {"field_name": "Name", "value": "Test User"},
+                            ],
+                        ),
+                    ]
+                )
+
+            worker = JobWorker()
+            session = MagicMock()
+
+            with (
+                patch(
+                    "app.jobs.worker.resolve_provider_config",
+                    return_value=mock_config,
+                ),
+                patch(
+                    "app.jobs.worker.OpenAiOcrClient",
+                    return_value=mock_client,
+                ),
+                patch("asyncio.sleep", new_callable=AsyncMock),
+            ):
+                await worker._run_batch_ocr(session, job, ocr_job, [crop])
+
+            assert mock_client.fetch_job_status.call_count <= 1, (
+                f"fetch_job_status called {mock_client.fetch_job_status.call_count} times "
+                f"for {terminal_status.value}, expected at most 1"
             )

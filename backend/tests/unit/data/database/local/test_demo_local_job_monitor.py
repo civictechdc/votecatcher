@@ -54,8 +54,11 @@ class TestDemoMatchingTaskMonitorCleanup:
         [
             MatchingStatus.COMPLETED,
             MatchingStatus.CANCELLED,
+            MatchingStatus.OCR_CANCELLED,
+            MatchingStatus.OCR_COMPLETED,
             MatchingStatus.OCR_FAILED,
             MatchingStatus.MATCHING_FAILED,
+            MatchingStatus.OCR_TIMED_OUT,
             MatchingStatus.TIMED_OUT,
             MatchingStatus.MISC_ERROR,
         ],
