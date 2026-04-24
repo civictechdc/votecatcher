@@ -345,7 +345,8 @@ version-set version:
     @sed -i '' 's/^version = ".*"/version = "{{version}}"/' backend/pyproject.toml
     @cd frontend && node -e "const p=require('./package.json'); p.version='{{version}}'; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, '\t') + '\n');"
     @sed -i '' 's/^version = ".*"/version = "{{version}}"/' .cz.toml
-    @echo "Updated: backend/pyproject.toml, frontend/package.json, .cz.toml"
+    @cd backend && uv lock
+    @echo "Updated: backend/pyproject.toml, frontend/package.json, .cz.toml, backend/uv.lock"
     @echo "Verify:  just version"
 
 # Auto-bump version based on conventional commits since last tag
