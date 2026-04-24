@@ -204,12 +204,14 @@ class TestBatchOcrPersistsProviderJobId:
             commit_indices = [i for i, c in enumerate(call_order) if c == "commit"]
             fetch_indices = [i for i, c in enumerate(call_order) if c == "fetch"]
 
-            assert len(commit_indices) > 0, "session.commit must be called after batch creation"
+            assert len(commit_indices) > 0, (
+                "session.commit must be called after batch creation"
+            )
             first_commit = commit_indices[0]
             assert create_idx < first_commit, "create must happen before commit"
-            assert first_commit < (fetch_indices[0] if fetch_indices else float("inf")), (
-                "provider_job_id must be committed before polling starts"
-            )
+            assert first_commit < (
+                fetch_indices[0] if fetch_indices else float("inf")
+            ), "provider_job_id must be committed before polling starts"
 
 
 class TestBatchOcrPollingTermination:
