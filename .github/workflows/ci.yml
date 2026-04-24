@@ -725,6 +725,22 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: 1
 
+      - name: Run Trivy on backend production image
+        id: trivy-backend-prod
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: votecatcher-backend:prod
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Run Trivy on frontend production image
+        id: trivy-frontend-prod
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: votecatcher-frontend:prod
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
       - name: Docker build and scan failure summary
         if: failure()
         run: |
@@ -737,6 +753,8 @@ jobs:
           if [[ "${{ steps.build-frontend-prod.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Frontend production image build"; else FAILED="$FAILED\n- ❌ Frontend production image build"; fi
           if [[ "${{ steps.trivy-backend.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Backend Trivy scan"; else FAILED="$FAILED\n- ❌ Backend Trivy scan (CRITICAL/HIGH CVEs)"; fi
           if [[ "${{ steps.trivy-frontend.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Frontend Trivy scan"; else FAILED="$FAILED\n- ❌ Frontend Trivy scan (CRITICAL/HIGH CVEs)"; fi
+          if [[ "${{ steps.trivy-backend-prod.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Backend production Trivy scan"; else FAILED="$FAILED\n- ❌ Backend production Trivy scan (CRITICAL/HIGH CVEs)"; fi
+          if [[ "${{ steps.trivy-frontend-prod.outcome }}" == "success" ]]; then PASSED="$PASSED\n- ✅ Frontend production Trivy scan"; else FAILED="$FAILED\n- ❌ Frontend production Trivy scan (CRITICAL/HIGH CVEs)"; fi
 
           FIRST_FAIL=$(echo -e "$FAILED" | grep -m1 "❌" || true)
           echo "::error::Docker build and scan failed:$FIRST_FAIL"
@@ -760,3 +778,5 @@ jobs:
           echo "- ✅ Frontend production image build" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Backend Trivy scan" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Frontend Trivy scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Backend production Trivy scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Frontend production Trivy scan" >> "$GITHUB_STEP_SUMMARY"
