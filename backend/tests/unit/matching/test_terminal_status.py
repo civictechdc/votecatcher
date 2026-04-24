@@ -5,9 +5,7 @@ when terminal statuses are encountered — they stop polling, yielding, or
 monitoring. Also guards that no new MatchingStatus enum member is missed.
 """
 
-import asyncio
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock
 
 import pytest
 

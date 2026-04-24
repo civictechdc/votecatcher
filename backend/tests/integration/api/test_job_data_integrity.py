@@ -9,7 +9,6 @@ long-running operations, preventing orphaned resources.
 """
 
 import json
-import uuid
 
 from fastapi.testclient import TestClient
 from sqlmodel import Session
