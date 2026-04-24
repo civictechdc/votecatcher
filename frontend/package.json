@@ -89,11 +89,11 @@
 	"overrides": {
 		"cookie": ">=0.7.0",
 		"esbuild": ">=0.25.0",
-		"postcss": ">=8.5.10",
 		"follow-redirects": ">=1.16.0",
 		"minimatch": ">=10.2.3",
 		"path-to-regexp": ">=8.4.0",
 		"picomatch": ">=4.0.4",
+		"postcss": ">=8.5.10",
 		"tar": ">=7.5.11"
 	},
 	"lint-staged": {
