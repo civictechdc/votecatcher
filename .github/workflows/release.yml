@@ -61,8 +61,23 @@ jobs:
           done
           git-cliff --version
 
-      - name: Generate raw changelog
-        run: git-cliff --config cliff.toml -o CHANGELOG.md
+      - name: Generate new version section
+        run: git-cliff --config cliff.toml --tag ${{ github.ref_name }} > /tmp/new-version.md
+
+      - name: Prepend new version to CHANGELOG.md
+        run: |
+          if [ ! -f CHANGELOG.md ]; then
+            cp /tmp/new-version.md CHANGELOG.md
+            exit 0
+          fi
+          NEW_CONTENT=$(sed '/^# Changelog/d; /^<!-- generated/d' /tmp/new-version.md | sed '/^$/N;/^\n$/d')
+          OLD_CONTENT=$(sed '1{/^# Changelog$/d}' CHANGELOG.md | sed '1{/^$/d}')
+          {
+            printf "# Changelog\n\n"
+            echo "$NEW_CONTENT"
+            echo ""
+            echo "$OLD_CONTENT"
+          } > CHANGELOG.md
 
       - name: Summarize with GitHub Models
         run: bash scripts/changelog-summarize.sh CHANGELOG.md scripts/changelog-prompt.md
