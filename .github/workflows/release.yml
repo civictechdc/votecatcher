@@ -84,6 +84,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CHANGELOG_MODEL: ${{ vars.CHANGELOG_MODEL || 'deepseek/deepseek-v3-0324' }}
+          CHANGELOG_FALLBACK_MODEL: ${{ vars.CHANGELOG_FALLBACK_MODEL || 'openai/gpt-4.1-mini' }}
           CHANGELOG_MIN_COMMITS: ${{ vars.CHANGELOG_MIN_COMMITS || '6' }}
 
       - name: Commit summarized changelog

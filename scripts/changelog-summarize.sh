@@ -157,39 +157,47 @@ if [ -z "$TOKEN" ]; then
 fi
 
 # ── Call GitHub Models API ─────────────────────────────────────
-echo "[INFO] Summarizing $BULLET_COUNT commits with $MODEL..."
+FALLBACK_MODEL="${CHANGELOG_FALLBACK_MODEL:-openai/gpt-4.1-mini}"
+MODELS=("$MODEL" "$FALLBACK_MODEL")
 
-RESPONSE=$(curl -s -X POST "$API_URL" \
-	-H "Authorization: Bearer $TOKEN" \
-	-H "Content-Type: application/json" \
-	-H "Accept: application/vnd.github+json" \
-	-d "$(
-		jq -n \
-			--arg model "$MODEL" \
-			--arg system "$SYSTEM_PROMPT" \
-			--arg user "$USER_MESSAGE" \
-			'{
-            model: $model,
-            messages: [
-                {role: "system", content: $system},
-                {role: "user", content: $user}
-            ],
-            temperature: 0.3,
-            max_tokens: 4000
-        }'
-	)")
+for TRY_MODEL in "${MODELS[@]}"; do
+	echo "[INFO] Summarizing $BULLET_COUNT commits with $TRY_MODEL..."
 
-CONTENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
+	RESPONSE=$(curl -s -X POST "$API_URL" \
+		-H "Authorization: Bearer $TOKEN" \
+		-H "Content-Type: application/json" \
+		-H "Accept: application/vnd.github+json" \
+		-d "$(
+			jq -n \
+				--arg model "$TRY_MODEL" \
+				--arg system "$SYSTEM_PROMPT" \
+				--arg user "$USER_MESSAGE" \
+				'{
+                model: $model,
+                messages: [
+                    {role: "system", content: $system},
+                    {role: "user", content: $user}
+                ],
+                temperature: 0.3,
+                max_tokens: 4000
+            }'
+		)")
+
+	CONTENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
+
+	if [ -n "$CONTENT" ]; then
+		MODEL="$TRY_MODEL"
+		break
+	fi
+
+	ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message // "unknown"' 2>/dev/null)
+	echo "[WARN] $TRY_MODEL returned no content ($ERROR_MSG). Trying next model..."
+done
 
 # ── Error handling ─────────────────────────────────────────────
 if [ -z "$CONTENT" ]; then
-	ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message // "unknown"' 2>/dev/null)
-	ERROR_CODE=$(echo "$RESPONSE" | jq -r '.error.code // "N/A"' 2>/dev/null)
 	echo "" >&2
-	echo "[WARN] GitHub Models API returned no content." >&2
-	echo "       Model: $MODEL" >&2
-	echo "       Error: $ERROR_MSG (code: $ERROR_CODE)" >&2
-	echo "       Keeping raw git-cliff output." >&2
+	echo "[WARN] All models failed. Keeping raw git-cliff output." >&2
 	exit 0
 fi
 
