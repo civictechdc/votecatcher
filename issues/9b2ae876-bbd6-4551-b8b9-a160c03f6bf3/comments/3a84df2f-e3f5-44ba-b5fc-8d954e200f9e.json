@@ -1,0 +1,10 @@
+{
+  "uuid": "3a84df2f-e3f5-44ba-b5fc-8d954e200f9e",
+  "issue_uuid": "9b2ae876-bbd6-4551-b8b9-a160c03f6bf3",
+  "author": "qJ2u",
+  "content": "## Fix Applied (Session #20)\n\nCommit 82234e6: Added rm -rf strip of npm/yarn/corepack to frontend/Dockerfile.prod:31. Pushed to main. Awaiting CI green.",
+  "created_at": "2026-04-25T03:29:28.102546Z",
+  "kind": "note",
+  "signed_by": "SHA256:pbm1G1vGzSofxnCO3SFeDJyBAkNByLKJbqPqfD6qybI",
+  "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgAoAiM2+wI21k8W2C+VqaXa7LeNdUFSeAkGcmWiZ09A8AAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAbOi2FvA05xnVTZDdgVoxQ1jSPI0CHbDdeds58nMPZUEoKmLDfwiZUBWknGzJFrrUZDxrqPCNVnpvcYw5avHnCA=="
+}
