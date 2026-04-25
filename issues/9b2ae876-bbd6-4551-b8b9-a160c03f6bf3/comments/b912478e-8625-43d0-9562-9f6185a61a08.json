@@ -1,0 +1,10 @@
+{
+  "uuid": "b912478e-8625-43d0-9562-9f6185a61a08",
+  "issue_uuid": "9b2ae876-bbd6-4551-b8b9-a160c03f6bf3",
+  "author": "qJ2u",
+  "content": "## Session #20 VSDD/VDD Review\n\n### Status: Fix Still Not Applied\n\nfrontend/Dockerfile.prod lines 29-30 still missing the rm -rf strip step. Handover from session #19 correctly prescribes the fix but it has not been committed. CI remains red on af8c42b.\n\n### New VSDD Findings\n\n1. Backend Dockerfile.prod has a different coupling pattern -- CMD uses uv run uvicorn so uv must stay in runner stage. pip from python:3.13-slim is present but unused. Not urgent (Trivy passes) but worth tracking.\n\n2. Node.js 20 actions deprecation warning in CI. Affected: actions/cache@v4, actions/checkout@v4, docker/build-push-action@v6, docker/setup-buildx-action@v3. Migration deadline: June 2, 2026.\n\n3. pydantic-extra-types==2.11.2 yanked -- no CI gate for yanked packages.\n\n### New VDD Verification Gaps\n\n1. Fix-availability gap -- handover tracks fix-identified but not fix-applied status. No automated check.\n2. No cross-Dockerfile consistency check -- no CI verification that runner stages follow same minimal-image pattern across services.\n3. No yanked-package gate in CI.\n\n### Knowledge Page Created\n\nsession-20-ci-vsdd-vdd-review -- full analysis with prevention rules 6-9.",
+  "created_at": "2026-04-25T02:52:17.393593Z",
+  "kind": "note",
+  "signed_by": "SHA256:pbm1G1vGzSofxnCO3SFeDJyBAkNByLKJbqPqfD6qybI",
+  "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgAoAiM2+wI21k8W2C+VqaXa7LeNdUFSeAkGcmWiZ09A8AAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAshHKHTAJGIZA4hyMf7pX0EnNANB0ix44meX9scGooRRtmRV74g9IO9f+qjhs7nP3JCvuPAg4NPGWT79rCr7xAQ=="
+}
