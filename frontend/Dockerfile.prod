@@ -27,7 +27,8 @@ ENV HOST=0.0.0.0
 ENV PORT=3000
 
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 sveltekit
+    adduser --system --uid 1001 sveltekit && \
+    rm -rf /usr/local/lib/node_modules/npm /opt/yarn-* /usr/local/lib/node_modules/corepack
 
 COPY --from=build /app/build ./build
 COPY --from=build /app/package.json ./package.json
