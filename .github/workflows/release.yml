@@ -51,7 +51,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install git-cliff
-        run: curl -sfL https://github.com/orhun/git-cliff/releases/latest/download/git-cliff-linux-x86_64-unknown-linux-gnu.tar.gz | tar xz --strip-components=1 -C /usr/local/bin
+        run: |
+          CLIFF_VER="v2.12.0"
+          URL="https://github.com/orhun/git-cliff/releases/download/${CLIFF_VER}/git-cliff-${CLIFF_VER#v}-x86_64-unknown-linux-gnu.tar.gz"
+          for i in 1 2 3; do
+            curl -sfL "$URL" | tar xz --strip-components=1 -C /usr/local/bin && break
+            echo "Retry $i..." && sleep 5
+          done
+          git-cliff --version
 
       - name: Generate raw changelog
         run: git-cliff --config cliff.toml -o CHANGELOG.md

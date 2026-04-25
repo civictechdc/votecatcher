@@ -31,11 +31,14 @@ serve(async (req) => {
   }
 
   // Create a Supabase client as the user
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL'),
-    Deno.env.get('SUPABASE_ANON_KEY'),
-    { global: { headers: { Authorization: `Bearer ${accessToken}` } } }
-  );
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return new Response(JSON.stringify({ error: 'Missing Supabase environment variables' }), { status: 500, headers: corsHeaders });
+  }
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  });
 
   // Download the file from storage
   const { data: fileData, error: downloadError } = await supabase
@@ -73,10 +76,9 @@ serve(async (req) => {
   }
 
   // Clean and prepare records
-  const records = parsed.data.map((row) => {
-    // Trim whitespace and treat empty/whitespace-only fields as null
-    const clean = (val) => {
-      if (typeof val !== 'string') return val;
+  const records = (parsed.data as Record<string, string>[]).map((row) => {
+    const clean = (val: string | undefined): string | null => {
+      if (typeof val !== 'string') return null;
       const trimmed = val.trim();
       return trimmed === '' ? null : trimmed;
     };
@@ -93,7 +95,7 @@ serve(async (req) => {
 
   // Insert records into voter_records in batches
   const batchSize = parseInt(Deno.env.get('VOTER_FILE_BATCH_SIZE') || '1000');
-  let insertError = null;
+  let insertError: { message: string } | null = null;
   for (let i = 0; i < records.length; i += batchSize) {
     const batch = records.slice(i, i + batchSize);
     try {
@@ -102,10 +104,10 @@ serve(async (req) => {
         .insert(batch);
       if (error) {
         insertError = error;
-        break; // Stop on first error
+        break;
       }
     } catch (err) {
-      insertError = err;
+      insertError = { message: String(err) };
       break;
     }
   }
@@ -118,7 +120,7 @@ serve(async (req) => {
       file_name: filePath.split('/').pop(),
       status: insertError ? 'error' : 'completed',
       records_processed: records.length,
-      error_message: insertError ? insertError.message : null,
+      error_message: insertError?.message ?? null,
       completed_at: new Date().toISOString(),
     });
   } catch (_err) {
