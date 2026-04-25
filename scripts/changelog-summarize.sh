@@ -1,33 +1,32 @@
 #!/usr/bin/env bash
 # changelog-summarize.sh — AI-powered changelog summarization
 #
-# Transforms raw git-cliff output into a thematic Level 1 (GitHub Release) changelog
-# using GitHub Models API. Runs automatically in CI (release.yml) after tag push,
-# or locally via `just changelog-summarize`.
+# Summarizes only the FIRST (latest) version section in the changelog.
+# Older sections are preserved as-is.
 #
-# GUARDS (script exits early with a clear reason when any applies):
+# GUARDS (script exits early when any applies):
 #   1. No git diff                   → nothing changed, skip
 #   2. <10 lines added               → formatting-only change, skip
-#   3. Manual edits detected (>5)    → preserve intentional local changes, skip
+#   3. First section already summarized → preserve, skip
 #   4. <MIN_COMMITS in latest version → small release, raw output sufficient, skip
 #
 # CONFIGURATION via environment variables (all optional):
-#   CHANGELOG_FILE       Input/output file              (default: CHANGELOG.md)
-#   CHANGELOG_PROMPT     System prompt file             (default: scripts/changelog-prompt.md)
-#   CHANGELOG_MODEL      GitHub Models model ID         (default: deepseek/deepseek-v3-0324)
-#   CHANGELOG_MIN_COMMITS Skip threshold for bullet count (default: 6)
-#   CHANGELOG_API_URL    API endpoint                   (default: https://models.github.ai/...)
-#   CHANGELOG_DRY_RUN    Preview config without API call (default: false)
+#   CHANGELOG_FILE              Input/output file              (default: CHANGELOG.md)
+#   CHANGELOG_PROMPT            System prompt file             (default: scripts/changelog-prompt.md)
+#   CHANGELOG_MODEL             GitHub Models model ID         (default: deepseek/deepseek-v3-0324)
+#   CHANGELOG_FALLBACK_MODEL    Fallback model on primary failure (default: openai/gpt-4.1-mini)
+#   CHANGELOG_MIN_COMMITS       Skip threshold for bullet count (default: 6)
+#   CHANGELOG_API_URL           API endpoint                   (default: https://models.github.ai/...)
+#   CHANGELOG_DRY_RUN           Preview config without API call (default: false)
 #
 # AUTH: Uses GITHUB_TOKEN (CI) or gh auth token (local).
-#
-# See benchmarks at: .agent-workspace/changelog-samples/benchmarks/
 set -euo pipefail
 
 # ── Configuration ──────────────────────────────────────────────
 CHANGELOG_FILE="${CHANGELOG_FILE:-${1:-CHANGELOG.md}}"
 PROMPT_FILE="${CHANGELOG_PROMPT:-${2:-scripts/changelog-prompt.md}}"
 MODEL="${CHANGELOG_MODEL:-deepseek/deepseek-v3-0324}"
+FALLBACK_MODEL="${CHANGELOG_FALLBACK_MODEL:-openai/gpt-4.1-mini}"
 API_URL="${CHANGELOG_API_URL:-https://models.github.ai/inference/chat/completions}"
 DRY_RUN="${CHANGELOG_DRY_RUN:-false}"
 MIN_COMMITS="${CHANGELOG_MIN_COMMITS:-6}"
@@ -48,11 +47,10 @@ fi
 FIRST_VERSION=$(grep -m1 '^## \[' "$CHANGELOG_FILE" || true)
 if [ -z "$FIRST_VERSION" ]; then
 	echo "[SKIP] No version sections found in $CHANGELOG_FILE."
-	echo "       File may be empty or formatted differently than expected."
 	exit 0
 fi
 
-# ── Count commits in latest version section ────────────────────
+# ── Extract first section boundaries ───────────────────────────
 FIRST_HEADER_LINE=$(grep -n "^## \[" "$CHANGELOG_FILE" | head -1 | cut -d: -f1)
 SECOND_HEADER_LINE=$(grep -n "^## \[" "$CHANGELOG_FILE" | sed -n '2p' | cut -d: -f1)
 TOTAL_LINES=$(wc -l <"$CHANGELOG_FILE")
@@ -63,7 +61,8 @@ else
 	SECTION_END=$TOTAL_LINES
 fi
 
-BULLET_COUNT=$(sed -n "${FIRST_HEADER_LINE},${SECTION_END}p" "$CHANGELOG_FILE" | grep -c '^-' || true)
+FIRST_SECTION=$(sed -n "${FIRST_HEADER_LINE},${SECTION_END}p" "$CHANGELOG_FILE")
+BULLET_COUNT=$(echo "$FIRST_SECTION" | grep -c '^-' || true)
 
 # ── Guard 1: No diff at all ────────────────────────────────────
 if git diff --quiet -- "$CHANGELOG_FILE" 2>/dev/null; then
@@ -83,27 +82,30 @@ if [ -n "$DIFF_STATS" ]; then
 	fi
 fi
 
-# ── Guard 3: Manual edits detected ─────────────────────────────
-# Compare current file against fresh git-cliff output. If the content
-# differs significantly, someone edited the changelog intentionally
-# (e.g., an agent ran the full changelog-writing skill locally).
-# We preserve their work rather than overwriting with AI output.
+# ── Guard 3: First section already summarized ──────────────────
+# Compare only the first section against fresh git-cliff output for
+# the same tag. If it already looks summarized (themed headings,
+# narrative paragraphs), skip. Only raw bullet lists get summarized.
 if command -v git-cliff &>/dev/null; then
-	FRESH_RAW=$(git-cliff --config cliff.toml 2>/dev/null || true)
-	if [ -n "$FRESH_RAW" ]; then
-		RAW_CLEAN=$(echo "$FRESH_RAW" | grep -v '^#' | grep -v '^$' | grep -v '<!--')
-		FILE_CLEAN=$(cat "$CHANGELOG_FILE" | grep -v '^#' | grep -v '^$' | grep -v '<!--')
-		if [ "$RAW_CLEAN" = "$FILE_CLEAN" ]; then
-			echo "[INFO] Changelog matches raw git-cliff output — no manual edits."
-		else
-			MANUAL_DIFF=$(diff <(echo "$RAW_CLEAN") <(echo "$FILE_CLEAN") | grep -c '^[<>]' || true)
-			if [ "$MANUAL_DIFF" -gt 5 ] 2>/dev/null; then
-				echo "[SKIP] $MANUAL_DIFF manual edits detected in changelog."
-				echo "       Preserving intentional local changes — AI summarization skipped."
-				echo "       To force re-summarization, revert manual edits first."
-				exit 0
+	FIRST_TAG=$(echo "$FIRST_VERSION" | grep -oP '\[\K[^\]]+' | head -1)
+	if [ -n "$FIRST_TAG" ]; then
+		RAW_SECTION=$(git-cliff --config cliff.toml --tag "v${FIRST_TAG}" 2>/dev/null \
+			| sed '/^# Changelog/d; /^<!-- generated/d' \
+			| sed '/^$/N;/^\n$/d' \
+			| sed -n '/^## \[/,/^## \[/p' \
+			| head -n -1 \
+			|| true)
+		if [ -n "$RAW_SECTION" ]; then
+			RAW_CLEAN=$(echo "$RAW_SECTION" | grep -v '^#' | grep -v '^$' | grep -v '<!--')
+			FILE_CLEAN=$(echo "$FIRST_SECTION" | grep -v '^#' | grep -v '^$' | grep -v '<!--')
+			if [ "$RAW_CLEAN" = "$FILE_CLEAN" ]; then
+				echo "[INFO] First section matches raw git-cliff output — needs summarization."
 			else
-				echo "[INFO] $MANUAL_DIFF minor differences from raw output — proceeding with summarization."
+				MANUAL_DIFF=$(diff <(echo "$RAW_CLEAN") <(echo "$FILE_CLEAN") | grep -c '^[<>]' || true)
+				if [ "$MANUAL_DIFF" -gt 5 ] 2>/dev/null; then
+					echo "[SKIP] First section already summarized ($MANUAL_DIFF differences from raw)."
+					exit 0
+				fi
 			fi
 		fi
 	fi
@@ -119,19 +121,18 @@ fi
 
 # ── Prepare API request ────────────────────────────────────────
 SYSTEM_PROMPT=$(cat "$PROMPT_FILE")
-RAW_CHANGELOG=$(cat "$CHANGELOG_FILE")
 
-USER_MESSAGE="Transform this raw git-cliff changelog into a Level 1 GitHub Release changelog following the rules above. Output ONLY the changelog markdown, no explanation.
+USER_MESSAGE="Transform this raw git-cliff changelog section into a Level 1 GitHub Release changelog following the rules above. Output ONLY the changelog section markdown (starting with ## [version]), no explanation, no file header.
 
 ---
 
-$RAW_CHANGELOG"
+$FIRST_SECTION"
 
-# ── Dry run (preview without calling API) ──────────────────────
+# ── Dry run ────────────────────────────────────────────────────
 if [ "$DRY_RUN" = "true" ]; then
 	echo "=== DRY RUN — no API call will be made ==="
 	echo ""
-	echo "  Model:          $MODEL"
+	echo "  Model:          $MODEL (fallback: $FALLBACK_MODEL)"
 	echo "  API:            $API_URL"
 	echo "  Latest bullets: $BULLET_COUNT (threshold: $MIN_COMMITS)"
 	echo "  Changelog:      $TOTAL_LINES lines"
@@ -156,9 +157,9 @@ if [ -z "$TOKEN" ]; then
 	exit 1
 fi
 
-# ── Call GitHub Models API ─────────────────────────────────────
-FALLBACK_MODEL="${CHANGELOG_FALLBACK_MODEL:-openai/gpt-4.1-mini}"
+# ── Call GitHub Models API with fallback ───────────────────────
 MODELS=("$MODEL" "$FALLBACK_MODEL")
+CONTENT=""
 
 for TRY_MODEL in "${MODELS[@]}"; do
 	echo "[INFO] Summarizing $BULLET_COUNT commits with $TRY_MODEL..."
@@ -196,29 +197,20 @@ done
 
 # ── Error handling ─────────────────────────────────────────────
 if [ -z "$CONTENT" ]; then
-	echo "" >&2
-	echo "[WARN] All models failed. Keeping raw git-cliff output." >&2
+	echo "[WARN] All models failed. Keeping raw git-cliff output."
 	exit 0
 fi
 
 # ── Write output ───────────────────────────────────────────────
 FOOTER="\n<!-- generated by git-cliff, summarized by GitHub Models ($MODEL) -->\n<!-- Format: https://keepachangelog.com/en/1.0.0/ -->"
 
+NEW_SECTION=$(echo "$CONTENT" | sed '/^# Changelog/d' | sed '/^<!--/d' | sed '/^$/N;/^\n$/d')
+
 if [ -n "$SECOND_HEADER_LINE" ]; then
 	REST=$(sed -n "$((SECOND_HEADER_LINE)),\$p" "$CHANGELOG_FILE")
 else
 	REST=""
 fi
-
-if [ -z "$CONTENT" ]; then
-	echo "[WARN] AI summarization failed — keeping raw git-cliff output."
-	OUTPUT_LINES=$(wc -l <"$CHANGELOG_FILE" | tr -d ' ')
-	OUTPUT_THEMES=$(grep -c '^### ' "$CHANGELOG_FILE" || echo 0)
-	echo "     Output: $OUTPUT_LINES lines, $OUTPUT_THEMES themes (raw)"
-	exit 0
-fi
-
-NEW_SECTION=$(echo "$CONTENT" | sed '/^# Changelog/d' | sed '/^<!--/d' | sed '/^$/N;/^\n$/d')
 
 {
 	printf "# Changelog\n\n"
