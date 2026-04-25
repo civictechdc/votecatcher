@@ -186,22 +186,11 @@ if [ -z "$CONTENT" ]; then
 	ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message // "unknown"' 2>/dev/null)
 	ERROR_CODE=$(echo "$RESPONSE" | jq -r '.error.code // "N/A"' 2>/dev/null)
 	echo "" >&2
-	echo "[ERROR] GitHub Models API returned no content." >&2
-	echo "        Model: $MODEL" >&2
-	echo "        Error: $ERROR_MSG (code: $ERROR_CODE)" >&2
-	echo "" >&2
-	echo "        Common causes:" >&2
-	echo "        - Rate limit exceeded (low tier: 15 req/min, high tier: 10 req/min)" >&2
-	echo "        - Model unavailable or retired" >&2
-	echo "        - Token expired (re-auth with 'gh auth login')" >&2
-	echo "        - Input exceeds model context window" >&2
-	echo "" >&2
-	echo "        Full API response:" >&2
-	echo "$RESPONSE" | jq '.' >&2
-	echo "" >&2
-	echo "        Fallback: use raw git-cliff output or run locally with a different model:" >&2
-	echo "        CHANGELOG_MODEL=openai/gpt-4.1-mini just changelog-summarize" >&2
-	exit 1
+	echo "[WARN] GitHub Models API returned no content." >&2
+	echo "       Model: $MODEL" >&2
+	echo "       Error: $ERROR_MSG (code: $ERROR_CODE)" >&2
+	echo "       Keeping raw git-cliff output." >&2
+	exit 0
 fi
 
 # ── Write output ───────────────────────────────────────────────
