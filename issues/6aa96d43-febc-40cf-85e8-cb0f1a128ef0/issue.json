@@ -1,0 +1,12 @@
+{
+  "uuid": "6aa96d43-febc-40cf-85e8-cb0f1a128ef0",
+  "display_id": 14,
+  "title": "Impl: add periodic orphan detection to worker loop",
+  "description": "## GH Ref: #129\n\nAdd runtime orphan checker to worker loop. Check every N seconds for jobs stuck in non-terminal states (OCR_STARTED, OCR_COMPLETED, MATCHING_PENDING, MATCHING) beyond timeout threshold. Reset to retryable state instead of error.\n\n**Depends on:** Spike task (design doc).",
+  "status": "open",
+  "priority": "high",
+  "parent_uuid": "ae4be857-90bd-45ef-9f2d-74157364bdf9",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-26T03:23:46.724671Z",
+  "updated_at": "2026-04-26T03:23:46.724671Z"
+}
