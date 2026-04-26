@@ -1,0 +1,12 @@
+{
+  "uuid": "6f00fc38-6996-4194-9fad-83a061f45219",
+  "display_id": 22,
+  "title": "Build HTML scrubber utility for noise-free snapshots",
+  "description": "## GH: https://github.com/civictechdc/votecatcher/issues/117\n\nCreate scrubHtml() utility that strips Svelte scoped class hashes, dynamic IDs, attribute ordering noise, timestamps. Use with toMatchFileSnapshot() for readable .html snapshot files.\n\n**Depends on:** Vitest browser mode setup.\n**Deliverable:** scrubHtml utility + custom matcher + example snapshot.",
+  "status": "open",
+  "priority": "high",
+  "parent_uuid": "da4d3ec5-6d65-4bf5-a471-4a484cf74eaa",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-26T03:24:55.879470Z",
+  "updated_at": "2026-04-26T03:24:55.879470Z"
+}
