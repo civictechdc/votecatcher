@@ -1,0 +1,12 @@
+{
+  "uuid": "b80dea7b-1552-4975-989d-f2a62c558e73",
+  "display_id": 12,
+  "title": "DevEx batch: logging + Python 3.14 (GH #122 + #130)",
+  "description": "#122 Logging refactor (35+ files, structlog→stdlib). #130 Python 3.14 migration (Phase 1 pin + Phase 2 upgrade). Independent, pick up anytime.",
+  "status": "open",
+  "priority": "medium",
+  "parent_uuid": "fcd1a3d7-950b-4b7f-b9cd-1c4b3daa87a4",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-26T03:19:53.001913Z",
+  "updated_at": "2026-04-26T03:19:53.001913Z"
+}
