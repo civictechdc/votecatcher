@@ -1,0 +1,12 @@
+{
+  "uuid": "da4d3ec5-6d65-4bf5-a471-4a484cf74eaa",
+  "display_id": 9,
+  "title": "Frontend testing infrastructure (GH #116/#117/#118/#119)",
+  "description": "Approval/snapshot testing for frontend. Order: #116 Vitest browser mode → #117 HTML scrubber → #118 ARIA snapshot tests. Parent #119.",
+  "status": "open",
+  "priority": "high",
+  "parent_uuid": "fcd1a3d7-950b-4b7f-b9cd-1c4b3daa87a4",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-26T03:19:46.828176Z",
+  "updated_at": "2026-04-26T03:19:46.828176Z"
+}
