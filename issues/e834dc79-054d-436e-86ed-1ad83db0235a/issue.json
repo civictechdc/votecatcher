@@ -1,0 +1,12 @@
+{
+  "uuid": "e834dc79-054d-436e-86ed-1ad83db0235a",
+  "display_id": 23,
+  "title": "Implement ARIA snapshot tests for key UI components",
+  "description": "## GH: https://github.com/civictechdc/votecatcher/issues/118\n\nWrite ARIA snapshot tests for core components (job list, campaign view, results table, upload form). Use Vitest's native ARIA snapshot. Regex patterns for dynamic content.\n\n**Depends on:** Vitest browser mode + scrubber utility.\n**Deliverable:** ARIA snapshot tests for 5+ key components.",
+  "status": "open",
+  "priority": "medium",
+  "parent_uuid": "da4d3ec5-6d65-4bf5-a471-4a484cf74eaa",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-26T03:24:58.935402Z",
+  "updated_at": "2026-04-26T03:24:58.935402Z"
+}
