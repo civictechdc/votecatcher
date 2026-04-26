@@ -8,9 +8,12 @@
   "parent_uuid": "012dfd6d-bade-47af-93b6-2a949e931377",
   "created_by": "qJ2u",
   "created_at": "2026-04-26T03:24:21.777041Z",
-  "updated_at": "2026-04-26T03:24:22.083613Z",
+  "updated_at": "2026-04-26T03:24:31.164002Z",
   "labels": [
     "spike",
     "backend"
+  ],
+  "blockers": [
+    "c4307c0d-37aa-4165-ae10-9daa146177a7"
   ]
 }
