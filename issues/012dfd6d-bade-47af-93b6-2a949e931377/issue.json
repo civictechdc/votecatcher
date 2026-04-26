@@ -1,0 +1,12 @@
+{
+  "uuid": "012dfd6d-bade-47af-93b6-2a949e931377",
+  "display_id": 7,
+  "title": "Large PDF pipeline spikes (GH #111/#112/#113/#114)",
+  "description": "4 related spikes for scaling to real-world petition PDFs. Dependency chain: #114 RAM/streaming → #113 image compression → #112 provider limits → #111 upload strategy. Start with #114.",
+  "status": "open",
+  "priority": "high",
+  "parent_uuid": "fcd1a3d7-950b-4b7f-b9cd-1c4b3daa87a4",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-26T03:19:45.356934Z",
+  "updated_at": "2026-04-26T03:19:45.356934Z"
+}
