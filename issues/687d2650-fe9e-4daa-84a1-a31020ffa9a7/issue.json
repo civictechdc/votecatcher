@@ -1,0 +1,12 @@
+{
+  "uuid": "687d2650-fe9e-4daa-84a1-a31020ffa9a7",
+  "display_id": 13,
+  "title": "Spike: analyze worker loop timing and orphan detection patterns",
+  "description": "## GH Ref: #129\n\nResearch how worker.py loop currently works (timing, sleep intervals). Determine optimal check interval for orphan detection. Identify all non-terminal states and appropriate timeout thresholds per state.\n\n**Deliverable:** Design doc with recommended intervals and state machine.",
+  "status": "open",
+  "priority": "high",
+  "parent_uuid": "ae4be857-90bd-45ef-9f2d-74157364bdf9",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-26T03:23:44.602601Z",
+  "updated_at": "2026-04-26T03:23:44.602601Z"
+}
