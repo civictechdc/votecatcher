@@ -8,5 +8,8 @@
   "parent_uuid": "da4d3ec5-6d65-4bf5-a471-4a484cf74eaa",
   "created_by": "qJ2u",
   "created_at": "2026-04-26T03:24:52.827216Z",
-  "updated_at": "2026-04-26T03:24:52.827216Z"
+  "updated_at": "2026-04-26T03:24:53.117998Z",
+  "labels": [
+    "frontend"
+  ]
 }
