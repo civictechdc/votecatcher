@@ -1,0 +1,12 @@
+{
+  "uuid": "52132925-a5ee-4fe8-9507-8d07bae77710",
+  "display_id": 21,
+  "title": "Set up Vitest browser mode for approval testing",
+  "description": "## GH: https://github.com/civictechdc/votecatcher/issues/116\n\nConfigure Vitest browser mode (playwright or chromium). Ensure tests can render Svelte components in real browser. Wire into existing test runner.\n\n**Deliverable:** Working vitest.config.ts with browser mode, sample component test passing.",
+  "status": "open",
+  "priority": "high",
+  "parent_uuid": "da4d3ec5-6d65-4bf5-a471-4a484cf74eaa",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-26T03:24:52.827216Z",
+  "updated_at": "2026-04-26T03:24:52.827216Z"
+}
