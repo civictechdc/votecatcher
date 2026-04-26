@@ -1,0 +1,12 @@
+{
+  "uuid": "7f5354dc-2ffa-4a10-93df-21875cff39ec",
+  "display_id": 10,
+  "title": "OpenAPI automation + CI drift (GH #95/#97/#98/#99)",
+  "description": "Auto-generate openapi.yaml from FastAPI. Order: #97 justfile recipe → #95 auto-gen → #98 CI check → #99 pre-commit hook. Single concern, 4 facets.",
+  "status": "open",
+  "priority": "medium",
+  "parent_uuid": "fcd1a3d7-950b-4b7f-b9cd-1c4b3daa87a4",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-26T03:19:49.065188Z",
+  "updated_at": "2026-04-26T03:19:49.065188Z"
+}
