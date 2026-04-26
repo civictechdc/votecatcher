@@ -81,13 +81,10 @@ plans/
 # .agent-workspace/ files are tracked so samples/artifacts survive across sessions
 .agent/
 
-# Handover docs (local session state)
-.crosslink/
 
-# Agent skills (tooling config, not application source)
-.agents/
-.claude/skills/
-skills/
+
+
+
 
 # Secret detection baseline (contains detected patterns)
 .secrets.baseline
