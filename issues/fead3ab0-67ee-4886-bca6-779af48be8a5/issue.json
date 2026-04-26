@@ -1,0 +1,12 @@
+{
+  "uuid": "fead3ab0-67ee-4886-bca6-779af48be8a5",
+  "display_id": 25,
+  "title": "Impl: Claude batch file submission and result retrieval",
+  "description": "## GH: https://github.com/civictechdc/votecatcher/issues/121\n\nWire Claude batch API: JSONL upload, batch creation, polling, result download. Handle Claude-specific limits (100K requests, 256MB, 24h window). Prompt caching support.\n\n**Depends on:** Status mapping task.\n**Deliverable:** Working Claude batch integration end-to-end.",
+  "status": "open",
+  "priority": "high",
+  "parent_uuid": "25992b59-a837-4312-a16c-3352dd9c8b3a",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-26T03:25:24.615669Z",
+  "updated_at": "2026-04-26T03:25:24.615669Z"
+}
