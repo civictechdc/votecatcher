@@ -1,0 +1,12 @@
+{
+  "uuid": "ae4be857-90bd-45ef-9f2d-74157364bdf9",
+  "display_id": 8,
+  "title": "Bug: worker orphan recovery (GH #129)",
+  "description": "Jobs stuck in OCR_STARTED forever when worker dies mid-batch. Only recovery = server restart → data loss. Add periodic runtime orphan detection to worker loop.",
+  "status": "open",
+  "priority": "critical",
+  "parent_uuid": "fcd1a3d7-950b-4b7f-b9cd-1c4b3daa87a4",
+  "created_by": "qJ2u",
+  "created_at": "2026-04-26T03:19:45.362771Z",
+  "updated_at": "2026-04-26T03:19:45.362771Z"
+}
