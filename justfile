@@ -208,7 +208,7 @@ dast:
 
 # Run code duplication analysis
 duplication:
-    jscpd backend/app/ --min-lines 5 --min-tokens 50 --threshold 5 --reporters html
+    jscpd backend/app/ --min-lines 5 --min-tokens 50 --threshold 5 --reporters html --output jscpd-report
 
 duplication-frontend:
     cd frontend && npx fallow dupes

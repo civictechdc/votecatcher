@@ -569,7 +569,7 @@ jobs:
         run: go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@v3.7.1
 
       - name: Update nuclei templates
-        run: ~/go/bin/nuclei -update-templates -path ~/nuclei-templates
+        run: ~/go/bin/nuclei -update-templates -ud ~/nuclei-templates
 
       - name: Install dependencies
         run: cd backend && uv sync --dev
