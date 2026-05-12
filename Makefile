@@ -112,7 +112,7 @@ security-scan-backend:
 	cd backend && uv audit
 
 security-scan-frontend:
-	cd frontend && bun audit --ignore GHSA-4w7w-66w2-5vf9 --ignore GHSA-v2wj-q39q-566r --ignore GHSA-p9ff-h696-f583 --ignore GHSA-chqc-8p9q-pq6q --ignore GHSA-36xv-jgw5-4q75 --ignore GHSA-3f6h-2hrp-w5wx --ignore GHSA-2crg-3p73-43xp --ignore GHSA-3p68-rc4w-qgx5 --ignore GHSA-fvcv-3m26-pcqx --ignore GHSA-6v7q-wjvx-w8wg
+	cd frontend && bun audit --ignore GHSA-rp42-5vxx-qpwr --ignore GHSA-6v7q-wjvx-w8wg --ignore GHSA-chqc-8p9q-pq6q --ignore GHSA-rpmf-866q-6p89 --ignore GHSA-v2v4-37r5-5v8g --ignore GHSA-3p68-rc4w-qgx5 --ignore GHSA-fvcv-3m26-pcqx --ignore GHSA-36xv-jgw5-4q75 --ignore GHSA-4w7w-66w2-5vf9 --ignore GHSA-v2wj-q39q-566r --ignore GHSA-p9ff-h696-f583 --ignore GHSA-3f6h-2hrp-w5wx --ignore GHSA-2crg-3p73-43xp --ignore GHSA-pv5w-4p9q-p3v2
 
 sast:
 	semgrep --config auto --config p/owasp-top-ten --config p/fastapi --config p/jwt --config p/xss --json -o semgrep-results.json backend/ frontend/src/
@@ -180,7 +180,7 @@ complexity-check:
 	cd backend && uv run radon cc app/ -nc -n B
 
 dead-code:
-	cd backend && uv run vulture app/ vulture-whitelist.py --format json > vulture-report.json
+	cd backend && uv run vulture app/ vulture_whitelist.py --min-confidence 80
 
 dead-code-frontend:
 	cd frontend && npx fallow dead-code

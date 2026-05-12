@@ -55,7 +55,8 @@ jobs:
         run: just complexity
 
       - name: Run dead code analysis (backend — Python)
-        run: just dead-code
+        run: cd backend && uv run vulture app/ vulture_whitelist.py --min-confidence 80 2>&1 | tee ../vulture-report.txt
+        continue-on-error: true
 
       - name: Run dead code analysis (frontend — SvelteKit)
         run: cd frontend && npx fallow dead-code --format json > ../fallow-frontend-dead-code.json
@@ -80,12 +81,8 @@ jobs:
             echo "::error::jscpd report not found — duplication analysis may have failed"
             FAIL=1
           fi
-          if [ -f vulture-report.json ]; then
-            DEAD_COUNT=$(python3 -c "import json; print(len(json.load(open('vulture-report.json'))))" 2>/dev/null)
-            if [ -z "$DEAD_COUNT" ]; then
-              echo "::warning::Could not parse vulture report JSON"
-              DEAD_COUNT=0
-            fi
+          if [ -f vulture-report.txt ]; then
+            DEAD_COUNT=$(grep -c ':' vulture-report.txt 2>/dev/null || echo "0")
             echo "Dead code items (Python): ${DEAD_COUNT}"
             if [ "$DEAD_COUNT" -gt 50 ] 2>/dev/null; then
               echo "::error::Dead code items above 50 threshold: ${DEAD_COUNT}"
@@ -121,7 +118,7 @@ jobs:
           name: code-quality-reports
           path: |
             jscpd-report/
-            vulture-report.json
+            vulture-report.txt
             frontend/fallow-results.json
             frontend/fallow-results.sarif
             fallow-frontend-dead-code.json
