@@ -5,3 +5,5 @@ CVE-2025-69720
 CVE-2026-29111
 # openssl/libssl3t64 NULL pointer dereference in CMS — no patched deb13 package yet
 CVE-2026-28390
+# libcap2 — no patched deb package available yet
+CVE-2026-4878
