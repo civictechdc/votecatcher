@@ -103,6 +103,7 @@ Initial release with SvelteKit frontend, Supabase persistence, OCR pipeline, bac
 - Removed hardcoded database credentials from Alembic config
 
 ### Changed
+- Review: git hook infrastructure (.gitblock + reject-internal-dirs + pre-commit) (#80)
 
 - Extracted service layer — ResultsQueryService, CampaignQueryService, JobQueryService, SessionService, ConfigService, DemoOrchestrationService
 - Consolidated OCR providers — removed batching module, LangChain, dotenv, and settings repository

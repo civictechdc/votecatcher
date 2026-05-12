@@ -137,6 +137,10 @@ jobs:
         id: security-tests
         run: cd backend && uv run pytest tests/security/ -v --tb=short
 
+      - name: Dead code analysis (vulture)
+        id: dead-code
+        run: cd backend && uv run vulture app/ vulture_whitelist.py --min-confidence 80
+
       - name: Update coverage badge
         if: always() && steps.test.outcome == 'success' && github.ref == 'refs/heads/main'
         run: |
@@ -170,6 +174,7 @@ jobs:
           if [[ "${{ steps.test.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Tests (pytest)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Tests (pytest)"; fi
           if [[ "${{ steps.security-scan.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Security scan (bandit + uv audit)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Security scan (bandit + uv audit)"; fi
           if [[ "${{ steps.security-tests.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Security tests"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Security tests"; fi
+          if [[ "${{ steps.dead-code.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Dead code analysis (vulture)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Dead code analysis (vulture)"; fi
 
           FIRST_FAIL=$(echo -e "$FAILED_STEPS" | grep -m1 "❌" || true)
           echo "::error::Backend quality gate failed:$FIRST_FAIL"
@@ -194,6 +199,7 @@ jobs:
           echo "- ✅ Tests (pytest)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Security scan (bandit + uv audit)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Security tests" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Dead code analysis (vulture)" >> "$GITHUB_STEP_SUMMARY"
 
   frontend-quality:
     needs: [prepare]
@@ -241,18 +247,24 @@ jobs:
         # Ignores are per-advisory (not per-package). New vulns in same packages WILL still fail CI.
         # Remove individual ignores when transitive deps are updated or direct deps are removed.
         # openapi-generator-cli transitive chain (proxy-agent > pac-proxy-agent > get-uri > basic-ftp):
-        #   GHSA-rp42-5vxx-qpwr GHSA-6v7q-wjvx-w8wg GHSA-chqc-8p9q-pq6q
+        #   GHSA-rp42-5vxx-qpwr GHSA-6v7q-wjvx-w8wg GHSA-chqc-8p9q-pq6q GHSA-rpmf-866q-6p89
+        # openapi-generator-cli transitive chain (> socks > ip-address):
+        #   GHSA-v2v4-37r5-5v8g
         # openapi-generator-cli transitive chain (> axios > @nestjs):
         #   GHSA-3p68-rc4w-qgx5 GHSA-fvcv-3m26-pcqx GHSA-36xv-jgw5-4q75
         # vite (dev server only, not in production build):
         #   GHSA-4w7w-66w2-5vf9 GHSA-v2wj-q39q-566r GHSA-p9ff-h696-f583
         # sveltejs/kit (upgrade pending):
         #   GHSA-3f6h-2hrp-w5wx GHSA-2crg-3p73-43xp
+        # kysely (transitive via better-auth/drizzle-orm, pending upstream update):
+        #   GHSA-pv5w-4p9q-p3v2
         run: >-
           cd frontend && bun audit
           --ignore GHSA-rp42-5vxx-qpwr
           --ignore GHSA-6v7q-wjvx-w8wg
           --ignore GHSA-chqc-8p9q-pq6q
+          --ignore GHSA-rpmf-866q-6p89
+          --ignore GHSA-v2v4-37r5-5v8g
           --ignore GHSA-3p68-rc4w-qgx5
           --ignore GHSA-fvcv-3m26-pcqx
           --ignore GHSA-36xv-jgw5-4q75
@@ -261,6 +273,7 @@ jobs:
           --ignore GHSA-p9ff-h696-f583
           --ignore GHSA-3f6h-2hrp-w5wx
           --ignore GHSA-2crg-3p73-43xp
+          --ignore GHSA-pv5w-4p9q-p3v2
 
       - name: Frontend failure summary
         if: failure()
@@ -556,7 +569,7 @@ jobs:
         run: go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@v3.7.1
 
       - name: Update nuclei templates
-        run: ~/go/bin/nuclei -update-templates
+        run: ~/go/bin/nuclei -update-templates -path ~/nuclei-templates
 
       - name: Install dependencies
         run: cd backend && uv sync --dev
@@ -581,7 +594,7 @@ jobs:
 
       - name: Run DAST scan
         id: nuclei-scan
-        run: ~/go/bin/nuclei -t ~/go/bin/nuclei-templates/ -u http://localhost:8080 -j -o nuclei-results.json
+        run: ~/go/bin/nuclei -t ~/nuclei-templates/ -u http://localhost:8080 -j -o nuclei-results.json
 
       - name: Check for HIGH/CRITICAL findings
         if: always() && steps.nuclei-scan.outcome != 'skipped'
