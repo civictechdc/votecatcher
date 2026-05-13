@@ -4,23 +4,6 @@
 
 ### Fixed
 
-- **ci**: Generate only new version section, fix summarize guards
-- **ci**: Remove unsupported --format json from vulture, fix whitelist filename
-- **ci**: Correct nuclei path, update bun audit ignores, update deps
-- **ci**: Use -ud flag for nuclei templates, add --output jscpd-report to duplication recipe
-- **deps**: Upgrade mako, python-multipart, urllib3, mistralai — resolves 4 vulns + adverse status
-- **docker**: Bump uv 0.11.2→0.11.13 to resolve rustls-webpki CVE (GHSA-82j2-j2ch-gfr8)
-- **ci**: Ignore libcap2 CVE-2026-4878 in Trivy — no Debian fix available
-
-### Changed
-
-- Externalize blocked-dir patterns into .gitblock
-- Make reject-internal-dirs.sh project-agnostic
-
-## [1.0.0-alpha.8](https://github.com/civictechdc/votecatcher/compare/v1.0.0-alpha.7..v1.0.0-alpha.8) - 2026-05-13
-
-### Fixed
-
 - Resolved 3 CI pipeline failures: nuclei template flag, jscpd output path, and uv audit vulnerabilities (mako GHSA-2h4p-vjrc-8xpq, python-multipart GHSA-pp6c-gr5w-3c5g, urllib3 GHSA-mf9v-mfxr-j63j + GHSA-qccp-gfcp-xxvc, mistralai adverse status)
 - Updated Docker image uv binary (0.11.2→0.11.13) to resolve rustls-webpki CVE (GHSA-82j2-j2ch-gfr8) flagged by Trivy
 - Suppressed unfixed Debian CVE (libcap2 CVE-2026-4878) in Trivy scanning
