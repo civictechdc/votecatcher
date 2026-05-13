@@ -1,5 +1,165 @@
 # Changelog
 
+## [1.0.0](https://github.com/civictechdc/votecatcher/compare/v1.0.0-alpha.7..v1.0.0) - 2026-05-13
+
+### Fixed
+
+- **ci**: Generate only new version section, fix summarize guards
+- **ci**: Remove unsupported --format json from vulture, fix whitelist filename
+- **ci**: Correct nuclei path, update bun audit ignores, update deps
+- **ci**: Use -ud flag for nuclei templates, add --output jscpd-report to duplication recipe
+- **deps**: Upgrade mako, python-multipart, urllib3, mistralai — resolves 4 vulns + adverse status
+- **docker**: Bump uv 0.11.2→0.11.13 to resolve rustls-webpki CVE (GHSA-82j2-j2ch-gfr8)
+- **ci**: Ignore libcap2 CVE-2026-4878 in Trivy — no Debian fix available
+
+### Changed
+
+- Externalize blocked-dir patterns into .gitblock
+- Make reject-internal-dirs.sh project-agnostic
+
+### Bump
+
+- Version 1.0.0-a7 → 1.0.0
+
+## [1.0.0-alpha.7](https://github.com/civictechdc/votecatcher/compare/v1.0.0-alpha.6..v1.0.0-alpha.7) - 2026-04-25
+
+### Added
+
+- Devcontainer hardening + oxc editor migration (#128)
+- **ci**: Retry changelog summarization with fallback model
+
+### Fixed
+
+- **ci**: Add radon dev dependency, replace codecov with shields.io coverage badge
+- **worker**: Persist provider_job_id, terminal status, Python <3.14 pin (#131)
+- **docker**: Upgrade OS packages in frontend prod image (#132)
+- **docker**: Pin trixie source to upgrade OpenSSL in node:20-slim
+- **justfile**: Add uv lock to version-set recipe
+- **docker**: Add trixie-security source for frontend OpenSSL CVE fix
+- **docker**: Remove -t trixie pin to allow trixie-security upgrades
+- **docker**: Patch OpenSSL CVEs in frontend dev image and scan prod images
+- **deps**: Override postcss to >=8.5.10 for XSS CVE fix
+- **lint**: Sort package.json overrides, fill empty placeholder files
+- **docker**: Use node:22-trixie-slim for frontend prod image
+- **docker**: Strip npm/yarn/corepack from frontend prod runner stage
+- **ci**: Pin git-cliff v2.12.0 with versioned asset name, fix edge function TS errors
+- **ci**: Prevent changelog wipe on release, restore prior versions
+- **ci**: Generate changelog to temp file and prepend, add API fallback
+- **ci**: Gracefully handle AI summarization API failures
+
+## [1.0.0-alpha.6](https://github.com/civictechdc/votecatcher/compare/v1.0.0-alpha.5..v1.0.0-alpha.6) - 2026-04-21
+
+### Added
+
+- Git-cliff changelog generation with GitHub Models summarization (#110)
+- **middleware**: Implement security headers, CORS config, rate limiting modules
+- **api**: Wire security middleware into app startup
+- Observability foundation — correlation IDs, health check, query logging, Sentry (#123)
+- **pagination**: Cursor-based keyset pagination + CSV N+1 fix + adversarial hardening (#124)
+
+### Fixed
+
+- Add GitHub compare links to changelog version headers
+- Add google-genai as explicit dependency after langchain removal
+- Upgrade mako 1.3.10→1.3.11 to resolve path traversal vuln
+- **backend**: Add stale task cleanup to DemoMatchingTaskMonitor (#120)
+- **ci**: Add GHSA-rp42-5vxx-qpwr ignore for basic-ftp transitive vuln
+
+### Changed
+
+- **ocr**: Remove dead _create_ocr_client and langchain imports
+- **middleware**: Remove redundant local in security headers dispatch
+
+## [1.0.0-alpha.5](https://github.com/civictechdc/votecatcher/compare/v1.0.0-alpha.3..v1.0.0-alpha.5) - 2026-04-16
+
+### Added
+
+- **monitor**: Cleanup dicts on terminal status, pool recycling, SSE max lifetime
+- **results**: Add client-side sort for results table
+- **crops**: EPIC-2 — crop image endpoint + thumbnail_url in results
+- **frontend**: Add thumbnailUrl to CampaignResultResponse interface
+- **frontend**: Add thumbnail column to results table
+- **results**: Add renderPredictionsTable + renderExpandedCropImage pure functions
+- **results**: Add expandable rows to Table + wire accordion in results page
+- **results**: Add crop lightbox, backend semaphore, keyed table rows
+- **results**: Add progressive reveal — source page with crop highlight
+- **results**: Per-entry highlight on source page
+- **results**: Clip thumbnail/crop to entry row + source page lightbox
+- **results**: Adaptive score-based prediction truncation (#63)
+
+### Fixed
+
+- **crops**: Validate resolved path against storage base
+- **security**: Sanitize HTML output, add focus trap, fix VDD findings
+- **results**: Address LOW VDD findings #6 #7 #8
+- **frontend**: Centralize API URL, fix relative URL 404s
+- **backend**: Fix crop_router test import shadowing from __init__.py
+- **frontend**: Update featureFlags test env to match base-url convention
+- **results**: Add crop metadata to campaign results endpoint
+
+### Performance
+
+- **pagination**: SQL-level pagination and GROUP BY for results
+
+### Changed
+
+- **services**: Extract PredictionBuilder from duplicated logic
+- **services**: Wire export_results_csv to OcrTextParser.format_text()
+- **tests**: Consolidate engine/session fixtures into conftest
+- **services**: Stream CSV export with yield_per, extract HTTP concern
+- **services**: Readability pass — deduplicate, flatten, simplify
+- **monitor**: Close EPIC-6 — remove dead _providers, add edge cases, fix structlog
+
+## [1.0.0-alpha.3](https://github.com/civictechdc/votecatcher/compare/v1.0.0-alpha.2..v1.0.0-alpha.3) - 2026-04-15
+
+### Added
+
+- **field-spec**: G0 dependencies, editor config, and feature flag framework
+- **field-spec**: G1 domain value objects
+- **field-spec**: G2 template renderer with approval tests
+- **field-spec**: G3 DC region spec source file
+- **field-spec**: G4 persistence layer
+- **field-spec**: G7 implement voter data adapter
+- **field-spec**: G7 capture matching baseline approval test
+- **field-spec**: G7 add spec-driven matching to MatchingService
+- **field-spec**: G5 application service + G6 spec loading and startup integration
+- **field-spec**: G7.3a configurable pre-filter for voter selection
+- **field-spec**: G7.6 document full_name/is_matchable as simplified defaults + update progress
+- **field-spec**: G7.7-G7.9 consolidate worker matching, matching process doc, C4 update
+- **field-spec**: G3 add demo.json5 spec with approval tests and template smoke tests
+- **field-spec**: G9 backend — region list endpoint, campaign region resolution, integration tests (5/5 pass)
+- **matching**: Legacy address fallback in voter_data_adapter
+- **matching**: Extract ScoreAggregator protocol with HarmonicMeanAggregator
+
+### Fixed
+
+- SSE setup:updated event, field_spec None crash, double chevron dropdown
+- **matching**: Add .strip() to render_template to eliminate trailing space penalty
+- **matching**: Spec-driven voter CSV import with structured address_data
+- **frontend**: Replace import.meta.env with SSR-safe alternatives, add ESLint guard
+- **matching**: Campaign results and metrics must only use latest job
+- **ci**: Address PR #24 CI failures and code quality feedback
+- **frontend**: Use bracket access for import.meta.env to satisfy svelte-check
+- **frontend**: Replace $env/static/public with import.meta.env for CI build
+- **frontend**: Replace all $env/static/public imports with import.meta.env
+- **ci**: Replace $env/static/private with $env/dynamic/private to fix frontend build
+- **frontend**: Replace remaining $env/static/public imports with import.meta.env
+- **tests**: Update featureFlags/settings/demo/database tests to use vi.stubEnv
+
+### Changed
+
+- **field-spec**: G8 spec-driven voter list service
+- **field-spec**: G10 switch production code to spec-only paths
+
+## [1.0.0-alpha.2](https://github.com/civictechdc/votecatcher/compare/v0.1.0-alpha.1..v1.0.0-alpha.2) - 2026-04-14
+
+### Fixed
+
+- Prefix unused catch variable with underscore in edge function
+- Split dependency install into separate backend/frontend steps
+- Bump pytest to >=9.0.3 to resolve GHSA-6w46-j5rx-g56g
+- **ci**: Skip gold master tests when voter CSV unavailable
+
 ## [1.0.0-alpha.7](https://github.com/civictechdc/votecatcher/compare/v1.0.0-alpha.6..v1.0.0-alpha.7) — Pre-release
 
 ### Fixed
