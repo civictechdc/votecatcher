@@ -516,7 +516,7 @@ jobs:
         if: always() && steps.nuclei-scan.outcome != 'skipped'
         run: |
           if [ -f nuclei-results.json ]; then
-            HIGH_CRIT=$(grep -c '"severity":"critical"\|"severity":"high"' nuclei-results.json 2>/dev/null || echo "0")
+            HIGH_CRIT=$(grep -c '"severity":"critical"\|"severity":"high"' nuclei-results.json 2>/dev/null | tr -d '[:space:]' || echo "0")
             if [ "$HIGH_CRIT" -gt 0 ]; then
               echo "::error::$HIGH_CRIT HIGH/CRITICAL DAST findings detected — review nuclei-results.json"
               exit 1
@@ -600,7 +600,7 @@ jobs:
         if: always() && steps.nuclei-scan.outcome != 'skipped'
         run: |
           if [ -f nuclei-results.json ]; then
-            HIGH_CRIT=$(grep -c '"severity":"critical"\|"severity":"high"' nuclei-results.json 2>/dev/null || echo "0")
+            HIGH_CRIT=$(grep -c '"severity":"critical"\|"severity":"high"' nuclei-results.json 2>/dev/null | tr -d '[:space:]' || echo "0")
             if [ "$HIGH_CRIT" -gt 0 ]; then
               echo "::error::$HIGH_CRIT HIGH/CRITICAL DAST findings detected — review nuclei-results.json"
               exit 1

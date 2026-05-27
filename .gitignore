@@ -74,6 +74,9 @@ pids
 tmp/
 temp/
 
+# Code quality tool output
+jscpd-report/
+
 # Plans (local development only)
 plans/
 
