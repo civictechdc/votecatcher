@@ -11,7 +11,7 @@ import asyncio
 import base64
 import random
 import time
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -46,6 +46,8 @@ OCR_RETRY_DELAY_SECONDS = 5.0
 OCR_MAX_RETRIES = 3
 MATCHING_DELAY_SECONDS = 0.5
 BATCH_THRESHOLD = 5
+ORPHAN_CHECK_INTERVAL_SECONDS = 60
+ORPHAN_TIMEOUT_SECONDS = 300
 
 
 class JobWorker:
@@ -63,6 +65,7 @@ class JobWorker:
     def __init__(self, settings: "Settings | None" = None) -> None:
         self.settings = settings or get_settings()
         self.running = False
+        self._last_orphan_check: float = 0.0
 
     async def start(self) -> None:
         """Start the worker loop."""
@@ -77,6 +80,16 @@ class JobWorker:
                 await self._process_pending_jobs()
             except Exception as e:
                 logger.error("Worker error", error=str(e))
+
+            if (
+                time.monotonic() - self._last_orphan_check
+                >= ORPHAN_CHECK_INTERVAL_SECONDS
+            ):
+                try:
+                    await self._recover_orphaned_jobs()
+                except Exception as e:
+                    logger.error("Orphan recovery error", error=str(e))
+                self._last_orphan_check = time.monotonic()
 
             await asyncio.sleep(POLL_INTERVAL_SECONDS)
 
@@ -167,6 +180,84 @@ class JobWorker:
         """
         with Session(engine) as session:
             return self._terminate_orphans_with_session(session)
+
+    async def _recover_orphaned_jobs(self) -> int:
+        """Run periodic orphan recovery, resetting stale jobs to NOT_STARTED."""
+        with Session(engine) as session:
+            return self._recover_orphaned_jobs_with_session(session)
+
+    def _recover_orphaned_jobs_with_session(self, session: Session) -> int:
+        """Reset stale orphaned jobs to NOT_STARTED for automatic retry.
+
+        Unlike startup termination which moves to error states, this method
+        resets to NOT_STARTED so the existing _process_pending_jobs loop
+        picks them up for retry.
+
+        Args:
+                session: Database session
+
+        Returns:
+                Number of jobs recovered
+        """
+        orphan_states = [
+            JobStatus.OCR_STARTED,
+            JobStatus.OCR_COMPLETED,
+            JobStatus.MATCHING_PENDING,
+            JobStatus.MATCHING,
+        ]
+        threshold = datetime.now(UTC) - timedelta(seconds=ORPHAN_TIMEOUT_SECONDS)
+
+        stale_jobs = session.exec(
+            select(MatcherJob).where(
+                MatcherJob.current_status.in_(orphan_states),
+                (MatcherJob.started_on < threshold) | (MatcherJob.started_on.is_(None)),
+            )
+        ).all()
+
+        if not stale_jobs:
+            return 0
+
+        terminal_ocr = [
+            JobStatus.OCR_COMPLETED,
+            JobStatus.OCR_FAILED,
+            JobStatus.CANCELLED,
+            JobStatus.MATCHING_COMPLETED,
+            JobStatus.MATCHING_ERROR,
+        ]
+
+        recovered = 0
+        for job in stale_jobs:
+            previous_status = job.current_status.value
+            job.current_status = JobStatus.NOT_STARTED
+            job.started_on = None
+            job.ended_on = None
+            job.error_data = {
+                "recovered": True,
+                "previous_status": previous_status,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+
+            child_ocr_jobs = session.exec(
+                select(OcrJob).where(
+                    OcrJob.matcher_job_id == job.id,
+                    OcrJob.status.not_in(terminal_ocr),
+                )
+            ).all()
+            for ocr_job in child_ocr_jobs:
+                ocr_job.status = JobStatus.NOT_STARTED
+
+            logger.info(
+                "Orphaned job recovered",
+                job_id=job.id,
+                previous_status=previous_status,
+                campaign_id=str(job.campaign_id),
+            )
+            recovered += 1
+
+        session.commit()
+        logger.info("Periodic orphan recovery complete", count=recovered)
+
+        return recovered
 
     async def _process_pending_jobs(self) -> None:
         """Process all pending jobs in NOT_STARTED state."""

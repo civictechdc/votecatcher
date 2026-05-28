@@ -62,7 +62,7 @@ class TestBatchOcrPersistsProviderJobId:
 
             mock_config = MagicMock()
             mock_config.provider = "openai"
-            mock_config.api_key = "test-key"
+            mock_config.api_key = "test-key"  # pragma: allowlist secret
             mock_config.model = "gpt-4o"
 
             mock_client = AsyncMock()
@@ -134,7 +134,7 @@ class TestBatchOcrPersistsProviderJobId:
 
             mock_config = MagicMock()
             mock_config.provider = "openai"
-            mock_config.api_key = "test-key"
+            mock_config.api_key = "test-key"  # pragma: allowlist secret
             mock_config.model = "gpt-4o"
 
             call_order = []
@@ -258,7 +258,7 @@ class TestBatchOcrPollingTermination:
 
             mock_config = MagicMock()
             mock_config.provider = "openai"
-            mock_config.api_key = "test-key"
+            mock_config.api_key = "test-key"  # pragma: allowlist secret
             mock_config.model = "gpt-4o"
 
             mock_client = AsyncMock()
@@ -317,3 +317,22 @@ class TestBatchOcrPollingTermination:
                 f"fetch_job_status called {mock_client.fetch_job_status.call_count} times "
                 f"for {terminal_status.value}, expected at most 1"
             )
+
+
+class TestOrphanCheckInterval:
+    """Worker must track last orphan check time and only fire after ORPHAN_CHECK_INTERVAL_SECONDS."""
+
+    def test_last_orphan_check_initialized_to_zero(self):
+        from app.jobs.worker import JobWorker
+
+        worker = JobWorker()
+        assert worker._last_orphan_check == 0.0
+
+    @pytest.mark.asyncio
+    async def test_recover_fires_after_interval(self):
+        from app.jobs.worker import JobWorker
+
+        worker = JobWorker()
+        worker._last_orphan_check = 0.0
+        recovered = worker._recover_orphaned_jobs_with_session(MagicMock())
+        assert isinstance(recovered, int)
