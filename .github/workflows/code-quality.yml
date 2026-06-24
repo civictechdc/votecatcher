@@ -15,7 +15,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
-          cache-dependency-glob: "main/backend/uv.lock"
+          cache-dependency-glob: "backend/uv.lock"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -29,18 +29,15 @@ jobs:
         uses: extractions/setup-just@v2
 
       - name: Install backend dependencies
-        working-directory: main
         run: cd backend && uv sync --dev
 
       - name: Install frontend dependencies
-        working-directory: main
         run: cd frontend && bun install --frozen-lockfile
 
       - name: Install code quality tools
         run: npm install -g jscpd fallow
 
       - name: Run fallow analysis (frontend — SvelteKit)
-        working-directory: main
         run: cd frontend && npx fallow --format json --sarif-file fallow-results.sarif > fallow-results.json
         continue-on-error: true
 
@@ -48,29 +45,24 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: main/frontend/fallow-results.sarif
+          sarif_file: frontend/fallow-results.sarif
           category: fallow-frontend
 
       - name: Run duplication analysis (backend only)
-        working-directory: main
         run: just duplication
 
       - name: Run complexity analysis
-        working-directory: main
         run: just complexity
 
       - name: Run dead code analysis (backend — Python)
-        working-directory: main
         run: cd backend && uv run vulture app/ vulture_whitelist.py --min-confidence 80 2>&1 | tee ../vulture-report.txt
         continue-on-error: true
 
       - name: Run dead code analysis (frontend — SvelteKit)
-        working-directory: main
         run: cd frontend && npx fallow dead-code --format json > ../fallow-frontend-dead-code.json
         continue-on-error: true
 
       - name: Check quality thresholds
-        working-directory: main
         run: |
           echo "=== Quality Threshold Check ==="
           FAIL=0
@@ -125,11 +117,11 @@ jobs:
         with:
           name: code-quality-reports
           path: |
-            main/jscpd-report/
-            main/vulture-report.txt
-            main/frontend/fallow-results.json
-            main/frontend/fallow-results.sarif
-            main/fallow-frontend-dead-code.json
+            jscpd-report/
+            vulture-report.txt
+            frontend/fallow-results.json
+            frontend/fallow-results.sarif
+            fallow-frontend-dead-code.json
 
       - name: Create failure issue
         if: failure()
