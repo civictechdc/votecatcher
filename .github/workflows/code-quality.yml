@@ -66,8 +66,8 @@ jobs:
         run: |
           echo "=== Quality Threshold Check ==="
           FAIL=0
-          if [ -f jscpd-report/index.html ]; then
-            DUP_PCT=$(grep -oP '\d+(?=%)' jscpd-report/index.html | head -1)
+          if [ -f jscpd-report/jscpd-report.html ]; then
+            DUP_PCT=$(grep -oP '\d+(?=%)' jscpd-report/jscpd-report.html | head -1)
             if [ -z "$DUP_PCT" ]; then
               echo "::warning::Could not parse duplication percentage from jscpd report"
               DUP_PCT=0
