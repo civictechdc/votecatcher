@@ -67,13 +67,15 @@ jobs:
           echo "=== Quality Threshold Check ==="
           FAIL=0
           if [ -f jscpd-report/jscpd-report.html ]; then
-            DUP_PCT=$(grep -oP '\d+(?=%)' jscpd-report/jscpd-report.html | head -1)
+            # Scope to the "Duplicated Lines" stat card; a bare grep for digits
+            # before % matches CSS values like width:100% earlier in the HTML.
+            DUP_PCT=$(grep -A1 'Duplicated Lines' jscpd-report/jscpd-report.html | grep -oP '\d+(?:\.\d+)?(?=%)' | head -1)
             if [ -z "$DUP_PCT" ]; then
               echo "::warning::Could not parse duplication percentage from jscpd report"
               DUP_PCT=0
             fi
             echo "Duplication: ${DUP_PCT}%"
-            if [ "$DUP_PCT" -gt 20 ] 2>/dev/null; then
+            if awk "BEGIN {exit !($DUP_PCT > 20)}"; then
               echo "::error::Duplication above 20% threshold: ${DUP_PCT}%"
               FAIL=1
             fi
