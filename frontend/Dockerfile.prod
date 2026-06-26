@@ -14,7 +14,9 @@ ARG OCR_PROVIDER_NAME=openai
 ARG OCR_PROVIDER_MODEL=gpt-4o-mini
 ARG OCR_PROVIDER_API_KEY=
 ARG DATABASE_URL=postgresql://user:pass@localhost:5432/votecatcher  # pragma: allowlist secret
+ARG BETTER_AUTH_SECRET=build-time-dummy-secret-not-used-at-runtime
 ENV ADAPTER=${ADAPTER}
+ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run build
