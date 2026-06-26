@@ -617,13 +617,14 @@ jobs:
   docker-build:
     needs: [prepare, backend-quality, frontend-quality, frontend-fallow, dast-smoke]
     if: >-
-      (needs.prepare.outputs.backend == 'true' || needs.prepare.outputs.frontend == 'true') &&
+      always() &&
+      ((needs.prepare.outputs.backend == 'true' || needs.prepare.outputs.frontend == 'true') &&
       (needs.backend-quality.result == 'success' || needs.backend-quality.result == 'skipped') &&
       (needs.frontend-quality.result == 'success' || needs.frontend-quality.result == 'skipped') &&
       (needs.frontend-fallow.result == 'success' || needs.frontend-fallow.result == 'skipped') &&
       (needs.dast-smoke.result == 'success' || needs.dast-smoke.result == 'skipped') ||
       github.ref == 'refs/heads/main' ||
-      github.event_name == 'schedule'
+      github.event_name == 'schedule')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -691,7 +692,6 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache-frontend
           mv /tmp/.buildx-cache-frontend-new /tmp/.buildx-cache-frontend
-
       - name: Build backend production image
         id: build-backend-prod
         uses: docker/build-push-action@v6
