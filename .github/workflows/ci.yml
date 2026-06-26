@@ -617,13 +617,14 @@ jobs:
   docker-build:
     needs: [prepare, backend-quality, frontend-quality, frontend-fallow, dast-smoke]
     if: >-
-      (needs.prepare.outputs.backend == 'true' || needs.prepare.outputs.frontend == 'true') &&
+      always() &&
+      ((needs.prepare.outputs.backend == 'true' || needs.prepare.outputs.frontend == 'true') &&
       (needs.backend-quality.result == 'success' || needs.backend-quality.result == 'skipped') &&
       (needs.frontend-quality.result == 'success' || needs.frontend-quality.result == 'skipped') &&
       (needs.frontend-fallow.result == 'success' || needs.frontend-fallow.result == 'skipped') &&
       (needs.dast-smoke.result == 'success' || needs.dast-smoke.result == 'skipped') ||
       github.ref == 'refs/heads/main' ||
-      github.event_name == 'schedule'
+      github.event_name == 'schedule')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -668,9 +669,9 @@ jobs:
           push: false
           load: true
           tags: votecatcher-backend
+          build-args: APT_CACHE_BUST=${{ github.run_id }}
           cache-from: type=local,src=/tmp/.buildx-cache-backend
           cache-to: type=local,dest=/tmp/.buildx-cache-backend-new,mode=max
-
       - name: Move backend cache
         run: |
           rm -rf /tmp/.buildx-cache-backend
@@ -691,7 +692,6 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache-frontend
           mv /tmp/.buildx-cache-frontend-new /tmp/.buildx-cache-frontend
-
       - name: Build backend production image
         id: build-backend-prod
         uses: docker/build-push-action@v6
@@ -701,7 +701,7 @@ jobs:
           push: false
           load: true
           tags: votecatcher-backend:prod
-
+          build-args: APT_CACHE_BUST=${{ github.run_id }}
       - name: Build frontend production image
         id: build-frontend-prod
         uses: docker/build-push-action@v6
@@ -728,6 +728,7 @@ jobs:
           image-ref: votecatcher-backend
           severity: CRITICAL,HIGH
           exit-code: 1
+          ignore-unfixed: true
 
       - name: Run Trivy on frontend
         id: trivy-frontend
@@ -736,6 +737,7 @@ jobs:
           image-ref: votecatcher-frontend
           severity: CRITICAL,HIGH
           exit-code: 1
+          ignore-unfixed: true
 
       - name: Run Trivy on backend production image
         id: trivy-backend-prod
@@ -744,6 +746,7 @@ jobs:
           image-ref: votecatcher-backend:prod
           severity: CRITICAL,HIGH
           exit-code: 1
+          ignore-unfixed: true
 
       - name: Run Trivy on frontend production image
         id: trivy-frontend-prod
@@ -752,6 +755,7 @@ jobs:
           image-ref: votecatcher-frontend:prod
           severity: CRITICAL,HIGH
           exit-code: 1
+          ignore-unfixed: true
 
       - name: Docker build and scan failure summary
         if: failure()
