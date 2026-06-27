@@ -8,18 +8,19 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-project_root="$(cd "$script_dir/../../.." && pwd)"
+agents_dir="$(cd "$script_dir/../.." && pwd)"
+project_root="$(cd "$agents_dir/.." && pwd)"
 
 sections=()
 
-# 1. Root AGENTS.md — guarantee the agent reads it
+# 1. Root AGENTS.md — sibling of .agents/, guarantee the agent reads it
 root_agents="$project_root/AGENTS.md"
 if [[ -f "$root_agents" ]]; then
   sections+=("$(cat "$root_agents")")
 fi
 
-# 2. Local agent preferences
-local_agents="$script_dir/../../local/AGENTS.local.md"
+# 2. Local agent preferences — inside .agents/local/
+local_agents="$agents_dir/local/AGENTS.local.md"
 if [[ -f "$local_agents" ]]; then
   sections+=("--- BEGIN .agents/local/AGENTS.local.md ---
 $(cat "$local_agents")
