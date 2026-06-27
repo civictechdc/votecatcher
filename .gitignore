@@ -96,7 +96,7 @@ plans/
 .secrets.baseline
 
 # Cursor
-.cursor/
+.cursor/*
 
 # Environment files (catch-all)
 .env
@@ -153,13 +153,16 @@ supabase/.env
 !backend/pyrightconfig.json
 !backend/tests/**/assets/*.json
 !frontend/.fallowrc.json
+!.claude/settings.json
+!.codex/hooks.json
 
 # Upload directories
 uploads/
 temp-uploads/
 
 # Cursor
-.cursor/
+.cursor/*
+!.cursor/hooks.json
 
 # Votecatcher data files (contain sensitive batch/API data)
 Votecatcher/

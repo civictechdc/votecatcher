@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": ".agents/hooks/scripts/read-local-agents-hook.sh"
+      }
+    ]
+  }
+}

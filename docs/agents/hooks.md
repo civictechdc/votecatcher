@@ -44,21 +44,33 @@ Use this pattern:
 3. If a platform is not covered here, consult that platform's hook/plugin documentation and set up equivalent calls to the same scripts.
 4. If a platform does not support hooks, agents must manually run the relevant script before editing protected files.
 
-## Platform Setup Docs
+## Platform Configs
 
-Use each platform's supported hook/plugin system and point it at these scripts:
+Default hook configs ship in the repo so each platform loads local agent preferences at session start:
 
-- VS Code hooks: https://code.visualstudio.com/docs/agent-customization/hooks
-- OpenCode plugins: https://opencode.ai/docs/plugins/
-- Cursor hooks: https://cursor.com/docs/hooks
-- Codex hooks: https://developers.openai.com/codex/hooks
-- Claude Code hooks: https://code.claude.com/docs/en/hooks
+| Platform | Config file | Event |
+| --- | --- | --- |
+| Claude Code | `.claude/settings.json` | `SessionStart` |
+| VS Code | `.claude/settings.json` (shared) | `SessionStart` |
+| Cursor | `.cursor/hooks.json` | `sessionStart` |
+| Codex | `.codex/hooks.json` | `SessionStart` |
+| OpenCode | `.opencode/plugins/local-agents.js` | `session.created` |
+
+All platform hooks call `.agents/hooks/scripts/read-local-agents-hook.sh`, a JSON-output wrapper around `read-local-agents.sh` that works across platforms.
+
+Platform hook documentation:
+
+- Claude Code: https://code.claude.com/docs/en/hooks
+- VS Code: https://code.visualstudio.com/docs/agent-customization/hooks
+- Cursor: https://cursor.com/docs/hooks
+- Codex: https://developers.openai.com/codex/hooks
+- OpenCode: https://opencode.ai/docs/plugins/
 
 Do not add a generic `.agents/hooks.json`; project-owned behavior lives in scripts, not a shared manifest.
 
-## Claude Code Adapter Example
+## Branch Guard Adapter Example
 
-Claude Code stores hooks under the `hooks` key in `.claude/settings.json` or `~/.claude/settings.json`.
+To enforce the self-learning branch rule, wire `enforce-agent-doc-branch.sh` into each platform's pre-edit hook. Example for Claude Code:
 
 ```json
 {
@@ -69,26 +81,12 @@ Claude Code stores hooks under the `hooks` key in `.claude/settings.json` or `~/
         "hooks": [
           {
             "type": "command",
-            "command": ".agents/hooks/scripts/enforce-agent-doc-branch.sh"
+            "command": "${CLAUDE_PROJECT_DIR}/.agents/hooks/scripts/enforce-agent-doc-branch.sh"
           }
         ]
       }
     ]
   }
-}
-```
-
-## OpenCode Adapter Example
-
-OpenCode hook support may vary by version. If using `~/.config/opencode/hooks.json`, call the same script from the relevant pre-edit or stop event supported by that version.
-
-```json
-{
-  "stop": [
-    {
-      "command": ".agents/hooks/scripts/enforce-agent-doc-branch.sh"
-    }
-  ]
 }
 ```
 
