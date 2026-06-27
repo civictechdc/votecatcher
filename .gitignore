@@ -84,6 +84,9 @@ plans/
 # .agent-workspace/ files are tracked so samples/artifacts survive across sessions
 .agent/
 
+# Machine-local agent preferences
+.agents/local/
+
 
 
 
