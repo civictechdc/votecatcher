@@ -9,15 +9,15 @@ Agent hooks provide deterministic guardrails around agent behavior. Use them for
 - Platform-specific hook configs call these scripts directly.
 - Review hook scripts before enabling them. Hooks run with local user permissions.
 
-## Local AGENTS Bootstrap
+## AGENTS Bootstrap
 
-After reading root `AGENTS.md`, agents must immediately run:
+At session start, the hook script outputs root `AGENTS.md` followed by any machine-local preferences from `.agents/local/AGENTS.local.md`:
 
 ```bash
-.agents/hooks/scripts/read-local-agents.sh
+.agents/hooks/scripts/read-agents.sh
 ```
 
-This script checks the sibling `.agents/local/` directory for `AGENTS.local.md`. If present, it prints the file so the agent can load machine-local preferences without committing them.
+The script outputs JSON by default (for hook platforms). Use `--plain` for direct execution.
 
 ## Self-Learning Branch Guard
 
@@ -46,7 +46,7 @@ Use this pattern:
 
 ## Platform Configs
 
-Default hook configs ship in the repo so each platform loads local agent preferences at session start:
+Default hook configs ship in the repo so each platform loads root `AGENTS.md` and local agent preferences at session start:
 
 | Platform | Config file | Event |
 | --- | --- | --- |
@@ -55,8 +55,9 @@ Default hook configs ship in the repo so each platform loads local agent prefere
 | Cursor | `.cursor/hooks.json` | `sessionStart` |
 | Codex | `.codex/hooks.json` | `SessionStart` |
 | OpenCode | `.opencode/plugins/local-agents.js` | `session.created` |
+| Pi | `.pi/hook/hooks.yaml` | `session.created` |
 
-All platform hooks call `.agents/hooks/scripts/read-local-agents-hook.sh`, a JSON-output wrapper around `read-local-agents.sh` that works across platforms.
+All platform hooks call `.agents/hooks/scripts/read-agents.sh`, which outputs root `AGENTS.md` plus local preferences as JSON for cross-platform compatibility.
 
 Platform hook documentation:
 
@@ -65,6 +66,7 @@ Platform hook documentation:
 - Cursor: https://cursor.com/docs/hooks
 - Codex: https://developers.openai.com/codex/hooks
 - OpenCode: https://opencode.ai/docs/plugins/
+- Pi: https://pi.dev/packages/pi-yaml-hooks
 
 Do not add a generic `.agents/hooks.json`; project-owned behavior lives in scripts, not a shared manifest.
 
@@ -92,10 +94,10 @@ To enforce the self-learning branch rule, wire `enforce-agent-doc-branch.sh` int
 
 ## Manual Fallback
 
-If hook integration is unavailable, agents must run the local preferences hook immediately after reading root `AGENTS.md`:
+If hook integration is unavailable, agents must run the AGENTS bootstrap script immediately after reading root `AGENTS.md`:
 
 ```bash
-.agents/hooks/scripts/read-local-agents.sh
+.agents/hooks/scripts/read-agents.sh --plain
 ```
 
 Agents must also run this before editing or committing agent instruction files:

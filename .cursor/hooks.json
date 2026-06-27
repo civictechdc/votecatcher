@@ -3,7 +3,7 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": ".agents/hooks/scripts/read-local-agents-hook.sh"
+        "command": ".agents/hooks/scripts/read-agents.sh"
       }
     ]
   }

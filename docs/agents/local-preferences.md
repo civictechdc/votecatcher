@@ -13,12 +13,12 @@ This path is gitignored. It is for local workstation preferences that should not
 Immediately after reading root `AGENTS.md`, run:
 
 ```bash
-.agents/hooks/scripts/read-local-agents.sh
+.agents/hooks/scripts/read-agents.sh --plain
 ```
 
-The script checks for `.agents/local/AGENTS.local.md` by locating the sibling `.agents/local/` directory relative to `.agents/hooks/scripts/`. Because `.agents/local/` is gitignored, use CLI/file-search tools rather than relying on tracked file lists.
+The script outputs root `AGENTS.md` followed by `.agents/local/AGENTS.local.md` if it exists. Because `.agents/local/` is gitignored, use CLI/file-search tools rather than relying on tracked file lists.
 
-If the file exists, the script prints it. Treat that output as machine-local agent preferences before starting active work.
+If the local file exists, treat its output as machine-local agent preferences before starting active work.
 
 ## Appropriate Content
 

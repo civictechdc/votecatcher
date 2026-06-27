@@ -14,7 +14,7 @@ Stack: Python/FastAPI backend, SvelteKit 5 frontend, SQLModel/Alembic data layer
 
 ## First Reads
 
-- After reading this file, immediately run `.agents/hooks/scripts/read-local-agents.sh`. If `.agents/local/AGENTS.local.md` exists, treat its output as machine-local agent preferences.
+- After reading this file, run `.agents/hooks/scripts/read-agents.sh --plain` to load any machine-local preferences from `.agents/local/AGENTS.local.md`.
 - For project overview, read `README.md`.
 - For setup and commands, read `docs/development/README.md` and `docs/running-locally.md`.
 - For architecture changes, read `docs/architecture/README.md` and relevant ADRs in `docs/architecture/decisions/`.
@@ -49,7 +49,7 @@ Prefer narrower package commands while iterating, then run the broader check bef
 - Code quality: `docs/agents/code-quality.md`
 - Version and changelog work: `docs/agents/versioning.md`
 - Frontend/Svelte MCP: `docs/agents/svelte-mcp.md`
-- Local preferences: `docs/agents/local-preferences.md`; loaded by `.agents/hooks/scripts/read-local-agents.sh` when `.agents/local/AGENTS.local.md` exists.
+- Local preferences: `docs/agents/local-preferences.md`; loaded by `.agents/hooks/scripts/read-agents.sh` when `.agents/local/AGENTS.local.md` exists.
 
 Read these only when relevant to the current task.
 
