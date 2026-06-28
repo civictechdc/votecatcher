@@ -59,6 +59,7 @@ pids
 
 # npm cache
 .npm
+.pi/npm/
 
 # eslint cache
 .eslintcache
