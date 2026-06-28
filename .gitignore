@@ -59,6 +59,7 @@ pids
 
 # npm cache
 .npm
+.pi/npm/
 
 # eslint cache
 .eslintcache
@@ -84,6 +85,9 @@ plans/
 # .agent-workspace/ files are tracked so samples/artifacts survive across sessions
 .agent/
 
+# Machine-local agent preferences
+.agents/local/
+
 
 
 
@@ -93,7 +97,7 @@ plans/
 .secrets.baseline
 
 # Cursor
-.cursor/
+.cursor/*
 
 # Environment files (catch-all)
 .env
@@ -150,13 +154,16 @@ supabase/.env
 !backend/pyrightconfig.json
 !backend/tests/**/assets/*.json
 !frontend/.fallowrc.json
+!.claude/settings.json
+!.codex/hooks.json
 
 # Upload directories
 uploads/
 temp-uploads/
 
 # Cursor
-.cursor/
+.cursor/*
+!.cursor/hooks.json
 
 # Votecatcher data files (contain sensitive batch/API data)
 Votecatcher/

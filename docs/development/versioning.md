@@ -97,6 +97,18 @@ git push --tags
 just release-stable
 ```
 
+## Changelog
+
+VoteCatcher uses git-cliff for changelog generation.
+
+```bash
+just changelog          # regenerate CHANGELOG.md
+just changelog-preview  # preview unreleased changes
+just changelog-range v1..v2
+```
+
+Raw changelog entries come from conventional commits. Keep commit messages specific enough that generated release notes are useful.
+
 ## Workflow Example
 
 ```text

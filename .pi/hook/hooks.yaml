@@ -1,0 +1,4 @@
+hooks:
+  - event: session.created
+    actions:
+      - bash: .agents/hooks/scripts/read-agents.sh
