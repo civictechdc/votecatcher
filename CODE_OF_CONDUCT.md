@@ -4,7 +4,7 @@
 
 Civic Tech DC is an organization working, as a group, to empower ourselves and others to improve our local community through technology.
 
-We are committed to providing a safe and welcoming space, without regard to age, gender, race, ethnicity, nationality, sexual orientation, gender identity, gender expression, mental or physical disability, physical appearance, neuro(a)typicality, religion, level of knowledge, level of experience, parental status, marital status, socioeconomic status or background, political affiliation, or any other attribute. The organizers of Civic Tech DC ("Organizers") share the responsibility of enforcing these policies as necessary to maintain an open and welcoming environment.
+We are committed to providing a safe and welcoming space, without regard to age, gender, race, ethnicity, nationality, sexual orientation, gender identity, gender expression, mental or physical disability, physical appearance, neuro(a)typicality, religion, level of knowledge, level of experience, parental status, marital status, socioeconomic status or background, political affiliation, or any other attribute. The organizers of Civic Tech DC (Organizers) share the responsibility of enforcing these policies as necessary to maintain an open and welcoming environment.
 
 As the organizers of Civic Tech DC, we believe that the principles below are essential to maintaining this environment. In addition, we believe they are good principles for life in general.
 
@@ -34,7 +34,7 @@ Conduct need not be intentional to be harassment. **Civic Tech DC will not toler
 
 Civic Tech DC is designed as a place for people of all different skill levels and approaches to meet and work together toward common goals. We do not expect that everybody will share the same opinion, but we do expect that disagreement is done respectfully.
 
-Additionally, we expect that members will educate others respectfully. Do not assume anybody else's level of expertise or knowledge. Do not belittle a lack of information, or insist on unnecessary precision. We are all learning, so afford others—as well as yourself—room to grow.
+Additionally, we expect that members will educate others respectfully. Do not assume anybody else’s level of expertise or knowledge. Do not belittle a lack of information, or insist on unnecessary precision. We are all learning, so afford others—as well as yourself—room to grow.
 
 ### Keep Your Team Open
 
@@ -50,7 +50,7 @@ Work to ensure that the community is well-represented in all stages of developme
 
 ### Empower, Experiment, and Find a Way for Everybody to Contribute
 
-When more people share their knowledge and skills, they give a project a greater chance to succeed. When somebody shows up with an unusual skill, look for ways to fit them into the team rather than reasons why it wouldn't work. Experiment with new approaches, and don't be afraid to try something that might not work.
+When more people share their knowledge and skills, they give a project a greater chance to succeed. When somebody shows up with an unusual skill, look for ways to fit them into the team rather than reasons why it wouldn’t work. Experiment with new approaches, and don’t be afraid to try something that might not work.
 
 ## Photography
 
