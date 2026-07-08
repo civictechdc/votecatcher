@@ -1,12 +1,13 @@
 # Local Agent Preferences
 
-VoteCatcher supports optional machine-local agent preferences at:
+VoteCatcher supports optional machine-local agent preferences at either path:
 
 ```text
+AGENTS.local.md
 .agents/local/AGENTS.local.md
 ```
 
-This path is gitignored. It is for local workstation preferences that should not affect the team or CI.
+Both paths are gitignored. They are for local workstation preferences that should not affect the team or CI.
 
 ## Required Agent Behavior
 
@@ -16,7 +17,7 @@ Immediately after reading root `AGENTS.md`, run:
 .agents/hooks/scripts/read-agents.sh --plain
 ```
 
-The script outputs root `AGENTS.md` followed by `.agents/local/AGENTS.local.md` if it exists. Because `.agents/local/` is gitignored, use CLI/file-search tools rather than relying on tracked file lists.
+The script outputs root `AGENTS.md`, then `AGENTS.local.md` if it exists, then `.agents/local/AGENTS.local.md` if it exists. Because both local preference paths are gitignored, use CLI/file-search tools rather than relying on tracked file lists.
 
 If the local file exists, treat its output as machine-local agent preferences before starting active work.
 
