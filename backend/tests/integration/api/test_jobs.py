@@ -11,9 +11,9 @@ Tests the complete job lifecycle:
 import uuid
 
 from fastapi.testclient import TestClient
-from sqlmodel import Session
+from sqlmodel import Session, select
 
-from app.data.database.model.jobs import JobStatus, MatcherJob
+from app.data.database.model.jobs import JobStatus, MatcherJob, OcrJob
 from app.data.database.model.llm_provider_config import LlmProviderConfig
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
@@ -29,13 +29,17 @@ def _seed_prerequisites(session: Session, campaign: Campaign) -> None:
         status=UploadStatus.ACTIVE,
     )
     session.add(upload)
-    provider = LlmProviderConfig(
-        provider="openai",
-        api_key="sk-test-key-for-integration-tests",  # pragma: allowlist secret
-        model="gpt-4o-mini",
-        is_configured=True,
-    )
-    session.add(provider)
+    provider = session.exec(
+        select(LlmProviderConfig).where(LlmProviderConfig.provider == "openai")
+    ).first()
+    if provider is None:
+        provider = LlmProviderConfig(
+            provider="openai",
+            api_key="sk-test-key-for-integration-tests",  # pragma: allowlist secret
+            model="gpt-4o-mini",
+            is_configured=True,
+        )
+        session.add(provider)
     session.flush()
 
 
@@ -386,6 +390,101 @@ class TestStartJob:
         response = client.post(f"/api/jobs/{job.id}/start")
 
         assert response.status_code == 400
+
+
+class TestRetryJob:
+    """Tests for POST /api/jobs/{job_id}/retry endpoint."""
+
+    def test_retry_stuck_job_resets_job_and_child_ocr(
+        self, client: TestClient, test_campaign: Campaign, session: Session
+    ):
+        """Should reset stuck matcher job and non-terminal child OCR job."""
+        job = MatcherJob(
+            campaign_id=test_campaign.id,
+            current_status=JobStatus.OCR_STARTED,
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+        ocr_job = OcrJob(
+            matcher_job_id=job.id,
+            status=JobStatus.OCR_STARTED,
+        )
+        session.add(ocr_job)
+        session.commit()
+        session.refresh(ocr_job)
+
+        response = client.post(f"/api/jobs/{job.id}/retry")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == JobStatus.NOT_STARTED.value
+        session.refresh(job)
+        session.refresh(ocr_job)
+        assert job.current_status == JobStatus.NOT_STARTED
+        assert ocr_job.status == JobStatus.NOT_STARTED
+
+    def test_retry_completed_job_rejected(
+        self, client: TestClient, test_campaign: Campaign, session: Session
+    ):
+        """Should reject retry for terminal successful jobs."""
+        job = MatcherJob(
+            campaign_id=test_campaign.id,
+            current_status=JobStatus.MATCHING_COMPLETED,
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        response = client.post(f"/api/jobs/{job.id}/retry")
+
+        assert response.status_code == 400
+        assert "cannot be retried" in response.json()["detail"]
+
+    def test_retry_missing_job_returns_404(self, client: TestClient):
+        """Should return 404 when retrying a missing job."""
+        response = client.post("/api/jobs/999999/retry")
+
+        assert response.status_code == 404
+
+    def test_retry_matching_job_resets_to_not_started(
+        self, client: TestClient, test_campaign: Campaign, session: Session
+    ):
+        """Should reset a job stuck in MATCHING to NOT_STARTED."""
+        job = MatcherJob(
+            campaign_id=test_campaign.id,
+            current_status=JobStatus.MATCHING,
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        response = client.post(f"/api/jobs/{job.id}/retry")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == JobStatus.NOT_STARTED.value
+        session.refresh(job)
+        assert job.current_status == JobStatus.NOT_STARTED
+
+    def test_retry_failed_job_clears_error_data(
+        self, client: TestClient, test_campaign: Campaign, session: Session
+    ):
+        """Should clear error_data when retrying a failed job."""
+        job = MatcherJob(
+            campaign_id=test_campaign.id,
+            current_status=JobStatus.OCR_FAILED,
+            error_data={"message": "OCR provider error"},
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        response = client.post(f"/api/jobs/{job.id}/retry")
+
+        assert response.status_code == 200
+        session.refresh(job)
+        assert job.error_data == {}
 
 
 class TestJobOrphanStatus:

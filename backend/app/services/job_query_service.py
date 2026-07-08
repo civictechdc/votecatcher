@@ -10,7 +10,7 @@ from sqlmodel import Session, select
 if TYPE_CHECKING:
     from app.routers.job_router import JobListResponse, JobResponse
 
-from app.data.database.model.jobs import JobStatus, MatcherJob
+from app.data.database.model.jobs import JobStatus, MatcherJob, OcrJob
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
 from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
@@ -44,6 +44,16 @@ _RETRYABLE_STATES = frozenset(
         JobStatus.OCR_COMPLETED,
         JobStatus.MATCHING_PENDING,
         JobStatus.MATCHING,
+    }
+)
+
+_TERMINAL_OCR_STATES = frozenset(
+    {
+        JobStatus.OCR_COMPLETED,
+        JobStatus.OCR_FAILED,
+        JobStatus.CANCELLED,
+        JobStatus.MATCHING_COMPLETED,
+        JobStatus.MATCHING_ERROR,
     }
 )
 
@@ -234,6 +244,14 @@ class JobQueryService:
         job.started_on = None
         job.ended_on = None
         job.error_data = {}
+
+        child_ocr_jobs = self._session.exec(
+            select(OcrJob).where(OcrJob.matcher_job_id == job.id)
+        ).all()
+        for ocr_job in child_ocr_jobs:
+            if ocr_job.status not in _TERMINAL_OCR_STATES:
+                ocr_job.status = JobStatus.NOT_STARTED
+
         self._session.add(job)
         self._session.commit()
         self._session.refresh(job)

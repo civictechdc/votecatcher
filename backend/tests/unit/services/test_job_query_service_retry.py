@@ -14,7 +14,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlmodel import Session, SQLModel, create_engine
 
-from app.data.database.model.jobs import JobStatus, MatcherJob
+from app.data.database.model.jobs import JobStatus, MatcherJob, OcrJob
 from app.data.database.model.schema import Campaign, Region
 from app.services.job_query_service import JobQueryService
 
@@ -177,6 +177,50 @@ class TestRetryJobResetsOrphanState:
         result = service.retry_job(job.id)
 
         assert result.status == JobStatus.NOT_STARTED.value
+
+    def test_non_terminal_child_ocr_jobs_reset_to_not_started(
+        self, session, sample_campaign
+    ):
+        job = _create_job_with_status(
+            session,
+            sample_campaign,
+            JobStatus.OCR_STARTED,
+            started_on=datetime.now(UTC) - timedelta(minutes=6),
+        )
+        ocr_job = OcrJob(
+            matcher_job_id=job.id,
+            status=JobStatus.OCR_STARTED,
+        )
+        session.add(ocr_job)
+        session.commit()
+        session.refresh(ocr_job)
+
+        service = JobQueryService(session)
+        service.retry_job(job.id)
+
+        session.refresh(ocr_job)
+        assert ocr_job.status == JobStatus.NOT_STARTED
+
+    def test_terminal_child_ocr_jobs_preserved(self, session, sample_campaign):
+        job = _create_job_with_status(
+            session,
+            sample_campaign,
+            JobStatus.OCR_STARTED,
+            started_on=datetime.now(UTC) - timedelta(minutes=6),
+        )
+        ocr_job = OcrJob(
+            matcher_job_id=job.id,
+            status=JobStatus.OCR_COMPLETED,
+        )
+        session.add(ocr_job)
+        session.commit()
+        session.refresh(ocr_job)
+
+        service = JobQueryService(session)
+        service.retry_job(job.id)
+
+        session.refresh(ocr_job)
+        assert ocr_job.status == JobStatus.OCR_COMPLETED
 
 
 class TestRetryJobNotFound:
