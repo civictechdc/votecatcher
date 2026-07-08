@@ -4,7 +4,7 @@ SvelteKit 2 / Svelte 5 application for VoteCatcher.
 
 ## First Reads
 
-- Frontend overview and scripts: `frontend/README.md`
+- Frontend overview and scripts: `README.md`
 - Project-wide agent rules: `../AGENTS.md`
 - Svelte MCP workflow: `../docs/agents/svelte-mcp.md`
 - Local development: `../docs/development/README.md`

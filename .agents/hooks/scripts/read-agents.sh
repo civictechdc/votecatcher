@@ -19,7 +19,15 @@ if [[ -f "$root_agents" ]]; then
   sections+=("$(cat "$root_agents")")
 fi
 
-# 2. Local agent preferences — inside .agents/local/
+# 2. Root-local agent preferences — sibling of AGENTS.md
+root_local_agents="$project_root/AGENTS.local.md"
+if [[ -f "$root_local_agents" ]]; then
+  sections+=("--- BEGIN AGENTS.local.md ---
+$(cat "$root_local_agents")
+--- END AGENTS.local.md ---")
+fi
+
+# 3. Local agent preferences — inside .agents/local/
 local_agents="$agents_dir/local/AGENTS.local.md"
 if [[ -f "$local_agents" ]]; then
   sections+=("--- BEGIN .agents/local/AGENTS.local.md ---

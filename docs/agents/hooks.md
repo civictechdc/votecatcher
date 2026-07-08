@@ -11,7 +11,7 @@ Agent hooks provide deterministic guardrails around agent behavior. Use them for
 
 ## AGENTS Bootstrap
 
-At session start, the hook script outputs root `AGENTS.md` followed by any machine-local preferences from `.agents/local/AGENTS.local.md`:
+At session start, the hook script outputs root `AGENTS.md` followed by any machine-local preferences from `AGENTS.local.md`, then `.agents/local/AGENTS.local.md`:
 
 ```bash
 .agents/hooks/scripts/read-agents.sh

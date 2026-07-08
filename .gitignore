@@ -86,6 +86,7 @@ plans/
 .agent/
 
 # Machine-local agent preferences
+AGENTS.local.md
 .agents/local/
 
 
