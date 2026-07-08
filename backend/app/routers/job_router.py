@@ -133,6 +133,21 @@ def start_job(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
 
+@router.post("/{job_id}/retry", response_model=JobResponse)
+def retry_job(
+    job_id: int,
+    session: SessionDep,
+) -> JobResponse:
+    """Retry a failed or stuck job."""
+    try:
+        return JobQueryService(session).retry_job(job_id)
+    except ValueError as e:
+        error_msg = str(e)
+        if "not found" in error_msg:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_msg)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
+
+
 @router.get("/{job_id}/status", response_class=StreamingResponse)
 async def get_job_status_stream(
     job_id: int,

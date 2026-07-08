@@ -8,10 +8,16 @@ Scenarios covered:
   - Orphaned job error_data contains termination metadata
   - Orphaned OcrJob children are also terminated
   - JobStatusEvent is published for each terminated orphan
+  - Periodic runtime recovery: stale jobs reset to NOT_STARTED
+  - Periodic recovery leaves fresh jobs untouched
+  - Periodic recovery clears timing fields
+  - Periodic recovery resets child OcrJob records
 """
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session, SQLModel, create_engine, select
 
 from app.data.database.model.jobs import JobStatus, MatcherJob, OcrJob
 from app.data.database.model.schema import Campaign, Region
@@ -198,3 +204,165 @@ class TestMultipleOrphansAllTerminated:
         assert job1.current_status == JobStatus.OCR_FAILED
         assert job2.current_status == JobStatus.MATCHING_ERROR
         assert job3.current_status == JobStatus.MATCHING_ERROR
+
+
+def _create_stale_job(session, campaign, status, minutes_stale=6):
+    job = MatcherJob(
+        campaign_id=campaign.id,
+        current_status=status,
+        started_on=datetime.now(UTC) - timedelta(minutes=minutes_stale),
+        ended_on=datetime.now(UTC) - timedelta(minutes=minutes_stale - 1)
+        if minutes_stale > 1
+        else None,
+    )
+    session.add(job)
+    session.commit()
+    session.refresh(job)
+    return job
+
+
+class TestPeriodicOrphanRecoveryOcrStarted:
+    """Scenario: Job in OCR_STARTED for >5min gets reset to NOT_STARTED."""
+
+    def test_status_reset_to_not_started(self, session, sample_campaign):
+        from app.jobs.worker import JobWorker
+
+        _create_stale_job(
+            session, sample_campaign, JobStatus.OCR_STARTED, minutes_stale=6
+        )
+        worker = JobWorker()
+        worker._recover_orphaned_jobs_with_session(session)
+
+        job = session.exec(select(MatcherJob)).first()
+        assert job.current_status == JobStatus.NOT_STARTED
+
+    def test_started_on_cleared(self, session, sample_campaign):
+        from app.jobs.worker import JobWorker
+
+        _create_stale_job(
+            session, sample_campaign, JobStatus.OCR_STARTED, minutes_stale=6
+        )
+        worker = JobWorker()
+        worker._recover_orphaned_jobs_with_session(session)
+
+        job = session.exec(select(MatcherJob)).first()
+        assert job.started_on is None
+
+    def test_ended_on_cleared(self, session, sample_campaign):
+        from app.jobs.worker import JobWorker
+
+        _create_stale_job(
+            session, sample_campaign, JobStatus.OCR_STARTED, minutes_stale=6
+        )
+        worker = JobWorker()
+        worker._recover_orphaned_jobs_with_session(session)
+
+        job = session.exec(select(MatcherJob)).first()
+        assert job.ended_on is None
+
+    def test_error_data_contains_recovery_metadata(self, session, sample_campaign):
+        from app.jobs.worker import JobWorker
+
+        _create_stale_job(
+            session, sample_campaign, JobStatus.OCR_STARTED, minutes_stale=6
+        )
+        worker = JobWorker()
+        worker._recover_orphaned_jobs_with_session(session)
+
+        job = session.exec(select(MatcherJob)).first()
+        assert job.error_data.get("recovered") is True
+        assert "previous_status" in job.error_data
+
+
+class TestPeriodicOrphanRecoveryNotTooEarly:
+    """Scenario: Job in OCR_STARTED for <5min is left alone."""
+
+    def test_status_unchanged(self, session, sample_campaign):
+        from app.jobs.worker import JobWorker
+
+        _create_stale_job(
+            session, sample_campaign, JobStatus.OCR_STARTED, minutes_stale=2
+        )
+        worker = JobWorker()
+        worker._recover_orphaned_jobs_with_session(session)
+
+        job = session.exec(select(MatcherJob)).first()
+        assert job.current_status == JobStatus.OCR_STARTED
+
+
+class TestPeriodicOrphanRecoveryMatching:
+    """Scenario: Job in MATCHING for >5min gets reset to NOT_STARTED."""
+
+    def test_status_reset_to_not_started(self, session, sample_campaign):
+        from app.jobs.worker import JobWorker
+
+        _create_stale_job(session, sample_campaign, JobStatus.MATCHING, minutes_stale=6)
+        worker = JobWorker()
+        worker._recover_orphaned_jobs_with_session(session)
+
+        job = session.exec(select(MatcherJob)).first()
+        assert job.current_status == JobStatus.NOT_STARTED
+
+
+class TestPeriodicRecoveryNormalJobsUntouched:
+    """Scenario: Jobs in NOT_STARTED and terminal states are never touched."""
+
+    @pytest.mark.parametrize(
+        "status",
+        [
+            JobStatus.NOT_STARTED,
+            JobStatus.MATCHING_COMPLETED,
+            JobStatus.OCR_FAILED,
+            JobStatus.CANCELLED,
+        ],
+    )
+    def test_status_unchanged(self, session, sample_campaign, status):
+        from app.jobs.worker import JobWorker
+
+        _create_job(session, sample_campaign, status)
+        worker = JobWorker()
+        worker._recover_orphaned_jobs_with_session(session)
+
+        job = session.exec(select(MatcherJob)).first()
+        assert job.current_status == status
+
+
+class TestPeriodicRecoveryClearsTimings:
+    """Scenario: started_on and ended_on are cleared on recovery reset."""
+
+    def test_both_timings_cleared(self, session, sample_campaign):
+        from app.jobs.worker import JobWorker
+
+        _create_stale_job(
+            session, sample_campaign, JobStatus.OCR_STARTED, minutes_stale=6
+        )
+        worker = JobWorker()
+        worker._recover_orphaned_jobs_with_session(session)
+
+        job = session.exec(select(MatcherJob)).first()
+        assert job.started_on is None
+        assert job.ended_on is None
+
+
+class TestPeriodicRecoveryResetsChildOcrJobs:
+    """Scenario: Child OcrJob records are also reset to NOT_STARTED."""
+
+    def test_child_ocr_job_reset(self, session, sample_campaign):
+        from app.jobs.worker import JobWorker
+
+        job = _create_stale_job(
+            session, sample_campaign, JobStatus.OCR_STARTED, minutes_stale=6
+        )
+        ocr_job = OcrJob(
+            matcher_job_id=job.id,
+            status=JobStatus.OCR_STARTED,
+        )
+        session.add(ocr_job)
+        session.commit()
+        session.refresh(ocr_job)
+
+        worker = JobWorker()
+        worker._recover_orphaned_jobs_with_session(session)
+
+        session.refresh(ocr_job)
+        assert ocr_job.status == JobStatus.NOT_STARTED

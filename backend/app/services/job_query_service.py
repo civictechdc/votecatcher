@@ -10,7 +10,7 @@ from sqlmodel import Session, select
 if TYPE_CHECKING:
     from app.routers.job_router import JobListResponse, JobResponse
 
-from app.data.database.model.jobs import JobStatus, MatcherJob
+from app.data.database.model.jobs import JobStatus, MatcherJob, OcrJob
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
 from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
@@ -33,6 +33,28 @@ _CANCELABLE_STATES = frozenset(
         JobStatus.MATCHING_PENDING,
         JobStatus.MATCHING,
     ]
+)
+
+_RETRYABLE_STATES = frozenset(
+    {
+        JobStatus.OCR_FAILED,
+        JobStatus.OCR_TIMEOUT,
+        JobStatus.MATCHING_ERROR,
+        JobStatus.OCR_STARTED,
+        JobStatus.OCR_COMPLETED,
+        JobStatus.MATCHING_PENDING,
+        JobStatus.MATCHING,
+    }
+)
+
+_TERMINAL_OCR_STATES = frozenset(
+    {
+        JobStatus.OCR_COMPLETED,
+        JobStatus.OCR_FAILED,
+        JobStatus.CANCELLED,
+        JobStatus.MATCHING_COMPLETED,
+        JobStatus.MATCHING_ERROR,
+    }
 )
 
 
@@ -191,6 +213,45 @@ class JobQueryService:
             raise ValueError("Cannot start job: Campaign has no petition scans")
 
         job.current_status = JobStatus.OCR_PENDING
+        self._session.add(job)
+        self._session.commit()
+        self._session.refresh(job)
+
+        return self._build_job_response(job)
+
+    def retry_job(self, job_id: int) -> JobResponse:
+        """Retry a failed or stuck job by resetting it to NOT_STARTED.
+
+        Args:
+            job_id: Job ID to retry
+
+        Returns:
+            JobResponse with updated status
+
+        Raises:
+            ValueError: If job not found or cannot be retried in current state
+        """
+        job = self._session.get(MatcherJob, job_id)
+        if not job:
+            raise ValueError(f"Job {job_id} not found")
+
+        if job.current_status not in _RETRYABLE_STATES:
+            raise ValueError(
+                f"Job cannot be retried in state {job.current_status.value}"
+            )
+
+        job.current_status = JobStatus.NOT_STARTED
+        job.started_on = None
+        job.ended_on = None
+        job.error_data = {}
+
+        child_ocr_jobs = self._session.exec(
+            select(OcrJob).where(OcrJob.matcher_job_id == job.id)
+        ).all()
+        for ocr_job in child_ocr_jobs:
+            if ocr_job.status not in _TERMINAL_OCR_STATES:
+                ocr_job.status = JobStatus.NOT_STARTED
+
         self._session.add(job)
         self._session.commit()
         self._session.refresh(job)
