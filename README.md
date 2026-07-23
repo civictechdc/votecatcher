@@ -101,7 +101,8 @@ To stop: press `Ctrl+C`, or run `docker compose down`
 
 - [Python 3.12+](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/) package manager
-- [Bun](https://bun.sh/) runtime
+- [Node.js 24](https://nodejs.org/) (required for the production runtime)
+- [Bun 1.3.14](https://bun.sh/) runtime and package manager
 - [Docker](https://www.docker.com/) (for containerized setup)
 - [just](https://github.com/casey/just) task runner (recommended)
 - API key for an LLM provider (optional — simulation mode works without one)

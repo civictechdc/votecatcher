@@ -11,7 +11,7 @@ SvelteKit 5 application for the VoteCatcher campaign management platform.
 - **ORM**: Drizzle
 - **Testing**: Vitest (unit), Playwright (e2e)
 - **Linting**: oxlint, oxfmt
-- **Package Manager**: bun
+- **Package Manager**: Bun 1.3.14
 
 ## Quick Start
 
