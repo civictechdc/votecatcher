@@ -37,6 +37,11 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Verify Bun runtime
+        run: bun --version
 
       - name: Check Python lockfile
         run: cd backend && uv lock --check
@@ -210,6 +215,11 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Verify Bun runtime
+        run: bun --version
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -322,6 +332,11 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Verify Bun runtime
+        run: bun --version
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -409,6 +424,11 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Verify Bun runtime
+        run: bun --version
 
       - name: Setup Node
         uses: actions/setup-node@v4

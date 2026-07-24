@@ -20,10 +20,10 @@
       "installTools": true
     },
     "ghcr.io/devcontainers-contrib/features/bun:2": {
-      "version": "latest"
+      "version": "1.3.14"
     },
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts",
+      "version": "24",
       "nodeGypDependencies": true,
       "nvmInstallPath": "/usr/local/share/nvm"
     },
