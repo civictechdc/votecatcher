@@ -42,7 +42,8 @@ The backend is a Python FastAPI application providing REST APIs for signature va
 
 | Module | Purpose |
 |--------|---------|
-| `app/routers/` | API route handlers — request/response contracts |
+| `app/routers/` | API route handlers |
+| `app/responses/` | Shared Pydantic response models consumed by routers and services |
 | `app/services/` | Business logic — signature validation, job orchestration |
 | `app/persistence/` | Database abstraction — SQLite, PostgreSQL, Supabase engines |
 | `app/ocr/` | OCR provider integrations — OpenAI, Mistral, Gemini |
@@ -50,7 +51,7 @@ The backend is a Python FastAPI application providing REST APIs for signature va
 | `app/campaign/` | Campaign CRUD and lifecycle management |
 | `app/settings/` | Configuration management and environment handling |
 | `alembic/` | Database migration scripts |
-| `tests/` | Unit, integration, security, and benchmark tests |
+| `tests/` | Unit, integration, security, architecture, and benchmark tests |
 
 ### Frontend (`frontend/`)
 
@@ -62,7 +63,7 @@ A SvelteKit 5 application with server-side rendering, Tailwind CSS v4 styling, a
 | `src/routes/` | SvelteKit file-based routing |
 | `src/hooks.server.ts` | Server hooks — auth middleware, CORS |
 | `e2e/` | Playwright end-to-end test suite |
-| `tests/` | Vitest unit tests |
+| `tests/` | Vitest unit and architecture tests |
 
 ### Infrastructure
 

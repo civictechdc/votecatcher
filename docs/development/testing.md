@@ -43,3 +43,28 @@ If you intentionally change `render_template` behavior:
 2. Inspect the diff between `.approved.txt` and `.received.txt`
 3. If the change is intentional: `mv -f path.received.txt path.approved.txt`
 4. Commit both the code change and the updated `.approved.txt`
+
+## Architecture Tests
+
+Architecture tests enforce structural boundaries — dependency direction, import-cycle freedom, and layer isolation. They run as ordinary tests inside pytest and Vitest; no separate CLI is needed.
+
+See [`docs/agents/architecture-testing.md`](../agents/architecture-testing.md) for the full rules, ratchet policy, and design principles.
+
+### Running Architecture Tests
+
+```bash
+# Backend (ArchUnitPython)
+cd backend && uv run pytest tests/architecture -v
+
+# Frontend (ArchUnitTS)
+cd frontend && bun run test:unit -- tests/architecture
+```
+
+### What They Enforce
+
+- No import cycles in production code.
+- Domain code cannot depend on routers, services, persistence, frameworks, or provider SDKs.
+- Routers cannot access data/persistence modules directly.
+- Services cannot import routers.
+- Frontend browser code cannot import server-only modules (`src/lib/server/**`).
+- Frontend server libraries cannot import route UI.
