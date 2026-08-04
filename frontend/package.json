@@ -63,6 +63,7 @@
 		"@vitest/browser": "^4.1.10",
 		"@vitest/browser-playwright": "^4.1.10",
 		"@vitest/coverage-v8": "^4.1.10",
+		"archunit": "^2.3.3",
 		"better-auth": "^1.6.25",
 		"drizzle-kit": "^0.31.10",
 		"drizzle-orm": "^0.45.2",

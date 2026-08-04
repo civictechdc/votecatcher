@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 from sqlalchemy import func
 
 from app.data.database.model.match_result import ConfidenceLevel
-from app.routers.campaign_router import (
+from app.responses.campaign import (
     CampaignMatchPrediction,
     CampaignResultResponse,
     CampaignResultsListResponse,

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlmodel import Session, select
 
 from sqlalchemy import func
+from app.responses.results import MatchPrediction, ResultsListResponse
 from app.services.ocr_text_parser import OcrTextParser
 from app.services.prediction_truncation import truncate_predictions
 from app.services.results_shared import (
@@ -19,7 +20,6 @@ from app.services.results_shared import (
 
 if TYPE_CHECKING:
     from app.data.database.model.match_result import ConfidenceLevel, MatchResult
-    from app.routers.results_router import MatchPrediction, ResultsListResponse
 
 
 class ResultsQueryService:
@@ -49,11 +49,7 @@ class ResultsQueryService:
 
         from app.data.database.model.jobs import MatcherJob
         from app.data.database.model.match_result import MatchResult
-        from app.routers.results_router import (
-            MatchPrediction,
-            ResultResponse,
-            ResultsListResponse,
-        )
+        from app.responses.results import ResultResponse
 
         job = self._session.get(MatcherJob, job_id)
         if not job:
@@ -162,8 +158,6 @@ class ResultsQueryService:
         self, match_results: list["MatchResult"]
     ) -> dict[int, list["MatchPrediction"]]:
         """Build predictions grouped by OCR result ID."""
-        from app.routers.results_router import MatchPrediction
-
         raw = build_predictions(self._session, match_results)
 
         predictions_by_ocr: dict[int, list[MatchPrediction]] = {}

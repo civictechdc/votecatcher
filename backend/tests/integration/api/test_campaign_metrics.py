@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from app.data.database.model.jobs import JobStatus, MatcherJob
 from app.data.database.model.match_result import ConfidenceLevel, MatchResult
@@ -401,6 +401,7 @@ class TestCampaignMetricsAPI:
         session.commit()
         session.refresh(old_job)
 
+        created_ocr_results: list[OcrResult] = []
         for i in range(3):
             crop = PetitionCrop(
                 scan_id=scan.id,
@@ -421,6 +422,7 @@ class TestCampaignMetricsAPI:
             session.add(ocr)
             session.commit()
             session.refresh(ocr)
+            created_ocr_results.append(ocr)
 
             match = MatchResult(
                 ocr_result_id=ocr.id,
@@ -441,7 +443,7 @@ class TestCampaignMetricsAPI:
         session.commit()
         session.refresh(new_job)
 
-        ocr_results = session.exec(select(OcrResult).order_by(OcrResult.id)).all()
+        ocr_results = created_ocr_results
         for i, ocr in enumerate(ocr_results):
             level = [
                 ConfidenceLevel.HIGH,

@@ -68,6 +68,7 @@ dev = [
     "pandas-stubs>=2.2.0",
     "types-requests>=2.32.0",
     "radon>=6.0.1",
+    "archunitpython>=1.5.0,<2.0.0",
 ]
 
 [build-system]
