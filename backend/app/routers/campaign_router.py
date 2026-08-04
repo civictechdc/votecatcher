@@ -1,7 +1,6 @@
 """Campaign management router."""
 
 import uuid
-from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -11,30 +10,41 @@ from sqlmodel import Session
 from app.api_models import ApiModel
 from app.data.database.model.match_result import ConfidenceLevel
 from app.dependencies import get_session
+from app.responses.campaign import (
+    CampaignListResponse,
+    CampaignMatchPrediction,
+    CampaignResponse,
+    CampaignResultsListResponse,
+    CampaignResultResponse,
+    JobsStatus,
+    PetitionScanListResponse,
+    PetitionScanResponse,
+    PetitionsStatus,
+    SetupStatusResponse,
+    VoterListStatus,
+)
+
+__all__ = [
+    "CampaignListResponse",
+    "CampaignMatchPrediction",
+    "CampaignMetricsResponse",
+    "CampaignResponse",
+    "CampaignResultsListResponse",
+    "CampaignResultResponse",
+    "CreateCampaignRequest",
+    "JobsStatus",
+    "LastJobInfo",
+    "PetitionScanListResponse",
+    "PetitionScanResponse",
+    "PetitionsStatus",
+    "SetupStatusResponse",
+    "VoterListStatus",
+    "router",
+]
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 
 SessionDep = Annotated[Session, Depends(get_session)]
-
-
-class CampaignResponse(ApiModel):
-    """Response schema for campaign."""
-
-    id: uuid.UUID | None
-    unique_name: str
-    title: str
-    year: str
-    region: str | None
-    region_id: uuid.UUID | None
-    created_at: datetime | None
-    updated_at: datetime | None
-
-
-class CampaignListResponse(ApiModel):
-    """Response schema for campaign list."""
-
-    campaigns: list[CampaignResponse]
-    total: int
 
 
 class CreateCampaignRequest(ApiModel):
@@ -124,23 +134,6 @@ class CampaignMetricsResponse(ApiModel):
     voter_list_count: int | None
 
 
-class PetitionScanResponse(ApiModel):
-    """Response schema for a petition scan."""
-
-    id: int
-    original_filename: str
-    file_size: int | None
-    page_count: int | None
-    uploaded_at: datetime
-
-
-class PetitionScanListResponse(ApiModel):
-    """Response schema for listing petition scans."""
-
-    scans: list[PetitionScanResponse]
-    total: int
-
-
 @router.get("/{campaign_id}/metrics", response_model=CampaignMetricsResponse)
 def get_campaign_metrics(
     campaign_id: uuid.UUID,
@@ -192,42 +185,6 @@ def delete_campaign_scan(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
-class CampaignMatchPrediction(ApiModel):
-    """Schema for a single match prediction."""
-
-    rank: int
-    voter_name: str
-    voter_address: str
-    similarity_score: float
-    confidence: ConfidenceLevel
-
-
-class CampaignResultResponse(ApiModel):
-    """Response schema for a single result."""
-
-    ocr_result_id: int
-    extracted_name: str
-    extracted_address: str
-    crop_id: int
-    job_id: int
-    thumbnail_url: str
-    predictions: list[CampaignMatchPrediction]
-    crop_coordinates: dict[str, float] | None = None
-    entry_coordinates: dict[str, float] | None = None
-    page_number: int | None = None
-    document_name: str = ""
-    scan_id: int | None = None
-
-
-class CampaignResultsListResponse(ApiModel):
-    """Response schema for paginated campaign results."""
-
-    results: list[CampaignResultResponse]
-    total: int
-    page_size: int
-    next_cursor: int | None = None
-
-
 @router.get("/{campaign_id}/results", response_model=CampaignResultsListResponse)
 def get_campaign_results(
     campaign_id: uuid.UUID,
@@ -248,39 +205,6 @@ def get_campaign_results(
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-
-
-class VoterListStatus(ApiModel):
-    """Voter list status sub-object."""
-
-    exists: bool
-    row_count: int | None
-    uploaded_at: str | None
-    region_name: str | None
-
-
-class PetitionsStatus(ApiModel):
-    """Petitions status sub-object."""
-
-    exists: bool
-    file_count: int
-    signature_count: int
-
-
-class JobsStatus(ApiModel):
-    """Jobs status sub-object."""
-
-    total: int
-    active: int
-
-
-class SetupStatusResponse(ApiModel):
-    """Response schema for campaign setup status."""
-
-    voter_list: VoterListStatus
-    petitions: PetitionsStatus
-    jobs: JobsStatus
-    state: str
 
 
 @router.get("/{campaign_id}/setup-status", response_model=SetupStatusResponse)

@@ -9,7 +9,7 @@ from sqlmodel import Session, select
 
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign, Region
-from app.routers.campaign_router import (
+from app.responses.campaign import (
     CampaignListResponse,
     CampaignResponse,
     PetitionScanListResponse,

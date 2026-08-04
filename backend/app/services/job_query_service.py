@@ -3,17 +3,13 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
-
 from sqlmodel import Session, select
-
-if TYPE_CHECKING:
-    from app.routers.job_router import JobListResponse, JobResponse
 
 from app.data.database.model.jobs import JobStatus, MatcherJob, OcrJob
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
 from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
+from app.responses.jobs import JobListResponse, JobResponse
 
 _ORPHAN_STATES = frozenset(
     {
@@ -70,8 +66,6 @@ class JobQueryService:
         Returns:
             JobListResponse with all jobs and total count.
         """
-        from app.routers.job_router import JobListResponse
-
         jobs = self._session.exec(select(MatcherJob)).all()
         return JobListResponse(
             jobs=[self._build_job_response(job) for job in jobs],
@@ -267,8 +261,6 @@ class JobQueryService:
         Returns:
             JobResponse with formatted fields
         """
-        from app.routers.job_router import JobResponse
-
         campaign = self._session.get(Campaign, job.campaign_id)
 
         error_message = None
