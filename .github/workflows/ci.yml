@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 3 * * 1'
 
 jobs:
   prepare:
@@ -37,6 +37,11 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Verify Bun runtime
+        run: bun --version
 
       - name: Check Python lockfile
         run: cd backend && uv lock --check
@@ -210,6 +215,11 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Verify Bun runtime
+        run: bun --version
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -244,36 +254,7 @@ jobs:
 
       - name: Security scan (bun audit)
         id: security-scan
-        # Ignores are per-advisory (not per-package). New vulns in same packages WILL still fail CI.
-        # Remove individual ignores when transitive deps are updated or direct deps are removed.
-        # openapi-generator-cli transitive chain (proxy-agent > pac-proxy-agent > get-uri > basic-ftp):
-        #   GHSA-rp42-5vxx-qpwr GHSA-6v7q-wjvx-w8wg GHSA-chqc-8p9q-pq6q GHSA-rpmf-866q-6p89
-        # openapi-generator-cli transitive chain (> socks > ip-address):
-        #   GHSA-v2v4-37r5-5v8g
-        # openapi-generator-cli transitive chain (> axios > @nestjs):
-        #   GHSA-3p68-rc4w-qgx5 GHSA-fvcv-3m26-pcqx GHSA-36xv-jgw5-4q75
-        # vite (dev server only, not in production build):
-        #   GHSA-4w7w-66w2-5vf9 GHSA-v2wj-q39q-566r GHSA-p9ff-h696-f583
-        # sveltejs/kit (upgrade pending):
-        #   GHSA-3f6h-2hrp-w5wx GHSA-2crg-3p73-43xp
-        # kysely (transitive via better-auth/drizzle-orm, pending upstream update):
-        #   GHSA-pv5w-4p9q-p3v2
-        run: >-
-          cd frontend && bun audit
-          --ignore GHSA-rp42-5vxx-qpwr
-          --ignore GHSA-6v7q-wjvx-w8wg
-          --ignore GHSA-chqc-8p9q-pq6q
-          --ignore GHSA-rpmf-866q-6p89
-          --ignore GHSA-v2v4-37r5-5v8g
-          --ignore GHSA-3p68-rc4w-qgx5
-          --ignore GHSA-fvcv-3m26-pcqx
-          --ignore GHSA-36xv-jgw5-4q75
-          --ignore GHSA-4w7w-66w2-5vf9
-          --ignore GHSA-v2wj-q39q-566r
-          --ignore GHSA-p9ff-h696-f583
-          --ignore GHSA-3f6h-2hrp-w5wx
-          --ignore GHSA-2crg-3p73-43xp
-          --ignore GHSA-pv5w-4p9q-p3v2
+        run: cd frontend && bun audit
 
       - name: Frontend failure summary
         if: failure()
@@ -322,6 +303,11 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Verify Bun runtime
+        run: bun --version
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -409,6 +395,11 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Verify Bun runtime
+        run: bun --version
 
       - name: Setup Node
         uses: actions/setup-node@v4

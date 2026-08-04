@@ -6,7 +6,7 @@ This guide covers local development setup. For a quick start, see the main [READ
 
 - **Python 3.12+** (3.13 recommended)
 - **uv package manager** - [Install](https://docs.astral.sh/uv/)
-- **Node.js 20+** or **Bun** - [Bun Install](https://bun.sh/)
+- **Node.js 24+** or **Bun** - [Bun Install](https://bun.sh/)
 - **PostgreSQL** (optional, SQLite works for development)
 - **Git**
 - **API key** for at least one LLM provider (optional - use simulation mode without)

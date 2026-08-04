@@ -9,7 +9,7 @@ Votecatcher automates petition signature verification using LLM-based OCR and fu
 ### Prerequisites
 
 - Docker and Docker Compose (recommended)
-- OR: Python 3.12+ and Node.js 20+ for local development
+- OR: Python 3.12+ and Node.js 24+ for local development
 - At least one LLM provider API key (OpenAI, Gemini, or Mistral)
 
 ### Running with Docker Compose

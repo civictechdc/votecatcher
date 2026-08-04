@@ -8,7 +8,8 @@ Thanks for your interest in contributing. This guide covers development setup, c
 
 - [Python 3.12+](https://www.python.org/downloads/) (3.13 recommended)
 - [uv](https://docs.astral.sh/uv/) — Python package manager
-- [Bun](https://bun.sh/) — JavaScript runtime and package manager
+- [Node.js 24](https://nodejs.org/) (required for the production runtime)
+- [Bun 1.3.14](https://bun.sh/) runtime and package manager
 - [Git](https://git-scm.com/)
 - [just](https://github.com/casey/just) — Task runner
 - Docker (optional, for PostgreSQL and containerized dev)

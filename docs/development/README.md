@@ -45,7 +45,7 @@ cp .env.example .env.local
 ## Prerequisites
 
 - **Python 3.12+** (3.13 recommended)
-- **Node.js 20+** or **Bun**
+- **Node.js 24+** or **Bun**
 - **PostgreSQL** (optional, SQLite works for development)
 - **Git**
 - **LLM Provider API key** (OpenAI, Gemini, or Mistral)

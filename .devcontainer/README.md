@@ -10,6 +10,11 @@
    .devcontainer/setup.sh
    ```
 
+## Included Runtimes
+
+- Node.js 24
+- Bun 1.3.14
+
 ## Running the Application
 
 **Terminal 1 - Backend:**
