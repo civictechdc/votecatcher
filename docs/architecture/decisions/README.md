@@ -18,6 +18,8 @@ An ADR is a document that captures an important architectural decision along wit
 | 0006 | [Spec-Driven Field Configuration](./0006-spec-driven-field-configuration.md) | Accepted | 2026-04-13 |
 | 0008 | [Template-Based Field Rendering](./0008-template-based-field-rendering.md) | Accepted | 2026-04-13 |
 | 0009 | [Observability Signal Catalog](./0009-observability-signal-catalog.md) | Accepted | 2026-04-21 |
+| 0010 | [Adopt Architecture Fitness Tests](./0010-adopt-architecture-fitness-tests.md) | Accepted | 2026-07-21 |
+| 0011 | [Extract API Response Contracts](./0011-extract-api-response-contracts.md) | Accepted | 2026-07-22 |
 
 ## Creating a New ADR
 

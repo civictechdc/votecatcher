@@ -103,6 +103,15 @@ wheels = [
 ]
 
 [[package]]
+name = "archunitpython"
+version = "1.5.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/8e/95f2d0c7f5f402a3b880cbff718d0ec8e3fe458e6df389d7af3800319d0b/archunitpython-1.5.0.tar.gz", hash = "sha256:d9ad8d66df62426f0c0f1027dc3b57729f27b48a1648db1a485f31ca425d96b5", size = 393834, upload-time = "2026-07-18T21:17:49.482Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7f/1d/5a5bc46122de30d96cc6d477a55c49a0abd72ce4ec9fe57b8d735ecefbc7/archunitpython-1.5.0-py3-none-any.whl", hash = "sha256:bb335e67018c1a846929966837b8023dc9ee28bbb8413f4e1fb8becbcd7805f1", size = 78729, upload-time = "2026-07-18T21:17:48.476Z" },
+]
+
+[[package]]
 name = "argcomplete"
 version = "3.6.3"
 source = { registry = "https://pypi.org/simple" }
@@ -177,6 +186,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "approvaltests" },
+    { name = "archunitpython" },
     { name = "bandit" },
     { name = "basedpyright" },
     { name = "black" },
@@ -235,6 +245,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "approvaltests", specifier = ">=0.2.0" },
+    { name = "archunitpython", specifier = ">=1.5.0,<2.0.0" },
     { name = "bandit", specifier = ">=1.9.0" },
     { name = "basedpyright", specifier = ">=1.28.0" },
     { name = "black", specifier = ">=25.1.0" },
@@ -1790,7 +1801,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "ptyprocess" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [

@@ -1,6 +1,6 @@
 # Agent Code Quality Notes
 
-Use this when changing Python, refactoring legacy code, or writing tests.
+Use this when changing Python, refactoring legacy code, or writing tests. For dependency direction and inside-out architecture rules, see [architecture-testing.md](architecture-testing.md).
 
 ## Python Readability
 
