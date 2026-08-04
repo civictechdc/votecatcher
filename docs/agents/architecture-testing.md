@@ -76,6 +76,10 @@ cd frontend && bun run test:unit -- tests/architecture
 
 Run the normal backend or frontend unit suite before merge as well. ArchUnitPython and ArchUnitTS execute inside pytest and Vitest; neither requires a separate architecture-test CLI.
 
+## CI Integration
+
+Backend architecture tests run as part of the backend Test step in `.github/workflows/ci.yml` (`tests/architecture` is included in the pytest invocation). Frontend architecture tests are collected automatically by Vitest's `tests/**/*.{test,spec}.{js,ts}` include pattern — no separate workflow step is needed.
+
 ## Continuous Improvement
 
 Treat architecture guidance, architecture tests, and decision records as one system of record.
