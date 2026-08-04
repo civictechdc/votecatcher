@@ -9,9 +9,17 @@ from sqlmodel import Session
 
 from app.data.database.model.match_result import ConfidenceLevel
 from app.dependencies import get_session
-from app.responses.results import MatchPrediction as MatchPrediction
-from app.responses.results import ResultResponse as ResultResponse
-from app.responses.results import ResultsListResponse
+from app.responses.results import (
+    MatchPrediction,
+    ResultResponse,
+    ResultsListResponse,
+)
+
+__all__ = [
+    "MatchPrediction",
+    "ResultResponse",
+    "ResultsListResponse",
+]
 
 logger = structlog.get_logger(__name__)
 
