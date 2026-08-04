@@ -8,7 +8,7 @@
         "@tailwindcss/forms": "^0.5.11",
         "@tailwindcss/typography": "^0.5.20",
         "clsx": "^2.1.1",
-        "cookie": "^2.0.1",
+        "cookie": "^1.1.1",
         "esbuild": "^0.28.1",
         "lucide-svelte": "^1.0.1",
         "path-to-regexp": "^8.4.2",
@@ -70,7 +70,7 @@
   "overrides": {
     "basic-ftp": ">=5.3.1",
     "brace-expansion": ">=5.0.8",
-    "cookie": ">=0.7.0",
+    "cookie": ">=0.7.0 <2.0.0",
     "cross-spawn": ">=7.0.5",
     "esbuild": ">=0.28.1",
     "follow-redirects": ">=1.16.0",
@@ -827,7 +827,7 @@
 
     "convert-source-map": ["convert-source-map@2.0.0", "", {}, "sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg=="],
 
-    "cookie": ["cookie@2.0.1", "", {}, "sha512-yuToqVvRrj6pfDXREyQAAv8SkAEk/8GS3jQRTiUMm66TVtBYmqQeoEjL2Lmq8Rpo6271vH76InTChTitEAm65w=="],
+    "cookie": ["cookie@1.1.1", "", {}, "sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ=="],
 
     "cross-spawn": ["cross-spawn@7.0.6", "", { "dependencies": { "path-key": "^3.1.0", "shebang-command": "^2.0.0", "which": "^2.0.1" } }, "sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA=="],
 
