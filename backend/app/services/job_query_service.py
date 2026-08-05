@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import uuid
+
+import structlog
 from sqlmodel import Session, select
 
 from app.data.database.model.jobs import JobStatus, MatcherJob, OcrJob
@@ -10,6 +12,8 @@ from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
 from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
 from app.responses.jobs import JobListResponse, JobResponse
+
+logger = structlog.get_logger(__name__)
 
 _ORPHAN_STATES = frozenset(
     {
@@ -149,6 +153,13 @@ class JobQueryService:
         self._session.commit()
         self._session.refresh(job)
 
+        logger.info(
+            "Job created",
+            job_id=job.id,
+            campaign_id=str(campaign_id),
+            status=job.current_status.value,
+        )
+
         return self._build_job_response(job)
 
     def cancel_job(self, job_id: int) -> JobResponse:
@@ -172,10 +183,18 @@ class JobQueryService:
                 f"Job cannot be cancelled in state {job.current_status.value}"
             )
 
+        previous_status = job.current_status.value
         job.current_status = JobStatus.CANCELLED
         self._session.add(job)
         self._session.commit()
         self._session.refresh(job)
+
+        logger.info(
+            "Job cancelled",
+            job_id=job.id,
+            previous_status=previous_status,
+            new_status=job.current_status.value,
+        )
 
         return self._build_job_response(job)
 
@@ -206,10 +225,18 @@ class JobQueryService:
         if not petition_scans:
             raise ValueError("Cannot start job: Campaign has no petition scans")
 
+        previous_status = job.current_status.value
         job.current_status = JobStatus.OCR_PENDING
         self._session.add(job)
         self._session.commit()
         self._session.refresh(job)
+
+        logger.info(
+            "Job started",
+            job_id=job.id,
+            previous_status=previous_status,
+            new_status=job.current_status.value,
+        )
 
         return self._build_job_response(job)
 
@@ -234,6 +261,7 @@ class JobQueryService:
                 f"Job cannot be retried in state {job.current_status.value}"
             )
 
+        previous_status = job.current_status.value
         job.current_status = JobStatus.NOT_STARTED
         job.started_on = None
         job.ended_on = None
@@ -249,6 +277,13 @@ class JobQueryService:
         self._session.add(job)
         self._session.commit()
         self._session.refresh(job)
+
+        logger.info(
+            "Job retried",
+            job_id=job.id,
+            previous_status=previous_status,
+            new_status=job.current_status.value,
+        )
 
         return self._build_job_response(job)
 

@@ -50,6 +50,20 @@ ORPHAN_CHECK_INTERVAL_SECONDS = 60
 ORPHAN_TIMEOUT_SECONDS = 300
 
 
+def _compute_stale_duration_seconds(started_on: datetime | None) -> float | None:
+    """Compute how long a job has been running, or None if never started.
+
+    Handles both timezone-aware (PostgreSQL) and timezone-naive (SQLite)
+    datetimes by normalizing to UTC before subtraction.
+    """
+    if started_on is None:
+        return None
+    now = datetime.now(UTC)
+    if started_on.tzinfo is None:
+        started_on = started_on.replace(tzinfo=UTC)
+    return (now - started_on).total_seconds()
+
+
 class JobWorker:
     """Background worker for processing MatcherJobs.
 
@@ -127,12 +141,15 @@ class JobWorker:
             for job in jobs:
                 orphans.append(job)
                 previous_status = job.current_status.value
+                now = datetime.now(UTC)
+                stale_duration_seconds = _compute_stale_duration_seconds(job.started_on)
                 job.current_status = terminal_state
-                job.ended_on = datetime.now(UTC)
+                job.ended_on = now
+                reason = f"Job stuck in {previous_status} after backend restart"
                 job.error_data = {
                     "message": f"Orphaned job terminated on restart (was {previous_status})",
                     "previous_status": previous_status,
-                    "timestamp": datetime.now(UTC).isoformat(),
+                    "timestamp": now.isoformat(),
                 }
 
                 child_ocr_jobs = session.exec(
@@ -158,6 +175,8 @@ class JobWorker:
                     previous_status=previous_status,
                     new_status=terminal_state.value,
                     campaign_id=str(job.campaign_id),
+                    stale_duration_seconds=stale_duration_seconds,
+                    reason=reason,
                 )
 
         if orphans:
@@ -226,15 +245,23 @@ class JobWorker:
         ]
 
         recovered = 0
+        now = datetime.now(UTC)
         for job in stale_jobs:
             previous_status = job.current_status.value
+            stale_duration_seconds = _compute_stale_duration_seconds(job.started_on)
             job.current_status = JobStatus.NOT_STARTED
             job.started_on = None
             job.ended_on = None
+            reason = (
+                f"Job stuck in {previous_status} for "
+                f"{stale_duration_seconds:.0f}s (exceeds {ORPHAN_TIMEOUT_SECONDS}s timeout)"
+                if stale_duration_seconds is not None
+                else f"Job stuck in {previous_status} with no started_on timestamp"
+            )
             job.error_data = {
                 "recovered": True,
                 "previous_status": previous_status,
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": now.isoformat(),
             }
 
             child_ocr_jobs = session.exec(
@@ -250,7 +277,10 @@ class JobWorker:
                 "Orphaned job recovered",
                 job_id=job.id,
                 previous_status=previous_status,
+                new_status=JobStatus.NOT_STARTED.value,
                 campaign_id=str(job.campaign_id),
+                stale_duration_seconds=stale_duration_seconds,
+                reason=reason,
             )
             recovered += 1
 
