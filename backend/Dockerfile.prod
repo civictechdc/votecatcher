@@ -8,7 +8,7 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir uv==0.12.1
+RUN pip install --no-cache-dir --upgrade uv==0.12.1 "setuptools>=78.1.1" "msgpack>=1.2.1"
 
 COPY pyproject.toml uv.lock ./
 RUN mkdir -p app && touch app/__init__.py
