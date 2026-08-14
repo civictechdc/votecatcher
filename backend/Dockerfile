@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir --upgrade uv==0.12.1 "setuptools>=78.1.1" "msgpac
 
 COPY pyproject.toml uv.lock ./
 RUN mkdir -p app && touch app/__init__.py
-RUN uv sync --no-dev --frozen
+RUN uv sync --no-dev --frozen && uv cache clean
 
 COPY . .
 
