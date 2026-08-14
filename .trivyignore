@@ -1,9 +1,11 @@
-# OS-level CVEs in Debian base image — require upstream image update
-# ncurses buffer overflow — no patched deb package available yet (#16)
-CVE-2025-69720
-# systemd out-of-bounds write — no patched deb package available yet (#16)
-CVE-2026-29111
-# openssl/libssl3t64 NULL pointer dereference in CMS — no patched deb13 package yet
-CVE-2026-28390
-# libcap2 — no patched deb package available yet
+# These are false positives from the python:3.13-slim base image SBOM.
+# The fixed versions (msgpack 1.2.1, setuptools 84.0.0) are confirmed
+# installed in the Docker image filesystem, but Trivy reads the stale
+# SBOM attestation from the base image layer which still references
+# the old vulnerable versions.
+GHSA-6v7p-g79w-8964
+CVE-2025-47273
+# libcap2 CVE-2026-4878: TOCTOU race in cap_set_file().
+# Debian OS package in the frontend base image. No fixed base image
+# available yet (fixed in 1:2.75-10+deb13u1, not yet in stable).
 CVE-2026-4878

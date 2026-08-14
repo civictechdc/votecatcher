@@ -8,11 +8,12 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir uv==0.12.1
+RUN pip install --no-cache-dir uv==0.12.1 && \
+    pip install --no-cache-dir --upgrade "setuptools>=78.1.1"
 
 COPY pyproject.toml uv.lock ./
 RUN mkdir -p app && touch app/__init__.py
-RUN uv sync --no-dev --frozen
+RUN uv sync --no-dev --frozen && uv cache clean
 
 COPY . .
 
