@@ -730,6 +730,7 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: 1
           ignore-unfixed: true
+          trivyignores: .trivyignore
 
       - name: Run Trivy on backend production image
         id: trivy-backend-prod
@@ -749,6 +750,7 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: 1
           ignore-unfixed: true
+          trivyignores: .trivyignore
 
       - name: Docker build and scan failure summary
         if: failure()

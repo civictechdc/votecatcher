@@ -5,3 +5,7 @@
 # the old vulnerable versions.
 GHSA-6v7p-g79w-8964
 CVE-2025-47273
+# libcap2 CVE-2026-4878: TOCTOU race in cap_set_file().
+# Debian OS package in the frontend base image. No fixed base image
+# available yet (fixed in 1:2.75-10+deb13u1, not yet in stable).
+CVE-2026-4878
