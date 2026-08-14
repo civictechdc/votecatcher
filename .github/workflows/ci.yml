@@ -720,6 +720,7 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: 1
           ignore-unfixed: true
+          trivyignores: .trivyignore
 
       - name: Run Trivy on frontend
         id: trivy-frontend
@@ -738,6 +739,7 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: 1
           ignore-unfixed: true
+          trivyignores: .trivyignore
 
       - name: Run Trivy on frontend production image
         id: trivy-frontend-prod
