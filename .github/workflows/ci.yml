@@ -16,6 +16,8 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Detect changed paths
         uses: dorny/paths-filter@v3
@@ -42,6 +44,9 @@ jobs:
 
       - name: Verify Bun runtime
         run: bun --version
+
+      - name: Check conventional commits
+        run: cd backend && uv sync --dev && uv run cz check --rev-range origin/main..HEAD
 
       - name: Check Python lockfile
         run: cd backend && uv lock --check
@@ -91,6 +96,7 @@ jobs:
           echo "## ❌ Prepare Checks Failed" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "One or more preparation checks failed. Check the failed step above for details." >> "$GITHUB_STEP_SUMMARY"
+          echo "- ❌ Conventional commits check failed" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Prepare success summary
         if: success()
@@ -102,6 +108,7 @@ jobs:
           echo "- ✅ JS lockfile (bun)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Documentation validation" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Deploy config validation" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Conventional commits validated" >> "$GITHUB_STEP_SUMMARY"
           if [[ "${{ steps.filter.outputs.backend }}" == "true" ]] || [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "- ✅ Justfile/Makefile sync" >> "$GITHUB_STEP_SUMMARY"
           fi
