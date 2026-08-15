@@ -349,6 +349,10 @@ version-set version:
     @echo "Updated: backend/pyproject.toml, frontend/package.json, .cz.toml, backend/uv.lock"
     @echo "Verify:  just version"
 
+# Create an interactive conventional commit using commitizen
+commit:
+    @cd backend && uv run cz commit
+
 # Auto-bump version based on conventional commits since last tag
 release:
     @cd backend && uv run cz bump --yes && git push --tags
