@@ -44,6 +44,14 @@ All version commands use [just](https://github.com/casey/just):
 just version
 ```
 
+### Interactive conventional commit
+
+```bash
+just commit
+```
+
+Guides you through creating a Conventional Commit message via `cz check`. See [Commit Enforcement](#commit-enforcement) for details.
+
 ### Auto-bump (reads conventional commits)
 
 ```bash
@@ -142,6 +150,42 @@ feat(api)!: change /jobs response schema
 
 BREAKING CHANGE: jobs endpoint returns array instead of object.
 ```
+
+## Commit Enforcement
+
+A `commit-msg` hook runs `cz check` on every commit to enforce Conventional Commit syntax. Non-conforming commits are rejected by the hook.
+
+### Interactive commit creation
+
+Use the `just` recipe for interactive conventional commit creation:
+
+```bash
+just commit
+```
+
+This opens a prompt that guides you through selecting a type, scope, and message that will pass `cz check`.
+
+### CI enforcement
+
+CI validates commit messages on every PR:
+
+```yaml
+# .github/workflows/ci.yml
+- name: Check conventional commits
+  run: cd backend && uv sync --dev && uv run cz check --rev-range origin/main..HEAD
+```
+
+This checks all commits introduced by the PR against the Conventional Commit spec.
+
+### Bypassing the hook
+
+For critical hotfixes where the message must be written immediately, bypass the hook:
+
+```bash
+git commit --no-verify -m "hotfix: urgent security patch"
+```
+
+Bypass should be rare and the PR branch should be amended to a conventional commit message after the hotfix is staged, whenever possible.
 
 ## Configuration
 

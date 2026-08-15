@@ -120,13 +120,29 @@ just ci-sim
 
 ### 4. Commit
 
-Write clear, concise commit messages. Explain *why*, not just *what*.
+VoteCatcher enforces [Conventional Commits](https://www.conventionalcommits.org/) via a `commit-msg` hook (which runs `cz check`) and CI validation on PRs. All commit messages must follow the `type(scope): description` format.
+
+The recommended way to create a conforming commit is:
+
+```bash
+just commit
+```
+
+This interactive prompt guides you through a Conventional Commit message that will pass validation.
+
+Example commit message:
 
 ```
 fix(backend): handle empty voter file gracefully
 
 Previously, uploading an empty CSV would crash the matching service.
 Now returns a validation error to the client.
+```
+
+For critical hotfixes where the hook must be bypassed, use:
+
+```bash
+git commit --no-verify -m "hotfix: urgent security patch"
 ```
 
 ### 5. Push and Create PR
