@@ -1,7 +1,7 @@
 # DO NOT EDIT - Generated from justfile by scripts/just-to-make.py
 # To update: python scripts/just-to-make.py > Makefile
 
-.PHONY: default stop install dev dev-backend dev-frontend dev-frontend-demo test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration security-test dast duplication duplication-frontend duplication-all complexity complexity-check dead-code dead-code-frontend fallow fallow-dead-code fallow-dupes fallow-health fallow-audit test-frontend sbom license-check edge-functions bundle-size benchmark ci-sim install-tools install-hooks validate-docs sync-makefile version version-set release changelog changelog-range changelog-preview changelog-summarize changelog-summarize-dry release-force release-prerelease release-stable
+.PHONY: default stop install dev dev-backend dev-frontend dev-frontend-demo test lint typecheck clean docker-up docker-down dev-postgres dev-postgres-stop dev-postgres-clean docker-logs migrate migrate-down migrate-create db-reset security-scan security-scan-backend security-scan-frontend sast sast-pr sca container-scan docker-lint lint-backend lint-frontend typecheck-backend typecheck-frontend test-backend test-backend-integration security-test dast duplication duplication-frontend duplication-all complexity complexity-check dead-code dead-code-frontend fallow fallow-dead-code fallow-dupes fallow-health fallow-audit test-frontend sbom license-check edge-functions bundle-size benchmark ci-sim install-tools install-hooks validate-docs sync-makefile version version-set commit release changelog changelog-range changelog-preview changelog-summarize changelog-summarize-dry release-force release-prerelease release-stable
 
 default:
 	@just --list
@@ -287,6 +287,9 @@ version-set:
 	@cd backend && uv lock
 	@echo "Updated: backend/pyproject.toml, frontend/package.json, .cz.toml, backend/uv.lock"
 	@echo "Verify:  just version"
+
+commit:
+	@cd backend && uv run cz commit
 
 release:
 	@cd backend && uv run cz bump --yes && git push --tags

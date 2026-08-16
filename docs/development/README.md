@@ -86,9 +86,12 @@ bun run test               # Tests
 
 ### 4. Commit and Push
 
+The recommended way to commit is `just commit`, which opens an interactive prompt for creating a Conventional Commit message (validated by the `commit-msg` hook). If you prefer a direct commit, ensure your message follows the `type(scope): description` format:
+
 ```bash
 git add .
-git commit -m "feat: your feature description"
+just commit
+# or: git commit -m "feat(backend): your feature description"
 git push origin feature/your-feature-name
 ```
 

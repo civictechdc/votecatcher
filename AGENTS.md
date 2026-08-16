@@ -90,5 +90,6 @@ If changing `AGENTS.md` or `docs/agents/**`, branch name must start with `agents
 
 - You may be in a dirty worktree. Do not revert or overwrite changes you did not make.
 - Check `git status --short --branch` before edits and before commits.
+- A `commit-msg` hook enforces Conventional Commit syntax on every commit; use `just commit` for a reliable way to produce a conforming message.
 - Create focused branches for non-trivial work.
 - Commit only when the user asks.
