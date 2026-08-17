@@ -9,3 +9,9 @@ CVE-2025-47273
 # Debian OS package in the frontend base image. No fixed base image
 # available yet (fixed in 1:2.75-10+deb13u1, not yet in stable).
 CVE-2026-4878
+# util-linux CVE-2026-53615: Integer overflow in libblkid/src/partitions/dos.c.
+# Affects bsdutils, libblkid1, libmount1, libuuid1, libsmartcols1,
+# liblastlog2-2, mount, util-linux in the frontend base image
+# (oven/bun:1.3.14, Debian 13/trixie). Fixed in 2.41.5-0+deb13u1,
+# not yet available in stable base image.
+CVE-2026-53615

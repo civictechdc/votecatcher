@@ -46,6 +46,7 @@ jobs:
         run: bun --version
 
       - name: Check conventional commits
+        if: github.event_name == 'pull_request'
         run: cd backend && uv sync --dev && uv run cz check --rev-range origin/main..HEAD
 
       - name: Check Python lockfile
