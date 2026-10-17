@@ -155,6 +155,14 @@ Open a PR against `main`. Fill in the PR template.
 
 ## PR Process
 
+### PR Descriptions
+
+Keep PRs concise and clear:
+
+- Lead with a short summary of what changed and why.
+- Verification as brief bullets; link the CI runs instead of pasting logs or diagnostics.
+- One concern per PR — split unrelated changes into separate PRs.
+
 ### CI Checks
 
 All PRs must pass these checks:
@@ -181,6 +189,7 @@ All PRs must pass these checks:
 
 - Delete your branch
 - Squash merges preferred for clean history
+- Keep the squash commit message to the PR title line — don't pull the PR body into the merge commit
 
 ## Testing
 
