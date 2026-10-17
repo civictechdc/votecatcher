@@ -6,6 +6,8 @@ node_modules
 
 # testing
 /coverage
+backend/.coverage
+backend/coverage.xml
 
 # production
 /build

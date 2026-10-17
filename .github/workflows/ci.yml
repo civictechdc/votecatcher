@@ -262,7 +262,20 @@ jobs:
 
       - name: Security scan (bun audit)
         id: security-scan
-        run: cd frontend && bun audit
+        # Ignored advisories — all dev/build-time only chains with no in-range fix:
+        #   GHSA-vfj7-8cjw-p6xm (braces HIGH): no fixed release exists upstream (3.0.3 is latest);
+        #     reached only via archunit, the frontend architecture test runner.
+        #   GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr (tinypool CRITICAL): oxfmt pins tinypool 2.1.0
+        #     exactly; fix requires an oxfmt ^0.70 formatter migration (tracked as follow-up).
+        #   GHSA-rj75-hqrm-r3gf (postcss-selector-parser MODERATE): @tailwindcss/typography (latest)
+        #     pins 6.0.10 exactly; blocked upstream; build-time only.
+        # Runtime dependencies are fully remediated — none of these chains ship to production.
+        run: >-
+          cd frontend && bun audit
+          --ignore GHSA-vfj7-8cjw-p6xm
+          --ignore GHSA-5gmw-xhrv-c9v3
+          --ignore GHSA-85c8-ppgw-ccpr
+          --ignore GHSA-rj75-hqrm-r3gf
 
       - name: Frontend failure summary
         if: failure()
@@ -636,10 +649,10 @@ jobs:
           needs.dast-smoke.result == 'failure'
         run: |
           echo "::warning::Docker build proceeding despite upstream failures (main branch or scheduled run):"
-          [[ "${{ needs.backend-quality.result }}" == "failure" ]] && echo "::warning::backend-quality: failed"
-          [[ "${{ needs.frontend-quality.result }}" == "failure" ]] && echo "::warning::frontend-quality: failed"
-          [[ "${{ needs.frontend-fallow.result }}" == "failure" ]] && echo "::warning::frontend-fallow: failed"
-          [[ "${{ needs.dast-smoke.result }}" == "failure" ]] && echo "::warning::dast-smoke: failed"
+          [[ "${{ needs.backend-quality.result }}" == "failure" ]] && echo "::warning::backend-quality: failed" || true
+          [[ "${{ needs.frontend-quality.result }}" == "failure" ]] && echo "::warning::frontend-quality: failed" || true
+          [[ "${{ needs.frontend-fallow.result }}" == "failure" ]] && echo "::warning::frontend-fallow: failed" || true
+          [[ "${{ needs.dast-smoke.result }}" == "failure" ]] && echo "::warning::dast-smoke: failed" || true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
