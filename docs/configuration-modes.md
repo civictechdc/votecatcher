@@ -26,6 +26,8 @@ make dev-postgres  # Starts Postgres container + runs migrations
 | Variable | Production | Dev (Real) | Simulation | Demo | Testing |
 |----------|------------|------------|------------|------|---------|
 | `DATABASE_URL` | PostgreSQL | SQLite | SQLite | SQLite | SQLite |
+| `ENVIRONMENT` | `production` | `development` | `development` | `development` | `development` |
+| `CORS_ORIGINS` | Required — comma-separated origins; startup fails if missing/empty | Not used (localhost allowed) | Not used (localhost allowed) | Not used (localhost allowed) | Not used (localhost allowed) |
 | `OCR_PROVIDER_NAME` | Required | Required | Optional | Optional | Optional |
 | `OCR_PROVIDER_MODEL` | Required | Required | Optional | Optional | Optional |
 | `OCR_PROVIDER_API_KEY` | Required | Required | Not used | Not used | Optional |

@@ -1,8 +1,10 @@
 """Tests for CORS configuration builder.
 
-Crosslink #18 — Spec: CORS Hardening.
-Contract: environment-aware CORS with explicit methods, production origin validation.
+Contract: environment-aware CORS with explicit methods, production origin
+validation, and fail-closed behavior when production origins are missing.
 """
+
+import pytest
 
 from app.middleware.cors import build_cors_config
 
@@ -77,9 +79,35 @@ class TestCORSProduction:
         assert "Content-Type" in headers
         assert "X-API-Key" in headers
 
-    def test_empty_origins_logs_warning(self):
-        config = build_cors_config(environment="production", cors_origins="")
-        assert config["allow_origins"] == []
+    def test_missing_origins_raises_in_production(self):
+        with pytest.raises(ValueError, match="CORS_ORIGINS"):
+            build_cors_config(environment="production", cors_origins="")
+
+    def test_whitespace_only_origins_raises_in_production(self):
+        with pytest.raises(ValueError, match="CORS_ORIGINS"):
+            build_cors_config(environment="production", cors_origins="   ")
+
+    def test_comma_only_origins_raises_in_production(self):
+        with pytest.raises(ValueError, match="CORS_ORIGINS"):
+            build_cors_config(environment="production", cors_origins=",,,,")
+
+    def test_wildcard_origins_raises_in_production(self):
+        with pytest.raises(ValueError, match=r"\*"):
+            build_cors_config(environment="production", cors_origins="*")
+
+    def test_wildcard_mixed_with_explicit_origins_raises_in_production(self):
+        with pytest.raises(ValueError, match="wildcard"):
+            build_cors_config(
+                environment="production",
+                cors_origins="https://app.example.com,*",
+            )
+
+    def test_error_message_names_expected_format(self):
+        with pytest.raises(ValueError) as excinfo:
+            build_cors_config(environment="production", cors_origins="")
+        message = str(excinfo.value)
+        assert "CORS_ORIGINS" in message
+        assert "comma-separated" in message
 
 
 class TestCORSConfigurationValidation:
@@ -90,7 +118,3 @@ class TestCORSConfigurationValidation:
             environment="production", cors_origins="https://single.example.com"
         )
         assert config["allow_origins"] == ["https://single.example.com"]
-
-    def test_empty_string_origins_split_handled(self):
-        config = build_cors_config(environment="production", cors_origins=",,,")
-        assert config["allow_origins"] == []

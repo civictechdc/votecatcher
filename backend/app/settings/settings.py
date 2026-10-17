@@ -5,7 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import override
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import (
     BaseSettings,
     DotEnvSettingsSource,
@@ -108,6 +108,18 @@ class Settings(BaseSettings):
 
     environment: str = Field(default="development", alias="ENVIRONMENT")
     cors_origins: str = Field(default="", alias="CORS_ORIGINS")
+
+    @field_validator("environment")
+    @classmethod
+    def _validate_environment(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if normalized not in {"development", "production"}:
+            raise ValueError(
+                f"ENVIRONMENT must be 'development' or 'production' "
+                f"(case-insensitive), got {value!r}"
+            )
+        return normalized
+
     rate_limit_enabled: bool = Field(default=True, alias="RATE_LIMIT_ENABLED")
     rate_limit_default: str = Field(default="60/minute", alias="RATE_LIMIT_DEFAULT")
     rate_limit_upload: str = Field(default="10/minute", alias="RATE_LIMIT_UPLOAD")

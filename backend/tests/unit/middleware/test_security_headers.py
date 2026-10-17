@@ -1,6 +1,5 @@
 """Tests for SecurityHeadersMiddleware.
 
-Crosslink #17 — Spec: Security Headers Middleware.
 Contract: every response includes OWASP-recommended security headers.
 Environment-conditional: HSTS (production only), CSP report-only (dev).
 """
@@ -75,6 +74,26 @@ class TestSecurityHeadersAlwaysPresent:
     def test_headers_on_options_preflight(self, client: TestClient):
         response = client.options("/preflight")
         assert response.headers["x-content-type-options"] == "nosniff"
+
+    def test_headers_on_404_response(self, client: TestClient):
+        response = client.get("/nonexistent")
+        assert response.status_code == 404
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["x-frame-options"] == "DENY"
+        assert response.headers["referrer-policy"] == "strict-origin-when-cross-origin"
+
+    def test_headers_on_500_response(self):
+        app = _create_test_app(is_production=False)
+
+        @app.get("/boom")
+        async def boom():
+            return PlainTextResponse("failed", status_code=500)
+
+        client = TestClient(app)
+        response = client.get("/boom")
+        assert response.status_code == 500
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["x-frame-options"] == "DENY"
 
     def test_does_not_overwrite_existing_header(self):
         app = FastAPI()
