@@ -40,6 +40,73 @@ def client():
     return TestClient(app)
 
 
+class TestEnvironmentValidation:
+    """ENVIRONMENT normalization and fail-closed validation."""
+
+    def test_production_case_insensitive_normalized(self):
+        from app.settings import Settings
+
+        settings = Settings(ENVIRONMENT="Production")
+        assert settings.environment == "production"
+
+    def test_environment_whitespace_stripped(self):
+        from app.settings import Settings
+
+        settings = Settings(ENVIRONMENT=" production ")
+        assert settings.environment == "production"
+
+    def test_unknown_environment_rejected(self):
+        from app.settings import Settings
+
+        with pytest.raises(Exception, match="ENVIRONMENT"):
+            Settings(ENVIRONMENT="staging")
+
+    def test_default_environment_is_development(self):
+        from app.settings import Settings
+
+        settings = Settings()
+        assert settings.environment == "development"
+
+
+class TestEnvironmentLoadingFromSource:
+    """ENVIRONMENT validation applies to real environment-variable loading,
+    not only direct constructor kwargs."""
+
+    def test_env_var_case_variant_normalized_through_get_settings(self, monkeypatch):
+        from app.settings import get_settings
+
+        monkeypatch.setenv("ENVIRONMENT", "Production")
+        get_settings.cache_clear()
+        try:
+            assert get_settings().environment == "production"
+        finally:
+            monkeypatch.delenv("ENVIRONMENT", raising=False)
+            get_settings.cache_clear()
+
+    def test_env_var_unknown_environment_fails_at_load(self, monkeypatch):
+        from app.settings import get_settings
+
+        monkeypatch.setenv("ENVIRONMENT", "staging")
+        get_settings.cache_clear()
+        try:
+            with pytest.raises(Exception, match="ENVIRONMENT"):
+                get_settings()
+        finally:
+            monkeypatch.delenv("ENVIRONMENT", raising=False)
+            get_settings.cache_clear()
+
+    def test_env_var_cors_origins_reaches_settings(self, monkeypatch):
+        from app.settings import get_settings
+
+        monkeypatch.setenv("CORS_ORIGINS", "https://app.example.com")
+        get_settings.cache_clear()
+        try:
+            assert get_settings().cors_origins == "https://app.example.com"
+        finally:
+            monkeypatch.delenv("CORS_ORIGINS", raising=False)
+            get_settings.cache_clear()
+
+
 class TestFeatureFlags:
     """Tests for feature flag configuration."""
 

@@ -58,9 +58,43 @@ class TestCORSIntegration:
             },
         )
         assert response.status_code == 200
-        assert "http://localhost:5173" in response.headers.get(
-            "access-control-allow-origin", ""
+
+    def test_preflight_carries_cors_policy_headers(self, client: TestClient):
+        response = client.options(
+            "/api/health",
+            headers={
+                "Origin": "http://localhost:5173",
+                "Access-Control-Request-Method": "GET",
+            },
         )
+        assert response.status_code == 200
+        assert response.headers["access-control-allow-origin"] == (
+            "http://localhost:5173"
+        )
+        assert "GET" in response.headers["access-control-allow-methods"]
+
+    def test_preflight_terminated_by_cors_lacks_security_headers(
+        self, client: TestClient
+    ):
+        """CORS runs outside the security-headers middleware; a preflight
+        response short-circuited by CORSMiddleware does not pass through it."""
+        response = client.options(
+            "/api/health",
+            headers={
+                "Origin": "http://localhost:5173",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert response.status_code == 200
+        assert "x-content-type-options" not in response.headers
+        assert "x-frame-options" not in response.headers
+
+    def test_unknown_origin_gets_no_allow_origin(self, client: TestClient):
+        response = client.get(
+            "/api/health", headers={"Origin": "https://evil.example.com"}
+        )
+        assert response.status_code == 200
+        assert "access-control-allow-origin" not in response.headers
 
     def test_cors_actual_request(self, client: TestClient):
         response = client.get(

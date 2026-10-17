@@ -1,11 +1,8 @@
 """CORS configuration builder.
 
 Environment-aware CORS: strict origins in production, relaxed in development.
+Production is fail-closed: a missing or empty CORS_ORIGINS raises at startup.
 """
-
-import structlog
-
-logger = structlog.get_logger(__name__)
 
 _DEV_ORIGINS = ["http://localhost", "http://localhost:5173"]
 _EXPLICIT_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
@@ -20,9 +17,16 @@ def build_cors_config(
     if is_production:
         origins = _parse_origins(cors_origins)
         if not origins:
-            logger.warning(
-                "CORS_ORIGINS is empty in production — no origins will be allowed. "
-                "Set CORS_ORIGINS environment variable (comma-separated URLs)."
+            raise ValueError(
+                "CORS_ORIGINS is missing or empty in production. "
+                "Set the CORS_ORIGINS environment variable to a comma-separated "
+                "list of allowed origins, e.g. https://app.example.com."
+            )
+        if "*" in origins:
+            raise ValueError(
+                "CORS_ORIGINS must not contain a wildcard (*) in production. "
+                "Wildcard origins are incompatible with credentialed CORS; "
+                "list explicit origins instead."
             )
         return {
             "allow_origins": origins,
