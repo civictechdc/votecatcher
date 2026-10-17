@@ -5,6 +5,13 @@
 # the old vulnerable versions.
 GHSA-6v7p-g79w-8964
 CVE-2025-47273
+# urllib3: same base-image SBOM phantom pattern. The application venv
+# installs urllib3 2.8.0 (confirmed in the image filesystem and the
+# build log); the stale SBOM attestation from the python:3.13-slim
+# base layer references the vendored urllib3 2.7.0, which Trivy
+# matches against advisories published 2026-10-12.
+CVE-2026-97687
+CVE-2026-97689
 # libcap2 CVE-2026-4878: TOCTOU race in cap_set_file().
 # Debian OS package in the frontend base image. No fixed base image
 # available yet (fixed in 1:2.75-10+deb13u1, not yet in stable).
