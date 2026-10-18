@@ -265,16 +265,12 @@ jobs:
         # Ignored advisories — all dev/build-time only chains with no in-range fix:
         #   GHSA-vfj7-8cjw-p6xm (braces HIGH): no fixed release exists upstream (3.0.3 is latest);
         #     reached only via archunit, the frontend architecture test runner.
-        #   GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr (tinypool CRITICAL): oxfmt pins tinypool 2.1.0
-        #     exactly; fix requires an oxfmt ^0.70 formatter migration (tracked as follow-up).
         #   GHSA-rj75-hqrm-r3gf (postcss-selector-parser MODERATE): @tailwindcss/typography (latest)
         #     pins 6.0.10 exactly; blocked upstream; build-time only.
         # Runtime dependencies are fully remediated — none of these chains ship to production.
         run: >-
           cd frontend && bun audit
           --ignore GHSA-vfj7-8cjw-p6xm
-          --ignore GHSA-5gmw-xhrv-c9v3
-          --ignore GHSA-85c8-ppgw-ccpr
           --ignore GHSA-rj75-hqrm-r3gf
 
       - name: Frontend failure summary
