@@ -197,7 +197,7 @@ All PRs must pass these checks:
 
 ```bash
 just test-backend                  # Unit tests with coverage
-just test-backend-integration      # Integration tests (needs PostgreSQL)
+just test-backend-integration      # Integration tests (in-memory SQLite — no external services)
 just security-test                 # Security-focused tests
 ```
 
@@ -210,7 +210,7 @@ cd frontend && bun run test:e2e    # E2E tests (needs running app)
 
 ### Database Tests
 
-Integration tests require PostgreSQL. Start it with:
+Integration tests run against in-memory SQLite — no database server needed. To start a local PostgreSQL for running the app:
 
 ```bash
 just dev-postgres

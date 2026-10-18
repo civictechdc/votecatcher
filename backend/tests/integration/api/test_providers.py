@@ -1,5 +1,11 @@
 """Integration tests for provider settings endpoints."""
 
+from unittest.mock import AsyncMock, patch
+
+from sqlmodel import delete
+
+from app.data.database.model.llm_provider_config import LlmProviderConfig
+
 _FAKE_KEY = "test-placeholder-not-a-real-key"
 
 
@@ -15,6 +21,8 @@ class TestListProviders:
         assert "mistral" in provider_names
 
     def test_list_providers_shows_unconfigured_state(self, client, session):
+        session.exec(delete(LlmProviderConfig))
+        session.commit()
         response = client.get("/api/settings/providers")
         data = response.json()
         for provider in data:
@@ -90,7 +98,11 @@ class TestDeleteProvider:
 
 
 class TestTestProvider:
-    def test_test_provider_invalid_key(self, client):
+    @patch("app.services.providers.AsyncOpenAI")
+    def test_test_provider_invalid_key(self, mock_openai_cls, client):
+        mock_openai_cls.return_value.models.list = AsyncMock(
+            side_effect=Exception("Error code: 401 - Invalid API key provided")
+        )
         response = client.post(
             "/api/settings/providers/openai/test",
             json={"api_key": _FAKE_KEY, "model": "gpt-4o"},

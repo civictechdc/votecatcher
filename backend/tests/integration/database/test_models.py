@@ -1,18 +1,17 @@
 """Integration tests for database operations."""
 
 import pytest
+from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
-
-pytestmark = pytest.mark.skip(reason="Requires local PostgreSQL — use Docker or CI")
 
 
 @pytest.fixture
 def db_engine():
-    """Create PostgreSQL engine for integration testing."""
-    _cred = "votecatcher" + ":" + "votecatcher_dev"
+    """Create isolated in-memory SQLite engine for integration testing."""
     engine = create_engine(
-        f"postgresql+psycopg://{_cred}@localhost:5432/votecatcher",
-        echo=False,
+        "sqlite://",
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
     )
     SQLModel.metadata.create_all(engine)
     yield engine
