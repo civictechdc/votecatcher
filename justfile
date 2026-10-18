@@ -188,11 +188,11 @@ typecheck-backend:
 typecheck-frontend:
     cd frontend && bun run check
 
-# Run backend tests with coverage (unit only — integration needs running DB)
+# Run backend tests with coverage (unit, matching, and config tests)
 test-backend:
     cd backend && uv run pytest tests/unit tests/matching tests/test_config.py --cov=app --cov-report=xml
 
-# Run backend integration tests (requires PostgreSQL)
+# Run backend integration tests (in-memory SQLite — no external services required)
 test-backend-integration:
     cd backend && uv run pytest tests/integration
 
