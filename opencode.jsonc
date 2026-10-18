@@ -1,0 +1,13 @@
+// Project-level OpenCode config: wires the Svelte MCP server (local stdio).
+// Docs: docs/agents/svelte-mcp.md
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "svelte": {
+        "type": "local",
+        "command": ["npx", "-y", "@sveltejs/mcp"]
+      }
+    }
+  }
+}

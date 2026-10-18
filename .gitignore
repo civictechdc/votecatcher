@@ -41,7 +41,8 @@ bun-debug.log*
 .supabase
 
 # IDE
-.vscode/
+# Exclude contents (not the dir itself) so the `!.vscode/<file>` negations below can re-include committed files.
+.vscode/*
 .idea/
 *.swp
 *.swo
@@ -159,6 +160,7 @@ supabase/.env
 !frontend/.fallowrc.json
 !.claude/settings.json
 !.codex/hooks.json
+!.mcp.json
 
 # Upload directories
 uploads/
