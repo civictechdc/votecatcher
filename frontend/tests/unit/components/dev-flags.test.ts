@@ -9,10 +9,27 @@ vi.mock("$app/environment", () => ({
 	SSR: false,
 }));
 
+// Mock substrate for the config helper. `known` models the configured set
+// the panel lists (env-seeded keys plus previously persisted keys);
+// `local` models the persisted vc:flags set.
+// beforeEach reseeds both so every test is order-independent.
 const state = vi.hoisted(() => {
-	let local = new Set<string>(["mock:createCampaign:success"]);
+	const known = new Set<string>(["mockApi", "mock:createCampaign:success"]);
+	const local = new Set<string>(["mock:createCampaign:success"]);
 	return {
+		known,
 		local,
+		reset() {
+			known.clear();
+			known.add("mockApi");
+			known.add("mock:createCampaign:success");
+			local.clear();
+			local.add("mock:createCampaign:success");
+		},
+		empty() {
+			known.clear();
+			local.clear();
+		},
 	};
 });
 
@@ -24,7 +41,7 @@ vi.mock("$lib/config/featureFlags", () => ({
 			else state.local.add(f);
 			localStorage.setItem("vc:flags", Array.from(state.local).join(","));
 		},
-		list: () => Array.from(new Set(["mockApi", ...Array.from(state.local)])),
+		list: () => Array.from(new Set([...Array.from(state.known), ...Array.from(state.local)])),
 	},
 }));
 
@@ -42,6 +59,7 @@ function rowOf(label: string): HTMLInputElement {
 describe("DevFlags panel", () => {
 	beforeEach(() => {
 		localStorage.clear();
+		state.reset();
 	});
 
 	it("starts collapsed and expands into the panel from the Flags pill", async () => {
@@ -70,7 +88,7 @@ describe("DevFlags panel", () => {
 		expect(rowOf("mockApi").checked).toBe(true);
 	});
 
-	it("toggling a persisted flag off drops it from the panel's configured list", async () => {
+	it("toggling a persisted flag off persists the flip to vc:flags and re-renders disabled", async () => {
 		render(DevFlags);
 
 		await fireEvent.click(screen.getByRole("button", { name: /flags/i }));
@@ -80,12 +98,29 @@ describe("DevFlags panel", () => {
 
 		await fireEvent.click(box);
 
-		// list() is the configured set (env ∪ persisted): a disabled flag leaves it.
-		expect(
-			[...document.querySelectorAll("label")].some((l) => l.textContent?.includes("success")),
-		).toBe(false);
+		// The flag stays in the configured list (still known) but renders disabled.
 		expect((localStorage.getItem("vc:flags") || "").split(",")).not.toContain(
 			"mock:createCampaign:success",
 		);
+		expect(rowOf("mock:createCampaign:success").checked).toBe(false);
+	});
+
+	it("add-flag input bootstraps a flag when the list is empty", async () => {
+		state.empty();
+		localStorage.clear();
+
+		render(DevFlags);
+
+		await fireEvent.click(screen.getByRole("button", { name: /flags/i }));
+
+		// Empty configured set: no flag rows, only the add-flag affordance.
+		expect(document.querySelectorAll("label").length).toBe(0);
+
+		const input = screen.getByLabelText("New flag name");
+		await fireEvent.input(input, { target: { value: "myNewFlag" } });
+		await fireEvent.click(screen.getByRole("button", { name: /add/i }));
+
+		expect(rowOf("myNewFlag").checked).toBe(true);
+		expect((localStorage.getItem("vc:flags") || "").split(",")).toContain("myNewFlag");
 	});
 });
