@@ -149,6 +149,33 @@ test.describe("Campaign-Scoped Navigation", () => {
 	});
 });
 
+test.describe("Dashboard SPA Navigation", () => {
+	test("Scenario 7: Quick action navigates client-side without a reload", async ({
+		page,
+		seededCampaign,
+	}) => {
+		await page.goto(`/workspace/${seededCampaign.id}`);
+		await expect(page.locator("h1").first()).toBeVisible();
+
+		// marker set before the click; a full page reload would wipe it
+		await page.evaluate(() => {
+			(window as unknown as { __spaNavMarker?: string }).__spaNavMarker = "set-before-click";
+		});
+
+		const uploadFilesButton = page.getByRole("button", { name: /upload files/i });
+		await expect(uploadFilesButton).toBeVisible();
+		await uploadFilesButton.click();
+
+		await page.waitForURL(new RegExp(`/workspace/${seededCampaign.id}/upload`), { timeout: 5000 });
+		await expect(page.locator("h1").first()).toBeVisible();
+
+		const marker = await page.evaluate(() => {
+			return (window as unknown as { __spaNavMarker?: string }).__spaNavMarker;
+		});
+		expect(marker).toBe("set-before-click");
+	});
+});
+
 test.describe("Campaign Dashboard", () => {
 	test("Dashboard shows campaign metrics", async ({ page }) => {
 		await page.goto("/workspace/campaigns");

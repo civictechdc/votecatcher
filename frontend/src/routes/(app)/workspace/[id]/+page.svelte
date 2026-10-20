@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { jobs } from '$lib/stores/jobs';
@@ -116,12 +116,17 @@
 		fetchMetrics();
 		fetchSetupStatus();
 
-		document.addEventListener('votecatcher:setup:updated', fetchSetupStatus as EventListener);
+		document.addEventListener('votecatcher:setup:updated', handleSetupUpdated as EventListener);
 
 		return () => {
-			document.removeEventListener('votecatcher:setup:updated', fetchSetupStatus as EventListener);
+			document.removeEventListener('votecatcher:setup:updated', handleSetupUpdated as EventListener);
 		};
 	});
+
+	function handleSetupUpdated() {
+		fetchSetupStatus();
+		fetchMetrics();
+	}
 
 	afterNavigate(({ from, to }) => {
 		if (from?.url.pathname !== to?.url.pathname) {
@@ -145,8 +150,8 @@
 				<p class="mt-1 text-slate-600">{campaign?.region || ''} • {campaign?.year || ''}</p>
 			</div>
 			<div class="flex gap-3">
-				<Button variant="secondary" text="Upload Files" onclick={() => window.location.href = `/workspace/${campaignId}/upload`} />
-				<Button variant="primary" text="New Job" onclick={() => window.location.href = `/workspace/${campaignId}/jobs`} />
+				<Button variant="secondary" text="Upload Files" onclick={() => goto(`/workspace/${campaignId}/upload`)} />
+				<Button variant="primary" text="New Job" onclick={() => goto(`/workspace/${campaignId}/jobs`)} />
 			</div>
 		</div>
 
@@ -247,10 +252,10 @@
 		<div class="rounded-lg border border-slate-200 bg-white p-6">
 			<h2 class="text-lg font-semibold text-slate-900">Quick Actions</h2>
 			<div class="mt-4 flex flex-wrap gap-3">
-				<Button variant="secondary" text="Upload Voter List" onclick={() => window.location.href = `/workspace/${campaignId}/upload`} />
-				<Button variant="secondary" text="Upload Petitions" onclick={() => window.location.href = `/workspace/${campaignId}/upload`} />
+				<Button variant="secondary" text="Upload Voter List" onclick={() => goto(`/workspace/${campaignId}/upload`)} />
+				<Button variant="secondary" text="Upload Petitions" onclick={() => goto(`/workspace/${campaignId}/upload`)} />
 				{#if hasMatchResults}
-					<Button variant="secondary" text="View Results" onclick={() => window.location.href = `/workspace/${campaignId}/results`} />
+					<Button variant="secondary" text="View Results" onclick={() => goto(`/workspace/${campaignId}/results`)} />
 				{/if}
 			</div>
 		</div>

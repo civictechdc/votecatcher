@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui';
 	import type { VoterListStatus, PetitionsStatus } from '$lib/api/generated/models/Campaign';
 
@@ -51,7 +52,7 @@
 	});
 
 	function navigate(href: string) {
-		window.location.href = href;
+		goto(href);
 	}
 </script>
 
