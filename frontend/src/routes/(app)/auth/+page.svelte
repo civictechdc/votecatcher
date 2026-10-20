@@ -3,9 +3,8 @@
   import { auth } from "$lib/stores/auth"
   import { get } from "svelte/store"
   import { featureFlags } from "$lib/config/featureFlags"
-  import { Progress } from "$lib/components/ui"
   import { Navbar } from "$lib/components/layout"
-  import DevFlags from "$lib/components/DevFlags.svelte"
+  import { Progress } from "$lib/components/ui"
 
   // Local state for form
   let mode: "signin" | "signup" = "signin"
@@ -138,9 +137,6 @@
         <div role="alert" style="color:var(--vc-danger)" class="small">{msg}</div>
       {/if}
     </div>
-
-    <!-- Dev-only panel: visible in development (import.meta.env.DEV) -->
-    <DevFlags />
   </div>
 </div>
 

@@ -3,7 +3,7 @@ import { featureFlags } from "$lib/config/featureFlags";
 
 /**
  * Handlers used by the client-side MSW worker.
- * Driven by feature flags (VITE_FEATURES or localStorage vc:flags via DevFlags).
+ * Driven by feature flags (VITE_FEATURES seed + vc:flags localStorage; where the dev-only Flags pill panel, mounted from the (app) layout, manages them).
  *
  * Flags used:
  * - mockApi : enable the worker

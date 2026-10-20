@@ -3,6 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api/client';
 	import { LoadingSpinner } from '$lib/components/ui';
+	import DevFlags from '$lib/components/DevFlags.svelte';
+	import { IS_DEV } from '$lib/utils/mode';
 
 	const STATUS_TIMEOUT_MS = 5000;
 
@@ -53,4 +55,8 @@
 	<main>
 		{@render children()}
 	</main>
+{/if}
+
+{#if IS_DEV}
+	<DevFlags />
 {/if}
