@@ -1,4 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+
+import { test } from "./fixtures";
 
 test.describe("Campaign-Scoped Navigation", () => {
 	test("Scenario 1: Navigate to campaign dashboard", async ({ page }) => {
@@ -166,7 +168,8 @@ test.describe("Dashboard SPA Navigation", () => {
 		await expect(uploadFilesButton).toBeVisible();
 		await uploadFilesButton.click();
 
-		await page.waitForURL(new RegExp(`/workspace/${seededCampaign.id}/upload`), { timeout: 5000 });
+		const escapedId = seededCampaign.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		await page.waitForURL(new RegExp(`/workspace/${escapedId}/upload$`), { timeout: 5000 });
 		await expect(page.locator("h1").first()).toBeVisible();
 
 		const marker = await page.evaluate(() => {
