@@ -11,7 +11,7 @@
 	let campaignToDelete = $state<{ id: string; name: string } | null>(null);
 	let formData = $state({
 		name: '',
-		year: 2024,
+		year: new Date().getFullYear(),
 		region: 'DC'
 	});
 	let sortConfig = $state<SortConfig | null>({ key: 'createdAt', direction: 'desc' });
@@ -108,7 +108,7 @@
 		try {
 			await campaigns.create(formData);
 			showCreateModal = false;
-			formData = { name: '', year: 2024, region: 'DC' };
+			formData = { name: '', year: new Date().getFullYear(), region: 'DC' };
 		} catch (error) {
 			console.error('Failed to create campaign:', error);
 		}

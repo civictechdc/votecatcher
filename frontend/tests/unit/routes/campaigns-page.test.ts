@@ -155,6 +155,54 @@ describe("Campaigns List Page", () => {
 			});
 		});
 
+		it("defaults year input to the current year when opened", async () => {
+			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
+				fn({ campaigns: [], loading: false, loaded: true, error: null, metrics: {} });
+				return () => {};
+			});
+
+			render(Page);
+
+			await fireEvent.click(screen.getByRole("button", { name: /create campaign/i }));
+
+			await waitFor(() => {
+				expect(screen.getByRole("dialog")).toBeTruthy();
+			});
+			expect(screen.getByLabelText(/year/i)).toHaveProperty(
+				"value",
+				String(new Date().getFullYear()),
+			);
+		});
+
+		it("resets year input to the current year after a creation", async () => {
+			vi.mocked(campaigns.create).mockResolvedValue({} as CampaignResponse);
+			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
+				fn({ campaigns: [], loading: false, loaded: true, error: null, metrics: {} });
+				return () => {};
+			});
+
+			render(Page);
+
+			await fireEvent.click(screen.getByRole("button", { name: /create campaign/i }));
+			await fireEvent.input(screen.getByLabelText(/name/i), { target: { value: "New Campaign" } });
+			await fireEvent.input(screen.getByLabelText(/year/i), { target: { value: "2001" } });
+			await fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
+
+			await waitFor(() => {
+				expect(campaigns.create).toHaveBeenCalled();
+			});
+
+			await fireEvent.click(screen.getByRole("button", { name: /create campaign/i }));
+
+			await waitFor(() => {
+				expect(screen.getByRole("dialog")).toBeTruthy();
+			});
+			expect(screen.getByLabelText(/year/i)).toHaveProperty(
+				"value",
+				String(new Date().getFullYear()),
+			);
+		});
+
 		it("calls create with form data", async () => {
 			vi.mocked(campaigns.create).mockResolvedValue({} as CampaignResponse);
 			vi.mocked(campaigns.subscribe).mockImplementation((fn) => {
@@ -166,14 +214,13 @@ describe("Campaigns List Page", () => {
 
 			await fireEvent.click(screen.getByRole("button", { name: /create campaign/i }));
 			await fireEvent.input(screen.getByLabelText(/name/i), { target: { value: "New Campaign" } });
-			await fireEvent.input(screen.getByLabelText(/year/i), { target: { value: "2024" } });
 			await fireEvent.input(screen.getByLabelText(/region/i), { target: { value: "DC" } });
 			await fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
 
 			await waitFor(() => {
 				expect(campaigns.create).toHaveBeenCalledWith({
 					name: "New Campaign",
-					year: 2024,
+					year: new Date().getFullYear(),
 					region: "DC",
 				});
 			});
