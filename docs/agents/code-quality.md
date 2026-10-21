@@ -27,3 +27,9 @@ Use this when changing Python, refactoring legacy code, or writing tests. For de
 ## Nesting Watch
 
 When loop bodies reach three or more nested levels, pause and flatten with guards, extracted helpers, or clearer condition order.
+
+## Comment Hygiene
+
+- Code comments must not reference internal tracking: issue numbers (`#123`), task or checklist numbering (`tasks 1.4`), design-letter references, or session tooling identifiers. Code and comments are public project history; internal references go stale when trackers move and mislead readers. This mirrors the commit-message guard that blocks the same references in commit messages.
+- Comments explain non-obvious mechanics — the why a future editor cannot infer. Test names carry behavior; a comment that narrates the next line or restates a test name is noise and gets deleted.
+- A comment that misdescribes its code is a defect, not a cosmetic issue — an inaccurate comment once accompanied an ungated production render that looked gated.
