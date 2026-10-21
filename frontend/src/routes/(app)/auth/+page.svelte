@@ -6,7 +6,6 @@
   import { Navbar } from "$lib/components/layout"
   import { Progress } from "$lib/components/ui"
 
-  // Local state for form
   let mode: "signin" | "signup" = "signin"
   let email = ""
   let password = ""

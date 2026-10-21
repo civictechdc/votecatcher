@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/svelte";
 import Page from "../../../src/routes/(app)/auth/+page.svelte";
 
+// Overrides the repo-wide dev:true $app/environment mock (tests/setup.ts) — the per-file factory wins — so this file runs in production mode.
 vi.mock("$app/environment", () => ({
 	browser: true,
 	dev: false,

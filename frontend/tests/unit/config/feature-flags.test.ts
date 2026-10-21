@@ -1,8 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
-// Green guards for the retained helper behavior (tasks 1.4).
-// featureFlags reads VITE_FEATURES at module load, so each scenario
-// re-imports the module after stubbing the env and resetting modules.
+// Guards for retained helper behavior. featureFlags reads VITE_FEATURES at module load,
+// so each scenario stubs the env and re-imports the module (resetModules).
 
 async function freshFeatureFlags(viteFeatures: string) {
 	vi.stubEnv("VITE_FEATURES", viteFeatures);

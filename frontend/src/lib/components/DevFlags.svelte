@@ -67,7 +67,7 @@
 				<div class="mt-2 flex items-center gap-1">
 					<input
 						class="w-full rounded border border-gray-300 px-2 py-1 text-xs"
-						placeholder="Add flag (e.g. mockApi)"
+						placeholder="Add / toggle flag (e.g. mockApi)"
 						aria-label="New flag name"
 						bind:value={newFlag}
 						onkeydown={(e) => {
@@ -79,7 +79,7 @@
 						class="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
 						onclick={addFlag}
 					>
-						Add
+						Add / toggle
 					</button>
 				</div>
 

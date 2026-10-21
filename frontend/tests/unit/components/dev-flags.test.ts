@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import DevFlags from "../../../src/lib/components/DevFlags.svelte";
 
+// Overrides the repo-wide $app/environment mock (tests/setup.ts); the per-file factory wins.
 vi.mock("$app/environment", () => ({
 	browser: true,
 	dev: true,
@@ -99,6 +100,7 @@ describe("DevFlags panel", () => {
 		await fireEvent.click(box);
 
 		// The flag stays in the configured list (still known) but renders disabled.
+		// Fidelity: with the real helper, list() = env ∪ persisted — a persisted-ONLY flag toggled off also leaves the panel; this mock keeps `known` static.
 		expect((localStorage.getItem("vc:flags") || "").split(",")).not.toContain(
 			"mock:createCampaign:success",
 		);

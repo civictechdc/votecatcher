@@ -7,6 +7,9 @@ import DevFlags from "../../../src/lib/components/DevFlags.svelte";
 // is not dev. Separate file with a fresh module graph — mode.ts snapshots
 // `dev` into IS_DEV at import time, so flipping it inside this file's
 // module graph is the only reliable way to exercise the gate.
+// Pinned self-gate (defense in depth): even if a page mounts DevFlags without its own gate, the component renders nothing outside dev.
+// This per-file factory overrides the repo-wide dev:true mock (tests/setup.ts) — the file factory wins.
+// A separate file is required because mode.ts snapshots `dev` into IS_DEV at import time, so the flip must land before any import, in a fresh module graph.
 vi.mock("$app/environment", () => ({
 	browser: true,
 	dev: false,

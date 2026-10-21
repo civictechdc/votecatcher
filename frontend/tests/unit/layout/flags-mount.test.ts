@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/svelte";
 import { createRawSnippet } from "svelte";
 import Layout from "../../../src/routes/(app)/+layout.svelte";
 
+// Overrides the repo-wide $app/environment mock (tests/setup.ts); the per-file factory wins.
 vi.mock("$app/environment", () => ({
 	browser: true,
 	dev: true,
@@ -37,7 +38,6 @@ describe("(app) layout dev flag mount", () => {
 
 		// The pill is mounted once at layout level, independent of backend status.
 		expect(screen.getByRole("button", { name: /flags/i })).toBeTruthy();
-		// Collapsed by default: the panel itself is closed.
 		expect(screen.queryByText("Dev Flags")).toBeNull();
 	});
 });
