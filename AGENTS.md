@@ -11,7 +11,7 @@ Stack: Python/FastAPI backend, SvelteKit 5 frontend, SQLModel/Alembic data layer
 - Say `I don't know` when evidence is missing.
 - Start with `❗️` when calling out a likely error, miss, or risk.
 - Do not invent project facts. Read the source or docs first.
-- Keep PRs concise (short summary, brief verification, no pasted logs) and merge commits to the title line.
+- Keep PRs concise (short summary, brief verification, no pasted logs) and merge commits to the title line. PR bodies are a high-level summary of changes plus notable validation steps for review — no internal process narration (red-first TDD ceremony, fix-round or audit accounting).
 
 ## First Reads
 
