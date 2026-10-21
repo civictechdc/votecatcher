@@ -71,6 +71,7 @@
 		"eslint-plugin-storybook": "^10.6.2",
 		"eslint-plugin-svelte": "^3.23.1",
 		"fallow": "^2.104.0",
+		"fast-check": "^4.10.2",
 		"globals": "^17.13.0",
 		"jsdom": "^29.1.1",
 		"msw": "^2.15.0",
