@@ -2,11 +2,6 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/svelte";
 import DevFlags from "../../../src/lib/components/DevFlags.svelte";
 
-// Pinned self-gate (D2 defense in depth): even if a page mounts DevFlags
-// without its own gate, the component renders nothing when the environment
-// is not dev. Separate file with a fresh module graph — mode.ts snapshots
-// `dev` into IS_DEV at import time, so flipping it inside this file's
-// module graph is the only reliable way to exercise the gate.
 // Pinned self-gate (defense in depth): even if a page mounts DevFlags without its own gate, the component renders nothing outside dev.
 // This per-file factory overrides the repo-wide dev:true mock (tests/setup.ts) — the file factory wins.
 // A separate file is required because mode.ts snapshots `dev` into IS_DEV at import time, so the flip must land before any import, in a fresh module graph.
