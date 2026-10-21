@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { events } from '$lib/stores/events';
 	import { jobs } from '$lib/stores/jobs';
@@ -27,11 +26,13 @@
 		campaigns.handleMetricsEvent(e.detail);
 	}
 
-	onMount(() => {
+	$effect(() => {
 		if ($campaigns.campaigns.length === 0) {
 			campaigns.fetchAll();
 		}
+	});
 
+	$effect(() => {
 		if (campaignId && campaignId !== 'demo') {
 			events.connect(campaignId);
 			document.addEventListener('votecatcher:job:status', handleJobStatusEvent as EventListener);

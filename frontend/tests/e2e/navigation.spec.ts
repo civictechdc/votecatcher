@@ -1,4 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+
+import { test } from "./fixtures";
 
 test.describe("Campaign-Scoped Navigation", () => {
 	test("Scenario 1: Navigate to campaign dashboard", async ({ page }) => {
@@ -146,6 +148,34 @@ test.describe("Campaign-Scoped Navigation", () => {
 		await page.goto("/workspace/demo");
 
 		await expect(page.locator("h1").first()).toBeVisible();
+	});
+});
+
+test.describe("Dashboard SPA Navigation", () => {
+	test("Scenario 7: Quick action navigates client-side without a reload", async ({
+		page,
+		seededCampaign,
+	}) => {
+		await page.goto(`/workspace/${seededCampaign.id}`);
+		await expect(page.locator("h1").first()).toBeVisible();
+
+		// marker set before the click; a full page reload would wipe it
+		await page.evaluate(() => {
+			(window as unknown as { __spaNavMarker?: string }).__spaNavMarker = "set-before-click";
+		});
+
+		const uploadFilesButton = page.getByRole("button", { name: /upload files/i });
+		await expect(uploadFilesButton).toBeVisible();
+		await uploadFilesButton.click();
+
+		const escapedId = seededCampaign.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		await page.waitForURL(new RegExp(`/workspace/${escapedId}/upload$`), { timeout: 5000 });
+		await expect(page.locator("h1").first()).toBeVisible();
+
+		const marker = await page.evaluate(() => {
+			return (window as unknown as { __spaNavMarker?: string }).__spaNavMarker;
+		});
+		expect(marker).toBe("set-before-click");
 	});
 });
 
