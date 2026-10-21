@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { ArrowRight, Users, Shield, Flag } from 'lucide-svelte';
-	import DevFlags from '$lib/components/DevFlags.svelte';
-	import { getCTADestination, IS_DEV } from '$lib/utils/mode';
+	import { getCTADestination } from '$lib/utils/mode';
 
 	const homeLink = $derived(getCTADestination());
 </script>
@@ -91,9 +90,4 @@
 			</div>
 		</div>
 	</div>
-
-	{#if IS_DEV}
-		<!-- Dev-only UI to toggle flags in real time -->
-		<DevFlags />
-	{/if}
 </div>

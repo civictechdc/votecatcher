@@ -3,7 +3,7 @@ import { featureFlags } from "$lib/config/featureFlags";
 
 /**
  * Handlers used by the client-side MSW worker.
- * Driven by feature flags (VITE_FEATURES or localStorage vc:flags via DevFlags).
+ * Driven by feature flags (VITE_FEATURES seed + the vc:flags localStorage set, managed from the dev-only Flags pill mounted in the (app) layout).
  *
  * Flags used:
  * - mockApi : enable the worker
@@ -24,9 +24,9 @@ async function jsonSafe(request: Request) {
 }
 
 export const handlers = [
-	// session endpoint used by server-side load and client code
+	// session endpoint (client-side only; server-side load uses the SvelteKit dev route)
 	http.get("/api/session", async () => {
-		// Dev override: allow local toggles
+		// Dev override precedence: loggedOut wins over loggedIn.
 		if (featureFlags.isEnabled("mock:session:loggedOut")) {
 			return new HttpResponse(JSON.stringify({ error: "Not authenticated" }), {
 				status: 401,
@@ -44,7 +44,7 @@ export const handlers = [
 				},
 			);
 		}
-		// Default: pass-through to real network (MSW config onUnhandledRequest: 'bypass')
+		// Default (no session flag set): canned 401 — unauthenticated. Unhandled requests bypass to the network per initMocks (init.ts).
 		return new HttpResponse(JSON.stringify({ error: "Not authenticated" }), {
 			status: 401,
 			headers: { "Content-Type": "application/json" },
@@ -65,7 +65,6 @@ export const handlers = [
 			});
 		}
 
-		// Simulate small latency if requested
 		if (featureFlags.isEnabled("mock:createCampaign:delay")) {
 			await new Promise((r) => setTimeout(r, 600));
 		}
@@ -80,7 +79,6 @@ export const handlers = [
 	http.post("/api/create-campaign", async ({ request }) => {
 		const body = await jsonSafe(request);
 
-		// explicit mocked failures/overrides
 		if (featureFlags.isEnabled("mock:createCampaign:missingFields")) {
 			return new HttpResponse(JSON.stringify({ error: "Missing name or year (mocked)" }), {
 				status: 400,
@@ -99,7 +97,7 @@ export const handlers = [
 			});
 		}
 
-		// Normal validation to mirror your server real behavior
+		// Mirror the real backend's validation.
 		if (
 			!(body as Record<string, unknown>)["name"] ||
 			!("year" in (body as Record<string, unknown>)) ||
@@ -112,7 +110,7 @@ export const handlers = [
 			});
 		}
 
-		// Return an id similar to your server route
+		// Return an id shaped like the real route's.
 		return new HttpResponse(JSON.stringify({ id: "campaign_abc123" }), {
 			status: 200,
 			headers: { "Content-Type": "application/json" },
