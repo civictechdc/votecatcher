@@ -60,9 +60,9 @@
 		"@testing-library/svelte": "^5.4.2",
 		"@types/jsdom": "^28.0.3",
 		"@types/node": "^25.9.9",
-		"@vitest/browser": "^4.1.11",
-		"@vitest/browser-playwright": "^4.1.11",
-		"@vitest/coverage-v8": "^4.1.11",
+		"@vitest/browser": "^4.1.12",
+		"@vitest/browser-playwright": "^4.1.12",
+		"@vitest/coverage-v8": "^4.1.12",
 		"archunit": "^2.5.4",
 		"better-auth": "^1.7.8",
 		"drizzle-kit": "^0.31.11",
@@ -87,7 +87,7 @@
 		"typescript-eslint": "^8.71.2",
 		"vite": "^8.3.4",
 		"vite-plugin-oxlint": "^2.2.1",
-		"vitest": "^4.1.11"
+		"vitest": "^4.1.12"
 	},
 	"overrides": {
 		"basic-ftp": ">=5.3.1",
@@ -95,7 +95,7 @@
 		"cookie": ">=0.7.0 <2.0.0",
 		"cross-spawn": ">=7.0.5",
 		"esbuild": ">=0.28.1",
-		"follow-redirects": ">=1.16.0",
+		"follow-redirects": ">=1.16.1",
 		"form-data": ">=4.0.6",
 		"glob": ">=10.5.0",
 		"ip-address": ">=10.3.0",
