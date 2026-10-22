@@ -187,59 +187,78 @@ test.describe("Job Status Event UI Update", () => {
 		expect(handlerResult.handled).toBeTruthy();
 	});
 
-	test("SSE job status change updates job list in real-time", async ({
+	test("SSE job status event reaches the page in real-time", async ({
 		page,
 		apiContext,
-		seededCampaign,
+		campaignWithJobInputs,
 	}) => {
-		await page.goto(`/workspace/${seededCampaign.id}/jobs`);
-		await page.waitForLoadState("domcontentloaded");
+		// Seeding uploads the sample petition PDF and can exceed the 30s default —
+		// the timeout is handled by the campaignWithJobInputs fixture via testInfo.
+		const sseResponsePromise = page.waitForResponse(
+			(response) =>
+				response.url().includes("/events/campaigns/") && response.url().includes("/stream"),
+		);
+
+		await page.goto(`/workspace/${campaignWithJobInputs.id}/jobs`);
+
+		const sseResponse = await sseResponsePromise;
+		expect(sseResponse.ok(), `SSE stream status: ${sseResponse.status()}`).toBeTruthy();
+
+		// Register the in-page listener without awaiting it: it resolves on the
+		// first job status event or after the listener window expires. The worker
+		// polls NOT_STARTED jobs and publishes JobStatusEvent as processing begins;
+		// job creation itself publishes no event.
+		const listenerPromise = page.evaluate(() => {
+			return new Promise<{ job_id: number; status: string } | null>((resolve) => {
+				const eventListener = (event: CustomEvent) => {
+					document.removeEventListener("votecatcher:job:status", eventListener as EventListener);
+					resolve({
+						job_id: event.detail?.job_id,
+						status: event.detail?.status,
+					});
+				};
+				document.addEventListener("votecatcher:job:status", eventListener as EventListener);
+				setTimeout(() => {
+					document.removeEventListener("votecatcher:job:status", eventListener as EventListener);
+					resolve(null);
+				}, 10000);
+			});
+		});
 
 		const createResponse = await apiContext.post("/api/jobs", {
 			data: {
-				campaign_id: seededCampaign.id,
+				campaign_id: campaignWithJobInputs.id,
 				provider_name: "test-provider",
 				provider_model: "test-model",
 				force_reprocess: false,
 			},
 		});
 
-		expect(createResponse.ok()).toBeTruthy();
-		const job = await createResponse.json();
-		const jobId = job.job_id;
+		// Read the failure body before asserting so a bad create surfaces with
+		// its payload instead of only a status code.
+		const createBody = await createResponse.text();
+		expect(
+			createResponse.ok(),
+			`POST /api/jobs failed: ${createResponse.status()} ${createBody}`,
+		).toBeTruthy();
+		const job = JSON.parse(createBody);
+		const jobId = job.jobId;
 
-		await page.waitForTimeout(1000);
+		const event = await listenerPromise;
 
-		const eventReceived = await page.evaluate(
-			({ testJobId }) => {
-				return new Promise<{ received: boolean; status: string | null }>((resolve) => {
-					let eventReceived = false;
-					let receivedStatus: string | null = null;
-
-					const eventListener = (event: CustomEvent) => {
-						if (event.detail.job_id === testJobId) {
-							eventReceived = true;
-							receivedStatus = event.detail.status;
-							document.removeEventListener(
-								"votecatcher:job:status",
-								eventListener as EventListener,
-							);
-							resolve({ received: eventReceived, status: receivedStatus });
-						}
-					};
-
-					document.addEventListener("votecatcher:job:status", eventListener as EventListener);
-
-					setTimeout(() => {
-						document.removeEventListener("votecatcher:job:status", eventListener as EventListener);
-						resolve({ received: eventReceived, status: receivedStatus });
-					}, 5000);
-				});
-			},
-			{ testJobId: jobId },
-		);
-
-		expect(eventReceived.received).toBeTruthy();
-		expect(eventReceived.status).toBeTruthy();
+		if (!event) {
+			// Include the server's view of the job so a failure shows whether the
+			// poller ever picked it up.
+			const jobStatus = await apiContext.get(`/api/jobs/${jobId}`);
+			const jobStatusBody = jobStatus.ok() ? await jobStatus.text() : `${jobStatus.status()}`;
+			throw new Error(
+				`No votecatcher:job:status event observed within the listener window; job status: ${jobStatusBody}`,
+			);
+		}
+		expect(event.job_id).toBe(jobId);
+		// The first event for a fresh NOT_STARTED job is deterministically an
+		// OCR_* transition, though the job may have progressed further by the
+		// time we observe the event.
+		expect(event.status).toMatch(/^OCR_/);
 	});
 });

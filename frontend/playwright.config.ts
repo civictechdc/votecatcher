@@ -5,7 +5,9 @@ export default defineConfig({
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
-	workers: process.env.CI ? 1 : undefined,
+	// The vite dev server compiles modules on demand; parallel workers racing
+	// the same cold compile graph intermittently break hydration.
+	workers: 1,
 	reporter: "html",
 	use: {
 		baseURL: "http://localhost:5173",
@@ -25,6 +27,7 @@ export default defineConfig({
 			reuseExistingServer: !process.env.CI,
 			timeout: 120000,
 			env: {
+				FEATURE_DEMO_MODE: "1",
 				FEATURE_ENABLE_SIMULATION: "1",
 			},
 		},

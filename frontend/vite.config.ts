@@ -6,6 +6,7 @@ import { visualizer } from "rollup-plugin-visualizer";
 import path from "path";
 
 export default defineConfig({
+	envPrefix: ["VITE_", "PUBLIC_"],
 	plugins: [
 		sveltekit(),
 		tailwindcss(),
