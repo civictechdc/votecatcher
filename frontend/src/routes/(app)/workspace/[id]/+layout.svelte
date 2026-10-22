@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { get } from 'svelte/store';
 	import { campaigns } from '$lib/stores/campaigns';
 	import { events } from '$lib/stores/events';
 	import { jobs } from '$lib/stores/jobs';
@@ -27,7 +28,8 @@
 	}
 
 	$effect(() => {
-		if ($campaigns.campaigns.length === 0) {
+		const state = get(campaigns);
+		if (state.campaigns.length === 0 && !state.loading) {
 			campaigns.fetchAll();
 		}
 	});
