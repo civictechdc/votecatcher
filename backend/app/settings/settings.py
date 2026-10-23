@@ -106,6 +106,10 @@ class Settings(BaseSettings):
 
     matching_engine: str = Field(default="harmonic", alias="MATCHING_ENGINE")
 
+    pdf_conversion_timeout: float = Field(
+        default=120.0, alias="PDF_CONVERSION_TIMEOUT", ge=1, le=3600
+    )
+
     environment: str = Field(default="development", alias="ENVIRONMENT")
     cors_origins: str = Field(default="", alias="CORS_ORIGINS")
 

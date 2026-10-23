@@ -58,6 +58,20 @@ class TestValidateCampaignRegion:
         assert result.campaign_id == campaign.id
         assert result.region_id == region.id
 
+    def test_ensure_valid_campaign_uuid_malformed_rejected(self):
+        """Scenario: Malformed campaign ID raises FileValidationError."""
+        from app.files.file_service import FileValidationError
+        from app.services.upload_service import UploadService
+
+        with pytest.raises(FileValidationError, match="Invalid campaign ID"):
+            UploadService.ensure_valid_campaign_uuid("not-a-campaign-id")
+
+    def test_ensure_valid_campaign_uuid_well_formed_passes(self):
+        """Scenario: Well-formed campaign ID does not raise."""
+        from app.services.upload_service import UploadService
+
+        UploadService.ensure_valid_campaign_uuid(str(uuid4()))
+
     def test_raises_not_found_when_campaign_missing(self, session):
         """Scenario: Campaign ID does not exist."""
         from app.services.upload_service import UploadService

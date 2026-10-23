@@ -3,9 +3,20 @@
 import io
 import uuid
 
+from unittest.mock import MagicMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 
 from app.data.database.model.schema import Campaign
+
+
+@pytest.fixture(autouse=True)
+def tmp_upload_dir(tmp_path, monkeypatch):
+    """Route all upload disk writes into tmp_path, not backend/uploads."""
+    upload_dir = tmp_path / "uploads"
+    monkeypatch.setenv("UPLOAD_DIR", str(upload_dir))
+    return upload_dir
 
 
 class TestSetupStatusAPI:
@@ -72,7 +83,14 @@ class TestSetupStatusAPI:
         files = {"file": ("petition.pdf", io.BytesIO(pdf_content), "application/pdf")}
         data = {"campaign_id": str(test_campaign.id)}
 
-        upload_response = client.post("/api/upload/petition", files=files, data=data)
+        with patch("app.files.file_service.convert_from_path") as mock_convert:
+            mock_image = MagicMock()
+            mock_image.size = (1000, 1500)
+            mock_convert.return_value = [mock_image]
+
+            upload_response = client.post(
+                "/api/upload/petition", files=files, data=data
+            )
         assert upload_response.status_code == 201
 
         status_response = client.get(f"/api/campaigns/{test_campaign.id}/setup-status")

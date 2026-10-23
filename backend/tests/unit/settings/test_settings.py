@@ -72,6 +72,26 @@ class TestSettings:
         )
         assert settings.supabase.region == "aws-0-eu-west-1"
 
+    def test_pdf_conversion_timeout_constraints(self):
+        """pdf_conversion_timeout rejects zero, negative, fractional, and oversized values."""
+        from pydantic import ValidationError
+
+        from app.settings.settings import Settings
+
+        with pytest.raises(ValidationError):
+            Settings(PDF_CONVERSION_TIMEOUT="0")
+        with pytest.raises(ValidationError):
+            Settings(PDF_CONVERSION_TIMEOUT="0.5")
+        with pytest.raises(ValidationError):
+            Settings(PDF_CONVERSION_TIMEOUT="-5")
+        with pytest.raises(ValidationError):
+            Settings(PDF_CONVERSION_TIMEOUT="3601")
+
+    def test_pdf_conversion_timeout_default(self):
+        from app.settings.settings import Settings
+
+        assert Settings().pdf_conversion_timeout == 120.0
+
 
 class TestSettingsConsolidatedFields:
     """Tests for fields migrated from AppSettings (R13)."""

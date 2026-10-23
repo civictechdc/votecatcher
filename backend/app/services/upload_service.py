@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import structlog
 
 from app.data.database.model.schema import Campaign, Region
-from app.files.file_service import FileService
+from app.files.file_service import FileService, FileValidationError
 
 if TYPE_CHECKING:
     from fastapi import UploadFile
@@ -41,7 +41,16 @@ class UploadService:
         self.session = session
         self._file_service = FileService(session)
 
+    @staticmethod
+    def ensure_valid_campaign_uuid(campaign_id: str) -> None:
+        """Reject malformed campaign IDs as a client error (400), not 404."""
+        try:
+            uuid.UUID(campaign_id.replace("-", ""))
+        except ValueError as e:
+            raise FileValidationError("Invalid campaign ID") from e
+
     def validate_campaign_region(self, campaign_id: str) -> CampaignValidationResult:
+        self.ensure_valid_campaign_uuid(campaign_id)
         campaign_uuid = uuid.UUID(campaign_id.replace("-", ""))
         campaign = self.session.get(Campaign, campaign_uuid)
         if not campaign:
@@ -82,10 +91,17 @@ class UploadService:
     async def process_petition_upload(
         self, campaign_id: str, file: "UploadFile", region: str = "DC"
     ) -> PetitionUploadResult:
+        self.ensure_valid_campaign_uuid(campaign_id)
+        self.validate_campaign_region(campaign_id)
+
+        if region.upper() != "DC":
+            raise FileValidationError(
+                "Unsupported region. Only DC is currently supported."
+            )
+
         scan_id, crop_count = await self._file_service.process_petition_upload(
             file=file,
             campaign_id=campaign_id,
-            region=region,
         )
 
         logger.info(
