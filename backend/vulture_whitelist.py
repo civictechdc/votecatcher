@@ -28,3 +28,6 @@ _.__context  # noqa: F821 - app/settings/providers/database_config.py:33
 
 # Pydantic settings_customise_sources — param required by override signature
 _.dotenv_settings  # noqa: F821 - app/settings/settings.py:68
+
+# FileRepository.get_cropped_assets — protocol param required by the interface signature
+_.petition_scan_id  # noqa: F821 - app/files/file_repository.py:82
