@@ -156,6 +156,7 @@ jobs:
 
       - name: Update coverage badge
         if: always() && steps.test.outcome == 'success' && github.ref == 'refs/heads/main'
+        continue-on-error: true
         run: |
           COVERAGE=$(python3 -c "
           import xml.etree.ElementTree as ET
@@ -174,7 +175,19 @@ jobs:
           cp /tmp/coverage.json coverage.json
           git add coverage.json
           git commit -m "update coverage badge: ${COVERAGE}%" --allow-empty
-          git push origin badges --force
+          PUSH_OK=0
+          for ATTEMPT in 1 2 3; do
+            if git push origin badges --force; then
+              PUSH_OK=1
+              break
+            fi
+            echo "::warning::Badge push attempt ${ATTEMPT} of 3 failed; retrying"
+            sleep 15
+          done
+          if [ "$PUSH_OK" -ne 1 ]; then
+            echo "::warning::Badge push failed after 3 attempts; coverage badge not updated (cosmetic, non-blocking)"
+            exit 0
+          fi
 
       - name: Backend failure summary
         if: failure()
