@@ -1,6 +1,7 @@
 """File service for handling petition PDFs and voter lists."""
 
 import asyncio
+import contextlib
 import hashlib
 import io
 import os
@@ -413,17 +414,14 @@ class FileService:
             # Never leave disk residue from a rejected/cancelled upload.
             # BaseException (not Exception) covers asyncio.CancelledError from
             # client disconnects.
-            try:
+            with contextlib.suppress(OSError):
                 file_path.unlink(missing_ok=True)
-            except OSError:
-                pass
             for crop_path in crop_paths:
                 # Guard each unlink so one failure cannot mask the original
-                # exception or abort the remaining cleanup.
-                try:
+                # exception or abort the remaining cleanup (a failing unlink
+                # must not mask the original error or abort the loop).
+                with contextlib.suppress(OSError):
                     crop_path.unlink(missing_ok=True)
-                except OSError:
-                    pass
             raise
 
         return (scan_id, crop_count)
