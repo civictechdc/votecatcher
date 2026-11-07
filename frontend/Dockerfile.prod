@@ -24,6 +24,13 @@ RUN bun run build
 FROM node:24.22.1-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea AS runner
 WORKDIR /app
 
+# Digest-pinned runner base never picks up distro fixes; bake trixie security/point
+# updates at build time so all installed distro packages get patched versions.
+# (Only this stage's OS layer ships: deps/build stages contribute artifacts via COPY --from.)
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
