@@ -1,13 +1,26 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
-	import { campaignResults, sortResults, renderThumbnailCell, renderPredictionsTable, renderExpandedCropImage, toggleAccordion, escapeHtml, getConfidenceBadgeClass, getScanPageUrl, type CampaignResultResponse } from '$lib/stores/campaign-results';
-	import { campaigns } from '$lib/stores/campaigns';
-	import { Table, LoadingState, Button, ErrorDisplay } from '$lib/components/ui';
-	import CropLightbox from '$lib/components/results/CropLightbox.svelte';
-	import type { SortConfig } from '$lib/components/ui/Table.svelte';
+	import { page } from '$app/state';
 
-	let campaignId = $derived($page.params.id ?? '');
+	import {
+		campaignResults,
+		sortResults,
+		renderThumbnailCell,
+		renderPredictionsTable,
+		renderExpandedCropImage,
+		toggleAccordion,
+		escapeHtml,
+		getConfidenceBadgeClass,
+		getScanPageUrl,
+		type CampaignResultResponse
+	} from '#lib/stores/campaign-results.ts';
+
+	import { campaigns } from '#lib/stores/campaigns.ts';
+	import { Table, LoadingState, Button, ErrorDisplay } from '#lib/components/ui/index.ts';
+	import CropLightbox from '#lib/components/results/CropLightbox.svelte';
+	import type { SortConfig } from '#lib/components/ui/Table.svelte';
+
+	let campaignId = $derived(page.params.id ?? '');
 	let sortConfig = $state<SortConfig | null>(null);
 	let expandedRowId = $state<number | null>(null);
 	let lightboxUrl = $state<string | null>(null);
@@ -32,7 +45,7 @@
 	});
 
 	const sortedResults = $derived(sortResults($campaignResults.results, sortConfig));
-	const resultById = $derived(new Map(sortedResults.map(r => [r.ocrResultId, r])));
+	const resultById = $derived(new Map(sortedResults.map((r) => [r.ocrResultId, r])));
 
 	function getTableRows(resultList: CampaignResultResponse[]) {
 		return resultList.map((result) => {
@@ -91,7 +104,7 @@
 
 	let shownCount = $derived($campaignResults.results.length);
 
-	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
+	const campaign = $derived($campaigns.campaigns.find((c) => String(c.id) === String(campaignId)));
 
 	function getExpandedResult(rowId: string | number): CampaignResultResponse | undefined {
 		return resultById.get(Number(rowId));
@@ -155,7 +168,7 @@
 						rows={getTableRows(sortedResults)}
 						sortable={true}
 						sortConfig={sortConfig}
-						onSortChange={(config) => (sortConfig = config)}
+						onSortChange={(config) => sortConfig = config}
 						onRowClick={handleRowClick}
 						expandedRowId={expandedRowId}
 						emptyMessage="No results to display"
@@ -197,7 +210,20 @@
 										class="mt-3 text-xs text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 py-1.5 px-3 hover:bg-blue-50 rounded transition-colors"
 										onclick={() => toggleSourcePanel(result.ocrResultId)}
 									>
-										<svg class="w-3.5 h-3.5 transition-transform {sourcePanelOpen === result.ocrResultId ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+										<svg
+											class="w-3.5 h-3.5 transition-transform {sourcePanelOpen === result.ocrResultId ? 'rotate-180' : ''}"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M19 9l-7 7-7-7"
+											></path>
+										</svg>
+
 										{sourcePanelOpen === result.ocrResultId ? 'Hide source page' : 'Show on source page'}
 									</button>
 									<div class="source-panel {sourcePanelOpen === result.ocrResultId ? 'expanded' : ''}" >
@@ -208,8 +234,25 @@
 														<h4 class="text-xs font-semibold text-slate-500 uppercase">Source Page</h4>
 														<p class="text-xs text-slate-400">{result.documentName || 'Document'} · Page {result.pageNumber}</p>
 													</div>
-													<button class="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1" onclick={() => toggleSourcePanel(result.ocrResultId)}>
-														<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+
+													<button
+														class="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1"
+														onclick={() => toggleSourcePanel(result.ocrResultId)}
+													>
+														<svg
+															class="w-3.5 h-3.5"
+															fill="none"
+															stroke="currentColor"
+															viewBox="0 0 24 24"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M5 15l7-7 7 7"
+															></path>
+														</svg>
+
 														Collapse
 													</button>
 												</div>
@@ -221,17 +264,17 @@
 														</div>
 													{:else}
 													<div class="bg-white shadow-md rounded relative inline-block cursor-pointer" style="max-width: 400px;" onclick={() => { sourceLightboxUrl = getScanPageUrl(result.scanId!, result.pageNumber!); }}>
-														<img
-															src={getScanPageUrl(result.scanId!, result.pageNumber!)}
-															alt="Source page {result.pageNumber} of {result.documentName}"
-															class="rounded w-full"
+															<img
+																src={getScanPageUrl(result.scanId!, result.pageNumber!)}
+																alt="Source page {result.pageNumber} of {result.documentName}"
+																class="rounded w-full"
 															onerror={() => { sourcePageErrors = { ...sourcePageErrors, [result.ocrResultId]: 'Failed to load source page image' }; }}
-														/>
-														<div
-															class="absolute left-0 right-0 pointer-events-none"
-															style="background: rgba(59, 130, 246, 0.15); border-top: 2px solid rgba(59, 130, 246, 0.8); border-bottom: 2px solid rgba(59, 130, 246, 0.8); {getSourcePageStyle(getHighlightCoords(result)!)}"
-														></div>
-													</div>
+															/>
+															<div
+																class="absolute left-0 right-0 pointer-events-none"
+																style="background: rgba(59, 130, 246, 0.15); border-top: 2px solid rgba(59, 130, 246, 0.8); border-bottom: 2px solid rgba(59, 130, 246, 0.8); {getSourcePageStyle(getHighlightCoords(result)!)}"
+															></div>
+														</div>
 													{/if}
 												</div>
 											</div>

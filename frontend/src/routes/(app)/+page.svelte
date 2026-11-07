@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ArrowRight, Users, Shield, Flag } from 'lucide-svelte';
-	import { getCTADestination } from '$lib/utils/mode';
+	import { getCTADestination } from '#lib/utils/mode.ts';
 
 	const homeLink = $derived(getCTADestination());
 </script>

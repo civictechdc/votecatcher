@@ -2,11 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
-	import { page } from '$app/stores';
-	import { campaigns } from '$lib/stores/campaigns';
-	import { jobs } from '$lib/stores/jobs';
-	import { Button } from '$lib/components/ui';
-	import { API_BASE_URL } from '$lib/api/base-url';
+	import { page } from '$app/state';
+	import { campaigns } from '#lib/stores/campaigns.ts';
+	import { jobs } from '#lib/stores/jobs.ts';
+	import { Button } from '#lib/components/ui/index.ts';
+	import { API_BASE_URL } from '#lib/api/base-url.ts';
 	const API_BASE = `${API_BASE_URL}/api`;
 
 	interface ProviderConfig {
@@ -28,7 +28,7 @@
 		total: number;
 	}
 
-	let campaignId = $derived($page.params.id);
+	let campaignId = $derived(page.params.id);
 
 	let scans = $state<PetitionScan[]>([]);
 	let providers = $state<ProviderConfig[]>([]);
@@ -41,7 +41,7 @@
 	let submitting = $state(false);
 	let error = $state<string | null>(null);
 
-	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
+	const campaign = $derived($campaigns.campaigns.find((c) => String(c.id) === String(campaignId)));
 
 	async function fetchScans() {
 		try {
@@ -63,13 +63,13 @@
 			const response = await fetch(`${API_BASE}/settings/providers`);
 			if (response.ok) {
 				providers = await response.json();
-				const configured = providers.find(p => p.is_configured);
+				const configured = providers.find((p) => p.is_configured);
 				if (configured) {
 					formData.providerName = configured.provider;
 					formData.providerModel = configured.model;
 				} else if (providers.length > 0) {
-					formData.providerName = providers[0]!.provider;
-					formData.providerModel = providers[0]!.model;
+					formData.providerName = (providers[0]!).provider;
+					formData.providerModel = (providers[0]!).model;
 				}
 			} else {
 				error = 'Failed to load providers';
@@ -182,99 +182,99 @@
 			<div class="rounded-md bg-red-50 p-4 text-red-800">
 				{error}
 			</div>
-		{/if}
+	{/if}
 
-		<div class="rounded-lg border border-slate-200 p-6">
-			<h2 class="text-lg font-semibold text-slate-900 mb-4">File Selection</h2>
+	<div class="rounded-lg border border-slate-200 p-6">
+		<h2 class="text-lg font-semibold text-slate-900 mb-4">File Selection</h2>
 
-			{#if scans.length === 0}
-				<p class="text-slate-500 text-sm">No petition scans uploaded yet.</p>
-				<p class="mt-2 text-sm">
+		{#if scans.length === 0}
+			<p class="text-slate-500 text-sm">No petition scans uploaded yet.</p>
+			<p class="mt-2 text-sm">
 					<a href="/workspace/{campaignId}/upload" class="text-blue-600 hover:text-blue-800 underline">
 						Upload petition files first
 					</a>
-				</p>
-			{:else}
-				<div class="space-y-3">
-					{#each scans as scan}
+			</p>
+		{:else}
+			<div class="space-y-3">
+				{#each scans as scan}
 						<label class="flex items-center gap-3 p-3 rounded-md border border-slate-200 hover:bg-slate-50 cursor-pointer">
-							<input
-								type="checkbox"
-								checked={selectedScans.has(scan.id)}
-								onchange={() => toggleScan(scan.id)}
-								class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-							/>
-							<div class="flex-1">
-								<p class="font-medium text-slate-900">{scan.originalFilename}</p>
+						<input
+							type="checkbox"
+							checked={selectedScans.has(scan.id)}
+							onchange={() => toggleScan(scan.id)}
+							class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+						/>
+						<div class="flex-1">
+							<p class="font-medium text-slate-900">{scan.originalFilename}</p>
 								<p class="text-sm text-slate-500">
 									{scan.pageCount ?? '?'} pages - Uploaded {formatDate(scan.uploadedAt)}
 								</p>
-							</div>
-						</label>
-					{/each}
-				</div>
+						</div>
+					</label>
+				{/each}
+			</div>
 
 				<p class="text-sm text-slate-500 mt-4">
 					{scans.length} scan(s) available. {selectedScans.size} selected.
 				</p>
-			{/if}
-		</div>
+		{/if}
+	</div>
 
-		<div class="rounded-lg border border-slate-200 p-6">
-			<h2 class="text-lg font-semibold text-slate-900 mb-4">Provider Selection</h2>
+	<div class="rounded-lg border border-slate-200 p-6">
+		<h2 class="text-lg font-semibold text-slate-900 mb-4">Provider Selection</h2>
 
-			<div class="space-y-3">
-				<div>
+		<div class="space-y-3">
+			<div>
 					<label for="provider" class="block text-sm font-medium text-slate-700 mb-1">
 						LLM Provider
 					</label>
-					<select
-						id="provider"
-						bind:value={formData.providerName}
-						class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
-					>
-						{#each providers as provider}
-							<option value={provider.provider}>
-								{provider.provider.charAt(0).toUpperCase() + provider.provider.slice(1)}
+				<select
+					id="provider"
+					bind:value={formData.providerName}
+					class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+				>
+					{#each providers as provider}
+						<option value={provider.provider}>
+							{provider.provider.charAt(0).toUpperCase() + provider.provider.slice(1)}
 								{#if !provider.is_configured}(not configured){/if}
-							</option>
-						{/each}
-					</select>
-				</div>
+						</option>
+					{/each}
+				</select>
+			</div>
 
-				<div>
+			<div>
 					<label for="model" class="block text-sm font-medium text-slate-700 mb-1">
 						Model
 					</label>
-					<select
-						id="model"
-						bind:value={formData.providerModel}
-						class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
-					>
-						{#each providers as provider}
-							<option value={provider.model}>{provider.model}</option>
-						{/each}
-					</select>
-				</div>
+				<select
+					id="model"
+					bind:value={formData.providerModel}
+					class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+				>
+					{#each providers as provider}
+						<option value={provider.model}>{provider.model}</option>
+					{/each}
+				</select>
+			</div>
 
-				<div class="flex items-start gap-3 pt-2">
-					<input
-						type="checkbox"
-						id="forceReprocess"
-						bind:checked={formData.forceReprocess}
-						class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-					/>
-					<div>
+			<div class="flex items-start gap-3 pt-2">
+				<input
+					type="checkbox"
+					id="forceReprocess"
+					bind:checked={formData.forceReprocess}
+					class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+				/>
+				<div>
 						<label for="forceReprocess" class="text-sm font-medium text-slate-700 cursor-pointer">
 							Re-process all crops
 						</label>
 						<p class="text-xs text-slate-500">
 							When checked, will re-run OCR on all crops even if results already exist.
 						</p>
-					</div>
 				</div>
 			</div>
 		</div>
+	</div>
 
 		<div class="flex justify-end gap-3 pt-6 border-t border-slate-200">
 			<Button variant="secondary" text="Cancel" onclick={() => goto(`/workspace/${campaignId}/jobs`)} type="button" />

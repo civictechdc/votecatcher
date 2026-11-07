@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
-	import { jobs } from '$lib/stores/jobs';
-	import { campaigns } from '$lib/stores/campaigns';
-	import { Button, Table, Modal } from '$lib/components/ui';
-	import type { JobResponse } from '$lib/api/generated';
-	import type { SortConfig } from '$lib/components/ui/Table.svelte';
-	import { API_BASE_URL } from '$lib/api/base-url';
+	import { page } from '$app/state';
+	import { jobs } from '#lib/stores/jobs.ts';
+	import { campaigns } from '#lib/stores/campaigns.ts';
+	import { Button, Table, Modal } from '#lib/components/ui/index.ts';
+	import type { JobResponse } from '#lib/api/generated/index.ts';
+	import type { SortConfig } from '#lib/components/ui/Table.svelte';
+	import { API_BASE_URL } from '#lib/api/base-url.ts';
 	const API_BASE = `${API_BASE_URL}/api`;
 	interface ProviderConfig {
 		provider: string;
@@ -17,7 +17,7 @@
 
 	type StatusFilter = 'all' | 'not_started' | 'running' | 'completed' | 'failed';
 
-	let campaignId = $derived($page.params.id);
+	let campaignId = $derived(page.params.id);
 
 	let showCreateModal = $state(false);
 	let showCancelModal = $state(false);
@@ -50,7 +50,7 @@
 	};
 
 	function formatStatus(status: string): string {
-		return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+		return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 	}
 
 	function formatDate(date: Date | string | null | undefined): string {
@@ -121,13 +121,13 @@
 			const response = await fetch(`${API_BASE}/settings/providers`);
 			if (response.ok) {
 				providers = await response.json();
-				const configured = providers.find(p => p.is_configured);
+				const configured = providers.find((p) => p.is_configured);
 				if (configured) {
 					formData.providerName = configured.provider;
 					formData.providerModel = configured.model;
 				} else if (providers.length > 0) {
-					formData.providerName = providers[0]!.provider;
-					formData.providerModel = providers[0]!.model;
+					formData.providerName = (providers[0]!).provider;
+					formData.providerModel = (providers[0]!).model;
 				}
 			}
 		} catch (error) {
@@ -156,18 +156,18 @@
 		checkScans();
 	});
 
-	const campaignJobs = $derived($jobs.jobs.filter(job => String(job.campaignId) === String(campaignId)));
-	const filteredJobs = $derived(campaignJobs.filter(job => statusMatchesFilter(job.status, statusFilter)));
+	const campaignJobs = $derived($jobs.jobs.filter((job) => String(job.campaignId) === String(campaignId)));
+	const filteredJobs = $derived(campaignJobs.filter((job) => statusMatchesFilter(job.status, statusFilter)));
 	const sortedJobs = $derived(sortJobs(filteredJobs, sortConfig));
 
 	const availableModels = $derived(() => {
-		const provider = providers.find(p => p.provider === formData.providerName);
+		const provider = providers.find((p) => p.provider === formData.providerName);
 		if (!provider) return [];
 		return [{ name: provider.model, configured: provider.is_configured }];
 	});
 
 	function handleProviderChange() {
-		const provider = providers.find(p => p.provider === formData.providerName);
+		const provider = providers.find((p) => p.provider === formData.providerName);
 		if (provider) {
 			formData.providerModel = provider.model;
 		}
@@ -204,7 +204,7 @@
 		if (!campaignId) return;
 		try {
 			await jobs.create({
-				campaignId: campaignId,
+				campaignId,
 				providerName: formData.providerName || undefined,
 				providerModel: formData.providerModel || undefined,
 				forceReprocess: formData.forceReprocess
@@ -221,7 +221,7 @@
 		showCreateModal = true;
 	}
 
-	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
+	const campaign = $derived($campaigns.campaigns.find((c) => String(c.id) === String(campaignId)));
 </script>
 
 <svelte:head>
@@ -247,8 +247,16 @@
 	{#if hasScans === false}
 		<div class="rounded-md bg-amber-50 p-4">
 			<div class="flex">
-				<svg class="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
-					<path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+				<svg
+					class="h-5 w-5 text-amber-400"
+					viewBox="0 0 20 20"
+					fill="currentColor"
+				>
+					<path
+						fill-rule="evenodd"
+						d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+						clip-rule="evenodd"
+					></path>
 				</svg>
 				<div class="ml-3">
 					<h3 class="text-sm font-medium text-amber-800">No uploads yet</h3>
@@ -276,9 +284,22 @@
 					<option value="completed">Completed</option>
 					<option value="failed">Failed</option>
 				</select>
-				<span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500">
-					<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+
+				<span
+					class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500"
+				>
+					<svg
+						class="h-4 w-4"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M19 9l-7 7-7-7"
+						></path>
 					</svg>
 				</span>
 			</div>
@@ -295,13 +316,25 @@
 		rows={getTableRows(sortedJobs)}
 		sortable={true}
 		sortConfig={sortConfig}
-		onSortChange={(config) => (sortConfig = config)}
-		emptyMessage={statusFilter !== 'all' ? 'No jobs match the selected filter.' : 'No jobs yet for this campaign. Create your first job to get started.'}
+		onSortChange={(config) => sortConfig = config}
+		emptyMessage={statusFilter !== 'all'
+			? 'No jobs match the selected filter.'
+			: 'No jobs yet for this campaign. Create your first job to get started.'}
 	/>
 </div>
 
-<Modal open={showCreateModal} onClose={() => (showCreateModal = false)} title="Create Job">
-	<form onsubmit={(e) => { e.preventDefault(); handleCreate(); }} class="space-y-4">
+<Modal
+	open={showCreateModal}
+	onClose={() => showCreateModal = false}
+	title="Create Job"
+>
+	<form
+		onsubmit={(e) => {
+			e.preventDefault();
+			handleCreate();
+		}}
+		class="space-y-4"
+	>
 		{#if providersLoading}
 			<div class="text-slate-500">Loading providers...</div>
 		{:else if providers.length === 0}
@@ -363,8 +396,19 @@
 		{/if}
 
 		<div class="flex justify-end gap-3 pt-4">
-			<Button variant="secondary" text="Cancel" onclick={() => (showCreateModal = false)} type="button" />
-			<Button variant="primary" text="Create" type="submit" disabled={providers.length === 0} />
+			<Button
+				variant="secondary"
+				text="Cancel"
+				onclick={() => showCreateModal = false}
+				type="button"
+			/>
+
+			<Button
+				variant="primary"
+				text="Create"
+				type="submit"
+				disabled={providers.length === 0}
+			/>
 		</div>
 	</form>
 </Modal>

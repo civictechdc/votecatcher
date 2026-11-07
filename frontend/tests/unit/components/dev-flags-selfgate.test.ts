@@ -5,14 +5,14 @@ import DevFlags from "../../../src/lib/components/DevFlags.svelte";
 // Pinned self-gate (defense in depth): even if a page mounts DevFlags without its own gate, the component renders nothing outside dev.
 // This per-file factory overrides the repo-wide dev:true mock (tests/setup.ts) — the file factory wins.
 // A separate file is required because mode.ts snapshots `dev` into IS_DEV at import time, so the flip must land before any import, in a fresh module graph.
-vi.mock("$app/environment", () => ({
+vi.mock("$app/env", () => ({
 	browser: true,
 	dev: false,
-	prerendering: false,
-	SSR: false,
+	building: false,
+	version: "test",
 }));
 
-vi.mock("$lib/config/featureFlags", () => ({
+vi.mock("#lib/config/featureFlags.ts", () => ({
 	featureFlags: {
 		isEnabled: vi.fn(() => true),
 		toggleLocal: vi.fn(),

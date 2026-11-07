@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import type { MatchMetaDataResponse, MatchResultResponse } from "$lib/api/response-types";
-import type { LoadedSessionInfo } from "$lib/stores/demo";
-import type { CampaignResultResponse } from "$lib/stores/campaign-results";
-import type { MatchRow } from "$lib/workspace-types";
-import type { Session } from "$lib/stores/sessions";
-import type { VoterListStatus, PetitionsStatus } from "$lib/api/generated/models/Campaign";
+import type { MatchMetaDataResponse, MatchResultResponse } from "#lib/api/response-types.ts";
+import type { LoadedSessionInfo } from "#lib/stores/demo.ts";
+import type { CampaignResultResponse } from "#lib/stores/campaign-results.ts";
+import type { MatchRow } from "#lib/workspace-types.ts";
+import type { Session } from "#lib/stores/sessions.ts";
+import type { VoterListStatus, PetitionsStatus } from "#lib/api/generated/models/Campaign.ts";
 
 const _ak = "sk-" + "123";
 

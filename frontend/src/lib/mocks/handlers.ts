@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { featureFlags } from "$lib/config/featureFlags";
+import { featureFlags } from "#lib/config/featureFlags.ts";
 
 /**
  * Handlers used by the client-side MSW worker.

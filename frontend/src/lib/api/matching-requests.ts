@@ -1,4 +1,4 @@
-import { request } from "$lib/api/client";
+import { request } from "#lib/api/client.ts";
 import type { MatchResponse, MatchResultResponse } from "./response-types";
 
 export interface MatchMetaDataResponse {

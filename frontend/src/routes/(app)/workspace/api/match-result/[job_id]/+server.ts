@@ -1,6 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit";
-import { json } from "@sveltejs/kit";
-import { api, type ApiResult } from "$lib/api/client";
+import { api, type ApiResult } from "#lib/api/client.ts";
 import { error } from "@sveltejs/kit";
 import type {
 	MatchColumnsResponse,
@@ -8,13 +7,13 @@ import type {
 	MatchResultResponse,
 	MatchRowsResponse,
 	MatchRowEntryResponse,
-} from "$lib/api/response-types";
+} from "#lib/api/response-types.ts";
 import {
 	type MatchRow,
 	type MatchColumn,
 	type MatchResults,
 	MatchValueFormatKeys,
-} from "$lib/workspace-types";
+} from "#lib/workspace-types.ts";
 
 export const GET: RequestHandler = async ({ params }) => {
 	const jobId: string = params?.job_id as string;
@@ -31,7 +30,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		`Found ${matchResults.matchRecords.length} match results with ${matchResults.matchColumns.length} columns`,
 	);
 
-	return json({ matchResults }, { status: 200 });
+	return Response.json({ matchResults }, { status: 200 });
 };
 
 function transformToMatchResults(response: MatchResultResponse): MatchResults {

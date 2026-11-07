@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { settings } from '$lib/stores/settings';
-	import { Button, LoadingSpinner } from '$lib/components/ui';
+	import { settings } from '#lib/stores/settings.ts';
+	import { Button, LoadingSpinner } from '#lib/components/ui/index.ts';
 	import { Key, Flag, Cpu, CheckCircle, Trash2, AlertTriangle } from 'lucide-svelte';
-	import ProviderConfigCard from '$lib/components/ProviderConfigCard.svelte';
-	import { getAppMode } from '$lib/utils/mode';
-	import { API_BASE_URL } from '$lib/api/base-url';
+	import ProviderConfigCard from '#lib/components/ProviderConfigCard.svelte';
+	import { getAppMode } from '#lib/utils/mode.ts';
+	import { API_BASE_URL } from '#lib/api/base-url.ts';
 
 	const BASE_URL = `${API_BASE_URL}/api`;
 

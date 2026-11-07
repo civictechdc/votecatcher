@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { get } from "svelte/store";
 import { jobs, resetJobsStore } from "./jobs";
-import type { JobResponse } from "$lib/api/generated";
+import type { JobResponse } from "#lib/api/generated/index.ts";
 
 const mockListJobs = vi.fn();
 const mockCreateJob = vi.fn();
 const mockGetJob = vi.fn();
 const mockCancelJob = vi.fn();
 
-vi.mock("$lib/api/generated", () => {
+vi.mock("#lib/api/generated/index.ts", () => {
 	return {
 		JobsApi: class {
 			listJobsJobsGet = mockListJobs;

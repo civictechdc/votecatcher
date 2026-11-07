@@ -1,8 +1,8 @@
 <script lang="ts">
-	import MatchConfidenceIndicator from '$lib/components/MatchConfidenceIndicator.svelte';
-	import { mockMatchResponse, expectedConfidenceLevels } from '$lib/mockMatchData';
-	import { convertMatchResponseToMatchResults } from '$lib/utils';
-	import type { ConfidenceThresholds } from '$lib/workspace-types';
+	import MatchConfidenceIndicator from '#lib/components/MatchConfidenceIndicator.svelte';
+	import { mockMatchResponse, expectedConfidenceLevels } from '#lib/mockMatchData.ts';
+	import { convertMatchResponseToMatchResults } from '#lib/utils.ts';
+	import type { ConfidenceThresholds } from '#lib/workspace-types.ts';
 
 	// Test thresholds
 	const testThresholds: ConfidenceThresholds = {

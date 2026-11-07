@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Button, LoadingSpinner } from '$lib/components/ui';
-	import { results } from '$lib/stores/results';
+	import { Button, LoadingSpinner } from '#lib/components/ui/index.ts';
+	import { results } from '#lib/stores/results.ts';
 	import { Download } from 'lucide-svelte';
 
 	interface Props {

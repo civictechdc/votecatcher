@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { DatabaseType } from '$lib/api/database-types';
+	import type { DatabaseType } from '#lib/api/database-types.ts';
 	import DatabaseSelector from './DatabaseSelector.svelte';
 	import SupabaseConnectForm from './SupabaseConnectForm.svelte';
-	import { Button } from '$lib/components/ui';
+	import { Button } from '#lib/components/ui/index.ts';
 
 	interface Props {
 		onComplete: () => void;

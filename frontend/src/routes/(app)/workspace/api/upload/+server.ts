@@ -3,9 +3,8 @@
 // Demo behavior when DEMO_MODE=true, otherwise returns minimal success response.
 
 import type { RequestHandler } from "@sveltejs/kit";
-import { json } from "@sveltejs/kit";
 import { randomUUID } from "crypto";
-import { api, type ApiResult } from "$lib/api/client";
+import { api, type ApiResult } from "#lib/api/client.ts";
 import { env } from "$env/dynamic/private";
 
 const SERVER_DEMO = (env["DEMO_MODE"] ?? "false") === "true";
@@ -37,7 +36,7 @@ async function uploadPetitions(formData: FormData) {
 		console.log(`File upload response status: ${response.ok}}`);
 
 		if (response.ok) {
-			return json(response, { status: 200 });
+			return Response.json(response, { status: 200 });
 		} else {
 			return new Response(
 				JSON.stringify({
@@ -64,7 +63,7 @@ async function uploadVoterList(formData: FormData) {
 		console.log(`File upload response status: ${response.ok}}`);
 
 		if (response.ok) {
-			return json(response, { status: 200 });
+			return Response.json(response, { status: 200 });
 		} else {
 			return new Response(
 				JSON.stringify({

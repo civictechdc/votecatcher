@@ -1,19 +1,17 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { get } from 'svelte/store';
-	import { campaigns } from '$lib/stores/campaigns';
-	import { events } from '$lib/stores/events';
-	import { jobs } from '$lib/stores/jobs';
-	import { CampaignSidebar } from '$lib/components/layout';
+	import { campaigns } from '#lib/stores/campaigns.ts';
+	import { events } from '#lib/stores/events.ts';
+	import { jobs } from '#lib/stores/jobs.ts';
+	import { CampaignSidebar } from '#lib/components/layout/index.ts';
 
 	let { children } = $props();
+	const campaignId = $derived(page.params.id ?? '');
 
-	const campaignId = $derived($page.params.id ?? '');
-	const campaignName = $derived(
-	 $campaigns.loading
-         ? ''
-         : $campaigns.campaigns.find(c => c.id === campaignId)?.uniqueName || $campaigns.campaigns.find(c => c.id === campaignId)?.title || 'Campaign'
-     );
+	const campaignName = $derived($campaigns.loading
+		? ''
+		: $campaigns.campaigns.find((c) => c.id === campaignId)?.uniqueName || $campaigns.campaigns.find((c) => c.id === campaignId)?.title || 'Campaign');
 
 	function handleJobStatusEvent(e: CustomEvent) {
 		jobs.handleStatusEvent(e.detail);
@@ -52,8 +50,10 @@
 </script>
 
 <div class="flex min-h-screen bg-slate-50">
-	<CampaignSidebar {campaignId} {campaignName} />
-	<main class="flex-1 overflow-auto p-6">
-		{@render children()}
-	</main>
+	<CampaignSidebar
+		campaignId={campaignId}
+		campaignName={campaignName}
+	/>
+
+	<main class="flex-1 overflow-auto p-6">{@render children()}</main>
 </div>

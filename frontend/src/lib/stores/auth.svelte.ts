@@ -1,5 +1,5 @@
-import { browser } from "$app/environment";
-import { API_BASE_URL } from "$lib/api/base-url";
+import { browser } from "$app/env";
+import { API_BASE_URL } from "#lib/api/base-url.ts";
 
 export interface UserSession {
 	accessToken: string;

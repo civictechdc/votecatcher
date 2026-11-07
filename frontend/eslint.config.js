@@ -5,7 +5,6 @@ import svelte from "eslint-plugin-svelte";
 import { defineConfig } from "eslint/config";
 import globals from "globals";
 import ts from "typescript-eslint";
-import svelteConfig from "./svelte.config.js";
 import storybook from "eslint-plugin-storybook";
 
 const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
@@ -44,7 +43,6 @@ export default defineConfig(
 				projectService: true,
 				extraFileExtensions: [".svelte"],
 				parser: ts.parser,
-				svelteConfig,
 			},
 		},
 		rules: {
@@ -52,7 +50,7 @@ export default defineConfig(
 				"error",
 				{
 					message:
-						"Use `dev` from `$app/environment` or `$env/static/public` instead of `import.meta.env` in Svelte files. See: https://svelte.dev/docs/kit/modules#$app-environment",
+						"Use `dev` from `$app/env` or `$env/static/public` instead of `import.meta.env` in Svelte files. See: https://svelte.dev/docs/kit/$app-env",
 					selector: "MemberExpression[object.meta.property.name=env][object.object.name=import]",
 				},
 			],

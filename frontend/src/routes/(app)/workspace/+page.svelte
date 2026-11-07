@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { campaigns } from '$lib/stores/campaigns';
-	import { Button, LoadingState } from '$lib/components/ui';
+	import { campaigns } from '#lib/stores/campaigns.ts';
+	import { Button, LoadingState } from '#lib/components/ui/index.ts';
 
 	onMount(() => {
 		campaigns.fetchAll();

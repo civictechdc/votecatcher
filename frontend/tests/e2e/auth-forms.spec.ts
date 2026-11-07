@@ -12,11 +12,12 @@ const EMAIL_DOMAIN = "@example.test";
  * Characterization suite for the better-auth demo form actions
  * (`src/routes/(app)/demo/better-auth/**`).
  *
- * These tests PIN current SvelteKit 2 behavior as a tripwire for the
- * SvelteKit 3 upgrade. Notably, `use:enhance` form posts that hit a
- * `fail()` action are answered with HTTP 200 on Kit 2 (Kit 3 will surface
- * the real status code) — the status assertions below are deliberate and
- * must be flipped together with the migration (task 3.6).
+ * These tests PIN enhanced-form status behavior across the SvelteKit 2 → 3
+ * migration. On Kit 2, `use:enhance` form posts that hit a `fail()` action
+ * were answered with HTTP 200; Kit 3 surfaces the real status code. The
+ * status assertions below record the observed Kit 3 values (flipped
+ * 2026-11-07 as part of the sanctioned migration flip; success-path POSTs
+ * stayed 200, fail-path POSTs surfaced 400).
  */
 
 function uniqueEmail(): string {
@@ -91,9 +92,9 @@ test.describe("Better Auth Demo Forms (characterization)", () => {
 		await expect(page).toHaveURL(new RegExp(AUTHED_PATH.replace(/\//g, "\\/")));
 		await expect(page.locator("h1")).toContainText(`Hi, ${name}!`);
 
-		// status PIN (Kit 2): enhanced action POSTs answer HTTP 200 even when
-		// the action redirects — the redirect is conveyed in the response body
-		// and applied client-side. Kit 3 changes this; flip with task 3.6.
+		// status PIN — Kit 3 (observed 2026-11-07): still 200 (was 200 on Kit 2) —
+		// success-path enhanced POSTs keep HTTP 200 on Kit 3,
+		// svelte.dev/docs/kit/migrating-to-sveltekit-3
 		expect(response.status()).toBe(200);
 	});
 
@@ -108,9 +109,9 @@ test.describe("Better Auth Demo Forms (characterization)", () => {
 		await expect(page).toHaveURL(/\/demo\/better-auth\/login/);
 		await expect(page.locator("h1")).toContainText("Login");
 
-		// status PIN (Kit 2): enhanced signOut POST answers HTTP 200; the
-		// redirect to /demo/better-auth/login is body-carried and applied
-		// client-side. Kit 3 changes this; flip with task 3.6.
+		// status PIN — Kit 3 (observed 2026-11-07): still 200 (was 200 on Kit 2) —
+		// signOut enhanced POST keeps HTTP 200 with the redirect body-carried on
+		// Kit 3, svelte.dev/docs/kit/migrating-to-sveltekit-3
 		expect(response.status()).toBe(200);
 	});
 
@@ -126,8 +127,9 @@ test.describe("Better Auth Demo Forms (characterization)", () => {
 
 		await expect(page.locator("h1")).toContainText(`Hi, ${name}!`);
 
-		// status PIN (Kit 2): successful signInEmail enhanced POST answers
-		// HTTP 200; redirect is body-carried. Flip with task 3.6.
+		// status PIN — Kit 3 (observed 2026-11-07): still 200 (was 200 on Kit 2) —
+		// successful signInEmail enhanced POST keeps HTTP 200 with the redirect
+		// body-carried on Kit 3, svelte.dev/docs/kit/migrating-to-sveltekit-3
 		expect(response.status()).toBe(200);
 	});
 
@@ -143,9 +145,9 @@ test.describe("Better Auth Demo Forms (characterization)", () => {
 		const message = await page.locator("p.text-red-500").textContent();
 		expect(message?.trim().length ?? 0).toBeGreaterThan(0);
 
-		// status PIN (Kit 2): fail(400) action answered as HTTP 200 to the
-		// enhanced post — Kit 3 will return the real status; flip with task 3.6
-		expect(response.status()).toBe(200);
+		// status PIN — Kit 3 (observed 2026-11-07): 400, was 200 on Kit 2 —
+		// documented enhanced-fail change, svelte.dev/docs/kit/migrating-to-sveltekit-3
+		expect(response.status()).toBe(400);
 	});
 
 	test("sign-up failure with duplicate email shows error message", async ({ page }) => {
@@ -161,8 +163,8 @@ test.describe("Better Auth Demo Forms (characterization)", () => {
 		const message = await page.locator("p.text-red-500").textContent();
 		expect(message?.trim().length ?? 0).toBeGreaterThan(0);
 
-		// status PIN (Kit 2): fail(400) action answered as HTTP 200 to the
-		// enhanced post — Kit 3 will return the real status; flip with task 3.6
-		expect(response.status()).toBe(200);
+		// status PIN — Kit 3 (observed 2026-11-07): 400, was 200 on Kit 2 —
+		// documented enhanced-fail change, svelte.dev/docs/kit/migrating-to-sveltekit-3
+		expect(response.status()).toBe(400);
 	});
 });

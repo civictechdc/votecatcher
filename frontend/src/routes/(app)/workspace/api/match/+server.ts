@@ -3,13 +3,12 @@
 // Replace implementation with FastAPI backend later.
 
 import type { RequestHandler } from "@sveltejs/kit";
-import { json } from "@sveltejs/kit";
-import type { MatchRow, ConfidenceThresholds, MatchResults } from "$lib/workspace-types";
-import { MatchColumn } from "$lib/workspace-types";
+import type { MatchRow, ConfidenceThresholds, MatchResults } from "#lib/workspace-types.ts";
+import { MatchColumn } from "#lib/workspace-types.ts";
 import { faker } from "@faker-js/faker";
-import { api, type ApiResult } from "$lib/api/client";
+import { api, type ApiResult } from "#lib/api/client.ts";
 import { env } from "$env/dynamic/private";
-import type { MatchingProgressResponse } from "$lib/api/response-types";
+import type { MatchingProgressResponse } from "#lib/api/response-types.ts";
 
 const SERVER_DEMO = (env["DEMO_MODE"] ?? "false") === "true";
 
@@ -137,12 +136,12 @@ export const POST: RequestHandler = async ({ request }) => {
 		});
 
 		if (!batchResponse.ok) {
-			return json({ batchResponse }, { status: 400 });
+			return Response.json({ batchResponse }, { status: 400 });
 		}
 
 		const matchStatus: MatchingProgressResponse = batchResponse.data as MatchingProgressResponse;
 		console.log(`Batch response is ${JSON.stringify(matchStatus)}`);
-		return json({ matchStatus }, { status: 200 });
+		return Response.json({ matchStatus }, { status: 200 });
 	}
 	const threshold: ConfidenceThresholds = body?.thresholds;
 
@@ -160,5 +159,5 @@ export const POST: RequestHandler = async ({ request }) => {
 		timestamp: new Date().toISOString(),
 	};
 
-	return json({ matchResults }, { status: 200 });
+	return Response.json({ matchResults }, { status: 200 });
 };

@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { Sidebar } from '$lib/components/layout';
+	import { page } from '$app/state';
+	import { Sidebar } from '#lib/components/layout/index.ts';
 	let { children } = $props();
 
 	// Check if we're on a campaign-scoped route (has ID parameter)
-	const isCampaignRoute = $derived(!!$page.params.id);
+	const isCampaignRoute = $derived(!!page.params.id);
 </script>
 
 {#if isCampaignRoute}

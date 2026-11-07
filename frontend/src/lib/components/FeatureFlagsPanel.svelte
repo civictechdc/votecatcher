@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { featureFlags, hasOverrides } from '$lib/stores/featureFlags';
+	import { cn } from '#lib/utils/cn.ts';
+	import { featureFlags, hasOverrides } from '#lib/stores/featureFlags.ts';
 
 	interface Props {
 		class?: string;

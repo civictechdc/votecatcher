@@ -1,6 +1,6 @@
 <script lang="ts">
 	import MatchConfidenceIndicator from './MatchConfidenceIndicator.svelte';
-	import type { ConfidenceThresholds } from '$lib/workspace-types';
+	import type { ConfidenceThresholds } from '#lib/workspace-types.ts';
 
 	const PAGE_SIZE_OPTIONS = [20, 50, 100] as const;
 

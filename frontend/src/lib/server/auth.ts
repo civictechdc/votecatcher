@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { sveltekitCookies } from "better-auth/svelte-kit";
 import { env } from "$env/dynamic/private";
 import { getRequestEvent } from "$app/server";
-import { db } from "$lib/server/db";
+import { db } from "#lib/server/db/index.ts";
 
 export const auth = betterAuth({
 	baseURL: env["ORIGIN"],

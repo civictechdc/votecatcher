@@ -4,7 +4,7 @@ import { createRawSnippet } from "svelte";
 import Layout from "../../../src/routes/(app)/workspace/[id]/+layout.svelte";
 
 const mocks = vi.hoisted(() => ({
-	pageStore: null as null | { set: (v: unknown) => void },
+	page: null as null | Record<string, any>,
 	initialPage: {
 		url: new URL("http://localhost/workspace/1"),
 		params: { id: "1" } as Record<string, string>,
@@ -18,14 +18,13 @@ const mocks = vi.hoisted(() => ({
 
 const { initialPage } = mocks;
 
-vi.mock("$app/stores", async () => {
-	const { writable } = await import("svelte/store");
-	const page = writable(mocks.initialPage);
-	mocks.pageStore = page as unknown as { set: (v: unknown) => void };
-	return { page };
+vi.mock("$app/state", async () => {
+	const state = await import("../../../tests/__mocks__/$app/state.svelte.ts");
+	mocks.page = state.page as unknown as Record<string, any>;
+	return state;
 });
 
-vi.mock("$lib/stores/campaigns", () => ({
+vi.mock("#lib/stores/campaigns.ts", () => ({
 	campaigns: {
 		subscribe: vi.fn((fn: (state: unknown) => void) => {
 			fn({
@@ -45,7 +44,7 @@ vi.mock("$lib/stores/campaigns", () => ({
 	},
 }));
 
-vi.mock("$lib/stores/jobs", () => ({
+vi.mock("#lib/stores/jobs.ts", () => ({
 	jobs: {
 		subscribe: vi.fn((fn: (state: unknown) => void) => {
 			fn({ jobs: [], loading: false, error: null });
@@ -57,7 +56,7 @@ vi.mock("$lib/stores/jobs", () => ({
 	},
 }));
 
-vi.mock("$lib/stores/events", () => ({
+vi.mock("#lib/stores/events.ts", () => ({
 	events: {
 		subscribe: vi.fn((fn: (state: unknown) => void) => {
 			fn({ status: "disconnected", lastEvent: null, reconnectAttempts: 0 });
@@ -69,11 +68,11 @@ vi.mock("$lib/stores/events", () => ({
 	},
 }));
 
-vi.mock("$lib/components/layout", () => ({
+vi.mock("#lib/components/layout/index.ts", () => ({
 	CampaignSidebar: vi.fn(),
 }));
 
-import { events } from "$lib/stores/events";
+import { events } from "#lib/stores/events.ts";
 
 const children = createRawSnippet(() => ({
 	render: () => `<p data-testid="child">dashboard</p>`,
@@ -88,7 +87,7 @@ describe("Workspace Layout — event stream follows the active campaign", () => 
 		vi.clearAllMocks();
 		initialPage.params = { id: "1" };
 		initialPage.url = new URL("http://localhost/workspace/1");
-		mocks.pageStore?.set({ ...initialPage });
+		if (mocks.page) Object.assign(mocks.page, { ...initialPage });
 	});
 
 	it("connects the event stream to the campaign on first render", async () => {
@@ -107,11 +106,12 @@ describe("Workspace Layout — event stream follows the active campaign", () => 
 			expect(events.connect).toHaveBeenCalledWith("1");
 		});
 
-		mocks.pageStore?.set({
-			...initialPage,
-			params: { id: "2" },
-			url: new URL("http://localhost/workspace/2"),
-		});
+		if (mocks.page)
+			Object.assign(mocks.page, {
+				...initialPage,
+				params: { id: "2" },
+				url: new URL("http://localhost/workspace/2"),
+			});
 
 		await waitFor(() => {
 			expect(events.connect).toHaveBeenLastCalledWith("2");
@@ -119,22 +119,24 @@ describe("Workspace Layout — event stream follows the active campaign", () => 
 	});
 
 	it("does not connect for demo or empty campaign ids", async () => {
-		mocks.pageStore?.set({
-			...initialPage,
-			params: {},
-			url: new URL("http://localhost/workspace"),
-		});
+		if (mocks.page)
+			Object.assign(mocks.page, {
+				...initialPage,
+				params: {},
+				url: new URL("http://localhost/workspace"),
+			});
 		renderLayout();
 
 		await new Promise((resolve) => setTimeout(resolve, 20));
 
 		expect(events.connect).not.toHaveBeenCalled();
 
-		mocks.pageStore?.set({
-			...initialPage,
-			params: { id: "demo" },
-			url: new URL("http://localhost/workspace/demo"),
-		});
+		if (mocks.page)
+			Object.assign(mocks.page, {
+				...initialPage,
+				params: { id: "demo" },
+				url: new URL("http://localhost/workspace/demo"),
+			});
 
 		await new Promise((resolve) => setTimeout(resolve, 20));
 

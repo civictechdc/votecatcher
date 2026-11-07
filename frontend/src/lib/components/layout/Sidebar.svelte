@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { campaigns } from '$lib/stores/campaigns';
-	import { getLogoDestination } from '$lib/utils/mode';
+	import { campaigns } from '#lib/stores/campaigns.ts';
+	import { getLogoDestination } from '#lib/utils/mode.ts';
 	import SidebarNavItem from './SidebarNavItem.svelte';
 	import Menu from 'lucide-svelte/icons/menu';
 	import X from 'lucide-svelte/icons/x';
@@ -102,7 +102,7 @@
 							href={item.href}
 							label={item.label}
 							icon={item.icon}
-							isActive={$page.url.pathname === item.href}
+							isActive={page.url.pathname === item.href}
 						/>
 					</li>
 				{/each}

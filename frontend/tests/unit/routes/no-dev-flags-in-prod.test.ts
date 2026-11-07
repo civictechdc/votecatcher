@@ -2,15 +2,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/svelte";
 import Page from "../../../src/routes/(app)/auth/+page.svelte";
 
-// Overrides the repo-wide dev:true $app/environment mock (tests/setup.ts) — the per-file factory wins — so this file runs in production mode.
-vi.mock("$app/environment", () => ({
+// Overrides the repo-wide dev:true $app/env mock (tests/setup.ts) — the per-file factory wins — so this file runs in production mode.
+vi.mock("$app/env", () => ({
 	browser: true,
 	dev: false,
-	prerendering: false,
-	SSR: false,
+	building: false,
+	version: "test",
 }));
 
-vi.mock("$lib/stores/auth", () => ({
+vi.mock("#lib/stores/auth.ts", () => ({
 	auth: {
 		subscribe: vi.fn((fn: (s: unknown) => void) => {
 			fn({ twoFactorRequired: false, user: null, initialized: true });
@@ -24,7 +24,7 @@ vi.mock("$lib/stores/auth", () => ({
 	},
 }));
 
-vi.mock("$lib/config/featureFlags", () => ({
+vi.mock("#lib/config/featureFlags.ts", () => ({
 	featureFlags: {
 		isEnabled: vi.fn(() => false),
 		toggleLocal: vi.fn(),

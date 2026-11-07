@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { campaigns } from '$lib/stores/campaigns';
-	import { getLogoDestination } from '$lib/utils/mode';
+	import { campaigns } from '#lib/stores/campaigns.ts';
+	import { getLogoDestination } from '#lib/utils/mode.ts';
 	import SidebarNavItem from './SidebarNavItem.svelte';
 	import Menu from 'lucide-svelte/icons/menu';
 	import X from 'lucide-svelte/icons/x';
@@ -44,7 +44,7 @@
 	}
 
 	function switchCampaign(newId: string) {
-		const currentPath = $page.url.pathname;
+		const currentPath = page.url.pathname;
 		const currentSegment = currentPath.replace(/^\/workspace\/[^/]+/, '');
 		goto(`/workspace/${newId}${currentSegment}`);
 		showCampaignSwitcher = false;
@@ -82,18 +82,18 @@
 
 		<div class="flex-1 overflow-y-auto p-4">
 			<div class="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <button
-                    onclick={toggleCampaignSwitcher}
-                    class="flex w-full items-center justify-between text-sm font-medium text-slate-700"
-                    aria-expanded={showCampaignSwitcher}
-                >
-                    {#if $campaigns.loading}
+				<button
+					onclick={toggleCampaignSwitcher}
+					class="flex w-full items-center justify-between text-sm font-medium text-slate-700"
+					aria-expanded={showCampaignSwitcher}
+				>
+					{#if $campaigns.loading}
                         <span class="animate-pulse bg-slate-200 rounded h-4 w-24 inline-block"></span>
-                    {:else}
-                        <span class="truncate">{campaignName}</span>
-                    {/if}
-                    <ChevronDown class="h-4 w-4" />
-                </button>
+					{:else}
+						<span class="truncate">{campaignName}</span>
+					{/if}
+					<ChevronDown class="h-4 w-4" />
+				</button>
 
 				{#if showCampaignSwitcher}
 					<ul class="mt-2 max-h-48 overflow-y-auto rounded border border-slate-200 bg-white">
@@ -131,7 +131,7 @@
 							href={item.href}
 							label={item.label}
 							icon={item.icon}
-							isActive={$page.url.pathname === item.href}
+							isActive={page.url.pathname === item.href}
 						/>
 					</li>
 				{/each}
@@ -147,7 +147,7 @@
 							href={item.href}
 							label={item.label}
 							icon={item.icon}
-							isActive={$page.url.pathname === item.href}
+							isActive={page.url.pathname === item.href}
 						/>
 					</li>
 				{/each}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { MatchColumn } from '$lib/workspace-types';
+	import { MatchColumn } from '#lib/workspace-types.ts';
 
 	interface Props {
 		column: MatchColumn;

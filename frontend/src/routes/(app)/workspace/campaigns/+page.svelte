@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { campaigns } from '$lib/stores/campaigns';
-	import { regions } from '$lib/stores/regions';
-	import { Button, Table, LoadingState, Modal, ErrorDisplay } from '$lib/components/ui';
-	import type { CampaignResponse } from '$lib/api/generated';
-	import type { SortConfig } from '$lib/components/ui/Table.svelte';
+	import { campaigns } from '#lib/stores/campaigns.ts';
+	import { regions } from '#lib/stores/regions.ts';
+	import { Button, Table, LoadingState, Modal, ErrorDisplay } from '#lib/components/ui/index.ts';
+	import type { CampaignResponse } from '#lib/api/generated/index.ts';
+	import type { SortConfig } from '#lib/components/ui/Table.svelte';
 
 	let showCreateModal = $state(false);
 	let showDeleteModal = $state(false);

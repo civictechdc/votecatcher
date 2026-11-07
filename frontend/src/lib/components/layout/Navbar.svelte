@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getLogoDestination } from '$lib/utils/mode';
+	import { getLogoDestination } from '#lib/utils/mode.ts';
 	export let user: { email?: string } | null = null;
 </script>
 

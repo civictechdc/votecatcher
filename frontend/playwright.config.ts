@@ -6,8 +6,8 @@ export default defineConfig({
 	// (`bun run test:e2e:prod`); keep it out of dev-server runs
 	testIgnore: "tests/e2e/prod-smoke.spec.ts",
 	fullyParallel: true,
-	forbidOnly: !!process.env.CI,
-	retries: process.env.CI ? 2 : 0,
+	forbidOnly: !!process.env["CI"],
+	retries: process.env["CI"] ? 2 : 0,
 	// The vite dev server compiles modules on demand; parallel workers racing
 	// the same cold compile graph intermittently break hydration.
 	workers: 1,
@@ -27,7 +27,7 @@ export default defineConfig({
 		{
 			command: "cd ../backend && uv run python main.py --env local",
 			url: "http://localhost:8080/docs",
-			reuseExistingServer: !process.env.CI,
+			reuseExistingServer: !process.env["CI"],
 			timeout: 120000,
 			env: {
 				FEATURE_DEMO_MODE: "1",
@@ -37,7 +37,7 @@ export default defineConfig({
 		{
 			command: "bun run dev",
 			url: "http://localhost:5173",
-			reuseExistingServer: !process.env.CI,
+			reuseExistingServer: !process.env["CI"],
 			timeout: 120000,
 			env: {
 				PUBLIC_DEMO_MODE: "true",

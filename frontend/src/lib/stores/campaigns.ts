@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
-import { CampaignsApi } from "$lib/api/generated";
+import { CampaignsApi } from "#lib/api/generated/index.ts";
 import { getApiClient } from "./api-client";
-import type { CampaignResponse } from "$lib/api/generated";
+import type { CampaignResponse } from "#lib/api/generated/index.ts";
 
 interface CampaignsState {
 	campaigns: CampaignResponse[];

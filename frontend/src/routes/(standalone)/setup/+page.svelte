@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { OnboardingWizard } from '$lib/components/onboarding';
+	import { OnboardingWizard } from '#lib/components/onboarding/index.ts';
 
 	function handleComplete() {
 		goto('/');

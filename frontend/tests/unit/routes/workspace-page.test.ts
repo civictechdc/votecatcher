@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import Page from "../../../src/routes/(app)/workspace/[id]/+page.svelte";
 
 const mocks = vi.hoisted(() => ({
-	pageStore: null as null | { set: (v: unknown) => void },
+	page: null as null | Record<string, any>,
 	goto: vi.fn(),
 	afterNavigate: vi.fn(),
 	initialPage: {
@@ -19,11 +19,10 @@ const mocks = vi.hoisted(() => ({
 
 const { initialPage } = mocks;
 
-vi.mock("$app/stores", async () => {
-	const { writable } = await import("svelte/store");
-	const page = writable(mocks.initialPage);
-	mocks.pageStore = page as unknown as { set: (v: unknown) => void };
-	return { page };
+vi.mock("$app/state", async () => {
+	const state = await import("../../../tests/__mocks__/$app/state.svelte.ts");
+	mocks.page = state.page as unknown as Record<string, any>;
+	return state;
 });
 
 vi.mock("$app/navigation", () => ({
@@ -34,7 +33,7 @@ vi.mock("$app/navigation", () => ({
 	beforeNavigate: vi.fn(),
 }));
 
-vi.mock("$lib/stores/campaigns", () => ({
+vi.mock("#lib/stores/campaigns.ts", () => ({
 	campaigns: {
 		subscribe: vi.fn((fn: (state: unknown) => void) => {
 			fn({
@@ -62,7 +61,7 @@ vi.mock("$lib/stores/campaigns", () => ({
 	},
 }));
 
-vi.mock("$lib/stores/jobs", () => ({
+vi.mock("#lib/stores/jobs.ts", () => ({
 	jobs: {
 		subscribe: vi.fn((fn: (state: unknown) => void) => {
 			fn({ jobs: [], loading: false, error: null });
@@ -74,7 +73,7 @@ vi.mock("$lib/stores/jobs", () => ({
 	},
 }));
 
-vi.mock("$lib/api/base-url", () => ({
+vi.mock("#lib/api/base-url.ts", () => ({
 	API_BASE_URL: "",
 }));
 
@@ -106,7 +105,7 @@ describe("Workspace Page — live state", () => {
 		vi.clearAllMocks();
 		initialPage.params = { id: "1" };
 		initialPage.url = new URL("http://localhost/workspace/1");
-		mocks.pageStore?.set({ ...initialPage });
+		if (mocks.page) Object.assign(mocks.page, { ...initialPage });
 
 		fetchSpy = vi.fn((input: RequestInfo | URL) => {
 			const url = String(input);

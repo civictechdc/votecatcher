@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { API_BASE_URL } from "$lib/api/base-url";
+import { API_BASE_URL } from "#lib/api/base-url.ts";
 
 export interface UploadResult {
 	scanId: string;

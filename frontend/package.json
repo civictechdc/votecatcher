@@ -3,6 +3,10 @@
 	"version": "1.0.0-a9",
 	"private": true,
 	"type": "module",
+	"imports": {
+		"#lib": "./src/lib/index.ts",
+		"#lib/*": "./src/lib/*"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -31,7 +35,6 @@
 		"@tailwindcss/forms": "^0.5.11",
 		"@tailwindcss/typography": "^0.5.20",
 		"clsx": "^2.1.1",
-		"cookie": "^1.1.1",
 		"esbuild": "^0.28.2",
 		"lucide-svelte": "^1.0.1",
 		"path-to-regexp": "^8.4.2",
@@ -53,9 +56,9 @@
 		"@storybook/addon-svelte-csf": "^5.1.5",
 		"@storybook/addon-vitest": "^10.6.2",
 		"@storybook/sveltekit": "^10.6.2",
-		"@sveltejs/adapter-auto": "^7.0.1",
-		"@sveltejs/adapter-node": "^5.5.7",
-		"@sveltejs/kit": "^2.70.3",
+		"@sveltejs/adapter-auto": "^8.0.0",
+		"@sveltejs/adapter-node": "^6.0.0",
+		"@sveltejs/kit": "^3.1.1",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tailwindcss/vite": "^4.3.3",
 		"@testing-library/svelte": "^5.4.2",
@@ -93,7 +96,6 @@
 	"overrides": {
 		"basic-ftp": ">=5.3.1",
 		"brace-expansion": ">=5.0.8",
-		"cookie": ">=0.7.0 <2.0.0",
 		"cross-spawn": ">=7.0.5",
 		"esbuild": ">=0.28.1",
 		"follow-redirects": ">=1.16.2 <2.0.0",

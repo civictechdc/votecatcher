@@ -1,6 +1,6 @@
-import { browser, dev } from "$app/environment";
+import { browser, dev } from "$app/env";
 import { get } from "svelte/store";
-import { featureFlags } from "$lib/stores/featureFlags";
+import { featureFlags } from "#lib/stores/featureFlags.ts";
 
 const PUBLIC_DEMO_MODE: string = import.meta.env["PUBLIC_DEMO_MODE"] || "";
 
