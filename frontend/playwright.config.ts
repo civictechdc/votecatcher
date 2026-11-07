@@ -2,6 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
 	testDir: "./tests/e2e",
+	// the adapter-node smoke spec runs only under playwright.prod.config.ts
+	// (`bun run test:e2e:prod`); keep it out of dev-server runs
+	testIgnore: "tests/e2e/prod-smoke.spec.ts",
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
