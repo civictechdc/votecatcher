@@ -6,10 +6,18 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  - repo: https://github.com/oxc-project/mirrors-oxlint
-    rev: v0.16.4
+  # Frontend lint via the project's own oxlint (bun). The mirrors-oxlint
+  # remote repo bootstraps its own node env via nodeenv, which crashes with
+  # `ValueError: invalid literal for int() with base 10: '0-alpha'`, forcing
+  # SKIP=oxlint on every commit. This repo is bun-first, so run the same
+  # lint CI runs (`cd frontend && bun run lint`) — full-project, no nodeenv.
+  - repo: local
     hooks:
       - id: oxlint
+        name: oxlint (frontend)
+        entry: bun run --cwd frontend lint
+        language: system
+        pass_filenames: false
         files: ^frontend/
 
   - repo: https://github.com/Yelp/detect-secrets
