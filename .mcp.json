@@ -3,6 +3,17 @@
     "svelte": {
       "command": "npx",
       "args": ["-y", "@sveltejs/mcp"]
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest", "--isolated", "--no-usage-statistics", "--no-performance-crux"],
+      "env": {
+        "CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS": "1"
+      }
+    },
+    "firefox-devtools": {
+      "command": "npx",
+      "args": ["-y", "@mozilla/firefox-devtools-mcp@latest", "--headless", "--viewport", "1280x720", "--tool-preset", "developer"]
     }
   }
 }

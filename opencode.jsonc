@@ -1,5 +1,6 @@
-// Project-level OpenCode config: wires the Svelte MCP server (local stdio).
-// Docs: docs/agents/svelte-mcp.md
+// Project-level OpenCode config: wires the Svelte MCP server and the browser
+// DevTools MCP servers (local stdio).
+// Docs: docs/agents/svelte-mcp.md, docs/agents/browser-mcp.md
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
@@ -7,6 +8,17 @@
       "svelte": {
         "type": "local",
         "command": ["npx", "-y", "@sveltejs/mcp"]
+      },
+      "chrome-devtools": {
+        "type": "local",
+        "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--isolated", "--no-usage-statistics", "--no-performance-crux"],
+        "environment": {
+          "CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS": "1"
+        }
+      },
+      "firefox-devtools": {
+        "type": "local",
+        "command": ["npx", "-y", "@mozilla/firefox-devtools-mcp@latest", "--headless", "--viewport", "1280x720", "--tool-preset", "developer"]
       }
     }
   }
