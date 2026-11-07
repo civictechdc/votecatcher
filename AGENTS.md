@@ -50,6 +50,7 @@ Prefer narrower package commands while iterating, then run the broader check bef
 - Code quality: `docs/agents/code-quality.md`
 - Version and changelog work: `docs/agents/versioning.md`
 - Frontend/Svelte MCP: `docs/agents/svelte-mcp.md`
+- Browser DevTools MCP (Chrome/Firefox): `docs/agents/browser-mcp.md`
 - Local preferences: `docs/agents/local-preferences.md`; loaded by `.agents/hooks/scripts/read-agents.sh` when `AGENTS.local.md` or `.agents/local/AGENTS.local.md` exists.
 
 Read these only when relevant to the current task.
