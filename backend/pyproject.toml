@@ -48,7 +48,7 @@ dependencies = [
     "json5>=0.14.0",
     "slowapi>=0.1.9",
     "sentry-sdk[fastapi]>=2.57.0",
-    "msgpack>=1.2.1",
+    "msgpack>=1.2.4",
 ]
 
 [dependency-groups]

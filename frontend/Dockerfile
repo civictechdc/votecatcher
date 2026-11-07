@@ -1,8 +1,11 @@
 FROM oven/bun:1.4.3@sha256:ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598 AS base
 WORKDIR /app
 
+# Digest-pinned base never picks up distro fixes; bake trixie security/point
+# updates at build time so all installed distro packages get patched versions.
 RUN echo "deb http://deb.debian.org/debian-security trixie-security main" > /etc/apt/sources.list.d/trixie-security.list \
     && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
     && apt-get install -y --no-install-recommends libssl3t64 openssl-provider-legacy \
     && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/trixie-security.list
 
