@@ -12,6 +12,13 @@ CVE-2025-47273
 # matches against advisories published 2026-10-12.
 CVE-2026-97687
 CVE-2026-97689
+# msgpack CVE-2026-114613: same base-image SBOM phantom pattern. The application
+# venv installs msgpack 1.2.4 (fixed >= 1.2.3; confirmed via
+# /app/.venv/lib/python3.13/site-packages/msgpack-1.2.4.dist-info/METADATA in the
+# image filesystem); no msgpack exists in /usr/lib/python3/dist-packages or dpkg.
+# Trivy reads the stale python:3.13-slim base-layer SBOM attestation referencing
+# msgpack 1.1.2.
+CVE-2026-114613
 # libcap2 CVE-2026-4878: TOCTOU race in cap_set_file().
 # Debian OS package in the frontend base image. No fixed base image
 # available yet (fixed in 1:2.75-10+deb13u1, not yet in stable).
