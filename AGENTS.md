@@ -2,7 +2,7 @@
 
 Open source ballot signature recognition for grassroots campaigns.
 
-Stack: Python/FastAPI backend, SvelteKit 5 frontend, SQLModel/Alembic data layer, Docker/just for local workflow.
+Stack: Python/FastAPI backend, SvelteKit 3 frontend, SQLModel/Alembic data layer, Docker/just for local workflow.
 
 ## Agent Contract
 
