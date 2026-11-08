@@ -46,9 +46,12 @@ export default defineConfig({
 				OCR_PROVIDER_API_KEY: "ci-placeholder", // pragma: allowlist secret
 				OCR_PROVIDER_NAME: "openai",
 				OCR_PROVIDER_MODEL: "gpt-4o-mini",
-				// smoke origin + API base (PUBLIC_API_URL is inlined at build time)
+				// smoke origin + API base (dynamic env vars, read at runtime)
 				PUBLIC_API_URL: "http://localhost:8080",
 				ORIGIN: `http://localhost:${PROD_PORT}`,
+				// required in production (src/env.ts fails closed at startup
+				// without it); must include the smoke ORIGIN above
+				TRUSTED_ORIGINS: `http://localhost:${PROD_PORT}`,
 				PORT: String(PROD_PORT),
 			},
 		},
