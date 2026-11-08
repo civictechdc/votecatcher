@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { get } from "svelte/store";
 import { campaigns, resetCampaignsStore } from "./campaigns";
-import type { CampaignResponse } from "$lib/api/generated";
+import type { CampaignResponse } from "#lib/api/generated/index.ts";
 
 const mockListCampaigns = vi.fn();
 const mockCreateCampaign = vi.fn();
 const mockDeleteCampaign = vi.fn();
 
-vi.mock("$lib/api/generated", () => {
+vi.mock("#lib/api/generated/index.ts", () => {
 	return {
 		CampaignsApi: class {
 			listCampaignsCampaignsGet = mockListCampaigns;

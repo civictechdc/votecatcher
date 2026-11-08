@@ -142,8 +142,9 @@ security-scan-backend:
     cd backend && uv audit
 
 # Run frontend security scan (bun audit)
+# Ignore list mirrors .github/workflows/ci.yml "Security scan (bun audit)" — keep both in sync.
 security-scan-frontend:
-    cd frontend && bun audit --ignore GHSA-rp42-5vxx-qpwr --ignore GHSA-6v7q-wjvx-w8wg --ignore GHSA-chqc-8p9q-pq6q --ignore GHSA-rpmf-866q-6p89 --ignore GHSA-v2v4-37r5-5v8g --ignore GHSA-3p68-rc4w-qgx5 --ignore GHSA-fvcv-3m26-pcqx --ignore GHSA-36xv-jgw5-4q75 --ignore GHSA-4w7w-66w2-5vf9 --ignore GHSA-v2wj-q39q-566r --ignore GHSA-p9ff-h696-f583 --ignore GHSA-3f6h-2hrp-w5wx --ignore GHSA-2crg-3p73-43xp --ignore GHSA-pv5w-4p9q-p3v2
+    cd frontend && bun audit --ignore GHSA-gcqx-w48m-w2h4 --ignore GHSA-3g3m-2fjr-6pw4 --ignore GHSA-g3hv-75wg-m249 --ignore GHSA-h4fr-cmh5-qr62 --ignore GHSA-jfwm-3p3c-6hx5
 
 # Run SAST with semgrep (full scan)
 sast:

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
-	import { Progress } from '$lib/components/ui';
-	import { Navbar } from '$lib/components/layout';
-	import { onboard, initialState } from '$lib/stores/onboarding';
-	import { api } from '$lib/api/client';
-	import { initMocks } from '$lib/mocks/init';
-	import { OCR_PROVIDER_SELECTION } from '$lib/constants/ocr';
+	import { Progress } from '#lib/components/ui/index.ts';
+	import { Navbar } from '#lib/components/layout/index.ts';
+	import { onboard, initialState } from '#lib/stores/onboarding.ts';
+	import { api } from '#lib/api/client.ts';
+	import { initMocks } from '#lib/mocks/init.ts';
+	import { OCR_PROVIDER_SELECTION } from '#lib/constants/ocr.ts';
 
 	type OnboardState = typeof initialState;
 
@@ -321,7 +321,7 @@
 </div>
 
 <style>
-	@import '$lib/styles/theme.css';
+	@import '#lib/styles/theme.css';
 	h2 {
 		margin: 0;
 	}

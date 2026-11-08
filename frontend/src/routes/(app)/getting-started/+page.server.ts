@@ -1,5 +1,6 @@
 import type { Actions, PageServerLoad } from "./$types";
 import { redirect } from "@sveltejs/kit";
+import { trustedFetchUrl } from "#lib/server/trusted-origins.ts";
 
 /**
  * Steps shown in the onboarding flow. Returned by the server so the UI remains declarative.
@@ -35,10 +36,11 @@ function generateYears(): string[] {
 
 /**
  * Server-side load: verify session and return page data.
- * Uses relative fetch to the mocked /api/session route. Replace with real auth endpoint later.
+ * Uses relative fetch to the mocked /api/session route (resolved against the
+ * trusted-origin allowlist before any request is sent). Replace with real auth endpoint later.
  */
-export const load: PageServerLoad = async ({ fetch }) => {
-	const res = await fetch("/api/session");
+export const load: PageServerLoad = async ({ fetch, url }) => {
+	const res = await fetch(trustedFetchUrl("/api/session", url.origin));
 	if (!res.ok) {
 		// Not authenticated: redirect to auth page. Use 303 to prevent accidental POST resubmission.
 		throw redirect(303, "/auth");
@@ -57,14 +59,14 @@ export const load: PageServerLoad = async ({ fetch }) => {
  * Each action returns a JSON-like result; adapt to your FastAPI backend when ready.
  */
 export const actions: Actions = {
-	storeApiKey: async ({ request, fetch }) => {
+	storeApiKey: async ({ request, fetch, url }) => {
 		const form = await request.formData();
 		const provider = form.get("provider") as string | null;
 		const apiKey = form.get("apiKey") as string | null;
 		if (!provider || !apiKey) {
 			return { status: 400, body: { error: "Missing provider or apiKey" } };
 		}
-		const res = await fetch("/api/store-ocr-provider", {
+		const res = await fetch(trustedFetchUrl("/api/store-ocr-provider", url.origin), {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ provider, apiKey }),
@@ -74,13 +76,13 @@ export const actions: Actions = {
 		return { status: 200, body: payload };
 	},
 
-	createCampaign: async ({ request, fetch }) => {
+	createCampaign: async ({ request, fetch, url }) => {
 		const form = await request.formData();
 		const name = form.get("name") as string | null;
 		const year = form.get("year") as string | null;
 		const description = form.get("description") as string | null;
 		if (!name || !year) return { status: 400, body: { error: "Missing name or year" } };
-		const res = await fetch("/api/create-campaign", {
+		const res = await fetch(trustedFetchUrl("/api/create-campaign", url.origin), {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ name, year: Number(year), description }),
@@ -90,13 +92,13 @@ export const actions: Actions = {
 		return { status: 200, body: payload };
 	},
 
-	uploadFileMeta: async ({ request, fetch }) => {
+	uploadFileMeta: async ({ request, fetch, url }) => {
 		const form = await request.formData();
 		const fileName = form.get("fileName") as string | null;
 		const size = form.get("size") as string | null;
 		const campaignId = form.get("campaignId") as string | null;
 		if (!fileName || !size) return { status: 400, body: { error: "Missing file metadata" } };
-		const res = await fetch("/api/upload-file", {
+		const res = await fetch(trustedFetchUrl("/api/upload-file", url.origin), {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ fileName, size: Number(size), campaignId }),
@@ -106,12 +108,12 @@ export const actions: Actions = {
 		return { status: 200, body: payload };
 	},
 
-	processVoterFile: async ({ request, fetch }) => {
+	processVoterFile: async ({ request, fetch, url }) => {
 		const form = await request.formData();
 		const filePath = form.get("filePath") as string | null;
 		const campaignId = form.get("campaignId") as string | null;
 		if (!filePath) return { status: 400, body: { error: "Missing filePath" } };
-		const res = await fetch("/api/process-voter-file", {
+		const res = await fetch(trustedFetchUrl("/api/process-voter-file", url.origin), {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ filePath, campaignId }),

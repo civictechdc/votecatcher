@@ -3,15 +3,15 @@ import { render, screen } from "@testing-library/svelte";
 import { createRawSnippet } from "svelte";
 import Layout from "../../../src/routes/(app)/+layout.svelte";
 
-// Overrides the repo-wide $app/environment mock (tests/setup.ts); the per-file factory wins.
-vi.mock("$app/environment", () => ({
+// Overrides the repo-wide $app/env mock (tests/setup.ts); the per-file factory wins.
+vi.mock("$app/env", () => ({
 	browser: true,
 	dev: true,
-	prerendering: false,
-	SSR: false,
+	building: false,
+	version: "test",
 }));
 
-vi.mock("$lib/api/client", () => ({
+vi.mock("#lib/api/client.ts", () => ({
 	api: {
 		database: {
 			getStatus: vi.fn(() => new Promise<void>(() => {})),

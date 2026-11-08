@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { page } from '$app/stores';
-	import { campaigns } from '$lib/stores/campaigns';
-	import { jobs } from '$lib/stores/jobs';
-	import { Button, LoadingState } from '$lib/components/ui';
-	import { ConfidenceDonut, ProgressStepper } from '$lib/components/dashboard';
-	import { API_BASE_URL } from '$lib/api/base-url';
+	import { page } from '$app/state';
+	import { campaigns } from '#lib/stores/campaigns.ts';
+	import { jobs } from '#lib/stores/jobs.ts';
+	import { Button, LoadingState } from '#lib/components/ui/index.ts';
+	import { ConfidenceDonut, ProgressStepper } from '#lib/components/dashboard/index.ts';
+	import { API_BASE_URL } from '#lib/api/base-url.ts';
 	const API_BASE = API_BASE_URL;
-	const campaignId = $derived($page.params.id ?? '');
+	const campaignId = $derived(page.params.id ?? '');
 
 	let metrics = $state({
 		totalSignatures: 0,
@@ -71,14 +71,12 @@
 		}
 	}
 
-	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
-	const campaignJobs = $derived(
-		$jobs.jobs
-			.filter(job => String(job.campaignId) === String(campaignId))
-			.sort((a, b) => {
-				const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-				const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-				return bTime - aTime;
+	const campaign = $derived($campaigns.campaigns.find((c) => String(c.id) === String(campaignId)));
+
+	const campaignJobs = $derived($jobs.jobs.filter((job) => String(job.campaignId) === String(campaignId)).sort((a, b) => {
+		const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+		const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+		return bTime - aTime;
 			})
 	);
 	const hasCrops = $derived(metrics.totalSignatures > 0);
@@ -128,7 +126,9 @@
 		fetchMetrics();
 	}
 
-	afterNavigate(({ from, to }) => {
+	afterNavigate(({ from, to, shallow, type }) => {
+		if (shallow && type === 'goto') return;
+
 		if (from?.url.pathname !== to?.url.pathname) {
 			fetchSetupStatus();
 		}
@@ -160,7 +160,7 @@
 				voterListStatus={setupStatus.voter_list}
 				petitionStatus={setupStatus.petitions}
 				hasJobs={setupStatus.jobs.total > 0}
-				{campaignId}
+				campaignId={campaignId}
 			/>
 		{/if}
 
@@ -178,7 +178,7 @@
 			</div>
 			<div class="rounded-lg border border-slate-200 bg-white p-6">
 				<h3 class="text-sm font-medium text-slate-600">Active Jobs</h3>
-				<p class="mt-2 text-3xl font-bold text-slate-900">{campaignJobs.filter(j => ['NOT_STARTED', 'OCR_PENDING', 'OCR_STARTED', 'MATCHING'].includes(j.status)).length}</p>
+				<p class="mt-2 text-3xl font-bold text-slate-900">{campaignJobs.filter((j) => ['NOT_STARTED', 'OCR_PENDING', 'OCR_STARTED', 'MATCHING'].includes(j.status)).length}</p>
 			</div>
 			<div class="rounded-lg border border-slate-200 bg-white p-6">
 				<h3 class="text-sm font-medium text-slate-600">Voter List</h3>
@@ -209,9 +209,21 @@
 							total={metrics.totalSignatures}
 						/>
 					{:else}
-						<div class="flex flex-col items-center justify-center py-8 text-slate-500">
-							<svg class="w-12 h-12 mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+						<div
+							class="flex flex-col items-center justify-center py-8 text-slate-500"
+						>
+							<svg
+								class="w-12 h-12 mb-3 text-slate-300"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.5"
+									d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+								></path>
 							</svg>
 							<p class="text-sm">No match results yet</p>
 							<p class="text-xs mt-1">Run a job to see confidence distribution</p>

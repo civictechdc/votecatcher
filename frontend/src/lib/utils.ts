@@ -1,6 +1,6 @@
-import type { MatchResultResponse } from "$lib/api/response-types";
-import type { MatchRow, MatchResults } from "$lib/workspace-types";
-import { MatchColumn } from "$lib/workspace-types";
+import type { MatchResultResponse } from "#lib/api/response-types.ts";
+import type { MatchRow, MatchResults } from "#lib/workspace-types.ts";
+import { MatchColumn } from "#lib/workspace-types.ts";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 

@@ -7,9 +7,7 @@ export default defineConfig({
 	plugins: [svelte(), svelteTesting()],
 	resolve: {
 		alias: {
-			$lib: path.resolve("./src/lib"),
 			$app: path.resolve("./tests/__mocks__/$app"),
-			"$env/static/public": path.resolve("./tests/__mocks__/$env/static/public.ts"),
 		},
 	},
 	test: {

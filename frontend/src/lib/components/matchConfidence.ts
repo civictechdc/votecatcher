@@ -1,4 +1,4 @@
-import type { ConfidenceThresholds } from "$lib/workspace-types";
+import type { ConfidenceThresholds } from "#lib/workspace-types.ts";
 
 type ConfidenceDescription = "High" | "Medium" | "Low" | "No Score" | "Invalid Score";
 interface ConfidenceIndicator {

@@ -1,9 +1,9 @@
 import { http, HttpResponse } from "msw";
-import { featureFlags } from "$lib/config/featureFlags";
+import { featureFlags } from "#lib/config/featureFlags.ts";
 
 /**
  * Handlers used by the client-side MSW worker.
- * Driven by feature flags (VITE_FEATURES seed + the vc:flags localStorage set, managed from the dev-only Flags pill mounted in the (app) layout).
+ * Driven by feature flags (PUBLIC_FEATURES seed + the vc:flags localStorage set, managed from the dev-only Flags pill mounted in the (app) layout).
  *
  * Flags used:
  * - mockApi : enable the worker

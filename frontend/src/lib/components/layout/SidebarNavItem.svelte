@@ -6,7 +6,7 @@
 	import Settings from 'lucide-svelte/icons/settings';
 	import Save from 'lucide-svelte/icons/save';
 	import Upload from 'lucide-svelte/icons/upload';
-	import { cn } from '$lib/utils/cn';
+	import { cn } from '#lib/utils/cn.ts';
 
 	interface Props {
 	 href: string;

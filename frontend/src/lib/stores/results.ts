@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
-import { ResultsApi } from "$lib/api/generated";
+import { ResultsApi } from "#lib/api/generated/index.ts";
 import { getApiClient } from "./api-client";
-import type { ResultResponse } from "$lib/api/generated";
+import type { ResultResponse } from "#lib/api/generated/index.ts";
 
 interface ResultsState {
 	results: ResultResponse[];

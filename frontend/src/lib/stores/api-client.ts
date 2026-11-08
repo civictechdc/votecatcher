@@ -1,5 +1,5 @@
-import { Configuration } from "$lib/api/generated/runtime";
-import { API_BASE_URL } from "$lib/api/base-url";
+import { Configuration } from "#lib/api/generated/runtime.ts";
+import { API_BASE_URL } from "#lib/api/base-url.ts";
 
 let config: Configuration | null = null;
 

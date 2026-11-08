@@ -1,14 +1,11 @@
 // Lightweight feature flag helper.
-// - Read comma-separated flags from VITE_FEATURES (e.g. "mockAuth,2fa,passkeys")
+// - Read flags from PUBLIC_FEATURES (declared in src/env.ts, schema-parsed
+//   comma-separated, e.g. "mockAuth,2fa,passkeys")
 // - Allow localStorage dev toggles (key: vc:flags) for quick dev testing
 // - Keep logic minimal and synchronous so it's safe in both server and client contexts.
-const raw: string = import.meta.env["VITE_FEATURES"] || "";
-const envFlags = new Set(
-	raw
-		.split(",")
-		.map((s: string) => s.trim())
-		.filter(Boolean),
-);
+import { PUBLIC_FEATURES } from "$app/env/public";
+
+const envFlags = new Set(PUBLIC_FEATURES);
 
 function getLocalFlags(): Set<string> {
 	if (typeof window === "undefined") return new Set();

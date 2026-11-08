@@ -1,3 +1,3 @@
-export const API_BASE_URL = (import.meta.env["PUBLIC_API_URL"] ?? "http://localhost:8080")
-	.toString()
-	.replace(/\/$/, "");
+import { PUBLIC_API_URL } from "$app/env/public";
+
+export const API_BASE_URL = PUBLIC_API_URL.replace(/\/$/, "");

@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { get } from "svelte/store";
+import { setPublicEnv } from "../../helpers/env-mocks";
 
-vi.stubEnv("PUBLIC_DEMO_MODE", "true");
-
-vi.mock("$lib/stores/api-client", () => ({
+vi.mock("#lib/stores/api-client.ts", () => ({
 	getApiClient: () => ({
 		basePath: "http://localhost:8000/api",
 	}),
@@ -15,6 +14,9 @@ global.fetch = mockFetch;
 describe("demo store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		// demo.ts snapshots PUBLIC_DEMO_MODE at module load; each test below
+		// re-imports it (resetModules) after this seeding.
+		setPublicEnv({ PUBLIC_DEMO_MODE: true });
 	});
 
 	afterEach(() => {
@@ -24,7 +26,7 @@ describe("demo store", () => {
 	describe("initialized flag", () => {
 		it("starts with initialized as false", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			const state = get(demo);
@@ -33,7 +35,7 @@ describe("demo store", () => {
 
 		it("sets initialized to true after successful fetchPrebakedSessions", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			mockFetch.mockResolvedValueOnce({
@@ -49,7 +51,7 @@ describe("demo store", () => {
 
 		it("sets initialized to true even after network error", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			mockFetch.mockRejectedValueOnce(new Error("Network error"));
@@ -65,7 +67,7 @@ describe("demo store", () => {
 	describe("fetchPrebakedSessions", () => {
 		it("fetches sessions from correct endpoint", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			mockFetch.mockResolvedValueOnce({
@@ -87,7 +89,7 @@ describe("demo store", () => {
 
 		it("stores prebaked sessions in state", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			const mockSessions = [{ id: "session-1", name: "Demo 1", description: "Test session" }];
@@ -106,7 +108,7 @@ describe("demo store", () => {
 
 		it("handles empty sessions array", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			mockFetch.mockResolvedValueOnce({
@@ -124,7 +126,7 @@ describe("demo store", () => {
 	describe("loadPrebaked", () => {
 		it("calls correct endpoint with session ID", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			const mockResponse = {
@@ -153,7 +155,7 @@ describe("demo store", () => {
 
 		it("stores loaded session info in state", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			const mockResponse = {
@@ -179,7 +181,7 @@ describe("demo store", () => {
 
 		it("sets error on load failure", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			mockFetch.mockResolvedValueOnce({
@@ -198,7 +200,7 @@ describe("demo store", () => {
 	describe("resetData", () => {
 		it("calls reset endpoint with POST method", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			mockFetch.mockResolvedValueOnce({
@@ -217,7 +219,7 @@ describe("demo store", () => {
 
 		it("hides reset confirmation after successful reset", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 			demo.confirmReset();
 
@@ -236,7 +238,7 @@ describe("demo store", () => {
 
 		it("sets error on reset failure", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			mockFetch.mockResolvedValueOnce({
@@ -255,7 +257,7 @@ describe("demo store", () => {
 	describe("confirmReset/cancelReset", () => {
 		it("shows confirmation modal when confirmReset called", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			demo.confirmReset();
@@ -265,7 +267,7 @@ describe("demo store", () => {
 
 		it("hides confirmation modal when cancelReset called", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 			demo.confirmReset();
 
@@ -278,7 +280,7 @@ describe("demo store", () => {
 	describe("clearError", () => {
 		it("clears error state", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 			demo.resetStore();
 
 			mockFetch.mockRejectedValueOnce(new Error("Test error"));
@@ -295,7 +297,7 @@ describe("demo store", () => {
 	describe("resetStore", () => {
 		it("resets store to initial state", async () => {
 			vi.resetModules();
-			const { demo } = await import("$lib/stores/demo");
+			const { demo } = await import("#lib/stores/demo.ts");
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,

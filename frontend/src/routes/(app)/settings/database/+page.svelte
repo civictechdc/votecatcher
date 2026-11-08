@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { cn } from '$lib/utils/cn';
-	import { api } from '$lib/api/client';
-	import { Button, LoadingState, ErrorDisplay } from '$lib/components/ui';
-	import type { DatabaseStatus } from '$lib/api/database-types';
+	import { cn } from '#lib/utils/cn.ts';
+	import { api } from '#lib/api/client.ts';
+	import { Button, LoadingState, ErrorDisplay } from '#lib/components/ui/index.ts';
+	import type { DatabaseStatus } from '#lib/api/database-types.ts';
 
 	let status = $state<DatabaseStatus | null>(null);
 	let loading = $state(true);

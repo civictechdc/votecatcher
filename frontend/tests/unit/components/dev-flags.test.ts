@@ -2,12 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import DevFlags from "../../../src/lib/components/DevFlags.svelte";
 
-// Overrides the repo-wide $app/environment mock (tests/setup.ts); the per-file factory wins.
-vi.mock("$app/environment", () => ({
+// Overrides the repo-wide $app/env mock (tests/setup.ts); the per-file factory wins.
+vi.mock("$app/env", () => ({
 	browser: true,
 	dev: true,
-	prerendering: false,
-	SSR: false,
+	building: false,
+	version: "test",
 }));
 
 // Mock substrate for the config helper. `known` models the configured set
@@ -34,7 +34,7 @@ const state = vi.hoisted(() => {
 	};
 });
 
-vi.mock("$lib/config/featureFlags", () => ({
+vi.mock("#lib/config/featureFlags.ts", () => ({
 	featureFlags: {
 		isEnabled: (f: string) => state.local.has(f),
 		toggleLocal: (f: string) => {

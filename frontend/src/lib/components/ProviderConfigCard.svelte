@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Input, Select } from '$lib/components/ui';
+	import { Button, Input, Select } from '#lib/components/ui/index.ts';
 	import { CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-svelte';
 
 	interface Props {

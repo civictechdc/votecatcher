@@ -3,15 +3,19 @@
 // Replace implementation with FastAPI backend later.
 
 import type { RequestHandler } from "@sveltejs/kit";
-import { json } from "@sveltejs/kit";
-import type { MatchRow, ConfidenceThresholds, MatchResults } from "$lib/workspace-types";
-import { MatchColumn } from "$lib/workspace-types";
+import type { MatchRow, ConfidenceThresholds, MatchResults } from "#lib/workspace-types.ts";
+import { MatchColumn } from "#lib/workspace-types.ts";
 import { faker } from "@faker-js/faker";
-import { api, type ApiResult } from "$lib/api/client";
-import { env } from "$env/dynamic/private";
-import type { MatchingProgressResponse } from "$lib/api/response-types";
+import { api, type ApiResult } from "#lib/api/client.ts";
+import {
+	DEMO_MODE,
+	OCR_PROVIDER_API_KEY,
+	OCR_PROVIDER_MODEL,
+	OCR_PROVIDER_NAME,
+} from "$app/env/private";
+import type { MatchingProgressResponse } from "#lib/api/response-types.ts";
 
-const SERVER_DEMO = (env["DEMO_MODE"] ?? "false") === "true";
+const SERVER_DEMO = DEMO_MODE;
 
 const MATCH_TABLE_COLUMNS: MatchColumn[] = [
 	new MatchColumn("Registration Name", function (first: MatchRow, second: MatchRow) {
@@ -131,18 +135,18 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	if (batchEnabled) {
 		const batchResponse: ApiResult = await api.demoStartOcrRequest({
-			provider_name: env["OCR_PROVIDER_NAME"] || "openai",
-			provider_model: env["OCR_PROVIDER_MODEL"] || "gpt-4o-mini",
-			api_key: env["OCR_PROVIDER_API_KEY"] || "",
+			provider_name: OCR_PROVIDER_NAME || "openai",
+			provider_model: OCR_PROVIDER_MODEL || "gpt-4o-mini",
+			api_key: OCR_PROVIDER_API_KEY || "",
 		});
 
 		if (!batchResponse.ok) {
-			return json({ batchResponse }, { status: 400 });
+			return Response.json({ batchResponse }, { status: 400 });
 		}
 
 		const matchStatus: MatchingProgressResponse = batchResponse.data as MatchingProgressResponse;
 		console.log(`Batch response is ${JSON.stringify(matchStatus)}`);
-		return json({ matchStatus }, { status: 200 });
+		return Response.json({ matchStatus }, { status: 200 });
 	}
 	const threshold: ConfidenceThresholds = body?.thresholds;
 
@@ -160,5 +164,5 @@ export const POST: RequestHandler = async ({ request }) => {
 		timestamp: new Date().toISOString(),
 	};
 
-	return json({ matchResults }, { status: 200 });
+	return Response.json({ matchResults }, { status: 200 });
 };

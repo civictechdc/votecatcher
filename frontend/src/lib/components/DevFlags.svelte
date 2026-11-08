@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { featureFlags } from '$lib/config/featureFlags';
-	import { IS_DEV } from '$lib/utils/mode';
+	import { featureFlags } from '#lib/config/featureFlags.ts';
+	import { IS_DEV } from '#lib/utils/mode.ts';
 
 	// Self-gates: renders nothing outside developer mode, even if a page
 	// mounts this component without its own gate (defense in depth).

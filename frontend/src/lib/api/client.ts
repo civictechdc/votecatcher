@@ -1,13 +1,13 @@
 // Lightweight API client wrapper used by onboarding UI.
 // All direct Supabase calls in your previous app are replaced with REST endpoint calls.
 // For now endpoints are mocked under src/routes/api/*.
-import type { MatchResponse, MatchingProgressResponse } from "$lib/api/response-types";
+import type { MatchResponse, MatchingProgressResponse } from "#lib/api/response-types.ts";
 import type {
 	DatabaseStatus,
 	SupabaseCredentials,
 	ConnectionTestResult,
 	ProvisionResult,
-} from "$lib/api/database-types";
+} from "#lib/api/database-types.ts";
 
 import { API_BASE_URL } from "./base-url";
 

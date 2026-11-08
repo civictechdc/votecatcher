@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte"
-  import { auth } from "$lib/stores/auth"
+  import { auth } from "#lib/stores/auth.ts"
   import { get } from "svelte/store"
-  import { featureFlags } from "$lib/config/featureFlags"
-  import { Navbar } from "$lib/components/layout"
-  import { Progress } from "$lib/components/ui"
+  import { featureFlags } from "#lib/config/featureFlags.ts"
+  import { Navbar } from "#lib/components/layout/index.ts"
+  import { Progress } from "#lib/components/ui/index.ts"
 
   let mode: "signin" | "signup" = "signin"
   let email = ""
@@ -140,5 +140,5 @@
 </div>
 
 <style>
-  @import "$lib/styles/theme.css";
+  @import "../../../lib/styles/theme.css";
 </style>

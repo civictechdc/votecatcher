@@ -1,5 +1,5 @@
 import type { RequestHandler } from "./$types";
-import { API_BASE_URL } from "$lib/api/base-url";
+import { API_BASE_URL } from "#lib/api/base-url.ts";
 
 export const GET: RequestHandler = async ({ params }) => {
 	try {

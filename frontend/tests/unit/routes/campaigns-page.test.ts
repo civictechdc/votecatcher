@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from "vitest";
 import { render, screen, waitFor, fireEvent, cleanup } from "@testing-library/svelte";
 import Page from "../../../src/routes/(app)/workspace/campaigns/+page.svelte";
-import type { CampaignResponse } from "$lib/api/generated";
-import Table from "$lib/components/ui/Table.svelte";
+import type { CampaignResponse } from "#lib/api/generated/index.ts";
+import Table from "#lib/components/ui/Table.svelte";
 import fc from "fast-check";
 
 // Property-test render budget: each run renders the page (~30ms plus transform
@@ -12,7 +12,7 @@ const YEAR_PAYLOAD_PROPERTY_RUNS = 25;
 const YEAR_MIN = 1990;
 const YEAR_MAX = 2100;
 
-vi.mock("$lib/stores/campaigns", () => ({
+vi.mock("#lib/stores/campaigns.ts", () => ({
 	campaigns: {
 		subscribe: vi.fn(),
 		create: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock("$lib/stores/campaigns", () => ({
 	},
 }));
 
-vi.mock("$lib/stores/demo", () => ({
+vi.mock("#lib/stores/demo.ts", () => ({
 	demo: {
 		subscribe: vi.fn((fn) => {
 			fn({
@@ -43,7 +43,7 @@ vi.mock("$lib/stores/demo", () => ({
 	setDemoMode: vi.fn(),
 }));
 
-import { campaigns } from "$lib/stores/campaigns";
+import { campaigns } from "#lib/stores/campaigns.ts";
 
 const testCampaigns: CampaignResponse[] = [
 	{

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { API_BASE_URL } from "$lib/api/base-url";
+import { API_BASE_URL } from "#lib/api/base-url.ts";
 
 describe("API Client", () => {
 	beforeEach(() => {

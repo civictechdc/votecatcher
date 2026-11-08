@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
-import { RegionsApi } from "$lib/api/generated/RegionsApi";
+import { RegionsApi } from "#lib/api/generated/RegionsApi.ts";
 import { getApiClient } from "./api-client";
-import type { RegionSummary } from "$lib/api/generated/models/Region";
+import type { RegionSummary } from "#lib/api/generated/models/Region.ts";
 
 interface RegionsState {
 	regions: RegionSummary[];

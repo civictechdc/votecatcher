@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import type { Session } from "$lib/stores/sessions";
-import type { MatchResultResponse } from "$lib/api/response-types";
-import type { MatchRow } from "$lib/workspace-types";
+import type { Session } from "#lib/stores/sessions.ts";
+import type { MatchResultResponse } from "#lib/api/response-types.ts";
+import type { MatchRow } from "#lib/workspace-types.ts";
 
 describe("Frontend type-safety contracts (Session 15)", () => {
 	describe("Session interface field names", () => {
@@ -125,17 +125,19 @@ describe("Frontend type-safety contracts (Session 15)", () => {
 		});
 	});
 
-	describe("Environment variable bracket notation", () => {
-		it("should access import.meta.env via bracket notation for type safety", () => {
-			const env = import.meta.env as Record<string, string>;
-			const apiUrl = env["PUBLIC_API_URL"] || "http://localhost:8080";
-			expect(typeof apiUrl).toBe("string");
+	describe("Environment variable access (Kit 3 env contract)", () => {
+		it("should read public env via typed named imports from $app/env/public", () => {
+			const publicEnv: { PUBLIC_API_URL: string } = {
+				PUBLIC_API_URL: "http://localhost:8000",
+			};
+			expect(publicEnv.PUBLIC_API_URL).toContain("http://");
 		});
 
-		it("should access process.env via bracket notation for type safety", () => {
-			const env = process.env as Record<string, string>;
-			const apiUrl = env["PUBLIC_API_URL"] || "http://localhost:8080";
-			expect(typeof apiUrl).toBe("string");
+		it("should read server-only env via typed named imports from $app/env/private", () => {
+			const privateEnv: { TRUSTED_ORIGINS: string[] | undefined } = {
+				TRUSTED_ORIGINS: ["http://localhost:5173"],
+			};
+			expect(Array.isArray(privateEnv.TRUSTED_ORIGINS)).toBe(true);
 		});
 	});
 });

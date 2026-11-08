@@ -13,10 +13,10 @@
  */
 import { writable } from "svelte/store";
 import { getApiClient } from "./api-client";
-import { JobsApi } from "$lib/api/generated";
-import { API_BASE_URL } from "$lib/api/base-url";
-import type { JobResponse, CreateJobRequest } from "$lib/api/generated";
-import type { JobStatusEnum } from "$lib/api/generated/models/Job";
+import { JobsApi } from "#lib/api/generated/index.ts";
+import { API_BASE_URL } from "#lib/api/base-url.ts";
+import type { JobResponse, CreateJobRequest } from "#lib/api/generated/index.ts";
+import type { JobStatusEnum } from "#lib/api/generated/models/Job.ts";
 
 interface SSEState {
 	connected: boolean;

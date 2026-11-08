@@ -2,7 +2,7 @@
 // Methods are thin wrappers around authApi, and state updates are deterministic for tests.
 
 import { writable } from "svelte/store";
-import { authApi } from "$lib/api/auth";
+import { authApi } from "#lib/api/auth.ts";
 
 export type User = { id: string; email?: string } | null;
 

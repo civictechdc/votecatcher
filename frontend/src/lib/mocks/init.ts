@@ -1,4 +1,4 @@
-import { featureFlags } from "$lib/config/featureFlags";
+import { featureFlags } from "#lib/config/featureFlags.ts";
 
 // Initialize MSW worker if the mockApi feature flag is enabled.
 // This file is safe to import (it is lazy-started via initMocks in onMount).

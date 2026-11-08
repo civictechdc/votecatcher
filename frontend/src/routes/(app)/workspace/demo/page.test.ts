@@ -38,7 +38,7 @@ const createMockDemoStore = () => {
 
 let mockStore: ReturnType<typeof createMockDemoStore>;
 
-vi.mock("$lib/stores/demo", () => ({
+vi.mock("#lib/stores/demo.ts", () => ({
 	get demo() {
 		return mockStore;
 	},

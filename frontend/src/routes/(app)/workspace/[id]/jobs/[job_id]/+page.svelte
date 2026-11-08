@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { jobs } from '$lib/stores/jobs';
-	import { campaigns } from '$lib/stores/campaigns';
-	import { Button, LoadingSpinner, ErrorDisplay } from '$lib/components/ui';
+	import { page } from '$app/state';
+	import { jobs } from '#lib/stores/jobs.ts';
+	import { campaigns } from '#lib/stores/campaigns.ts';
+	import { Button, LoadingSpinner, ErrorDisplay } from '#lib/components/ui/index.ts';
 	import { onMount, onDestroy } from 'svelte';
 
-	let campaignId = $derived($page.params.id);
-	let jobId = $derived($page.params.job_id);
+	let campaignId = $derived(page.params.id);
+	let jobId = $derived(page.params.job_id);
 
 	onMount(() => {
 		campaigns.fetchAll();
@@ -61,10 +61,10 @@
 
 	function getStepStyle(stepKey: string, jobStatus: string): { bgClass: string; textClass: string } {
 		const currentPhase = getStatusPhase(jobStatus);
-		const stepIndex = statusSteps.findIndex(s => s.key === currentPhase);
-		const stepOrder = statusSteps.findIndex(s => s.key === stepKey);
+		const stepIndex = statusSteps.findIndex((s) => s.key === currentPhase);
+		const stepOrder = statusSteps.findIndex((s) => s.key === stepKey);
 		const isActive = stepKey === currentPhase;
-		const isCompleted = stepIndex > stepOrder || (currentPhase === 'completed' && stepKey !== 'completed');
+		const isCompleted = stepIndex > stepOrder || currentPhase === 'completed' && stepKey !== 'completed';
 		const isError = currentPhase === 'error' && isActive;
 		const isCancelled = currentPhase === 'cancelled';
 
@@ -114,7 +114,7 @@
 		return ['MATCHING_COMPLETED', 'CANCELLED', 'OCR_FAILED', 'OCR_TIMEOUT', 'MATCHING_ERROR'].includes(status);
 	}
 
-	const campaign = $derived($campaigns.campaigns.find(c => String(c.id) === String(campaignId)));
+	const campaign = $derived($campaigns.campaigns.find((c) => String(c.id) === String(campaignId)));
 </script>
 
 <svelte:head>

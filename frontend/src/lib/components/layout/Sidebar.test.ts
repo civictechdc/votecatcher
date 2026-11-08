@@ -2,16 +2,13 @@ import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/svelte";
 import Sidebar from "./Sidebar.svelte";
 
-vi.mock("$app/stores", () => ({
-	page: {
-		subscribe: vi.fn((fn) => {
-			fn({ url: { pathname: "/workspace/campaigns" } });
-			return { unsubscribe: vi.fn() };
-		}),
-	},
-}));
+vi.mock("$app/state", async () => {
+	const state = await import("../../../../tests/__mocks__/$app/state.svelte.ts");
+	state.page.url = new URL("http://localhost/workspace/campaigns");
+	return state;
+});
 
-vi.mock("$lib/stores/campaigns", () => ({
+vi.mock("#lib/stores/campaigns.ts", () => ({
 	campaigns: {
 		subscribe: vi.fn((fn) => {
 			fn({ campaigns: [], loading: false, loaded: true, error: null, metrics: {} });
@@ -21,7 +18,7 @@ vi.mock("$lib/stores/campaigns", () => ({
 	},
 }));
 
-vi.mock("$lib/utils/mode", () => ({
+vi.mock("#lib/utils/mode.ts", () => ({
 	getLogoDestination: () => "/workspace/campaigns",
 }));
 

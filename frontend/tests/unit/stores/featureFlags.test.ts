@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { get } from "svelte/store";
+import { setPublicEnv } from "../../helpers/env-mocks";
 
-vi.mock("$app/environment", () => ({
+vi.mock("$app/env", () => ({
 	browser: false,
 }));
-
-vi.stubEnv("PUBLIC_API_URL", "http://localhost:8000");
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -13,6 +12,7 @@ global.fetch = mockFetch;
 describe("featureFlags store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		setPublicEnv({ PUBLIC_API_URL: "http://localhost:8000" });
 	});
 
 	afterEach(() => {
@@ -22,7 +22,7 @@ describe("featureFlags store", () => {
 	describe("URL construction", () => {
 		it("should not double /api/api/ in URL", async () => {
 			vi.resetModules();
-			const { featureFlags } = await import("$lib/stores/featureFlags");
+			const { featureFlags } = await import("#lib/stores/featureFlags.ts");
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
@@ -47,7 +47,7 @@ describe("featureFlags store", () => {
 	describe("load", () => {
 		it("should update store with server flags on successful fetch", async () => {
 			vi.resetModules();
-			const { featureFlags } = await import("$lib/stores/featureFlags");
+			const { featureFlags } = await import("#lib/stores/featureFlags.ts");
 
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
@@ -69,7 +69,7 @@ describe("featureFlags store", () => {
 
 		it("should use default flags on fetch error", async () => {
 			vi.resetModules();
-			const { featureFlags } = await import("$lib/stores/featureFlags");
+			const { featureFlags } = await import("#lib/stores/featureFlags.ts");
 
 			mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
@@ -83,7 +83,7 @@ describe("featureFlags store", () => {
 
 		it("should use default flags on HTTP error", async () => {
 			vi.resetModules();
-			const { featureFlags } = await import("$lib/stores/featureFlags");
+			const { featureFlags } = await import("#lib/stores/featureFlags.ts");
 
 			mockFetch.mockResolvedValueOnce({
 				ok: false,

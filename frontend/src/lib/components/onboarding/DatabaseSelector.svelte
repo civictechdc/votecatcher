@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import type { DatabaseType } from '$lib/api/database-types';
+	import { cn } from '#lib/utils/cn.ts';
+	import type { DatabaseType } from '#lib/api/database-types.ts';
 
 	interface Props {
 		onSelect: (type: DatabaseType) => void;

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { api } from '$lib/api/client';
-	import { LoadingSpinner } from '$lib/components/ui';
-	import DevFlags from '$lib/components/DevFlags.svelte';
-	import { IS_DEV } from '$lib/utils/mode';
+	import { api } from '#lib/api/client.ts';
+	import { LoadingSpinner } from '#lib/components/ui/index.ts';
+	import DevFlags from '#lib/components/DevFlags.svelte';
+	import { IS_DEV } from '#lib/utils/mode.ts';
 
 	const STATUS_TIMEOUT_MS = 5000;
 

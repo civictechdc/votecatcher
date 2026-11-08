@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-
-vi.stubEnv("PUBLIC_API_URL", "http://localhost:8000");
+import { setPublicEnv } from "../../helpers/env-mocks";
 
 describe("api.database", () => {
 	beforeEach(() => {
 		vi.resetModules();
 		global.fetch = vi.fn();
+		setPublicEnv({ PUBLIC_API_URL: "http://localhost:8000" });
 	});
 
 	function mockFetchResponse(body: unknown, ok = true, status = 200) {
@@ -27,7 +27,7 @@ describe("api.database", () => {
 		};
 		mockFetchResponse(mockStatus);
 
-		const { api } = await import("$lib/api/client");
+		const { api } = await import("#lib/api/client.ts");
 		const result = await api.database.getStatus();
 		expect(result.ok).toBe(true);
 		if (result.ok) {
@@ -39,7 +39,7 @@ describe("api.database", () => {
 	it("getStatus returns error on failure", async () => {
 		mockFetchResponse({}, false, 500);
 
-		const { api } = await import("$lib/api/client");
+		const { api } = await import("#lib/api/client.ts");
 		const result = await api.database.getStatus();
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
@@ -55,7 +55,7 @@ describe("api.database", () => {
 		};
 		mockFetchResponse(mockResult);
 
-		const { api } = await import("$lib/api/client");
+		const { api } = await import("#lib/api/client.ts");
 		const result = await api.database.testSupabase({
 			project_url: "https://test.supabase.co",
 			service_key: "sk_test_1234567890123456789012345678901234567890", // pragma: allowlist secret
@@ -71,7 +71,7 @@ describe("api.database", () => {
 	it("testSupabase sends POST to correct endpoint", async () => {
 		mockFetchResponse({ success: true, message: "OK" });
 
-		const { api } = await import("$lib/api/client");
+		const { api } = await import("#lib/api/client.ts");
 		await api.database.testSupabase({
 			project_url: "https://test.supabase.co",
 			service_key: "sk_test_key", // pragma: allowlist secret
@@ -92,7 +92,7 @@ describe("api.database", () => {
 		};
 		mockFetchResponse(mockResult);
 
-		const { api } = await import("$lib/api/client");
+		const { api } = await import("#lib/api/client.ts");
 		const result = await api.database.provisionSupabase({
 			project_url: "https://test.supabase.co",
 			service_key: "sk_test_1234567890123456789012345678901234567890", // pragma: allowlist secret
@@ -107,7 +107,7 @@ describe("api.database", () => {
 	it("provisionSupabase sends POST to provision endpoint", async () => {
 		mockFetchResponse({ success: true, message: "OK" });
 
-		const { api } = await import("$lib/api/client");
+		const { api } = await import("#lib/api/client.ts");
 		await api.database.provisionSupabase({
 			project_url: "https://test.supabase.co",
 			service_key: "key", // pragma: allowlist secret
@@ -123,7 +123,7 @@ describe("api.database", () => {
 	it("disconnectSupabase sends DELETE and returns result", async () => {
 		mockFetchResponse({ success: true });
 
-		const { api } = await import("$lib/api/client");
+		const { api } = await import("#lib/api/client.ts");
 		const result = await api.database.disconnectSupabase();
 		expect(result.ok).toBe(true);
 

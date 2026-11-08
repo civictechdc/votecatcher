@@ -4,7 +4,7 @@ import CsvExportButton from "./CsvExportButton.svelte";
 
 const mockExportCSV = vi.fn();
 
-vi.mock("$lib/stores/results", () => ({
+vi.mock("#lib/stores/results.ts", () => ({
 	results: {
 		exportCSV: (...args: unknown[]) => mockExportCSV(...args),
 		fetchResults: vi.fn(),

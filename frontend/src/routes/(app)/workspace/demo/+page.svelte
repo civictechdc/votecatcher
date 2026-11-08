@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { demo, isDemoModeEnabled } from '$lib/stores/demo';
-	import { Button, LoadingSpinner, Modal } from '$lib/components/ui';
+	import { demo, isDemoModeEnabled } from '#lib/stores/demo.ts';
+	import { Button, LoadingSpinner, Modal } from '#lib/components/ui/index.ts';
 	import { RefreshCw, Download, AlertTriangle, CheckCircle, Users, GitCompare } from 'lucide-svelte';
 
 	let demoEnabled = $state(isDemoModeEnabled());

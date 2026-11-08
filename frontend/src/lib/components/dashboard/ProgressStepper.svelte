@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Button } from '$lib/components/ui';
-	import type { VoterListStatus, PetitionsStatus } from '$lib/api/generated/models/Campaign';
+	import { Button } from '#lib/components/ui/index.ts';
+	import type { VoterListStatus, PetitionsStatus } from '#lib/api/generated/models/Campaign.ts';
 
 	interface Props {
 		voterListStatus: VoterListStatus | null;

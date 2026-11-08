@@ -1,14 +1,16 @@
+import adapterAuto from "@sveltejs/adapter-auto";
+import adapterNode from "@sveltejs/adapter-node";
 import { defineConfig } from "vitest/config";
 import tailwindcss from "@tailwindcss/vite";
 import { sveltekit } from "@sveltejs/kit/vite";
 import oxlintPlugin from "vite-plugin-oxlint";
 import { visualizer } from "rollup-plugin-visualizer";
-import path from "path";
+
+const adapter = process.env["ADAPTER"] === "node" ? adapterNode() : adapterAuto();
 
 export default defineConfig({
-	envPrefix: ["VITE_", "PUBLIC_"],
 	plugins: [
-		sveltekit(),
+		sveltekit({ adapter }),
 		tailwindcss(),
 		oxlintPlugin(),
 		visualizer({
@@ -17,10 +19,5 @@ export default defineConfig({
 			gzipSize: true,
 			template: "treemap",
 		}),
-	] as any,
-	resolve: {
-		alias: {
-			$lib: path.resolve("./src/lib"),
-		},
-	},
+	],
 });

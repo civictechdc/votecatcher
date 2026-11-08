@@ -1,6 +1,6 @@
-import { vi } from "vitest";
+import { vi, beforeEach } from "vitest";
 import { JSDOM } from "jsdom";
-import { readable } from "svelte/store";
+import { resetEnvMocks } from "./helpers/env-mocks";
 
 const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>", {
 	url: "http://localhost",
@@ -35,43 +35,25 @@ const localStorageMock = (() => {
 })();
 vi.stubGlobal("localStorage", localStorageMock);
 
-vi.mock("$app/environment", () => ({
+vi.mock("$app/env", () => ({
 	browser: false,
 	dev: true,
-	prerendering: false,
-	SSR: true,
+	building: false,
+	version: "test",
 }));
 
-vi.mock("$env/static/public", () => ({
-	PUBLIC_API_URL: "http://localhost:8000",
-	PUBLIC_DEMO_MODE: "",
-}));
+// Reset the mutable $app/env/{public,private} mock state (snapshots are
+// re-read on vi.resetModules(); test files set values in their own beforeEach)
+beforeEach(() => {
+	resetEnvMocks();
+});
 
-vi.mock("$app/stores", () => {
-	return {
-		page: readable({
-			url: new URL("http://localhost"),
-			params: {},
-			route: {},
-			status: 200,
-			error: null,
-			data: {},
-			state: {},
-		}),
-		navigating: readable(null),
-		updated: readable(false),
-		goto: vi.fn(),
-		invalidate: vi.fn(),
-		invalidateAll: vi.fn(),
-		prefetch: vi.fn(),
-		prefetchRoutes: vi.fn(),
-		beforeNavigate: vi.fn(),
-		afterNavigate: vi.fn(),
-	};
+vi.mock("$app/state", async () => {
+	return await import("./__mocks__/$app/state.svelte.ts");
 });
 
 import { mount, unmount } from "svelte";
-import Button from "$lib/components/ui/Button.svelte";
+import Button from "#lib/components/ui/Button.svelte";
 import { Menu, Download } from "lucide-svelte";
 import MenuIcon from "lucide-svelte/icons/menu";
 import XIcon from "lucide-svelte/icons/x";
@@ -79,8 +61,8 @@ import ChevronDownIcon from "lucide-svelte/icons/chevron-down";
 import FolderOpenIcon from "lucide-svelte/icons/folder-open";
 import SettingsIcon from "lucide-svelte/icons/settings";
 import RefreshCwIcon from "lucide-svelte/icons/refresh-cw";
-import Table from "$lib/components/ui/Table.svelte";
-import LoadingSpinner from "$lib/components/ui/LoadingSpinner.svelte";
+import Table from "#lib/components/ui/Table.svelte";
+import LoadingSpinner from "#lib/components/ui/LoadingSpinner.svelte";
 
 function warmup(Component: any, props: Record<string, unknown> = {}) {
 	try {

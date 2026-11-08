@@ -1,8 +1,7 @@
-import { browser, dev } from "$app/environment";
+import { browser, dev } from "$app/env";
+import { PUBLIC_DEMO_MODE } from "$app/env/public";
 import { get } from "svelte/store";
-import { featureFlags } from "$lib/stores/featureFlags";
-
-const PUBLIC_DEMO_MODE: string = import.meta.env["PUBLIC_DEMO_MODE"] || "";
+import { featureFlags } from "#lib/stores/featureFlags.ts";
 
 export type AppMode = "production" | "demo" | "simulation" | "dev";
 
@@ -23,7 +22,7 @@ export function getAppMode(): AppMode {
 }
 
 export function isDemoMode(): boolean {
-	return PUBLIC_DEMO_MODE === "true";
+	return PUBLIC_DEMO_MODE;
 }
 
 export function isSimulationMode(): boolean {

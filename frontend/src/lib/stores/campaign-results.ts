@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { API_BASE_URL } from "$lib/api/base-url";
+import { API_BASE_URL } from "#lib/api/base-url.ts";
 
 function toAbsoluteUrl(url: string): string {
 	if (!url || url.startsWith("http")) return url;

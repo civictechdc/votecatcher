@@ -291,22 +291,15 @@ jobs:
         #     reached only via dev/build-time chains (archunit, eslint, typescript-eslint,
         #     openapi-generator-cli); nothing ships to production. Drop the <11 override ceiling in
         #     frontend/package.json when archunit ships minimatch-11 support.
-        #   GHSA-pfhg-q3qv-9q6r, GHSA-27mw-82g8-phjj (@sveltejs/kit LOW x2): fix is SvelteKit 3.0.0,
-        #     a tracked scoped major upgrade; 2.x has no in-range fix. Not reachable in this app
-        #     today: no catch-all ([...x]) route directories and no routes use prerender
-        #     (verified 2026-11-07).
         #   GHSA-h4fr-cmh5-qr62, GHSA-jfwm-3p3c-6hx5 (fallow LOW x2): fix is fallow 3.34.0 (major);
         #     dev-only architecture-test runner.
-        # Runtime dependencies are remediated except the two SvelteKit 2.x LOWs above, which are
-        # pending the planned Kit 3 major upgrade; all other flagged chains are dev/build-time only
-        # and do not ship to production.
+        # Runtime dependencies are remediated (SvelteKit 3 LOWs resolved by the Kit 3 upgrade);
+        # all flagged chains are dev/build-time only and do not ship to production.
         run: >-
           cd frontend && bun audit
           --ignore GHSA-gcqx-w48m-w2h4
           --ignore GHSA-3g3m-2fjr-6pw4
           --ignore GHSA-g3hv-75wg-m249
-          --ignore GHSA-pfhg-q3qv-9q6r
-          --ignore GHSA-27mw-82g8-phjj
           --ignore GHSA-h4fr-cmh5-qr62
           --ignore GHSA-jfwm-3p3c-6hx5
 

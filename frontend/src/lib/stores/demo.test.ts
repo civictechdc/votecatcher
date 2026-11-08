@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { get } from "svelte/store";
-import { API_BASE_URL } from "$lib/api/base-url";
+import { API_BASE_URL } from "#lib/api/base-url.ts";
 
 vi.mock("./api-client", () => ({
 	getApiClient: vi.fn(() => ({

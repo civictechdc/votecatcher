@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { get } from "svelte/store";
-
-vi.stubEnv("PUBLIC_API_URL", "http://localhost:8000/api");
+import { setPublicEnv } from "../../helpers/env-mocks";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -10,6 +9,7 @@ global.fetch = mockFetch;
 describe("settings store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		setPublicEnv({ PUBLIC_API_URL: "http://localhost:8000" });
 	});
 
 	afterEach(() => {
@@ -20,7 +20,7 @@ describe("settings store", () => {
 		it("starts with initialized as false", async () => {
 			// Import fresh store instance
 			vi.resetModules();
-			const { settings } = await import("$lib/stores/settings");
+			const { settings } = await import("#lib/stores/settings.ts");
 
 			// Reset to get initial state
 			settings.resetStore();
@@ -31,7 +31,7 @@ describe("settings store", () => {
 
 		it("sets initialized to true after successful fetch", async () => {
 			vi.resetModules();
-			const { settings } = await import("$lib/stores/settings");
+			const { settings } = await import("#lib/stores/settings.ts");
 			settings.resetStore();
 
 			const mockSettings = {
@@ -62,7 +62,7 @@ describe("settings store", () => {
 
 		it("sets initialized to true even after network error", async () => {
 			vi.resetModules();
-			const { settings } = await import("$lib/stores/settings");
+			const { settings } = await import("#lib/stores/settings.ts");
 			settings.resetStore();
 
 			mockFetch.mockRejectedValueOnce(new Error("Network error"));
@@ -77,7 +77,7 @@ describe("settings store", () => {
 
 		it("sets initialized to true after HTTP error", async () => {
 			vi.resetModules();
-			const { settings } = await import("$lib/stores/settings");
+			const { settings } = await import("#lib/stores/settings.ts");
 			settings.resetStore();
 
 			mockFetch.mockResolvedValueOnce({
@@ -96,7 +96,7 @@ describe("settings store", () => {
 	describe("loading state", () => {
 		it("sets loading to true during fetch", async () => {
 			vi.resetModules();
-			const { settings } = await import("$lib/stores/settings");
+			const { settings } = await import("#lib/stores/settings.ts");
 			settings.resetStore();
 
 			let resolveFetch: (value: unknown) => void;
@@ -128,7 +128,7 @@ describe("settings store", () => {
 	describe("clearError", () => {
 		it("clears error state", async () => {
 			vi.resetModules();
-			const { settings } = await import("$lib/stores/settings");
+			const { settings } = await import("#lib/stores/settings.ts");
 			settings.resetStore();
 
 			mockFetch.mockRejectedValueOnce(new Error("Test error"));

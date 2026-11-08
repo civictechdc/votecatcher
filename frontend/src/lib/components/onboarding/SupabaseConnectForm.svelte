@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { Button, Input } from '$lib/components/ui';
-	import { api } from '$lib/api/client';
-	import type { SupabaseCredentials, ConnectionTestResult } from '$lib/api/database-types';
+	import { cn } from '#lib/utils/cn.ts';
+	import { Button, Input } from '#lib/components/ui/index.ts';
+	import { api } from '#lib/api/client.ts';
+	import type { SupabaseCredentials, ConnectionTestResult } from '#lib/api/database-types.ts';
 
 	interface Props {
 		onBack: () => void;
