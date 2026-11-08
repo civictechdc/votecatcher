@@ -43,7 +43,7 @@ test.describe("Error Handling", () => {
 		await expect(page.locator("h1").first()).toBeVisible();
 	});
 
-	test("unmatched route answers HTTP 404 with the workspace error boundary", async ({ page }) => {
+	test("unmatched route answers HTTP 404 with the root error boundary", async ({ page }) => {
 		// CHARACTERIZATION: no route in the app throws error(404), so the root
 		// +error.svelte "404 — Page Not Found" mapping is unreachable. For an
 		// unrouted URL SvelteKit renders the ROOT +error.svelte (the root error

@@ -3,8 +3,10 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
 	testDir: "./tests/e2e",
 	// the adapter-node smoke spec runs only under playwright.prod.config.ts
-	// (`bun run test:e2e:prod`); keep it out of dev-server runs
-	testIgnore: "tests/e2e/prod-smoke.spec.ts",
+	// (`bun run test:e2e:prod`); the blocked-target spec runs only under
+	// playwright.blocked.config.ts (`bun run test:e2e:blocked`) — keep both
+	// out of dev-server runs
+	testIgnore: ["tests/e2e/prod-smoke.spec.ts", "tests/e2e/blocked-target.spec.ts"],
 	fullyParallel: true,
 	forbidOnly: !!process.env["CI"],
 	retries: process.env["CI"] ? 2 : 0,
@@ -41,8 +43,10 @@ export default defineConfig({
 			timeout: 120000,
 			env: {
 				PUBLIC_DEMO_MODE: "true",
-				DEMO_RESET: "true",
 				PUBLIC_API_URL: "http://localhost:8080",
+				// Note: no DEMO_RESET here — traced 2026-11-07: nothing reads
+				// it. The backend demo-reset gate is FEATURE_DEMO_RESET (see
+				// backend/app/settings/settings.py).
 			},
 		},
 	],
