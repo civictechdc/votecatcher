@@ -211,7 +211,7 @@ For full configuration details, see [Configuration Modes](docs/configuration-mod
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | SvelteKit 5, Svelte 5, TypeScript, Tailwind CSS v4 |
+| Frontend | SvelteKit 3, Svelte 5, TypeScript, Tailwind CSS v4 |
 | Backend | FastAPI, Python 3.12+, SQLModel, Alembic |
 | Database | PostgreSQL / SQLite / Supabase |
 | Auth | Better Auth |

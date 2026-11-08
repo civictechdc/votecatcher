@@ -1,10 +1,10 @@
 # VoteCatcher Frontend
 
-SvelteKit 5 application for the VoteCatcher campaign management platform.
+SvelteKit 3 application for the VoteCatcher campaign management platform.
 
 ## Tech Stack
 
-- **Framework**: SvelteKit 2, Svelte 5
+- **Framework**: SvelteKit 3, Svelte 5
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4
 - **Auth**: Better Auth

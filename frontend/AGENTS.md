@@ -1,6 +1,6 @@
 # VoteCatcher Frontend
 
-SvelteKit 2 / Svelte 5 application for VoteCatcher.
+SvelteKit 3 / Svelte 5 application for VoteCatcher.
 
 ## First Reads
 
@@ -31,7 +31,7 @@ SvelteKit 2 / Svelte 5 application for VoteCatcher.
 
 ## Conventions
 
-- Use Svelte 5 runes and SvelteKit 2 patterns.
+- Use Svelte 5 runes and SvelteKit 3 patterns.
 - Prefer existing component and route patterns before adding new abstractions.
 - Keep server-only code under `src/lib/server/`.
 - Keep TypeScript, Tailwind CSS v4, Better Auth, Drizzle, Vitest, and Playwright aligned with existing project patterns.
