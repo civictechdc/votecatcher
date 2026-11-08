@@ -68,16 +68,18 @@ async function seed() {
 	const find = (name) => campaigns.find((c) => c.uniqueName === name);
 	let alpha = find(CAMPAIGN_ALPHA);
 	let beta = find(CAMPAIGN_BETA);
-	if (!alpha) alpha = await api("/api/campaigns", {
-		method: "POST",
-		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ name: CAMPAIGN_ALPHA, year: 2024, region: "DC" }),
-	});
-	if (!beta) beta = await api("/api/campaigns", {
-		method: "POST",
-		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ name: CAMPAIGN_BETA, year: 2024, region: "DC" }),
-	});
+	if (!alpha)
+		alpha = await api("/api/campaigns", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ name: CAMPAIGN_ALPHA, year: 2024, region: "DC" }),
+		});
+	if (!beta)
+		beta = await api("/api/campaigns", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ name: CAMPAIGN_BETA, year: 2024, region: "DC" }),
+		});
 	log(`seed: alpha=${alpha.id} beta=${beta.id}`);
 
 	// Upload the voter CSV to Alpha only if it has no voter data yet. The
@@ -127,14 +129,25 @@ async function captureEngine(engine, ids) {
 		// console error ("interrupted" mid-stream or "can't establish" when the
 		// connect races the fast re-navigation). Deterministic capture artifact
 		// on both sides of the diff, not an app failure.
-		if (text.includes("/events/campaigns") && (text.includes("interrupted") || text.includes("establish a connection"))) return;
+		if (
+			text.includes("/events/campaigns") &&
+			(text.includes("interrupted") || text.includes("establish a connection"))
+		)
+			return;
 		consoleEntries.push({ type, text, route: page.url() });
 	});
-	page.on("pageerror", (err) => consoleEntries.push({ type: "pageerror", text: String(err), route: page.url() }));
+	page.on("pageerror", (err) =>
+		consoleEntries.push({ type: "pageerror", text: String(err), route: page.url() }),
+	);
 	page.on("response", (res) => {
 		if (!res.url().startsWith(API_URL)) return;
 		if (res.status() >= 400) {
-			failedApi.push({ status: res.status(), url: res.url(), method: res.request().method(), route: page.url() });
+			failedApi.push({
+				status: res.status(),
+				url: res.url(),
+				method: res.request().method(),
+				route: page.url(),
+			});
 		}
 	});
 	page.on("requestfailed", (req) => {
@@ -143,7 +156,13 @@ async function captureEngine(engine, ids) {
 			abortedSseNavigations += 1;
 			return;
 		}
-		failedApi.push({ status: null, url: req.url(), method: req.method(), route: page.url(), failure: req.failure()?.errorText });
+		failedApi.push({
+			status: null,
+			url: req.url(),
+			method: req.method(),
+			route: page.url(),
+			failure: req.failure()?.errorText,
+		});
 	});
 
 	const routes = [
@@ -223,7 +242,9 @@ print(f"{stat.stddev[0]:.4f} {0 if colors is None else len(colors)}")
 	}
 	const method = Object.values(results)[0]?.method ?? "none";
 	writeFileSync(join(OUT, "non-blank-check.json"), JSON.stringify({ method, results }, null, 2));
-	log(`non-blank guard method: ${method}, all non-blank: ${Object.values(results).every((r) => !r.blank)}`);
+	log(
+		`non-blank guard method: ${method}, all non-blank: ${Object.values(results).every((r) => !r.blank)}`,
+	);
 }
 
 // ---------- main ----------
@@ -235,10 +256,18 @@ const engines = [];
 for (const engine of ["chromium", "firefox"]) {
 	engines.push(await captureEngine(engine, ids));
 }
-const report = { capturedAt: new Date().toISOString(), baseUrl: BASE_URL, apiUrl: API_URL, ids, engines };
+const report = {
+	capturedAt: new Date().toISOString(),
+	baseUrl: BASE_URL,
+	apiUrl: API_URL,
+	ids,
+	engines,
+};
 writeFileSync(join(OUT, "capture-report.json"), JSON.stringify(report, null, 2));
 nonBlankCheck(report);
 const total = report.engines.reduce((n, e) => n + e.consoleEntries.length, 0);
 const failed = report.engines.reduce((n, e) => n + e.failedApi.length, 0);
-log(`done in ${((Date.now() - t0) / 1000).toFixed(1)}s — console entries: ${total}, failed API calls: ${failed}`);
+log(
+	`done in ${((Date.now() - t0) / 1000).toFixed(1)}s — console entries: ${total}, failed API calls: ${failed}`,
+);
 if (total > 0 || failed > 0) process.exitCode = 2;
