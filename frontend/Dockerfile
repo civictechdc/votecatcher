@@ -3,6 +3,9 @@ WORKDIR /app
 
 # Digest-pinned base never picks up distro fixes; bake trixie security/point
 # updates at build time so all installed distro packages get patched versions.
+# DL3008 (pin apt versions) is intentionally ignored: this layer exists to
+# pick up the latest security updates at build time.
+# hadolint ignore=DL3008
 RUN echo "deb http://deb.debian.org/debian-security trixie-security main" > /etc/apt/sources.list.d/trixie-security.list \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
