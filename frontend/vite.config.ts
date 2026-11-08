@@ -9,7 +9,6 @@ import { visualizer } from "rollup-plugin-visualizer";
 const adapter = process.env["ADAPTER"] === "node" ? adapterNode() : adapterAuto();
 
 export default defineConfig({
-	envPrefix: ["VITE_", "PUBLIC_"],
 	plugins: [
 		sveltekit({ adapter }),
 		tailwindcss(),

@@ -8,7 +8,6 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			$app: path.resolve("./tests/__mocks__/$app"),
-			"$env/static/public": path.resolve("./tests/__mocks__/$env/static/public.ts"),
 		},
 	},
 	test: {

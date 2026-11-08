@@ -2,7 +2,7 @@ import type { RequestHandler } from "@sveltejs/kit";
 
 /**
  * Mock session endpoint.
- * - In development this returns a fake user when VITE_FEATURES contains 'mockAuth'
+ * - In development this returns a fake user when PUBLIC_FEATURES contains 'mockAuth'
  * - Replace with real session validation (FastAPI) later.
  */
 export const GET: RequestHandler = async () => {

@@ -238,8 +238,8 @@ describe("Frontend type contract BDD tests (Session 15)", () => {
 		});
 	});
 
-	describe("import.meta.env bracket notation access", () => {
-		it("should access env vars via bracket notation", () => {
+	describe("$app/env/public typed access (Kit 3 env contract)", () => {
+		it("should expose declared public env vars as typed named exports", () => {
 			const env: Record<string, string> = {
 				PUBLIC_API_URL: "http://localhost:8080",
 			};

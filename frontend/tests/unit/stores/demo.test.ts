@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { get } from "svelte/store";
-
-vi.stubEnv("PUBLIC_DEMO_MODE", "true");
+import { setPublicEnv } from "../../helpers/env-mocks";
 
 vi.mock("#lib/stores/api-client.ts", () => ({
 	getApiClient: () => ({
@@ -15,6 +14,9 @@ global.fetch = mockFetch;
 describe("demo store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		// demo.ts snapshots PUBLIC_DEMO_MODE at module load; each test below
+		// re-imports it (resetModules) after this seeding.
+		setPublicEnv({ PUBLIC_DEMO_MODE: true });
 	});
 
 	afterEach(() => {

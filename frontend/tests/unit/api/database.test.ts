@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-
-vi.stubEnv("PUBLIC_API_URL", "http://localhost:8000");
+import { setPublicEnv } from "../../helpers/env-mocks";
 
 describe("api.database", () => {
 	beforeEach(() => {
 		vi.resetModules();
 		global.fetch = vi.fn();
+		setPublicEnv({ PUBLIC_API_URL: "http://localhost:8000" });
 	});
 
 	function mockFetchResponse(body: unknown, ok = true, status = 200) {

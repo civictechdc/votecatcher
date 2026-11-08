@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { get } from "svelte/store";
-
-vi.stubEnv("PUBLIC_API_URL", "http://localhost:8000/api");
+import { setPublicEnv } from "../../helpers/env-mocks";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -10,6 +9,7 @@ global.fetch = mockFetch;
 describe("settings store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		setPublicEnv({ PUBLIC_API_URL: "http://localhost:8000" });
 	});
 
 	afterEach(() => {

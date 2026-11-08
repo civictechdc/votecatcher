@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
+import { PUBLIC_DEMO_MODE } from "$app/env/public";
 import { getApiClient } from "./api-client";
-const PUBLIC_DEMO_MODE: string = import.meta.env["PUBLIC_DEMO_MODE"] || "";
 
 export interface PrebakedSession {
 	id: string;
@@ -27,7 +27,7 @@ interface DemoState {
 	loadedSession: LoadedSessionInfo | null;
 }
 
-let _demoModeEnabled = PUBLIC_DEMO_MODE === "true";
+let _demoModeEnabled = PUBLIC_DEMO_MODE;
 
 export function setDemoMode(enabled: boolean): void {
 	_demoModeEnabled = enabled;
