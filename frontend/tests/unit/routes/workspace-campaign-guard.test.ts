@@ -36,9 +36,7 @@ describe("workspace/[id] layout server load — unknown-campaign 404 guard", () 
 			body: { message: expect.stringContaining("not found") },
 		});
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
-		expect((fetchSpy.mock.calls[0] as unknown[])[0]).toBe(
-			`http://localhost:8080/campaigns/${id}`,
-		);
+		expect((fetchSpy.mock.calls[0] as unknown[])[0]).toBe(`http://localhost:8080/campaigns/${id}`);
 	});
 
 	it("maps a backend 422 (non-uuid id) to 404 as well", async () => {
@@ -55,9 +53,9 @@ describe("workspace/[id] layout server load — unknown-campaign 404 guard", () 
 		const load = await freshLayoutLoad();
 		const fetchSpy = vi.fn(async () => ({ ok: true, status: 200 }));
 
-		await expect(load(makeEvent("11111111-1111-4111-8111-111111111111", fetchSpy))).resolves.toEqual(
-			{},
-		);
+		await expect(
+			load(makeEvent("11111111-1111-4111-8111-111111111111", fetchSpy)),
+		).resolves.toEqual({});
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
 	});
 
@@ -66,10 +64,7 @@ describe("workspace/[id] layout server load — unknown-campaign 404 guard", () 
 		// /workspace/demo resolves to workspace/demo/+page.svelte and the
 		// [id] layout guard never runs for it. Pin the static route's
 		// existence so this stays true.
-		const demoPage = path.resolve(
-			process.cwd(),
-			"src/routes/(app)/workspace/demo/+page.svelte",
-		);
+		const demoPage = path.resolve(process.cwd(), "src/routes/(app)/workspace/demo/+page.svelte");
 		expect(existsSync(demoPage)).toBe(true);
 	});
 });

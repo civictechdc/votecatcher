@@ -34,9 +34,7 @@ test.describe("Blocked server fetch targets (untrusted TRUSTED_ORIGINS matrix)",
 		await expect(page.locator("body")).toContainText("TRUSTED_ORIGINS");
 	});
 
-	test("getting-started load: same fail-fast rejection with surfaced status", async ({
-		page,
-	}) => {
+	test("getting-started load: same fail-fast rejection with surfaced status", async ({ page }) => {
 		const response = await page.goto("/getting-started");
 
 		expect(response?.status()).toBe(502);

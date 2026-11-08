@@ -86,9 +86,7 @@ test.describe("Error Handling", () => {
 		// CONTRACT (spec: error-pages): the [id] layout guard covers every
 		// child route (here …/jobs), so deep links to unknown campaigns 404
 		// too — not a half-rendered jobs dashboard.
-		const response = await page.goto(
-			"/workspace/00000000-0000-4000-8000-000000000000/jobs",
-		);
+		const response = await page.goto("/workspace/00000000-0000-4000-8000-000000000000/jobs");
 
 		expect(response?.status()).toBe(404);
 

@@ -35,9 +35,7 @@ describe("root +error.svelte — Kit 3 error prop derivation", () => {
 		render(RootError, { props: { error: { message: "" } } });
 
 		expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("500");
-		expect(
-			screen.getByText("An unexpected error occurred. Please try again."),
-		).toBeTruthy();
+		expect(screen.getByText("An unexpected error occurred. Please try again.")).toBeTruthy();
 	});
 });
 
