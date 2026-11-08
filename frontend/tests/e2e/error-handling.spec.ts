@@ -1,20 +1,22 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Error Handling", () => {
-	test("error page displays on 404", async ({ page }) => {
-		await page.goto("/workspace/nonexistent-page-12345");
+	test("unknown campaign id answers 404 with the error page and retry affordances", async ({
+		page,
+	}) => {
+		// CONTRACT (spec: error-pages): a workspace URL whose campaign id
+		// does not exist answers HTTP 404 with the workspace error boundary —
+		// not the dashboard skeleton. Non-uuid ids can never name a campaign
+		// (the backend rejects them with 422); the layout guard maps both
+		// unknown-id shapes to 404.
+		const response = await page.goto("/workspace/nonexistent-page-12345");
 
-		await expect(page.locator("h1").first()).toBeVisible({ timeout: 5000 });
-	});
+		expect(response?.status()).toBe(404);
 
-	test("error page has navigation options", async ({ page }) => {
-		await page.goto("/workspace/nonexistent-page-12345");
-		await page.waitForLoadState("domcontentloaded");
-
-		const hasButton = (await page.locator("button").count()) > 0;
-		const hasLink = (await page.locator("a").count()) > 0;
-
-		expect(hasButton || hasLink).toBeTruthy();
+		await expect(page.locator("h1").first()).toHaveText("404", { timeout: 5000 });
+		await expect(page.locator("body")).toContainText("not found");
+		await expect(page.getByRole("button", { name: "Try Again" })).toBeVisible();
+		await expect(page.getByRole("button", { name: "Go Back" })).toBeVisible();
 	});
 
 	test("campaigns page handles loading state", async ({ page }) => {
@@ -43,43 +45,55 @@ test.describe("Error Handling", () => {
 		await expect(page.locator("h1").first()).toBeVisible();
 	});
 
-	test("unmatched route answers HTTP 404 with the root error boundary", async ({ page }) => {
-		// CHARACTERIZATION: no route in the app throws error(404), so the root
-		// +error.svelte "404 — Page Not Found" mapping is unreachable. For an
-		// unrouted URL SvelteKit renders the ROOT +error.svelte (the root error
-		// node) with an undefined status prop: EMPTY h1, title
-		// "— Error — Votecatcher". The HTTP response status is the only place
-		// "404" appears. Pin as-is; Kit 3 may change error-boundary resolution.
+	test("unmatched route answers HTTP 404 with the rendered error page", async ({ page }) => {
+		// CONTRACT (spec: error-pages): an unrouted URL answers 404 and the
+		// root error boundary renders the actual status ("404" h1, "Page Not
+		// Found" title map entry). Kit 3 hands the boundary an `error` prop;
+		// the component derives the status from it, so the heading is never
+		// empty (this replaces the Kit-2-era empty-h1 characterization pin).
 		const response = await page.goto("/no-such-route-characterization");
 		expect(response?.status()).toBe(404);
 
 		await page.waitForLoadState("domcontentloaded");
-		await expect(page.locator("h1").first()).toHaveText("", { timeout: 5000 });
+		await expect(page.locator("h1").first()).toHaveText("404", { timeout: 5000 });
+		await expect(page.locator("h2").first()).toHaveText("Page Not Found");
 		// The static SSR <title>Votecatcher</title> from app.html comes first
 		// in <head>; Svelte appends the error page's svelte:head title after
-		// it. This pin still passes because client hydration writes
-		// document.title directly (Svelte 5 title effect mutates the first
-		// title element), and toHaveTitle auto-retries through that hydration
-		// step — so what is asserted is the post-hydration title.
-		await expect(page).toHaveTitle("— Error — Votecatcher");
+		// it. This pin passes because client hydration writes document.title
+		// directly (Svelte 5 title effect mutates the first title element),
+		// and toHaveTitle auto-retries through that hydration step — so what
+		// is asserted is the post-hydration title.
+		await expect(page).toHaveTitle("404 — Page Not Found — Votecatcher");
 		await expect(page.getByRole("button", { name: "Try Again" })).toBeVisible();
 	});
 
-	test("unknown campaign id renders the dashboard skeleton, not an error page", async ({
+	test("unknown uuid campaign id answers 404 with the error page, not the skeleton", async ({
 		page,
 	}) => {
-		// CHARACTERIZATION: /workspace/<id> matches the [id] route for ANY id,
-		// so unknown campaign ids do NOT produce an error page — the dashboard
-		// renders with the fallback "Campaign" heading. The pre-existing
-		// "error page displays on 404" tests above pass vacuously for this
-		// reason (they only assert an h1 is visible).
-		const response = await page.goto("/workspace/nonexistent-page-12345");
-		await page.waitForLoadState("domcontentloaded");
+		// CONTRACT (spec: error-pages): uuid-shaped unknown ids are validated
+		// server-side by workspace/[id]/+layout.server.ts (backend 404 →
+		// error(404)) — the former skeleton-with-200 behavior is gone.
+		const unknownId = "00000000-0000-4000-8000-000000000000";
+		const response = await page.goto(`/workspace/${unknownId}`);
 
-		// the dashboard skeleton answers HTTP 200 (a matched, non-error route)
-		expect(response?.status()).toBe(200);
+		expect(response?.status()).toBe(404);
 
-		await expect(page.locator("h1").first()).toHaveText("Campaign", { timeout: 5000 });
+		await expect(page.locator("h1").first()).toHaveText("404", { timeout: 5000 });
+		await expect(page.locator("body")).toContainText(`Campaign "${unknownId}" not found.`);
+	});
+
+	test("unknown campaign child route answers 404 with the error page", async ({ page }) => {
+		// CONTRACT (spec: error-pages): the [id] layout guard covers every
+		// child route (here …/jobs), so deep links to unknown campaigns 404
+		// too — not a half-rendered jobs dashboard.
+		const response = await page.goto(
+			"/workspace/00000000-0000-4000-8000-000000000000/jobs",
+		);
+
+		expect(response?.status()).toBe(404);
+
+		await expect(page.locator("h1").first()).toHaveText("404", { timeout: 5000 });
+		await expect(page.locator("body")).toContainText("not found");
 	});
 
 	test("campaign API failure surfaces an error alert on the campaigns page", async ({ page }) => {
