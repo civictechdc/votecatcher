@@ -2,7 +2,14 @@
 	import { Button } from '#lib/components/ui/index.ts';
 	import { AlertTriangle, Home, RefreshCw } from 'lucide-svelte';
 
-	let { status, message } = $props();
+	// Kit 3 passes error boundaries a single `error` prop: an `HttpError`
+	// (from `error(status, body)` — has `status` and `body.message`) or a
+	// runtime `Error` (has only `message`). Derive what to display; unknown
+	// shapes fall back to 500 + generic copy so the heading is never empty.
+	let { error }: { error?: App.Error } = $props();
+
+	const status = $derived(error?.status ?? 500);
+	const message = $derived(error?.body?.message ?? error?.message ?? undefined);
 
 	const statusMessage: Record<number, string> = {
 		400: 'Bad Request',

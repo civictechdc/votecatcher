@@ -2,7 +2,13 @@
 	import { Button } from '#lib/components/ui/index.ts';
 	import { AlertTriangle, RefreshCw, ArrowLeft } from 'lucide-svelte';
 
-	let { status, message } = $props();
+	// Same Kit 3 derivation as the root boundary: an `HttpError` carries
+	// `status`/`body.message`, a runtime `Error` only `message`. Unknown ids
+	// and failed workspace loads throw here — never render an empty heading.
+	let { error }: { error?: App.Error } = $props();
+
+	const status = $derived(error?.status ?? 500);
+	const message = $derived(error?.body?.message ?? error?.message ?? undefined);
 
 	function handleRefresh() {
 		window.location.reload();
