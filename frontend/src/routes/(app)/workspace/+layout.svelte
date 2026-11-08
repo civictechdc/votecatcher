@@ -12,8 +12,8 @@
 {:else}
 	<div class="flex min-h-screen bg-slate-50">
 		<Sidebar />
-		<main class="flex-1 overflow-auto p-6">
+		<div class="flex-1 overflow-auto p-6">
 			{@render children()}
-		</main>
+		</div>
 	</div>
 {/if}

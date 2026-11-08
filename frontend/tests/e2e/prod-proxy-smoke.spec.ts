@@ -82,7 +82,7 @@ test.describe("Prod smoke behind a reverse proxy (header-derived origin)", () =>
 		await page.waitForLoadState("domcontentloaded");
 
 		expect(response?.status()).toBeLessThan(400);
-		await expect(page.locator("main").first()).toBeVisible();
+		await expect(page.locator("main")).toHaveCount(1);
 	});
 
 	test("auth round-trip works when Kit derives the origin from forwarded headers", async ({

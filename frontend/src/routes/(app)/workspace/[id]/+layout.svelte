@@ -55,5 +55,5 @@
 		campaignName={campaignName}
 	/>
 
-	<main class="flex-1 overflow-auto p-6">{@render children()}</main>
+	<div class="flex-1 overflow-auto p-6">{@render children()}</div>
 </div>
