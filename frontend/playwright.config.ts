@@ -2,11 +2,16 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
 	testDir: "./tests/e2e",
-	// the adapter-node smoke spec runs only under playwright.prod.config.ts
-	// (`bun run test:e2e:prod`); the blocked-target spec runs only under
-	// playwright.blocked.config.ts (`bun run test:e2e:blocked`) — keep both
+	// the adapter-node smoke specs run only under playwright.prod.config.ts
+	// (`bun run test:e2e:prod`) / playwright.proxy-smoke.config.ts
+	// (`bun run test:e2e:prod:proxy`); the blocked-target spec runs only under
+	// playwright.blocked.config.ts (`bun run test:e2e:blocked`) — keep all
 	// out of dev-server runs
-	testIgnore: ["tests/e2e/prod-smoke.spec.ts", "tests/e2e/blocked-target.spec.ts"],
+	testIgnore: [
+		"tests/e2e/prod-smoke.spec.ts",
+		"tests/e2e/prod-proxy-smoke.spec.ts",
+		"tests/e2e/blocked-target.spec.ts",
+	],
 	fullyParallel: true,
 	forbidOnly: !!process.env["CI"],
 	retries: process.env["CI"] ? 2 : 0,
