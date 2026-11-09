@@ -87,8 +87,8 @@ async function assertRouteHealthy(page: Page, path: string, watched: ReturnType<
 	await page.waitForLoadState("domcontentloaded");
 
 	expect(response?.status(), `page ${path} responded ${response?.status()}`).toBeLessThan(400);
-	// workspace routes nest two <main> elements (root + workspace layouts)
-	await expect(page.locator("main").first(), `route ${path} renders <main>`).toBeVisible();
+	// exactly one <main> landmark per page (#194): root (app) layout owns it
+	await expect(page.locator("main"), `route ${path} renders exactly one <main>`).toHaveCount(1);
 
 	// settle for onMount fetches (hydration + store loads) before judging
 	// the console / API-call invariants
@@ -109,7 +109,7 @@ test.describe("Production smoke (adapter-node build)", () => {
 		await page.goto("/workspace");
 		await page.waitForURL(/\/workspace\/campaigns/, { timeout: 10_000 });
 		await expect(page).toHaveURL(/\/workspace\/campaigns/);
-		await expect(page.locator("main").first()).toBeVisible();
+		await expect(page.locator("main")).toHaveCount(1);
 		await page.waitForTimeout(1500);
 		expect(watched.failedApiCalls, "API failures on /workspace redirect").toEqual([]);
 		expect(watched.consoleErrors, "console errors on /workspace redirect").toEqual([]);
