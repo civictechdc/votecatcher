@@ -3,22 +3,79 @@
 	import { jobs } from '#lib/stores/jobs.ts';
 	import { campaigns } from '#lib/stores/campaigns.ts';
 	import { Button, LoadingSpinner, ErrorDisplay } from '#lib/components/ui/index.ts';
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
+	import type { PageProps } from './$types';
+	import type { JobResponse } from '#lib/api/generated/index.ts';
+
+	let { data }: PageProps = $props();
 
 	let campaignId = $derived(page.params.id);
 	let jobId = $derived(page.params.job_id);
 
 	onMount(() => {
 		campaigns.fetchAll();
-		if (jobId) {
-			jobs.connectToJob(jobId);
-			jobs.fetch(parseInt(jobId));
-		}
 	});
 
-	onDestroy(() => {
-		jobs.disconnect();
+	// Keyed on the job id and server data, not onMount: client-side navigation
+	// between job pages (jobs/1 → jobs/2) reuses this component, so seeding,
+	// the client-fetch fallback, and the SSE stream must re-bind per job. The
+	// server load already fetched the job when it could; seed the store from
+	// it and skip the initial client-side GET. Otherwise fall back to a
+	// client-side fetch. The cleanup disconnects the previous job's stream.
+	//
+	// The fallback fetch is async and can resolve after this effect re-ran for
+	// a different job (or after unmount), and the store's fetch writes
+	// `currentJob` unconditionally when it resolves — so each run carries a
+	// token that the async path re-checks after every await before touching
+	// the store again.
+	let jobBindToken = 0;
+	let bindingDisposed = false;
+	let boundJob: JobResponse | null = null;
+
+	$effect(() => {
+		const id = jobId;
+		const campaign = campaignId;
+		if (!id) return;
+
+		jobBindToken++;
+		bindingDisposed = false;
+
+		if (data.job) {
+			boundJob = data.job;
+			jobs.seed(data.job);
+		} else {
+			boundJob = null;
+			fetchJobFromClient(id, campaign, jobBindToken);
+		}
+
+		jobs.connectToJob(id);
+		return () => {
+			bindingDisposed = true;
+			jobs.disconnect();
+		};
 	});
+
+	// Client-side fallback for when the server load couldn't produce the job
+	// (deadline / outage fall-through). The unscoped client endpoint can return
+	// a job belonging to a different campaign; treat that as not found via the
+	// page's not-found placeholder, mirroring the server guard's 404 for a
+	// campaign/job mismatch.
+	async function fetchJobFromClient(id: string, campaign: string | undefined, token: number) {
+		const job = await jobs.fetch(parseInt(id)).catch(() => null);
+		if (bindingDisposed) return; // Unmounted: never touch the store.
+		if (token !== jobBindToken) {
+			// Stale resolution: the store already wrote this job's data
+			// unconditionally, so re-apply the binding that is current now.
+			// When the current job is itself a pending fallback fetch, its own
+			// resolution overwrites this write shortly after.
+			if (boundJob) jobs.seed(boundJob);
+			return;
+		}
+		if (job && String(job.campaignId) !== String(campaign)) {
+			jobs.disconnect();
+			jobs.reset();
+		}
+	}
 
 	async function handleCancel() {
 		if (jobId) {

@@ -561,3 +561,160 @@ class TestJobOrphanStatus:
         assert response.status_code == 200
         data = response.json()
         assert data["isOrphaned"] is False
+
+
+class TestGetJobForCampaign:
+    """Tests for GET /api/campaigns/{campaign_id}/jobs/{job_id} endpoint."""
+
+    def test_get_job_for_campaign_success(
+        self, client: TestClient, test_campaign: Campaign, session: Session
+    ):
+        """Should return job details when job belongs to the campaign."""
+        job = MatcherJob(
+            campaign_id=test_campaign.id,
+            current_status=JobStatus.NOT_STARTED,
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        response = client.get(f"/api/campaigns/{test_campaign.id}/jobs/{job.id}")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["jobId"] == job.id
+        assert data["campaignId"] == str(test_campaign.id)
+        assert data["status"] == "NOT_STARTED"
+
+    def test_get_job_for_campaign_mismatch_returns_404(
+        self, client: TestClient, test_campaign: Campaign, test_region, session: Session
+    ):
+        """Should return 404 when job belongs to a different campaign."""
+        other_campaign = Campaign(
+            unique_name=f"other_campaign_{uuid.uuid4().hex[:8]}",
+            title="Other Campaign 2024",
+            year="2024",
+            region_id=test_region.id,
+        )
+        session.add(other_campaign)
+        session.commit()
+        session.refresh(other_campaign)
+
+        job = MatcherJob(
+            campaign_id=other_campaign.id,
+            current_status=JobStatus.NOT_STARTED,
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        response = client.get(f"/api/campaigns/{test_campaign.id}/jobs/{job.id}")
+
+        assert response.status_code == 404
+
+    def test_get_job_for_campaign_unknown_job_returns_404(
+        self, client: TestClient, test_campaign: Campaign
+    ):
+        """Should return 404 for non-existent job."""
+        response = client.get(f"/api/campaigns/{test_campaign.id}/jobs/99999")
+
+        assert response.status_code == 404
+
+    def test_get_job_for_campaign_unknown_campaign_returns_404(
+        self, client: TestClient, test_campaign: Campaign, session: Session
+    ):
+        """Should return 404 for non-existent campaign."""
+        fake_campaign_id = str(uuid.uuid4())
+        job = MatcherJob(
+            campaign_id=test_campaign.id,
+            current_status=JobStatus.NOT_STARTED,
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        response = client.get(f"/api/campaigns/{fake_campaign_id}/jobs/{job.id}")
+
+        assert response.status_code == 404
+
+    def test_get_job_for_campaign_non_uuid_campaign_returns_422(
+        self, client: TestClient, test_campaign: Campaign, session: Session
+    ):
+        """Should return 422 when campaign_id is not a valid UUID."""
+        job = MatcherJob(
+            campaign_id=test_campaign.id,
+            current_status=JobStatus.NOT_STARTED,
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        response = client.get(f"/api/campaigns/not-a-uuid/jobs/{job.id}")
+
+        assert response.status_code == 422
+
+    def test_get_job_for_campaign_non_int_job_id_returns_422(
+        self, client: TestClient, test_campaign: Campaign
+    ):
+        """Should return 422 when job_id is not an integer."""
+        response = client.get(f"/api/campaigns/{test_campaign.id}/jobs/not-an-int")
+
+        assert response.status_code == 422
+
+    def test_get_job_for_campaign_huge_job_id_returns_422(
+        self, client: TestClient, test_campaign: Campaign
+    ):
+        """Should return 422 when job_id overflows the database integer range."""
+        response = client.get(
+            f"/api/campaigns/{test_campaign.id}/jobs/99999999999999999999999999"
+        )
+
+        assert response.status_code == 422
+
+    def test_get_job_for_campaign_zero_job_id_returns_422(
+        self, client: TestClient, test_campaign: Campaign
+    ):
+        """Should return 422 when job_id is zero."""
+        response = client.get(f"/api/campaigns/{test_campaign.id}/jobs/0")
+
+        assert response.status_code == 422
+
+    def test_get_job_for_campaign_negative_job_id_returns_422(
+        self, client: TestClient, test_campaign: Campaign
+    ):
+        """Should return 422 when job_id is negative."""
+        response = client.get(f"/api/campaigns/{test_campaign.id}/jobs/-5")
+
+        assert response.status_code == 422
+
+    def test_get_job_for_campaign_404_causes_share_identical_detail(
+        self, client: TestClient, test_campaign: Campaign, test_region, session: Session
+    ):
+        """Should not let callers distinguish mismatch from unknown job via detail."""
+        other_campaign = Campaign(
+            unique_name=f"parity_campaign_{uuid.uuid4().hex[:8]}",
+            title="Parity Campaign 2024",
+            year="2024",
+            region_id=test_region.id,
+        )
+        session.add(other_campaign)
+        job = MatcherJob(
+            campaign_id=other_campaign.id,
+            current_status=JobStatus.NOT_STARTED,
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        url = f"/api/campaigns/{test_campaign.id}/jobs/{job.id}"
+        mismatch_response = client.get(url)
+        assert mismatch_response.status_code == 404
+
+        session.delete(job)
+        session.commit()
+        unknown_response = client.get(url)
+        assert unknown_response.status_code == 404
+
+        assert unknown_response.json()["detail"] == mismatch_response.json()["detail"]
+        assert unknown_response.text == mismatch_response.text

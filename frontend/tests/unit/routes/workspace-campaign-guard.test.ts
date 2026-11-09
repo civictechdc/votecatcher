@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
@@ -8,8 +8,9 @@ import path from "node:path";
  *
  * The backend (`GET {PUBLIC_API_URL}/campaigns/{id}`) answers 404 for an
  * unknown uuid id and 422 for a non-uuid id; the layout load maps both to
- * `error(404)` before any page data is produced, and sends exactly one
- * request while doing so.
+ * `error(404)` before any page data is produced, sends exactly one request
+ * while doing so, and falls through with empty data on deadline/outage
+ * failures so the page's client-side handling takes over.
  */
 async function freshLayoutLoad() {
 	vi.resetModules();
@@ -24,6 +25,24 @@ function makeEvent(id: string, fetchSpy: ReturnType<typeof vi.fn>) {
 		url: new URL(`http://localhost:5173/workspace/${id}`),
 	} as unknown as Parameters<Awaited<ReturnType<typeof freshLayoutLoad>>>[0];
 }
+
+// jsdom's AbortSignal.timeout schedules real timers that would keep the test
+// worker alive past teardown; stub it with unref'd timers instead.
+const realAbortSignalTimeout = AbortSignal.timeout;
+beforeEach(() => {
+	AbortSignal.timeout = ((ms: number) => {
+		const controller = new AbortController();
+		const t = setTimeout(
+			() => controller.abort(new DOMException("The operation timed out.", "TimeoutError")),
+			ms,
+		) as ReturnType<typeof setTimeout> & { unref?: () => void };
+		t.unref?.();
+		return controller.signal;
+	}) as typeof AbortSignal.timeout;
+});
+afterEach(() => {
+	AbortSignal.timeout = realAbortSignalTimeout;
+});
 
 describe("workspace/[id] layout server load — unknown-campaign 404 guard", () => {
 	it("throws 404 for an unknown uuid id and sends no further requests", async () => {
@@ -57,6 +76,59 @@ describe("workspace/[id] layout server load — unknown-campaign 404 guard", () 
 			load(makeEvent("11111111-1111-4111-8111-111111111111", fetchSpy)),
 		).resolves.toEqual({});
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
+	});
+
+	it("bounds the guard fetch with a deadline signal", async () => {
+		const load = await freshLayoutLoad();
+		const fetchSpy = vi.fn(async () => ({ ok: true, status: 200 }));
+
+		await load(makeEvent("11111111-1111-4111-8111-111111111111", fetchSpy));
+		const init = (fetchSpy.mock.calls[0] as unknown[])[1] as RequestInit;
+		expect(init?.signal).toBeInstanceOf(AbortSignal);
+	});
+
+	it("falls through with empty data on a fetch timeout (TimeoutError)", async () => {
+		const load = await freshLayoutLoad();
+		const fetchSpy = vi.fn(async () => {
+			throw new DOMException("The operation timed out.", "TimeoutError");
+		});
+
+		await expect(
+			load(makeEvent("11111111-1111-4111-8111-111111111111", fetchSpy)),
+		).resolves.toEqual({});
+	});
+
+	it("falls through with empty data on an abort (AbortError)", async () => {
+		const load = await freshLayoutLoad();
+		const fetchSpy = vi.fn(async () => {
+			throw new DOMException("This operation was aborted", "AbortError");
+		});
+
+		await expect(
+			load(makeEvent("11111111-1111-4111-8111-111111111111", fetchSpy)),
+		).resolves.toEqual({});
+	});
+
+	it("falls through with empty data on a plain network failure (TypeError)", async () => {
+		const load = await freshLayoutLoad();
+		const fetchSpy = vi.fn(async () => {
+			throw new TypeError("fetch failed");
+		});
+
+		await expect(
+			load(makeEvent("11111111-1111-4111-8111-111111111111", fetchSpy)),
+		).resolves.toEqual({});
+	});
+
+	it("still surfaces unexpected rejection types instead of swallowing them", async () => {
+		const load = await freshLayoutLoad();
+		const fetchSpy = vi.fn(async () => {
+			throw new SyntaxError("unexpected");
+		});
+
+		await expect(load(makeEvent("11111111-1111-4111-8111-111111111111", fetchSpy))).rejects.toThrow(
+			SyntaxError,
+		);
 	});
 
 	it("leaves /workspace/demo to its static route (never matched by [id])", async () => {

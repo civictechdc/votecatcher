@@ -1,5 +1,6 @@
 import type { RequestHandler } from "@sveltejs/kit";
 import { api, type ApiResult } from "#lib/api/client.ts";
+import { MATCH_RESULT_TIMEOUT_MS } from "#lib/api/fetch-deadline.ts";
 import { error } from "@sveltejs/kit";
 import type {
 	MatchColumnsResponse,
@@ -18,9 +19,40 @@ import {
 export const GET: RequestHandler = async ({ params }) => {
 	const jobId: string = params?.job_id as string;
 
-	const response: ApiResult<MatchResponse> = await api.demoGetMatchingResults(jobId);
+	// Bounded deadline: abort the upstream request if it hangs. A timed-out
+	// request surfaces as 504, an upstream 4xx is forwarded with its message,
+	// and other failures (no response, upstream 5xx) map to a 5xx with a
+	// generic message so upstream internals never reach the client.
+	const deadline = new AbortController();
+	const timeoutId = setTimeout(
+		() => deadline.abort(new DOMException("Upstream request timed out.", "TimeoutError")),
+		MATCH_RESULT_TIMEOUT_MS,
+	);
+	let response: ApiResult<MatchResponse>;
+	try {
+		response = await api.demoGetMatchingResults(jobId, { signal: deadline.signal });
+	} finally {
+		clearTimeout(timeoutId);
+	}
+
 	if (!response.ok) {
-		return error(500, `Error: ${response.error}`);
+		// The proxy-owned deadline is authoritative: if it fired, the request
+		// hit the deadline — even when the client reports a generic no-response
+		// status 0 (which also covers plain network failures and body-phase
+		// aborts, none of which are distinguishable on their own).
+		const timedOut = deadline.signal.aborted && deadline.signal.reason?.name === "TimeoutError";
+		const status = timedOut
+			? 504
+			: response.status >= 400 && response.status <= 599
+				? response.status
+				: 500;
+		if (status >= 500) {
+			// Server-side failures: keep upstream internals out of the response
+			// body and log them here instead.
+			console.error(`Match results upstream failure (status ${status}): ${response.error}`);
+			return error(status, "Upstream match results unavailable.");
+		}
+		return error(status, `Error: ${response.error}`);
 	}
 
 	const results: MatchResultResponse = response.data.results;
