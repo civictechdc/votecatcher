@@ -1,4 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+
+import { test } from "./fixtures";
 
 test.describe("Error Handling", () => {
 	test("unknown campaign id answers 404 with the error page and retry affordances", async ({
@@ -92,6 +94,29 @@ test.describe("Error Handling", () => {
 
 		await expect(page.locator("h1").first()).toHaveText("404", { timeout: 5000 });
 		await expect(page.locator("body")).toContainText("not found");
+	});
+
+	test("unknown job id answers 404 with the error page", async ({ page, seededCampaign }) => {
+		// CONTRACT (spec: error-pages): deep links to jobs that don't exist
+		// in a real campaign answer 404 via the job-detail server guard —
+		// not the page with an inline error card.
+		const response = await page.goto(`/workspace/${seededCampaign.id}/jobs/999999`);
+
+		expect(response?.status()).toBe(404);
+
+		await expect(page.locator("h1").first()).toHaveText("404", { timeout: 5000 });
+		await expect(page.locator("body")).toContainText("not found");
+	});
+
+	test("non-numeric job id answers 404 with the error page", async ({ page, seededCampaign }) => {
+		// CONTRACT (spec: error-pages): non-numeric job ids can never name a
+		// job (backend 422), so the guard maps them to 404 like unknown ids.
+		const response = await page.goto(`/workspace/${seededCampaign.id}/jobs/not-a-job`);
+
+		expect(response?.status()).toBe(404);
+
+		await expect(page.locator("h1").first()).toHaveText("404", { timeout: 5000 });
+		await expect(page.locator("body")).toContainText('Job "not-a-job" not found.');
 	});
 
 	test("campaign API failure surfaces an error alert on the campaigns page", async ({ page }) => {
