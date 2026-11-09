@@ -158,6 +158,7 @@ supabase/.env
 !backend/pyrightconfig.json
 !backend/tests/**/assets/*.json
 !frontend/.fallowrc.json
+!frontend/fallow-baselines/*.json
 !.claude/settings.json
 !.codex/hooks.json
 !.mcp.json
