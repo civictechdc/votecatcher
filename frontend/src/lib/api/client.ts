@@ -10,8 +10,13 @@ import type {
 } from "#lib/api/database-types.ts";
 
 import { API_BASE_URL } from "./base-url";
+import { isAbortError } from "./fetch-deadline";
 
-export type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
+export type ApiResult<T = unknown> =
+	| { ok: true; data: T }
+	// status: HTTP status of the response; 0 when the request never got a
+	// response at all (network failure, or the caller's signal aborted).
+	| { ok: false; error: string; status: number };
 
 // Extended options that allows plain objects as body (will be JSON stringified by fetchRaw)
 export type RequestOptions = Omit<RequestInit, "body"> & { body?: unknown };
@@ -74,6 +79,8 @@ async function fetchWithRetry(
 			attempt++;
 			await new Promise((r) => setTimeout(r, backoffMs * attempt));
 		} catch (err) {
+			// An abort/timeout is a deadline, not a transient fault: never retry it.
+			if (isAbortError(err)) throw err;
 			if (attempt >= retries) throw err;
 			attempt++;
 			await new Promise((r) => setTimeout(r, backoffMs * attempt));
@@ -177,12 +184,13 @@ export async function request<T = unknown>(
 					(parsed as { error: string }).error) ||
 				res.statusText ||
 				`HTTP ${res.status}`;
-			return { ok: false, error: String(err) };
+			return { ok: false, error: String(err), status: res.status };
 		}
 		return { ok: true, data: parsed as T };
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
-		return { ok: false, error: msg };
+		// No response arrived (network failure, or the caller's signal aborted).
+		return { ok: false, error: msg, status: 0 };
 	}
 }
 
@@ -253,12 +261,13 @@ export const api = {
 		const url = `${API_BASE_URL}/workspace/api/match/status/id/${encodeURIComponent(job_id)}`;
 		return new EventSource(url);
 	},
-	demoGetMatchingResults: (job_id: string) =>
+	demoGetMatchingResults: (job_id: string, opts?: RequestOptions) =>
 		request<MatchResponse>(
 			`${API_BASE_URL}/api/workspace/ocr/results/demo/${encodeURIComponent(job_id)}`,
 			{
 				method: "GET",
 				headers: { "Content-Type": "application/json" },
+				...opts,
 			},
 		),
 

@@ -136,6 +136,16 @@ function createJobsStore() {
 			}
 		},
 
+		/**
+		 * Seed the current job from data already fetched server-side (the page
+		 * load returns `{ job }`), skipping the redundant initial client-side
+		 * GET. The client fetch stays in place as the fallback when the server
+		 * could not produce the job (timeout / outage fall-through).
+		 */
+		seed(job: JobResponse) {
+			update((s) => ({ ...s, currentJob: job, loading: false, error: null }));
+		},
+
 		async cancel(id: number) {
 			update((s) => ({ ...s, loading: true, error: null }));
 

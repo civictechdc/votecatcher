@@ -1,0 +1,33 @@
+{
+	"clone_groups": [
+		"src/lib/api/auth.ts:25-34|src/lib/api/auth.ts:8-19",
+		"src/lib/api/generated/CampaignsApi.ts:19-25|src/lib/api/generated/JobsApi.ts:12-18",
+		"src/lib/api/generated/ResultsApi.ts:18-27|src/lib/api/generated/ResultsApi.ts:34-43",
+		"src/lib/api/generated/UploadApi.ts:15-24|src/lib/api/generated/UploadApi.ts:31-40",
+		"src/lib/components/dashboard/ProgressStepper.svelte:66-73|src/lib/components/dashboard/ProgressStepper.svelte:88-95",
+		"src/lib/components/layout/CampaignSidebar.svelte:58-78|src/lib/components/layout/Sidebar.svelte:44-64",
+		"src/lib/components/layout/CampaignSidebar.svelte:127-140|src/lib/components/layout/Sidebar.svelte:98-110",
+		"src/lib/components/layout/CampaignSidebar.svelte:144-165|src/lib/components/layout/Sidebar.svelte:99-120",
+		"src/lib/components/ui/Input.svelte:53-63|src/lib/components/ui/Select.svelte:179-189",
+		"src/lib/components/ui/Input.svelte:78-85|src/lib/components/ui/Select.svelte:288-295",
+		"src/lib/stores/campaigns.ts:83-90|src/lib/stores/jobs.ts:149-156",
+		"src/lib/stores/demo.ts:48-69|src/lib/stores/sessions.ts:28-49",
+		"src/lib/stores/jobs.ts:123-129|src/lib/stores/jobs.ts:139-145",
+		"src/lib/stores/jobs.ts:145-151|src/lib/stores/jobs.ts:172-178",
+		"src/lib/stores/uploads.ts:36-52|src/lib/stores/uploads.ts:73-89",
+		"src/routes/(app)/auth/+page.server.ts:27-33|src/routes/(app)/auth/+page.server.ts:43-49",
+		"src/routes/(app)/auth/+page.server.ts:33-39|src/routes/(app)/auth/+page.server.ts:49-55",
+		"src/routes/(app)/getting-started/+page.server.ts:104-108|src/routes/(app)/getting-started/+page.server.ts:119-123|src/routes/(app)/getting-started/+page.server.ts:72-76|src/routes/(app)/getting-started/+page.server.ts:88-92",
+		"src/routes/(app)/getting-started/+page.server.ts:104-108|src/routes/(app)/getting-started/+page.server.ts:119-123",
+		"src/routes/(app)/workspace/+error.svelte:23-34|src/routes/+error.svelte:34-45",
+		"src/routes/(app)/workspace/[id]/jobs/+page.svelte:105-115|src/routes/(app)/workspace/campaigns/+page.svelte:78-88",
+		"src/routes/(app)/workspace/[id]/jobs/+page.svelte:120-132|src/routes/(app)/workspace/[id]/jobs/new/+page.svelte:62-74",
+		"src/routes/(app)/workspace/[id]/jobs/+page.svelte:352-373|src/routes/(app)/workspace/[id]/jobs/new/+page.svelte:233-254",
+		"src/routes/(app)/workspace/[id]/jobs/+page.svelte:374-391|src/routes/(app)/workspace/[id]/jobs/new/+page.svelte:255-272",
+		"src/routes/(app)/workspace/[id]/jobs/[job_id]/+page.svelte:122-132|src/routes/(app)/workspace/[id]/jobs/new/+page.svelte:165-175",
+		"src/routes/(app)/workspace/[id]/upload/+page.svelte:441-461|src/routes/(app)/workspace/[id]/upload/+page.svelte:602-623",
+		"src/routes/(app)/workspace/[id]/upload/+page.svelte:474-495|src/routes/(app)/workspace/[id]/upload/+page.svelte:627-648",
+		"src/routes/(app)/workspace/api/upload/+server.ts:34-53|src/routes/(app)/workspace/api/upload/+server.ts:61-81",
+		"src/routes/(app)/workspace/settings/+page.svelte:182-196|src/routes/(app)/workspace/settings/+page.svelte:199-213|src/routes/(app)/workspace/settings/+page.svelte:216-230"
+	]
+}

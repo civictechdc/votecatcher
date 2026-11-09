@@ -94,6 +94,24 @@ class JobQueryService:
             raise ValueError(f"Job {job_id} not found")
         return self._build_job_response(job)
 
+    def get_job_for_campaign(self, campaign_id: uuid.UUID, job_id: int) -> JobResponse:
+        """Get a single job by ID, scoped to a campaign.
+
+        Args:
+            campaign_id: Campaign UUID the job must belong to
+            job_id: Job ID
+
+        Returns:
+            JobResponse with job details
+
+        Raises:
+            ValueError: If job not found or does not belong to the campaign
+        """
+        job = self._session.get(MatcherJob, job_id)
+        if not job or job.campaign_id != campaign_id:
+            raise ValueError(f"Job {job_id} not found")
+        return self._build_job_response(job)
+
     def create_job(
         self,
         campaign_id: uuid.UUID,

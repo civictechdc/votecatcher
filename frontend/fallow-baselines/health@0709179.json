@@ -1,0 +1,307 @@
+{
+	"finding_counts": {
+		"src/lib/api/client.ts": {
+			"complexity_high": {
+				"count": 1
+			},
+			"crap_high": {
+				"count": 1
+			},
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/lib/components/FeatureFlagsPanel.svelte": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/lib/components/PaginatedMatchTable.svelte": {
+			"crap_high": {
+				"count": 1
+			}
+		},
+		"src/lib/components/ProviderConfigCard.svelte": {
+			"complexity_critical": {
+				"count": 1
+			},
+			"crap_critical": {
+				"count": 1
+			}
+		},
+		"src/lib/components/dashboard/ProgressStepper.svelte": {
+			"complexity_moderate": {
+				"count": 1
+			},
+			"crap_moderate": {
+				"count": 2
+			}
+		},
+		"src/lib/components/layout/CampaignSidebar.svelte": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/lib/components/layout/Sidebar.svelte": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/lib/components/match-results/UploadItem.svelte": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/lib/components/matchConfidence.ts": {
+			"crap_critical": {
+				"count": 1
+			}
+		},
+		"src/lib/components/onboarding/DatabaseSelector.svelte": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/lib/components/onboarding/SupabaseConnectForm.svelte": {
+			"crap_high": {
+				"count": 1
+			}
+		},
+		"src/lib/components/results/CropLightbox.svelte": {
+			"complexity_moderate": {
+				"count": 1
+			}
+		},
+		"src/lib/components/ui/Input.svelte": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/lib/components/ui/Modal.svelte": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/lib/components/ui/Select.svelte": {
+			"complexity_critical": {
+				"count": 1
+			},
+			"crap_critical": {
+				"count": 1
+			},
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/lib/components/ui/Table.svelte": {
+			"complexity_critical": {
+				"count": 1
+			},
+			"crap_critical": {
+				"count": 1
+			}
+		},
+		"src/lib/mocks/handlers.ts": {
+			"crap_high": {
+				"count": 2
+			}
+		},
+		"src/lib/stores/auth.svelte.ts": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/lib/stores/campaign-results.ts": {
+			"complexity_critical": {
+				"count": 1
+			},
+			"crap_critical": {
+				"count": 1
+			}
+		},
+		"src/lib/stores/uploads.ts": {
+			"crap_moderate": {
+				"count": 2
+			}
+		},
+		"src/lib/utils.ts": {
+			"crap_high": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/auth/+page.svelte": {
+			"complexity_high": {
+				"count": 1
+			},
+			"crap_high": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/auth/sign-in/+server.ts": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/auth/sign-up/+server.ts": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/auth/verity-2fa/+server.ts": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/demo/better-auth/login/+page.server.ts": {
+			"crap_high": {
+				"count": 1
+			},
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/getting-started/+page.svelte": {
+			"complexity_critical": {
+				"count": 2
+			},
+			"crap_critical": {
+				"count": 3
+			},
+			"crap_moderate": {
+				"count": 2
+			}
+		},
+		"src/routes/(app)/settings/database/+page.svelte": {
+			"crap_high": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/workspace/[id]/+page.svelte": {
+			"complexity_critical": {
+				"count": 1
+			},
+			"crap_critical": {
+				"count": 1
+			},
+			"crap_high": {
+				"count": 1
+			},
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/workspace/[id]/jobs/+page.svelte": {
+			"crap_critical": {
+				"count": 2
+			},
+			"crap_moderate": {
+				"count": 3
+			}
+		},
+		"src/routes/(app)/workspace/[id]/jobs/[job_id]/+page.svelte": {
+			"complexity_critical": {
+				"count": 1
+			},
+			"crap_critical": {
+				"count": 2
+			},
+			"crap_high": {
+				"count": 1
+			},
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/workspace/[id]/jobs/new/+page.svelte": {
+			"crap_critical": {
+				"count": 1
+			},
+			"crap_high": {
+				"count": 2
+			},
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/workspace/[id]/results/+page.svelte": {
+			"complexity_critical": {
+				"count": 1
+			},
+			"crap_critical": {
+				"count": 2
+			}
+		},
+		"src/routes/(app)/workspace/[id]/upload/+page.svelte": {
+			"complexity_critical": {
+				"count": 1
+			},
+			"crap_critical": {
+				"count": 1
+			},
+			"crap_high": {
+				"count": 2
+			},
+			"crap_moderate": {
+				"count": 3
+			}
+		},
+		"src/routes/(app)/workspace/api/match-result/[job_id]/+server.ts": {
+			"crap_critical": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/workspace/api/match/+server.ts": {
+			"crap_critical": {
+				"count": 1
+			},
+			"crap_moderate": {
+				"count": 5
+			}
+		},
+		"src/routes/(app)/workspace/campaigns/+page.svelte": {
+			"complexity_critical": {
+				"count": 1
+			},
+			"crap_critical": {
+				"count": 1
+			}
+		},
+		"src/routes/(app)/workspace/settings/+page.svelte": {
+			"complexity_critical": {
+				"count": 1
+			},
+			"crap_critical": {
+				"count": 1
+			},
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/routes/api/create-campaign/+server.ts": {
+			"crap_moderate": {
+				"count": 1
+			}
+		},
+		"src/routes/api/store-ocr-provider/+server.ts": {
+			"crap_critical": {
+				"count": 1
+			}
+		}
+	},
+	"runtime_coverage_findings": [],
+	"target_keys": [
+		"src/lib/stores/auth.svelte.ts:dead code",
+		"src/lib/api/auth.ts:dead code",
+		"src/lib/api/client.ts:dead code",
+		"src/lib/utils/mode.ts:high impact",
+		"tests/__mocks__/$app/navigation.ts:high impact",
+		"src/lib/components/ui/Table.svelte:complexity",
+		"src/routes/(app)/workspace/[id]/+page.svelte:complexity",
+		"src/routes/(app)/workspace/[id]/results/+page.svelte:complexity",
+		"src/routes/(app)/workspace/[id]/jobs/[job_id]/+page.svelte:complexity",
+		"src/lib/components/ui/Select.svelte:complexity",
+		"src/routes/(app)/workspace/settings/+page.svelte:complexity",
+		"src/lib/components/ProviderConfigCard.svelte:complexity",
+		"src/routes/(app)/workspace/[id]/upload/+page.svelte:complexity"
+	]
+}

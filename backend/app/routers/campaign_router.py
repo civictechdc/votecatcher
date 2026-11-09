@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from pydantic import Field
 from sqlmodel import Session
 
@@ -23,6 +23,7 @@ from app.responses.campaign import (
     SetupStatusResponse,
     VoterListStatus,
 )
+from app.responses.jobs import JobResponse
 
 __all__ = [
     "CampaignListResponse",
@@ -109,6 +110,26 @@ def delete_campaign(
 
     try:
         CampaignManagementService(session).delete_campaign(campaign_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+
+@router.get("/{campaign_id}/jobs/{job_id}", response_model=JobResponse)
+def get_campaign_job(
+    campaign_id: uuid.UUID,
+    job_id: Annotated[int, Path(ge=1, le=2**31 - 1)],
+    session: SessionDep,
+) -> JobResponse:
+    """Get a job scoped to a campaign.
+
+    Returns 404 when the job does not exist or belongs to a different campaign.
+    Out-of-range or malformed job IDs are rejected with 422 before any database
+    access; the three 404 causes are deliberately indistinguishable.
+    """
+    from app.services.job_query_service import JobQueryService
+
+    try:
+        return JobQueryService(session).get_job_for_campaign(campaign_id, job_id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 

@@ -194,6 +194,40 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /campaigns/{campaign_id}/jobs/{job_id}:
+    get:
+      tags: [jobs]
+      summary: Get job status scoped to campaign
+      operationId: getCampaignJob
+      parameters:
+        - $ref: "#/components/parameters/CampaignId"
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          description: >-
+            Not found. Unknown campaign, unknown job, and job not belonging to
+            the campaign are deliberately indistinguishable.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: >-
+            Request validation failed for path parameters, such as a non-UUID
+            campaign_id or an out-of-range job_id.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /upload/voter-list:
     post:
       tags: [upload]
