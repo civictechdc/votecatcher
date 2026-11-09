@@ -1,20 +1,11 @@
 {
 	"$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
-	"entry": [
-		"src/index.{ts,tsx,js,jsx}",
-		"src/main.{ts,tsx,js,jsx}"
-	],
-	"ignorePatterns": [
-		".storybook/**",
-		"scripts/**"
-	],
+	"entry": ["src/index.{ts,tsx,js,jsx}", "src/main.{ts,tsx,js,jsx}"],
+	"ignorePatterns": [".storybook/**", "scripts/**"],
 	"ignoreExports": [
 		{
 			"file": "src/lib/server/trusted-origins.ts",
-			"exports": [
-				"trustedOrigins",
-				"resolveTrustedBase"
-			]
+			"exports": ["trustedOrigins", "resolveTrustedBase"]
 		}
 	],
 	"ignoreDependencies": [
