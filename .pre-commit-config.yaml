@@ -20,6 +20,20 @@ repos:
         pass_filenames: false
         files: ^frontend/
 
+  # Same rationale as the oxlint hook above: run the project's own oxfmt
+  # (`cd frontend && bun run fmt`, which honors .oxfmtignore) so formatting
+  # is fixed at commit time instead of failing the CI lint step later. The
+  # hook rewrites unformatted files; pre-commit then aborts the commit so
+  # the fixes can be re-staged.
+  - repo: local
+    hooks:
+      - id: oxfmt
+        name: oxfmt (frontend)
+        entry: bun run --cwd frontend fmt
+        language: system
+        pass_filenames: false
+        files: ^frontend/
+
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
