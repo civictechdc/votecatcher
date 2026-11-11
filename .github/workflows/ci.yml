@@ -365,13 +365,19 @@ jobs:
         run: cd frontend && bun install --frozen-lockfile
 
       - name: Run fallow audit
+        id: fallow-audit
         run: cd frontend && npx fallow audit --base origin/main --format compact
 
       - name: Fallow audit summary
         if: failure()
         run: |
-          echo "::error::Fallow audit found dead or unused code in the frontend. Run 'cd frontend && npx fallow audit --base origin/main' locally to see details."
-          echo "## ❌ Fallow Audit Failed" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ steps.fallow-audit.outcome }}" == "failure" ]]; then
+            echo "::error::Fallow audit found dead or unused code in the frontend. Run 'cd frontend && npx fallow audit --base origin/main' locally to see details."
+            echo "## ❌ Fallow Audit Failed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::Fallow audit job failed before the audit could run — dependency install or infrastructure issue, not dead-code findings. Re-run the job and check the logs."
+            echo "## ❌ Fallow Audit Failed Before Scanning" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   secrets-scan:
     runs-on: ubuntu-latest
@@ -383,18 +389,30 @@ jobs:
       - name: Install gitleaks
         run: |
           GITLEAKS_VERSION=8.24.3
-          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz -C /usr/local/bin
+          curl -sfL --retry 3 --retry-delay 2 --retry-all-errors \
+            -o /tmp/gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks
+          gitleaks version
 
       - name: Run gitleaks
+        id: gitleaks
         run: gitleaks detect --verbose .
 
       - name: Secrets scan summary
         if: failure()
         run: |
-          echo "::error::Potential secrets detected in git history. Review the gitleaks output above and rotate any exposed credentials immediately."
-          echo "## ❌ Secrets Scan Failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Action required:** Review findings above and rotate any exposed credentials." >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ steps.gitleaks.outcome }}" == "failure" ]]; then
+            echo "::error::Potential secrets detected in git history. Review the gitleaks output above and rotate any exposed credentials immediately."
+            echo "## ❌ Secrets Scan Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Action required:** Review findings above and rotate any exposed credentials." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::Secrets scan job failed before gitleaks could run — tool install or infrastructure issue, not a secrets finding. Re-run the job and check the logs."
+            echo "## ❌ Secrets Scan Failed Before Scanning" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "The failure happened in an earlier step (e.g. gitleaks download). Check the job logs and re-run before investigating secrets." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   sast:
     needs: [prepare]
@@ -406,6 +424,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run semgrep SAST
+        id: semgrep
         uses: returntocorp/semgrep-action@v1
         with:
           config: "auto,p/owasp-top-ten,p/fastapi,p/jwt,p/xss"
@@ -422,10 +441,17 @@ jobs:
       - name: SAST summary
         if: failure()
         run: |
-          echo "::error::Semgrep SAST found security issues. Review the findings in the logs and the uploaded semgrep-results artifact."
-          echo "## ❌ SAST Scan Failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Download the \`semgrep-results\` artifact for full details." >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ steps.semgrep.outcome }}" == "failure" ]]; then
+            echo "::error::Semgrep SAST found security issues. Review the findings in the logs and the uploaded semgrep-results artifact."
+            echo "## ❌ SAST Scan Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Download the \`semgrep-results\` artifact for full details." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::SAST job failed before semgrep could run — tool or infrastructure issue, not a security finding. Re-run the job and check the logs."
+            echo "## ❌ SAST Scan Failed Before Scanning" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "The failure happened in an earlier step. Check the job logs and re-run before treating this as security findings." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   sca:
     needs: [prepare]
@@ -476,11 +502,15 @@ jobs:
 
       - name: Install trivy
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-        env:
-          TRIVY_VERSION: v0.69.3
+          TRIVY_VERSION=0.76.2
+          curl -sfL --retry 3 --retry-delay 2 --retry-all-errors \
+            -o /tmp/trivy.tar.gz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          tar -xzf /tmp/trivy.tar.gz -C /usr/local/bin trivy
+          trivy --version
 
       - name: Run SCA scan
+        id: sca-scan
         run: |
           ~/go/bin/osv-scanner scan -r .
           trivy fs --severity CRITICAL,HIGH --scanners vuln --format json --output trivy-results.json .
@@ -497,10 +527,17 @@ jobs:
       - name: SCA summary
         if: failure()
         run: |
-          echo "::error::SCA scan found vulnerable dependencies. Check osv-scanner and trivy output above, and the uploaded sca-results artifact."
-          echo "## ❌ SCA Scan Failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Run 'just sca' locally to reproduce. Download the \`sca-results\` artifact for full details." >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ steps.sca-scan.outcome }}" == "failure" ]]; then
+            echo "::error::SCA scan found vulnerable dependencies. Check osv-scanner and trivy output above, and the uploaded sca-results artifact."
+            echo "## ❌ SCA Scan Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Run 'just sca' locally to reproduce. Download the \`sca-results\` artifact for full details." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::SCA job failed before scanning — dependency install or tool download issue, not a vulnerability finding. Re-run the job and check the logs."
+            echo "## ❌ SCA Scan Failed Before Scanning" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "The failure happened in an earlier step (e.g. dependency or scanner install). Check the job logs and re-run before treating this as vulnerabilities." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   dast-smoke:
     needs: [prepare]
