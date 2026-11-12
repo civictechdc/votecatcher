@@ -10,6 +10,8 @@ Tests the complete job lifecycle:
 
 import uuid
 
+import pytest
+from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
@@ -18,6 +20,21 @@ from app.data.database.model.llm_provider_config import LlmProviderConfig
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign
 from app.data.database.model.voter_list_upload import UploadStatus, VoterListUpload
+from app.settings import get_settings
+from app.utils.secret_encryption import encrypt_secret
+
+_PROVIDER_CONFIG_SECRET = Fernet.generate_key().decode()  # pragma: allowlist secret
+
+
+@pytest.fixture(autouse=True)
+def _provider_config_secret(monkeypatch: pytest.MonkeyPatch):
+    """Provider credential seeds must be encrypted with a valid key."""
+    monkeypatch.setenv(
+        "PROVIDER_CONFIG_SECRET", _PROVIDER_CONFIG_SECRET
+    )  # pragma: allowlist secret
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 def _seed_prerequisites(session: Session, campaign: Campaign) -> None:
@@ -35,7 +52,9 @@ def _seed_prerequisites(session: Session, campaign: Campaign) -> None:
     if provider is None:
         provider = LlmProviderConfig(
             provider="openai",
-            api_key="sk-test-key-for-integration-tests",  # pragma: allowlist secret
+            api_key=encrypt_secret(
+                "sk-test-key-for-integration-tests"  # pragma: allowlist secret
+            ),
             model="gpt-4o-mini",
             is_configured=True,
         )

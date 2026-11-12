@@ -4,6 +4,11 @@ Revision ID: 25e9ccd8acbe
 Revises: 20260327010000
 Create Date: 2026-04-13 20:19:36.590387
 
+Corrective edit (pre-release): this revision never applied on any
+alembic-tracked database — the chain aborted at 20260317140000 before
+reaching it, and runtime provisioning used create_all, which does not
+track alembic_version.
+
 """
 
 from typing import Sequence, Union
@@ -21,8 +26,8 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "region_field_specs",
-        sa.Column("id", sa.String(), nullable=False),
-        sa.Column("region_id", sa.String(), nullable=False),
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column("region_id", sa.Uuid(), nullable=False),
         sa.Column("region_key", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("ballot_fields", sa.JSON(), nullable=True),
@@ -30,12 +35,10 @@ def upgrade() -> None:
         sa.Column("field_mappings", sa.JSON(), nullable=True),
         sa.Column("hash_fields", sa.JSON(), nullable=True),
         sa.Column("crop_config", sa.JSON(), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.Column("updated_at", sa.DateTime(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(["region_id"], ["regions.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("region_id"),
-        sa.UniqueConstraint("region_key"),
     )
     op.create_index(
         op.f("ix_region_field_specs_region_id"),

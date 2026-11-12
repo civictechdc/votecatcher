@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Column
+from sqlalchemy import JSON, Column, Index
 from sqlmodel import Field, SQLModel
 
 
@@ -19,6 +19,14 @@ class OcrResult(SQLModel, table=True):
     confidence_score: float | None = Field(default=None)
     raw_response: dict = Field(default={}, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    __table_args__ = (
+        Index(
+            "idx_ocr_results_crop_index",
+            "crop_id",
+            "ocr_index",
+        ),
+    )
 
 
 class OcrResultCreate(SQLModel):

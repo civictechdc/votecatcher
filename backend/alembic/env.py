@@ -11,8 +11,11 @@ from alembic import context
 # Add path to app module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Import all models so Alembic can detect them
-from app.data.models import *  # noqa
+# Import exactly the runtime model set so Alembic's metadata matches
+# runtime provisioning (SqliteEngine/SupabaseEngine use import_models()).
+from app.persistence.engines.model_imports import import_models
+
+import_models()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -26,7 +29,9 @@ if database_url:
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
+if config.config_file_name is not None and config.attributes.get(
+    "configure_logger", True
+):
     fileConfig(config.config_file_name)
 
 # add your model's MetaData object here

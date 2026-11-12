@@ -882,35 +882,6 @@ class JobWorker:
             session.rollback()
             await self._run_real_ocr(session, job, ocr_job, crops)
 
-    def _get_provider_api_key(self, provider: str) -> str | None:
-        """Get API key for provider from config or environment.
-
-        Args:
-                provider: Provider name (e.g., 'openai')
-
-        Returns:
-                API key if configured, None otherwise
-        """
-        from app.data.database.session import engine
-
-        with Session(engine) as config_session:
-            from app.data.database.model.llm_provider_config import LlmProviderConfig
-
-            config = config_session.exec(
-                select(LlmProviderConfig).where(LlmProviderConfig.provider == provider)
-            ).first()
-
-            if config and config.api_key:
-                return config.api_key
-
-        import os
-
-        env_key = os.environ.get(f"{provider.upper()}_API_KEY")
-        if env_key:
-            return env_key
-
-        return None
-
     async def _run_matching_phase(
         self,
         session: Session,
