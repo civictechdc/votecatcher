@@ -118,6 +118,20 @@ jobs:
     needs: [prepare]
     if: needs.prepare.outputs.backend == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci  # pragma: allowlist secret
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -141,6 +155,8 @@ jobs:
       - name: Test
         id: test
         run: cd backend && uv run pytest tests/unit tests/matching tests/test_config.py tests/architecture tests/integration --cov=app --cov-report=xml
+        env:
+          TEST_DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"  # pragma: allowlist secret
 
       - name: Security scan (bandit + uv audit)
         id: security-scan

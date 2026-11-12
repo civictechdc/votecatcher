@@ -94,6 +94,10 @@ class Settings(BaseSettings):
     ocr_model: str | None = Field(default=None, alias="OCR_PROVIDER_MODEL")
     ocr_api_key: SecretStr | None = Field(default=None, alias="OCR_PROVIDER_API_KEY")
 
+    provider_config_secret: SecretStr | None = Field(
+        default=None, alias="PROVIDER_CONFIG_SECRET"
+    )
+
     app_name: str = Field(default="Votecatcher Backend", alias="APP_NAME")
     version: str = Field(default="", alias="APP_VERSION")
 

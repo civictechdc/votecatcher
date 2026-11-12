@@ -60,6 +60,7 @@ Required secrets:
 - `BETTER_AUTH_SECRET` — session encryption key
 - `OCR_PROVIDER_API_KEY` — LLM/OCR provider key (unless using simulation mode)
 - `SUPABASE_SERVICE_KEY` — Supabase admin key (if using Supabase)
+- `PROVIDER_CONFIG_SECRET` — Fernet key encrypting provider API keys stored in the database. Generate per environment with `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key())"`. Rotating the key invalidates already-stored credentials until they are re-saved.
 
 ### Database Security
 

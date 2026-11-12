@@ -49,6 +49,8 @@ dependencies = [
     "slowapi>=0.1.9",
     "sentry-sdk[fastapi]>=2.57.0",
     "msgpack>=1.2.4",
+    "psycopg[binary]>=3.3.8",
+    "cryptography>=50.0.0",
 ]
 
 [dependency-groups]

@@ -42,12 +42,16 @@ def resolve_provider_config(
                 )
             ).first()
 
-        if db_config and db_config.api_key and db_config.model:
-            return ProviderConfig(
-                provider=db_config.provider,
-                api_key=db_config.api_key,
-                model=db_config.model,
-            )
+        if db_config and db_config.model:
+            from app.services.providers import get_decrypted_api_key
+
+            api_key = get_decrypted_api_key(db_config)
+            if api_key:
+                return ProviderConfig(
+                    provider=db_config.provider,
+                    api_key=api_key,
+                    model=db_config.model,
+                )
 
     settings = get_settings()
     if settings.ocr.provider_name and settings.ocr.model and settings.ocr.api_key:
