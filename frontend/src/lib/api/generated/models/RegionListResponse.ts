@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { RegionSummary } from './RegionSummary';
 import {
-    RegionSummaryFromJSON,
-    RegionSummaryFromJSONTyped,
-    RegionSummaryToJSON,
-    RegionSummaryToJSONTyped,
+RegionSummaryFromJSON,
+RegionSummaryToJSON
 } from './RegionSummary';
 
 /**

@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { SessionResponse } from './SessionResponse';
 import {
-    SessionResponseFromJSON,
-    SessionResponseFromJSONTyped,
-    SessionResponseToJSON,
-    SessionResponseToJSONTyped,
+SessionResponseFromJSON,
+SessionResponseToJSON
 } from './SessionResponse';
 
 /**

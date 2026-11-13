@@ -13,57 +13,42 @@
  * Do not edit the class manually.
  */
 
-import * as runtime from '../runtime';
 import {
-    type CampaignListResponse,
-    CampaignListResponseFromJSON,
-    CampaignListResponseToJSON,
+type CampaignListResponse,
+CampaignListResponseFromJSON
 } from '../models/CampaignListResponse';
 import {
-    type CampaignMetricsResponse,
-    CampaignMetricsResponseFromJSON,
-    CampaignMetricsResponseToJSON,
+type CampaignMetricsResponse,
+CampaignMetricsResponseFromJSON
 } from '../models/CampaignMetricsResponse';
 import {
-    type CampaignResponse,
-    CampaignResponseFromJSON,
-    CampaignResponseToJSON,
+type CampaignResponse,
+CampaignResponseFromJSON
 } from '../models/CampaignResponse';
 import {
-    type CampaignResultsListResponse,
-    CampaignResultsListResponseFromJSON,
-    CampaignResultsListResponseToJSON,
+type CampaignResultsListResponse,
+CampaignResultsListResponseFromJSON
 } from '../models/CampaignResultsListResponse';
 import {
-    type ConfidenceLevel,
-    ConfidenceLevelFromJSON,
-    ConfidenceLevelToJSON,
+type ConfidenceLevel
 } from '../models/ConfidenceLevel';
 import {
-    type CreateCampaignRequest,
-    CreateCampaignRequestFromJSON,
-    CreateCampaignRequestToJSON,
+type CreateCampaignRequest,
+CreateCampaignRequestToJSON
 } from '../models/CreateCampaignRequest';
 import {
-    type HTTPValidationError,
-    HTTPValidationErrorFromJSON,
-    HTTPValidationErrorToJSON,
-} from '../models/HTTPValidationError';
-import {
-    type JobResponse,
-    JobResponseFromJSON,
-    JobResponseToJSON,
+type JobResponse,
+JobResponseFromJSON
 } from '../models/JobResponse';
 import {
-    type PetitionScanListResponse,
-    PetitionScanListResponseFromJSON,
-    PetitionScanListResponseToJSON,
+type PetitionScanListResponse,
+PetitionScanListResponseFromJSON
 } from '../models/PetitionScanListResponse';
 import {
-    type SetupStatusResponse,
-    SetupStatusResponseFromJSON,
-    SetupStatusResponseToJSON,
+type SetupStatusResponse,
+SetupStatusResponseFromJSON
 } from '../models/SetupStatusResponse';
+import * as runtime from '../runtime';
 
 export interface CreateCampaignCampaignsPostRequest {
     /**

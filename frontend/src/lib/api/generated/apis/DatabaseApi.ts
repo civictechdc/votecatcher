@@ -13,32 +13,23 @@
  * Do not edit the class manually.
  */
 
-import * as runtime from '../runtime';
 import {
-    type ConnectionTestResult,
-    ConnectionTestResultFromJSON,
-    ConnectionTestResultToJSON,
+type ConnectionTestResult,
+ConnectionTestResultFromJSON
 } from '../models/ConnectionTestResult';
 import {
-    type DatabaseStatus,
-    DatabaseStatusFromJSON,
-    DatabaseStatusToJSON,
+type DatabaseStatus,
+DatabaseStatusFromJSON
 } from '../models/DatabaseStatus';
 import {
-    type HTTPValidationError,
-    HTTPValidationErrorFromJSON,
-    HTTPValidationErrorToJSON,
-} from '../models/HTTPValidationError';
-import {
-    type ProvisionResult,
-    ProvisionResultFromJSON,
-    ProvisionResultToJSON,
+type ProvisionResult,
+ProvisionResultFromJSON
 } from '../models/ProvisionResult';
 import {
-    type SupabaseCredentials,
-    SupabaseCredentialsFromJSON,
-    SupabaseCredentialsToJSON,
+type SupabaseCredentials,
+SupabaseCredentialsToJSON
 } from '../models/SupabaseCredentials';
+import * as runtime from '../runtime';
 
 export interface DisconnectSupabaseDatabaseSupabaseDeleteRequest {
     /**

@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { UploadDetail } from './UploadDetail';
 import {
-    UploadDetailFromJSON,
-    UploadDetailFromJSONTyped,
-    UploadDetailToJSON,
-    UploadDetailToJSONTyped,
+UploadDetailFromJSON,
+UploadDetailToJSON
 } from './UploadDetail';
 
 /**

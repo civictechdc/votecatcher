@@ -13,27 +13,19 @@
  * Do not edit the class manually.
  */
 
-import * as runtime from '../runtime';
 import {
-    type DeleteVoterListResponse,
-    DeleteVoterListResponseFromJSON,
-    DeleteVoterListResponseToJSON,
+type DeleteVoterListResponse,
+DeleteVoterListResponseFromJSON
 } from '../models/DeleteVoterListResponse';
 import {
-    type HTTPValidationError,
-    HTTPValidationErrorFromJSON,
-    HTTPValidationErrorToJSON,
-} from '../models/HTTPValidationError';
-import {
-    type RegionListResponse,
-    RegionListResponseFromJSON,
-    RegionListResponseToJSON,
+type RegionListResponse,
+RegionListResponseFromJSON
 } from '../models/RegionListResponse';
 import {
-    type VoterListStatusResponse,
-    VoterListStatusResponseFromJSON,
-    VoterListStatusResponseToJSON,
+type VoterListStatusResponse,
+VoterListStatusResponseFromJSON
 } from '../models/VoterListStatusResponse';
+import * as runtime from '../runtime';
 
 export interface DeleteVoterListRegionsRegionIdVoterListDeleteRequest {
     /**

@@ -13,7 +13,6 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 /**
  * Response schema for petition upload.
  * @export

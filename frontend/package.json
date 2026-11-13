@@ -13,7 +13,7 @@
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"generate:client": "node scripts/clean-generated.mjs && openapi-generator-cli generate && node scripts/stamp-generated.mjs",
+		"generate:client": "node scripts/clean-generated.mjs && openapi-generator-cli generate && node scripts/organize-generated-imports.mjs && node scripts/stamp-generated.mjs",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test:e2e": "playwright test",
 		"test:e2e:prod": "playwright test -c playwright.prod.config.ts",

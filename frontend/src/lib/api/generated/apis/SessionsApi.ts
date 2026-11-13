@@ -13,27 +13,19 @@
  * Do not edit the class manually.
  */
 
-import * as runtime from '../runtime';
 import {
-    type CreateSessionRequest,
-    CreateSessionRequestFromJSON,
-    CreateSessionRequestToJSON,
+type CreateSessionRequest,
+CreateSessionRequestToJSON
 } from '../models/CreateSessionRequest';
 import {
-    type HTTPValidationError,
-    HTTPValidationErrorFromJSON,
-    HTTPValidationErrorToJSON,
-} from '../models/HTTPValidationError';
-import {
-    type SessionListResponse,
-    SessionListResponseFromJSON,
-    SessionListResponseToJSON,
+type SessionListResponse,
+SessionListResponseFromJSON
 } from '../models/SessionListResponse';
 import {
-    type SessionResponse,
-    SessionResponseFromJSON,
-    SessionResponseToJSON,
+type SessionResponse,
+SessionResponseFromJSON
 } from '../models/SessionResponse';
+import * as runtime from '../runtime';
 
 export interface CreateSessionSessionsPostRequest {
     /**

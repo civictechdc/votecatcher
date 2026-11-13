@@ -13,7 +13,6 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 /**
  * Typed sub-model for table deletion counts.
  * @export

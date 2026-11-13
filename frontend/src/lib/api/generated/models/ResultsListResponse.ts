@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { ResultResponse } from './ResultResponse';
 import {
-    ResultResponseFromJSON,
-    ResultResponseFromJSONTyped,
-    ResultResponseToJSON,
-    ResultResponseToJSONTyped,
+ResultResponseFromJSON,
+ResultResponseToJSON
 } from './ResultResponse';
 
 /**

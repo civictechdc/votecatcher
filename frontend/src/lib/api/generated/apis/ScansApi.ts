@@ -14,11 +14,6 @@
  */
 
 import * as runtime from '../runtime';
-import {
-    type HTTPValidationError,
-    HTTPValidationErrorFromJSON,
-    HTTPValidationErrorToJSON,
-} from '../models/HTTPValidationError';
 
 export interface GetScanPageImageScansScanIdPagesPageNumberImageGetRequest {
     /**

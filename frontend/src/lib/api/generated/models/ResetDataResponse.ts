@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { DeletedTableCounts } from './DeletedTableCounts';
 import {
-    DeletedTableCountsFromJSON,
-    DeletedTableCountsFromJSONTyped,
-    DeletedTableCountsToJSON,
-    DeletedTableCountsToJSONTyped,
+DeletedTableCountsFromJSON,
+DeletedTableCountsToJSON
 } from './DeletedTableCounts';
 
 /**

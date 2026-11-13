@@ -13,27 +13,19 @@
  * Do not edit the class manually.
  */
 
-import * as runtime from '../runtime';
 import {
-    type CreateJobRequest,
-    CreateJobRequestFromJSON,
-    CreateJobRequestToJSON,
+type CreateJobRequest,
+CreateJobRequestToJSON
 } from '../models/CreateJobRequest';
 import {
-    type HTTPValidationError,
-    HTTPValidationErrorFromJSON,
-    HTTPValidationErrorToJSON,
-} from '../models/HTTPValidationError';
-import {
-    type JobListResponse,
-    JobListResponseFromJSON,
-    JobListResponseToJSON,
+type JobListResponse,
+JobListResponseFromJSON
 } from '../models/JobListResponse';
 import {
-    type JobResponse,
-    JobResponseFromJSON,
-    JobResponseToJSON,
+type JobResponse,
+JobResponseFromJSON
 } from '../models/JobResponse';
+import * as runtime from '../runtime';
 
 export interface CancelJobJobsJobIdCancelPostRequest {
     /**

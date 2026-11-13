@@ -13,7 +13,7 @@
  * Do not edit the class manually.
  */
 
-import { mapValues, parseDate, parseDateTime, serializeDate, serializeDateTime } from '../runtime';
+import { parseDateTime,serializeDateTime } from '../runtime';
 /**
  * Schema for reading provider config (no API key).
  * @export

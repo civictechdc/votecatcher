@@ -13,28 +13,21 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
-import type { VoterListStatus } from './VoterListStatus';
-import {
-    VoterListStatusFromJSON,
-    VoterListStatusFromJSONTyped,
-    VoterListStatusToJSON,
-    VoterListStatusToJSONTyped,
-} from './VoterListStatus';
 import type { JobsStatus } from './JobsStatus';
 import {
-    JobsStatusFromJSON,
-    JobsStatusFromJSONTyped,
-    JobsStatusToJSON,
-    JobsStatusToJSONTyped,
+JobsStatusFromJSON,
+JobsStatusToJSON
 } from './JobsStatus';
 import type { PetitionsStatus } from './PetitionsStatus';
 import {
-    PetitionsStatusFromJSON,
-    PetitionsStatusFromJSONTyped,
-    PetitionsStatusToJSON,
-    PetitionsStatusToJSONTyped,
+PetitionsStatusFromJSON,
+PetitionsStatusToJSON
 } from './PetitionsStatus';
+import type { VoterListStatus } from './VoterListStatus';
+import {
+VoterListStatusFromJSON,
+VoterListStatusToJSON
+} from './VoterListStatus';
 
 /**
  * Response schema for campaign setup status.

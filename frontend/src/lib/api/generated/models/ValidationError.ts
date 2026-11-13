@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { LocationInner } from './LocationInner';
 import {
-    LocationInnerFromJSON,
-    LocationInnerFromJSONTyped,
-    LocationInnerToJSON,
-    LocationInnerToJSONTyped,
+LocationInnerFromJSON,
+LocationInnerToJSON
 } from './LocationInner';
 
 /**

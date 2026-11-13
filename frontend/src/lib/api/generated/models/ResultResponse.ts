@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { MatchPrediction } from './MatchPrediction';
 import {
-    MatchPredictionFromJSON,
-    MatchPredictionFromJSONTyped,
-    MatchPredictionToJSON,
-    MatchPredictionToJSONTyped,
+MatchPredictionFromJSON,
+MatchPredictionToJSON
 } from './MatchPrediction';
 
 /**

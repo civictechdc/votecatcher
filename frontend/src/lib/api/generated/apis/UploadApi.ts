@@ -13,22 +13,15 @@
  * Do not edit the class manually.
  */
 
-import * as runtime from '../runtime';
 import {
-    type HTTPValidationError,
-    HTTPValidationErrorFromJSON,
-    HTTPValidationErrorToJSON,
-} from '../models/HTTPValidationError';
-import {
-    type PetitionUploadResponse,
-    PetitionUploadResponseFromJSON,
-    PetitionUploadResponseToJSON,
+type PetitionUploadResponse,
+PetitionUploadResponseFromJSON
 } from '../models/PetitionUploadResponse';
 import {
-    type VoterListUploadResponse,
-    VoterListUploadResponseFromJSON,
-    VoterListUploadResponseToJSON,
+type VoterListUploadResponse,
+VoterListUploadResponseFromJSON
 } from '../models/VoterListUploadResponse';
+import * as runtime from '../runtime';
 
 export interface UploadPetitionUploadPetitionPostRequest {
     /**

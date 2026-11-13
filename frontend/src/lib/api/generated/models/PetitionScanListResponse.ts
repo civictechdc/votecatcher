@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { PetitionScanResponse } from './PetitionScanResponse';
 import {
-    PetitionScanResponseFromJSON,
-    PetitionScanResponseFromJSONTyped,
-    PetitionScanResponseToJSON,
-    PetitionScanResponseToJSONTyped,
+PetitionScanResponseFromJSON,
+PetitionScanResponseToJSON
 } from './PetitionScanResponse';
 
 /**

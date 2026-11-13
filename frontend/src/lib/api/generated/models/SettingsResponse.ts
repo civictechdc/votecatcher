@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { FeatureFlagsResponse } from './FeatureFlagsResponse';
 import {
-    FeatureFlagsResponseFromJSON,
-    FeatureFlagsResponseFromJSONTyped,
-    FeatureFlagsResponseToJSON,
-    FeatureFlagsResponseToJSONTyped,
+FeatureFlagsResponseFromJSON,
+FeatureFlagsResponseToJSON
 } from './FeatureFlagsResponse';
 
 /**

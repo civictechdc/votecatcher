@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { LastJobInfo } from './LastJobInfo';
 import {
-    LastJobInfoFromJSON,
-    LastJobInfoFromJSONTyped,
-    LastJobInfoToJSON,
-    LastJobInfoToJSONTyped,
+LastJobInfoFromJSON,
+LastJobInfoToJSON
 } from './LastJobInfo';
 
 /**

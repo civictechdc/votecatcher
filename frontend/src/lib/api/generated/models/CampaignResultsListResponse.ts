@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { CampaignResultResponse } from './CampaignResultResponse';
 import {
-    CampaignResultResponseFromJSON,
-    CampaignResultResponseFromJSONTyped,
-    CampaignResultResponseToJSON,
-    CampaignResultResponseToJSONTyped,
+CampaignResultResponseFromJSON,
+CampaignResultResponseToJSON
 } from './CampaignResultResponse';
 
 /**

@@ -13,22 +13,14 @@
  * Do not edit the class manually.
  */
 
-import * as runtime from '../runtime';
 import {
-    type ConfidenceLevel,
-    ConfidenceLevelFromJSON,
-    ConfidenceLevelToJSON,
+type ConfidenceLevel
 } from '../models/ConfidenceLevel';
 import {
-    type HTTPValidationError,
-    HTTPValidationErrorFromJSON,
-    HTTPValidationErrorToJSON,
-} from '../models/HTTPValidationError';
-import {
-    type ResultsListResponse,
-    ResultsListResponseFromJSON,
-    ResultsListResponseToJSON,
+type ResultsListResponse,
+ResultsListResponseFromJSON
 } from '../models/ResultsListResponse';
+import * as runtime from '../runtime';
 
 export interface ExportResultsCsvJobsJobIdResultsExportGetRequest {
     /**

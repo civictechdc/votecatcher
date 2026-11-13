@@ -13,13 +13,10 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
 import type { PrebakedSession } from './PrebakedSession';
 import {
-    PrebakedSessionFromJSON,
-    PrebakedSessionFromJSONTyped,
-    PrebakedSessionToJSON,
-    PrebakedSessionToJSONTyped,
+PrebakedSessionFromJSON,
+PrebakedSessionToJSON
 } from './PrebakedSession';
 
 /**

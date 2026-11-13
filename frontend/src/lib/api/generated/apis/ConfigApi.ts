@@ -13,22 +13,19 @@
  * Do not edit the class manually.
  */
 
-import * as runtime from '../runtime';
 import {
-    type FeatureFlagsResponse,
-    FeatureFlagsResponseFromJSON,
-    FeatureFlagsResponseToJSON,
+type FeatureFlagsResponse,
+FeatureFlagsResponseFromJSON
 } from '../models/FeatureFlagsResponse';
 import {
-    type ResetDataResponse,
-    ResetDataResponseFromJSON,
-    ResetDataResponseToJSON,
+type ResetDataResponse,
+ResetDataResponseFromJSON
 } from '../models/ResetDataResponse';
 import {
-    type SettingsResponse,
-    SettingsResponseFromJSON,
-    SettingsResponseToJSON,
+type SettingsResponse,
+SettingsResponseFromJSON
 } from '../models/SettingsResponse';
+import * as runtime from '../runtime';
 
 /**
  * 
