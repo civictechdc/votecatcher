@@ -97,7 +97,7 @@
 		"vitest": "^4.1.12"
 	},
 	"overrides": {
-		"basic-ftp": ">=5.3.1",
+		"basic-ftp": ">=6.2.4",
 		"brace-expansion": ">=5.0.8",
 		"cross-spawn": ">=7.0.5",
 		"esbuild": ">=0.28.1",
