@@ -379,6 +379,125 @@ jobs:
             echo "## ❌ Fallow Audit Failed Before Scanning" >> "$GITHUB_STEP_SUMMARY"
           fi
 
+  openapi-freshness:
+    # Regenerate the API contract and the generated TS client from app code and
+    # fail on drift (design D4). Cross-stack job (python + bun + java) kept
+    # separate from backend-quality/frontend-quality; runs on PRs touching
+    # backend/frontend and on main pushes (including the weekly schedule
+    # refresh, whose ref is main).
+    needs: [prepare]
+    if: needs.prepare.outputs.backend == 'true' || needs.prepare.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      # Contract export: python env only, same install path as backend-quality.
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Export OpenAPI contract
+        id: export
+        run: cd backend && uv sync --dev && uv run python scripts/export_openapi.py
+
+      - name: Check contract freshness
+        id: contract-diff
+        # Diff against HEAD, not the index: a compromised generation step could
+        # stage its own output, and a plain index diff would then pass.
+        run: git diff --exit-code HEAD -- backend/openapi.yaml
+
+      # Client regeneration: bun for the devDep CLI, Java for the generator jar.
+      # setup-java pins the JVM version explicitly — GitHub runners pre-cache
+      # Temurin, but the exact version drifts with runner images, and generator
+      # output must be reproducible across local/CI (design D6).
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Verify Bun runtime
+        run: bun --version
+
+      # generate:client stamps output via `node scripts/stamp-generated.mjs`;
+      # don't rely on a runner-preinstalled node (matches frontend-quality pin).
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Verify Java runtime
+        run: java --version
+
+      - name: Install dependencies
+        run: cd frontend && bun install --frozen-lockfile
+
+      # Config-driven invocation: frontend/openapitools.json pins the generator
+      # version and declares input/output. (`-c` on the CLI means a generator
+      # options file, not this wrapper config — flags must stay off.)
+      # generate:client = generator + @ts-nocheck stamp, identical to local
+      # `just openapi-generate`, so CI regenerates byte-identical output.
+      - name: Generate API client
+        id: generate
+        run: cd frontend && bun run generate:client
+
+      # git add -N makes newly generated (untracked) files visible to git diff.
+      # Diff against HEAD, not the index: a compromised generation step could
+      # stage its own output, and a plain index diff would then pass.
+      - name: Check client freshness
+        id: client-diff
+        run: |
+          git add -N frontend/src/lib/api/generated
+          git diff --exit-code HEAD -- frontend/src/lib/api/generated
+
+      - name: Freshness failure summary
+        if: failure()
+        run: |
+          echo "## ❌ OpenAPI Freshness Check Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ steps.contract-diff.outcome }}" == "failure" ]]; then
+            echo "::error::backend/openapi.yaml is stale. Regenerate with: cd backend && uv run python scripts/export_openapi.py"
+            echo "### Stale: \`backend/openapi.yaml\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`diff" >> "$GITHUB_STEP_SUMMARY"
+            # Indent each diff line 4 spaces: the diff is PR-influenced and a
+            # ``` line in it would otherwise close/insert fences in the summary.
+            git diff -- backend/openapi.yaml | sed 's/^/    /' >> "$GITHUB_STEP_SUMMARY" || true
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [[ "${{ steps.client-diff.outcome }}" == "failure" ]]; then
+            echo "::error::frontend/src/lib/api/generated is stale. Regenerate with: just openapi-generate (or: cd frontend && bun run generate:client)"
+            echo "### Stale: \`frontend/src/lib/api/generated\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            git add -N frontend/src/lib/api/generated || true
+            echo "\`\`\`diff" >> "$GITHUB_STEP_SUMMARY"
+            git diff -- frontend/src/lib/api/generated | sed 's/^/    /' >> "$GITHUB_STEP_SUMMARY" || true
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [[ "${{ steps.export.outcome }}" == "failure" || "${{ steps.generate.outcome }}" == "failure" ]]; then
+            echo "### Regeneration step failed before a diff could be produced" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Check the failed step's logs (dependency install, export script, or generator invocation) — this is infrastructure/config failure, not artifact drift." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Freshness success summary
+        if: success()
+        run: |
+          echo "## ✅ OpenAPI Freshness" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ \`backend/openapi.yaml\` matches the FastAPI app (no drift)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ \`frontend/src/lib/api/generated\` matches the contract (no drift)" >> "$GITHUB_STEP_SUMMARY"
+
   secrets-scan:
     runs-on: ubuntu-latest
     steps:

@@ -47,8 +47,13 @@ repos:
       - id: check-json
       - id: check-merge-conflict
       - id: check-case-conflict
+      # Generated client output contains trailing whitespace and is exempted
+      # from repo-wide fixers: rewriting it would trip the CI freshness diff
+      # (regenerated files must stay byte-identical to the committed ones).
       - id: end-of-file-fixer
+        exclude: ^frontend/src/lib/api/generated/
       - id: trailing-whitespace
+        exclude: ^frontend/src/lib/api/generated/
 
   # Ensure Makefile stays in sync with justfile
   - repo: local

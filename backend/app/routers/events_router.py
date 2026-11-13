@@ -1,11 +1,21 @@
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 
 from app.events import sse_transport
 
 router = APIRouter(prefix="/events", tags=["events"])
 
 
-@router.get("/campaigns/{campaign_id}/stream")
+@router.get(
+    "/campaigns/{campaign_id}/stream",
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "description": "SSE stream of campaign events",
+            "content": {"text/event-stream": {"schema": {"type": "string"}}},
+        }
+    },
+)
 async def campaign_event_stream(
     campaign_id: str,
 ):
@@ -13,7 +23,16 @@ async def campaign_event_stream(
     return await sse_transport.subscribe_to_campaign(campaign_id)
 
 
-@router.get("/jobs/{job_id}/stream")
+@router.get(
+    "/jobs/{job_id}/stream",
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "description": "SSE stream of job status updates",
+            "content": {"text/event-stream": {"schema": {"type": "string"}}},
+        }
+    },
+)
 async def job_event_stream(job_id: str):
     """SSE stream for job status updates."""
     return await sse_transport.subscribe_to_job(job_id)

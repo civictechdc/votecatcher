@@ -31,6 +31,14 @@ install:
     cd backend && uv sync
     cd frontend && bun install
 
+# Regenerate both API artifacts from app code (one command): the FastAPI
+# contract export (backend/openapi.yaml) and the generated TS client
+# (frontend/src/lib/api/generated, stamped @ts-nocheck by generate:client).
+# Deterministic; requires Java 21 for the client generator (design D6).
+openapi-generate:
+    cd backend && uv run python scripts/export_openapi.py
+    cd frontend && bun run generate:client
+
 # Start development servers via docker-compose
 dev:
     docker compose up --build

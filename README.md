@@ -125,6 +125,10 @@ cp frontend/.env.example frontend/.env
 # Run migrations
 just migrate
 
+# Regenerate the API contract + TS client after backend route changes
+# (client step needs Java; see docs/running-locally.md)
+just openapi-generate
+
 # Start backend (http://localhost:8080)
 just dev-backend
 
