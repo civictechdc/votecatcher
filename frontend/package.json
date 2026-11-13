@@ -13,6 +13,7 @@
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"generate:client": "node scripts/clean-generated.mjs && openapi-generator-cli generate && node scripts/organize-generated-imports.mjs && node scripts/stamp-generated.mjs",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test:e2e": "playwright test",
 		"test:e2e:prod": "playwright test -c playwright.prod.config.ts",
@@ -28,8 +29,8 @@
 		"auth:schema": "bunx @better-auth/cli generate --config src/lib/server/auth.ts --output src/lib/server/db/auth.schema.ts --yes",
 		"storybook": "storybook dev -p 6006",
 		"build-storybook": "storybook build",
-		"lint": "oxlint",
-		"lint:fix": "oxlint --fix",
+		"lint": "oxlint --ignore-path .oxlintignore",
+		"lint:fix": "oxlint --fix --ignore-path .oxlintignore",
 		"fmt": "oxfmt --ignore-path .oxfmtignore",
 		"fmt:check": "oxfmt --check --ignore-path .oxfmtignore"
 	},
@@ -51,7 +52,7 @@
 		"@eslint/compat": "^2.1.1",
 		"@eslint/js": "^10.0.1",
 		"@faker-js/faker": "^10.6.0",
-		"@openapitools/openapi-generator-cli": "^2.41.0",
+		"@openapitools/openapi-generator-cli": "2.41.0",
 		"@playwright/test": "1.60.0",
 		"@storybook/addon-a11y": "^10.6.2",
 		"@storybook/addon-docs": "^10.6.2",
@@ -96,7 +97,7 @@
 		"vitest": "^4.1.12"
 	},
 	"overrides": {
-		"basic-ftp": ">=5.3.1",
+		"basic-ftp": ">=6.2.4",
 		"brace-expansion": ">=5.0.8",
 		"cross-spawn": ">=7.0.5",
 		"esbuild": ">=0.28.1",
@@ -116,8 +117,8 @@
 		"ws": ">=8.20.1"
 	},
 	"lint-staged": {
-		"*.{js,jsx,ts,tsx,mjs,cjs}": "oxlint",
-		"*": "oxfmt --no-error-on-unmatched-pattern"
+		"*.{js,jsx,ts,tsx,mjs,cjs}": "oxlint --ignore-path .oxlintignore",
+		"*": "oxfmt --no-error-on-unmatched-pattern --ignore-path .oxfmtignore"
 	},
 	"engines": {
 		"node": ">=24 <25"

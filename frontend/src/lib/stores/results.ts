@@ -63,7 +63,7 @@ function createResultsStore() {
 					...s,
 					results: response.results,
 					total: response.total,
-					nextCursor: response.nextCursor,
+					nextCursor: response.nextCursor ?? null,
 					loading: false,
 				}));
 			} catch (error) {

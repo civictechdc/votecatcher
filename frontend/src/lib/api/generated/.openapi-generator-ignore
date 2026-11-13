@@ -1,0 +1,3 @@
+# OpenAPI Generator Ignore
+# docs/*.md excluded from generation output (see openapi-codegen-wiring task 3.2)
+docs/*.md

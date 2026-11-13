@@ -8,6 +8,7 @@ This guide covers local development setup. For a quick start, see the main [READ
 - **uv package manager** - [Install](https://docs.astral.sh/uv/)
 - **Node.js 24+** or **Bun** - [Bun Install](https://bun.sh/)
 - **PostgreSQL** (optional, SQLite works for development)
+- **Java 11+** (optional - only needed for client generation; generator minimum Java 11, repo tooling verified with Java 21 - see [API Client Regeneration](#api-client-regeneration))
 - **Git**
 - **API key** for at least one LLM provider (optional - use simulation mode without)
 
@@ -243,6 +244,29 @@ bun run preview
 
 # Build runs at http://localhost:4173
 ```
+
+## API Client Regeneration
+
+The backend API contract (`backend/openapi.yaml`) and the generated TypeScript client (`frontend/src/lib/api/generated/`) are both generated from FastAPI app code. After changing backend routes or models, regenerate both with one command from the repo root:
+
+```bash
+just openapi-generate
+```
+
+This runs two steps:
+
+| Step | Command | Output | Java needed |
+|------|---------|--------|-------------|
+| Contract export | `cd backend && uv run python scripts/export_openapi.py` | `backend/openapi.yaml` | No (pure Python, offline) |
+| Client generation | `cd frontend && bun run generate:client` | `frontend/src/lib/api/generated/` | Yes (generator minimum Java 11; repo tooling verified with Java 21) |
+
+> **Note:** Java is only needed for client generation - openapi-generator's documented minimum is Java 11, and this repo pins and verifies Java 21 (CI uses temurin 21). The contract export alone works without Java.
+
+The export is deterministic and needs no database or API keys. Regeneration is idempotent: re-running `just openapi-generate` produces byte-identical output, so it introduces nothing new to commit.
+
+> **Note:** Generated client files are stamped `// @ts-nocheck` and excluded from oxlint/oxfmt. This is intentional - hand-written code keeps full strictness. Do not hand-edit anything under `frontend/src/lib/api/generated/` or `backend/openapi.yaml`; any edits there are overwritten on the next regeneration.
+
+CI enforces freshness with the `openapi-freshness` job (`.github/workflows/ci.yml`): it regenerates both artifacts and fails if `git diff` shows any change. PRs are the main gate, and the job also runs on pushes to `main` and on a weekly schedule to catch toolchain drift. If it fails, run `just openapi-generate` locally and commit the result.
 
 ## Full Development Workflow
 

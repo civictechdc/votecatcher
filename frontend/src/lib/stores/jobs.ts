@@ -14,9 +14,9 @@
 import { writable } from "svelte/store";
 import { getApiClient } from "./api-client";
 import { JobsApi } from "#lib/api/generated/index.ts";
+
 import { API_BASE_URL } from "#lib/api/base-url.ts";
 import type { JobResponse, CreateJobRequest } from "#lib/api/generated/index.ts";
-import type { JobStatusEnum } from "#lib/api/generated/models/Job.ts";
 
 interface SSEState {
 	connected: boolean;
@@ -205,7 +205,7 @@ function createJobsStore() {
 			update((s) => ({ ...s, error: null }));
 		},
 
-		handleStatusEvent(event: { job_id: number; status: JobStatusEnum }) {
+		handleStatusEvent(event: { job_id: number; status: string }) {
 			update((s) => ({
 				...s,
 				jobs: s.jobs.map((j) => (j.jobId === event.job_id ? { ...j, status: event.status } : j)),

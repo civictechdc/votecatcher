@@ -12,7 +12,7 @@ export default defineConfig({
 	plugins: [
 		sveltekit({ adapter }),
 		tailwindcss(),
-		oxlintPlugin(),
+		oxlintPlugin({ ignorePattern: ["src/lib/api/generated"] }),
 		visualizer({
 			filename: "bundle-stats.html",
 			open: false,

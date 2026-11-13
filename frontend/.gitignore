@@ -30,3 +30,7 @@ storybook-static
 playwright-report/
 .fallow/
 bundle-stats.html
+
+# Generated OpenAPI client (task 3.2): metadata dir must not pollute the
+# freshness diff — only generator OUTPUT is tracked.
+src/lib/api/generated/.openapi-generator/

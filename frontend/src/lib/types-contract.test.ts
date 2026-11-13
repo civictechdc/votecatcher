@@ -4,7 +4,8 @@ import type { LoadedSessionInfo } from "#lib/stores/demo.ts";
 import type { CampaignResultResponse } from "#lib/stores/campaign-results.ts";
 import type { MatchRow } from "#lib/workspace-types.ts";
 import type { Session } from "#lib/stores/sessions.ts";
-import type { VoterListStatus, PetitionsStatus } from "#lib/api/generated/models/Campaign.ts";
+import type { VoterListStatus } from "#lib/api/generated/models/VoterListStatus.ts";
+import type { PetitionsStatus } from "#lib/api/generated/models/PetitionsStatus.ts";
 
 const _ak = "sk-" + "123";
 
@@ -162,7 +163,7 @@ describe("Frontend type contract BDD tests (Session 15)", () => {
 	describe("VoterListStatus type contract", () => {
 		it("should accept rowCount as null (not undefined)", () => {
 			const status: VoterListStatus = {
-				exists: true,
+				_exists: true,
 				rowCount: null,
 				uploadedAt: null,
 				regionName: null,
@@ -172,7 +173,7 @@ describe("Frontend type contract BDD tests (Session 15)", () => {
 
 		it("should accept rowCount as number", () => {
 			const status: VoterListStatus = {
-				exists: true,
+				_exists: true,
 				rowCount: 1500,
 				uploadedAt: "2024-01-01",
 				regionName: "DC",
@@ -184,7 +185,7 @@ describe("Frontend type contract BDD tests (Session 15)", () => {
 	describe("PetitionsStatus type contract", () => {
 		it("should require fileCount as number (not optional)", () => {
 			const status: PetitionsStatus = {
-				exists: true,
+				_exists: true,
 				fileCount: 5,
 				signatureCount: 150,
 			};
@@ -194,11 +195,20 @@ describe("Frontend type contract BDD tests (Session 15)", () => {
 
 		it("should not accept undefined for fileCount", () => {
 			const _typecheck: PetitionsStatus = {
-				exists: true,
+				_exists: true,
 				fileCount: 0,
 				signatureCount: 0,
 			};
-			expect(_typecheck.exists).toBe(true);
+			expect(_typecheck._exists).toBe(true);
+		});
+
+		it("should reject a missing fileCount at compile time", () => {
+			// @ts-expect-error fileCount is required; omitting it must fail typecheck
+			const _missing: PetitionsStatus = {
+				_exists: true,
+				signatureCount: 0,
+			};
+			expect(_missing._exists).toBe(true);
 		});
 	});
 
