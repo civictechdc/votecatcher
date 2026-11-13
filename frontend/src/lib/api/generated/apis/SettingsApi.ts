@@ -44,6 +44,10 @@ export interface ConfigureProviderSettingsProvidersProviderPostRequest {
      * 
      */
     llmProviderConfigCreate: LlmProviderConfigCreate;
+    /**
+     * 
+     */
+    xApiKey?: string | null;
 }
 
 export interface DeleteProviderSettingsProvidersProviderDeleteRequest {
@@ -51,6 +55,17 @@ export interface DeleteProviderSettingsProvidersProviderDeleteRequest {
      * 
      */
     provider: string;
+    /**
+     * 
+     */
+    xApiKey?: string | null;
+}
+
+export interface ListProvidersSettingsProvidersGetRequest {
+    /**
+     * 
+     */
+    xApiKey?: string | null;
 }
 
 export interface TestProviderSettingsProvidersProviderTestPostRequest {
@@ -62,6 +77,10 @@ export interface TestProviderSettingsProvidersProviderTestPostRequest {
      * 
      */
     llmProviderConfigCreate: LlmProviderConfigCreate;
+    /**
+     * 
+     */
+    xApiKey?: string | null;
 }
 
 /**
@@ -92,6 +111,10 @@ export class SettingsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xApiKey'] != null) {
+            headerParameters['x-api-key'] = String(requestParameters['xApiKey']);
+        }
 
 
         let urlPath = `/settings/providers/{provider}`;
@@ -141,6 +164,10 @@ export class SettingsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['xApiKey'] != null) {
+            headerParameters['x-api-key'] = String(requestParameters['xApiKey']);
+        }
+
 
         let urlPath = `/settings/providers/{provider}`;
         urlPath = urlPath.replace('{provider}', encodeURIComponent(String(requestParameters['provider'])));
@@ -176,10 +203,14 @@ export class SettingsApi extends runtime.BaseAPI {
     /**
      * Creates request options for listProvidersSettingsProvidersGet without sending the request
      */
-    async listProvidersSettingsProvidersGetRequestOpts(): Promise<runtime.RequestOpts> {
+    async listProvidersSettingsProvidersGetRequestOpts(requestParameters: ListProvidersSettingsProvidersGetRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xApiKey'] != null) {
+            headerParameters['x-api-key'] = String(requestParameters['xApiKey']);
+        }
 
 
         let urlPath = `/settings/providers`;
@@ -196,8 +227,8 @@ export class SettingsApi extends runtime.BaseAPI {
      * Get all provider configurations.
      * List Providers
      */
-    async listProvidersSettingsProvidersGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LlmProviderConfigRead>>> {
-        const requestOptions = await this.listProvidersSettingsProvidersGetRequestOpts();
+    async listProvidersSettingsProvidersGetRaw(requestParameters: ListProvidersSettingsProvidersGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LlmProviderConfigRead>>> {
+        const requestOptions = await this.listProvidersSettingsProvidersGetRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LlmProviderConfigReadFromJSON));
@@ -207,8 +238,8 @@ export class SettingsApi extends runtime.BaseAPI {
      * Get all provider configurations.
      * List Providers
      */
-    async listProvidersSettingsProvidersGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LlmProviderConfigRead>> {
-        const response = await this.listProvidersSettingsProvidersGetRaw(initOverrides);
+    async listProvidersSettingsProvidersGet(requestParameters: ListProvidersSettingsProvidersGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LlmProviderConfigRead>> {
+        const response = await this.listProvidersSettingsProvidersGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -235,6 +266,10 @@ export class SettingsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xApiKey'] != null) {
+            headerParameters['x-api-key'] = String(requestParameters['xApiKey']);
+        }
 
 
         let urlPath = `/settings/providers/{provider}/test`;

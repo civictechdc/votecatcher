@@ -9,11 +9,26 @@ import uuid
 from datetime import UTC, datetime
 
 import pytest
+from cryptography.fernet import Fernet
 from sqlmodel import Session
 
 from app.data.database.model.jobs import JobStatus, MatcherJob
 from app.data.database.model.petition_scan import PetitionScan
 from app.data.database.model.schema import Campaign, Region
+from app.settings import get_settings
+
+_PROVIDER_CONFIG_SECRET = Fernet.generate_key().decode()  # pragma: allowlist secret
+
+
+@pytest.fixture(autouse=True)
+def _provider_config_secret(monkeypatch: pytest.MonkeyPatch):
+    """Provider credential seeds must be encrypted with a valid key."""
+    monkeypatch.setenv(
+        "PROVIDER_CONFIG_SECRET", _PROVIDER_CONFIG_SECRET
+    )  # pragma: allowlist secret
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 def _seed_campaign(session: Session) -> tuple[Region, Campaign]:
@@ -67,10 +82,13 @@ def _seed_voter_list_upload(session: Session, region_id) -> None:
 
 def _seed_llm_provider(session: Session) -> None:
     from app.data.database.model.llm_provider_config import LlmProviderConfig
+    from app.utils.secret_encryption import encrypt_secret
 
     config = LlmProviderConfig(
         provider="openai",
-        api_key="sk-test-key-for-unit-tests",  # pragma: allowlist secret
+        api_key=encrypt_secret(
+            "sk-test-key-for-unit-tests"
+        ),  # pragma: allowlist secret
         model="gpt-4o-mini",
         is_configured=True,
     )

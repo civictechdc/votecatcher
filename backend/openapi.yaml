@@ -2344,6 +2344,15 @@ paths:
     get:
       description: Get all provider configurations.
       operationId: list_providers_settings_providers_get
+      parameters:
+      - in: header
+        name: x-api-key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
       responses:
         '200':
           content:
@@ -2354,6 +2363,12 @@ paths:
                 title: Response List Providers Settings Providers Get
                 type: array
           description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
       summary: List Providers
       tags:
       - settings
@@ -2369,6 +2384,14 @@ paths:
         schema:
           title: Provider
           type: string
+      - in: header
+        name: x-api-key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
       responses:
         '200':
           content:
@@ -2398,6 +2421,14 @@ paths:
         schema:
           title: Provider
           type: string
+      - in: header
+        name: x-api-key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
       requestBody:
         content:
           application/json:
@@ -2432,6 +2463,14 @@ paths:
         schema:
           title: Provider
           type: string
+      - in: header
+        name: x-api-key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
       requestBody:
         content:
           application/json:

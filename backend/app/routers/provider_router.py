@@ -11,9 +11,14 @@ from app.data.database.model.llm_provider_config import (
     LlmProviderTestResult,
 )
 from app.data.database.session import get_db_session
+from app.dependencies import verify_database_api_key
 from app.services import providers as provider_service
 
-router = APIRouter(prefix="/settings/providers", tags=["settings", "providers"])
+router = APIRouter(
+    prefix="/settings/providers",
+    tags=["settings", "providers"],
+    dependencies=[Depends(verify_database_api_key)],
+)
 
 
 @router.get("", response_model=list[LlmProviderConfigRead])
@@ -37,7 +42,10 @@ def configure_provider(
             detail=f"Unsupported provider: {provider}",
         )
 
-    config = provider_service.save_provider_config(session, provider, data)
+    try:
+        config = provider_service.save_provider_config(session, provider, data)
+    except provider_service.ProviderSecretNotConfiguredError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     return LlmProviderConfigRead(
         provider=config.provider,
         model=config.model,

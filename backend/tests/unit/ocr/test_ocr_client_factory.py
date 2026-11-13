@@ -5,6 +5,7 @@ import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from cryptography.fernet import Fernet
 
 from app.ocr.ocr_client_factory import (
     ProviderConfig,
@@ -14,10 +15,14 @@ from app.ocr.ocr_client_factory import (
     resolve_provider_config,
 )
 from app.settings import get_settings
+from app.utils.secret_encryption import encrypt_secret
 
 
 @pytest.fixture(autouse=True)
-def _clear_settings_cache():
+def _clear_settings_cache(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv(
+        "PROVIDER_CONFIG_SECRET", Fernet.generate_key().decode()
+    )  # pragma: allowlist secret
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
@@ -59,7 +64,7 @@ class TestResolveProviderConfigFromDB:
     def test_returns_db_config_when_available(self):
         mock_session = MagicMock()
         mock_config = MagicMock()
-        mock_config.api_key = "db-key"  # pragma: allowlist secret
+        mock_config.api_key = encrypt_secret("db-key")  # pragma: allowlist secret
         mock_config.model = "db-model"
         mock_config.provider = "openai"
         mock_session.exec.return_value.first.return_value = mock_config
@@ -73,7 +78,7 @@ class TestResolveProviderConfigFromDB:
     def test_returns_specific_provider_from_db(self):
         mock_session = MagicMock()
         mock_config = MagicMock()
-        mock_config.api_key = "gemini-key"  # pragma: allowlist secret
+        mock_config.api_key = encrypt_secret("gemini-key")  # pragma: allowlist secret
         mock_config.model = "gemini-model"
         mock_config.provider = "gemini"
         mock_session.exec.return_value.first.return_value = mock_config
@@ -82,6 +87,26 @@ class TestResolveProviderConfigFromDB:
 
         assert result.provider == "gemini"
         assert result.api_key == "gemini-key"  # pragma: allowlist secret
+
+    def test_skips_db_config_with_unencryptable_legacy_plaintext_key(self):
+        mock_session = MagicMock()
+        mock_config = MagicMock()
+        mock_config.api_key = "legacy-plaintext-key"  # pragma: allowlist secret
+        mock_config.model = "db-model"
+        mock_config.provider = "openai"
+        mock_session.exec.return_value.first.return_value = mock_config
+
+        with patch.dict(
+            os.environ,
+            {
+                "OCR_PROVIDER_NAME": "openai",
+                "OCR_PROVIDER_MODEL": "gpt-4o",
+                "OCR_PROVIDER_API_KEY": "env-key",  # pragma: allowlist secret
+            },
+            clear=False,
+        ):
+            result = resolve_provider_config(session=mock_session)
+            assert result.api_key == "env-key"  # pragma: allowlist secret
 
     def test_skips_db_config_with_missing_api_key(self):
         mock_session = MagicMock()
@@ -105,7 +130,6 @@ class TestResolveProviderConfigFromDB:
     def test_skips_db_config_with_missing_model(self):
         mock_session = MagicMock()
         mock_config = MagicMock()
-        mock_config.api_key = "key"  # pragma: allowlist secret
         mock_config.model = None
         mock_session.exec.return_value.first.return_value = mock_config
 
@@ -118,8 +142,13 @@ class TestResolveProviderConfigFromDB:
             },
             clear=False,
         ):
+            get_settings.cache_clear()
+            # Seed an encrypted key AFTER the env patch so the settings
+            # cache reflects the patched environment.
+            mock_config.api_key = encrypt_secret("key")  # pragma: allowlist secret
             result = resolve_provider_config(session=mock_session)
             assert result.api_key == "env-key"  # pragma: allowlist secret
+        get_settings.cache_clear()
 
 
 class TestResolveProviderConfigFromEnv:
@@ -192,7 +221,7 @@ class TestDBPreferredOverEnv:
     def test_db_takes_priority_over_env(self):
         mock_session = MagicMock()
         mock_config = MagicMock()
-        mock_config.api_key = "db-key"  # pragma: allowlist secret
+        mock_config.api_key = encrypt_secret("db-key")  # pragma: allowlist secret
         mock_config.model = "db-model"
         mock_config.provider = "openai"
         mock_session.exec.return_value.first.return_value = mock_config
