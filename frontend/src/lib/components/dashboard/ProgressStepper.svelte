@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { Button } from '#lib/components/ui/index.ts';
-	import type { VoterListStatus, PetitionsStatus } from '#lib/api/generated/models/Campaign.ts';
+	import type { VoterListStatus } from '#lib/api/generated/models/VoterListStatus.ts';
+	import type { PetitionsStatus } from '#lib/api/generated/models/PetitionsStatus.ts';
 
 	interface Props {
 		voterListStatus: VoterListStatus | null;
@@ -13,8 +14,8 @@
 	let { voterListStatus, petitionStatus, hasJobs, campaignId }: Props = $props();
 
 	const state = $derived(() => {
-		const hasVoterList = voterListStatus?.exists ?? false;
-		const hasPetitions = petitionStatus?.exists ?? false;
+		const hasVoterList = voterListStatus?._exists ?? false;
+		const hasPetitions = petitionStatus?._exists ?? false;
 
 		if (!hasVoterList && !hasPetitions) return 'empty';
 		if (hasVoterList && !hasPetitions) return 'voter_only';
@@ -63,7 +64,7 @@
 		<div class="space-y-3">
 			<!-- Voter List Step -->
 			<div class="flex items-center gap-3">
-				{#if voterListStatus?.exists}
+				{#if voterListStatus?._exists}
 					<div class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
 						<svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
 							<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
@@ -85,7 +86,7 @@
 
 			<!-- Petitions Step -->
 			<div class="flex items-center gap-3">
-				{#if petitionStatus?.exists}
+				{#if petitionStatus?._exists}
 					<div class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
 						<svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
 							<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>

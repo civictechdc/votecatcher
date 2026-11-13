@@ -7,6 +7,8 @@
 	import { Button, LoadingState } from '#lib/components/ui/index.ts';
 	import { ConfidenceDonut, ProgressStepper } from '#lib/components/dashboard/index.ts';
 	import { API_BASE_URL } from '#lib/api/base-url.ts';
+	import type { VoterListStatus } from '#lib/api/generated/models/VoterListStatus.ts';
+	import type { PetitionsStatus } from '#lib/api/generated/models/PetitionsStatus.ts';
 	const API_BASE = API_BASE_URL;
 	const campaignId = $derived(page.params.id ?? '');
 
@@ -22,17 +24,8 @@
 	let loading = $state(true);
 
 	interface SetupStatus {
-		voter_list: {
-			exists: boolean;
-			rowCount: number | null;
-			uploadedAt: string | null;
-			regionName: string | null;
-		};
-		petitions: {
-			exists: boolean;
-			fileCount: number;
-			signatureCount: number;
-		};
+		voter_list: VoterListStatus;
+		petitions: PetitionsStatus;
 		jobs: {
 			total: number;
 			active: number;
@@ -50,13 +43,13 @@
 				const data = await response.json();
 				setupStatus = {
 					voter_list: {
-						exists: data.voter_list?.exists ?? false,
+						_exists: data.voter_list?.exists ?? false,
 						rowCount: data.voter_list?.rowCount ?? null,
 						uploadedAt: data.voter_list?.uploadedAt ?? null,
 						regionName: data.voter_list?.regionName ?? null,
 					},
 					petitions: {
-						exists: data.petitions?.exists ?? false,
+						_exists: data.petitions?.exists ?? false,
 						fileCount: data.petitions?.fileCount ?? 0,
 						signatureCount: data.petitions?.signatureCount ?? 0,
 					},

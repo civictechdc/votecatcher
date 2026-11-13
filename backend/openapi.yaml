@@ -1,1104 +1,2518 @@
-openapi: 3.1.0
+components:
+  schemas:
+    Body_upload_petition_upload_petition_post:
+      properties:
+        campaign_id:
+          title: Campaign Id
+          type: string
+        file:
+          contentMediaType: application/octet-stream
+          title: File
+          type: string
+        region:
+          default: DC
+          title: Region
+          type: string
+      required:
+      - campaign_id
+      - file
+      title: Body_upload_petition_upload_petition_post
+      type: object
+    Body_upload_voter_list_upload_voter_list_post:
+      properties:
+        campaign_id:
+          title: Campaign Id
+          type: string
+        file:
+          contentMediaType: application/octet-stream
+          title: File
+          type: string
+      required:
+      - campaign_id
+      - file
+      title: Body_upload_voter_list_upload_voter_list_post
+      type: object
+    CampaignListResponse:
+      description: Response schema for campaign list.
+      properties:
+        campaigns:
+          items:
+            $ref: '#/components/schemas/CampaignResponse'
+          title: Campaigns
+          type: array
+        total:
+          title: Total
+          type: integer
+      required:
+      - campaigns
+      - total
+      title: CampaignListResponse
+      type: object
+    CampaignMatchPrediction:
+      description: Schema for a single match prediction.
+      properties:
+        confidence:
+          $ref: '#/components/schemas/ConfidenceLevel'
+        rank:
+          title: Rank
+          type: integer
+        similarityScore:
+          title: Similarityscore
+          type: number
+        voterAddress:
+          title: Voteraddress
+          type: string
+        voterName:
+          title: Votername
+          type: string
+      required:
+      - rank
+      - voterName
+      - voterAddress
+      - similarityScore
+      - confidence
+      title: CampaignMatchPrediction
+      type: object
+    CampaignMetricsResponse:
+      description: Response schema for campaign metrics.
+      properties:
+        highConfidence:
+          title: Highconfidence
+          type: integer
+        lastJob:
+          anyOf:
+          - $ref: '#/components/schemas/LastJobInfo'
+          - type: 'null'
+        lowConfidence:
+          title: Lowconfidence
+          type: integer
+        mediumConfidence:
+          title: Mediumconfidence
+          type: integer
+        processed:
+          title: Processed
+          type: integer
+        progressPercentage:
+          title: Progresspercentage
+          type: number
+        totalSignatures:
+          title: Totalsignatures
+          type: integer
+        voterListCount:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Voterlistcount
+      required:
+      - totalSignatures
+      - processed
+      - highConfidence
+      - mediumConfidence
+      - lowConfidence
+      - progressPercentage
+      - lastJob
+      - voterListCount
+      title: CampaignMetricsResponse
+      type: object
+    CampaignResponse:
+      description: Response schema for campaign.
+      properties:
+        createdAt:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Createdat
+        id:
+          anyOf:
+          - format: uuid
+            type: string
+          - type: 'null'
+          title: Id
+        region:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Region
+        regionId:
+          anyOf:
+          - format: uuid
+            type: string
+          - type: 'null'
+          title: Regionid
+        title:
+          title: Title
+          type: string
+        uniqueName:
+          title: Uniquename
+          type: string
+        updatedAt:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Updatedat
+        year:
+          title: Year
+          type: string
+      required:
+      - id
+      - uniqueName
+      - title
+      - year
+      - region
+      - regionId
+      - createdAt
+      - updatedAt
+      title: CampaignResponse
+      type: object
+    CampaignResultResponse:
+      description: Response schema for a single result.
+      properties:
+        cropCoordinates:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          title: Cropcoordinates
+        cropId:
+          title: Cropid
+          type: integer
+        documentName:
+          default: ''
+          title: Documentname
+          type: string
+        entryCoordinates:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          title: Entrycoordinates
+        extractedAddress:
+          title: Extractedaddress
+          type: string
+        extractedName:
+          title: Extractedname
+          type: string
+        jobId:
+          title: Jobid
+          type: integer
+        ocrResultId:
+          title: Ocrresultid
+          type: integer
+        pageNumber:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pagenumber
+        predictions:
+          items:
+            $ref: '#/components/schemas/CampaignMatchPrediction'
+          title: Predictions
+          type: array
+        scanId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scanid
+        thumbnailUrl:
+          title: Thumbnailurl
+          type: string
+      required:
+      - ocrResultId
+      - extractedName
+      - extractedAddress
+      - cropId
+      - jobId
+      - thumbnailUrl
+      - predictions
+      title: CampaignResultResponse
+      type: object
+    CampaignResultsListResponse:
+      description: Response schema for paginated campaign results.
+      properties:
+        nextCursor:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Nextcursor
+        pageSize:
+          title: Pagesize
+          type: integer
+        results:
+          items:
+            $ref: '#/components/schemas/CampaignResultResponse'
+          title: Results
+          type: array
+        total:
+          title: Total
+          type: integer
+      required:
+      - results
+      - total
+      - pageSize
+      title: CampaignResultsListResponse
+      type: object
+    ConfidenceLevel:
+      description: Confidence levels for match results.
+      enum:
+      - HIGH
+      - MEDIUM
+      - LOW
+      title: ConfidenceLevel
+      type: string
+    ConnectionTestResult:
+      description: Result of connection test.
+      properties:
+        message:
+          title: Message
+          type: string
+        project_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Project Ref
+        success:
+          title: Success
+          type: boolean
+      required:
+      - success
+      - message
+      title: ConnectionTestResult
+      type: object
+    CreateCampaignRequest:
+      description: Request schema for creating campaign.
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          pattern: ^[^<>\"';&]+$
+          title: Name
+          type: string
+        region:
+          default: DC
+          maxLength: 10
+          title: Region
+          type: string
+        year:
+          maximum: 2100.0
+          minimum: 1900.0
+          title: Year
+          type: integer
+      required:
+      - name
+      - year
+      title: CreateCampaignRequest
+      type: object
+    CreateJobRequest:
+      description: Request schema for creating a matcher job.
+      properties:
+        campaignId:
+          format: uuid
+          title: Campaignid
+          type: string
+        forceReprocess:
+          default: false
+          title: Forcereprocess
+          type: boolean
+        providerModel:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Providermodel
+        providerName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Providername
+        scanIds:
+          default: []
+          items:
+            type: integer
+          title: Scanids
+          type: array
+      required:
+      - campaignId
+      title: CreateJobRequest
+      type: object
+    CreateSessionRequest:
+      description: Request schema for saving a session.
+      properties:
+        campaignId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Campaignid
+        name:
+          title: Name
+          type: string
+        sessionType:
+          default: REAL
+          title: Sessiontype
+          type: string
+        snapshotData:
+          additionalProperties: true
+          default: {}
+          title: Snapshotdata
+          type: object
+      required:
+      - name
+      title: CreateSessionRequest
+      type: object
+    DatabaseStatus:
+      description: Current database configuration status.
+      properties:
+        configured:
+          title: Configured
+          type: boolean
+        connected:
+          title: Connected
+          type: boolean
+        message:
+          title: Message
+          type: string
+        type:
+          description: sqlite, postgres, or supabase
+          title: Type
+          type: string
+      required:
+      - configured
+      - type
+      - connected
+      - message
+      title: DatabaseStatus
+      type: object
+    DeleteVoterListResponse:
+      description: Response schema for deleting voter list.
+      properties:
+        deletedCount:
+          title: Deletedcount
+          type: integer
+        success:
+          title: Success
+          type: boolean
+      required:
+      - deletedCount
+      - success
+      title: DeleteVoterListResponse
+      type: object
+    DeletedTableCounts:
+      description: Typed sub-model for table deletion counts.
+      properties:
+        campaigns:
+          default: 0
+          title: Campaigns
+          type: integer
+        matchResults:
+          default: 0
+          title: Matchresults
+          type: integer
+        matcherJobs:
+          default: 0
+          title: Matcherjobs
+          type: integer
+        ocrJobs:
+          default: 0
+          title: Ocrjobs
+          type: integer
+        ocrResults:
+          default: 0
+          title: Ocrresults
+          type: integer
+        petitionCrops:
+          default: 0
+          title: Petitioncrops
+          type: integer
+        petitionScans:
+          default: 0
+          title: Petitionscans
+          type: integer
+      title: DeletedTableCounts
+      type: object
+    FeatureFlagsResponse:
+      properties:
+        alwaysBatchOcr:
+          title: Alwaysbatchocr
+          type: boolean
+        betaFeatures:
+          title: Betafeatures
+          type: boolean
+        debugMode:
+          title: Debugmode
+          type: boolean
+        demoMode:
+          title: Demomode
+          type: boolean
+        demoReset:
+          title: Demoreset
+          type: boolean
+        simulationMode:
+          title: Simulationmode
+          type: boolean
+      required:
+      - simulationMode
+      - betaFeatures
+      - debugMode
+      - demoMode
+      - demoReset
+      - alwaysBatchOcr
+      title: FeatureFlagsResponse
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    JobListResponse:
+      description: Response schema for listing jobs.
+      properties:
+        jobs:
+          items:
+            $ref: '#/components/schemas/JobResponse'
+          title: Jobs
+          type: array
+        total:
+          title: Total
+          type: integer
+      required:
+      - jobs
+      - total
+      title: JobListResponse
+      type: object
+    JobResponse:
+      description: Response schema for job status.
+      properties:
+        cachedOcrCount:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Cachedocrcount
+        campaignId:
+          format: uuid
+          title: Campaignid
+          type: string
+        campaignName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Campaignname
+        createdAt:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Createdat
+        endedAt:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Endedat
+        errorMessage:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Errormessage
+        forceReprocess:
+          default: false
+          title: Forcereprocess
+          type: boolean
+        isOrphaned:
+          default: false
+          title: Isorphaned
+          type: boolean
+        jobId:
+          title: Jobid
+          type: integer
+        matchingDurationSeconds:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Matchingdurationseconds
+        newOcrCount:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Newocrcount
+        ocrDurationSeconds:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Ocrdurationseconds
+        providerModel:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Providermodel
+        providerName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Providername
+        startedAt:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Startedat
+        status:
+          title: Status
+          type: string
+        updatedAt:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Updatedat
+      required:
+      - jobId
+      - status
+      - campaignId
+      title: JobResponse
+      type: object
+    JobsStatus:
+      description: Jobs status sub-object.
+      properties:
+        active:
+          title: Active
+          type: integer
+        total:
+          title: Total
+          type: integer
+      required:
+      - total
+      - active
+      title: JobsStatus
+      type: object
+    LastJobInfo:
+      description: Typed sub-model for last job info in metrics.
+      properties:
+        completedAt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Completedat
+        id:
+          title: Id
+          type: integer
+        status:
+          title: Status
+          type: string
+      required:
+      - id
+      - status
+      - completedAt
+      title: LastJobInfo
+      type: object
+    LlmProviderConfigCreate:
+      description: Schema for creating/updating provider config.
+      properties:
+        api_key:
+          title: Api Key
+          type: string
+        model:
+          title: Model
+          type: string
+      required:
+      - api_key
+      - model
+      title: LlmProviderConfigCreate
+      type: object
+    LlmProviderConfigRead:
+      description: Schema for reading provider config (no API key).
+      properties:
+        is_configured:
+          title: Is Configured
+          type: boolean
+        last_validated:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Last Validated
+        model:
+          title: Model
+          type: string
+        provider:
+          title: Provider
+          type: string
+      required:
+      - provider
+      - model
+      - is_configured
+      - last_validated
+      title: LlmProviderConfigRead
+      type: object
+    LlmProviderTestResult:
+      description: Schema for provider test result.
+      properties:
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+        models:
+          default: []
+          items:
+            type: string
+          title: Models
+          type: array
+        valid:
+          title: Valid
+          type: boolean
+      required:
+      - valid
+      title: LlmProviderTestResult
+      type: object
+    MatchPrediction:
+      properties:
+        confidence:
+          $ref: '#/components/schemas/ConfidenceLevel'
+        rank:
+          title: Rank
+          type: integer
+        similarityScore:
+          title: Similarityscore
+          type: number
+        voterAddress:
+          title: Voteraddress
+          type: string
+        voterName:
+          title: Votername
+          type: string
+      required:
+      - rank
+      - voterName
+      - voterAddress
+      - similarityScore
+      - confidence
+      title: MatchPrediction
+      type: object
+    PetitionScanListResponse:
+      description: Response schema for listing petition scans.
+      properties:
+        scans:
+          items:
+            $ref: '#/components/schemas/PetitionScanResponse'
+          title: Scans
+          type: array
+        total:
+          title: Total
+          type: integer
+      required:
+      - scans
+      - total
+      title: PetitionScanListResponse
+      type: object
+    PetitionScanResponse:
+      description: Response schema for a petition scan.
+      properties:
+        fileSize:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Filesize
+        id:
+          title: Id
+          type: integer
+        originalFilename:
+          title: Originalfilename
+          type: string
+        pageCount:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pagecount
+        uploadedAt:
+          format: date-time
+          title: Uploadedat
+          type: string
+      required:
+      - id
+      - originalFilename
+      - fileSize
+      - pageCount
+      - uploadedAt
+      title: PetitionScanResponse
+      type: object
+    PetitionUploadResponse:
+      description: Response schema for petition upload.
+      properties:
+        cropCount:
+          title: Cropcount
+          type: integer
+        message:
+          title: Message
+          type: string
+        scanId:
+          title: Scanid
+          type: integer
+      required:
+      - message
+      - scanId
+      - cropCount
+      title: PetitionUploadResponse
+      type: object
+    PetitionsStatus:
+      description: Petitions status sub-object.
+      properties:
+        exists:
+          title: Exists
+          type: boolean
+        fileCount:
+          title: Filecount
+          type: integer
+        signatureCount:
+          title: Signaturecount
+          type: integer
+      required:
+      - exists
+      - fileCount
+      - signatureCount
+      title: PetitionsStatus
+      type: object
+    PrebakedSession:
+      description: Pre-baked demo session metadata.
+      properties:
+        description:
+          title: Description
+          type: string
+        id:
+          title: Id
+          type: string
+        name:
+          title: Name
+          type: string
+      required:
+      - id
+      - name
+      - description
+      title: PrebakedSession
+      type: object
+    PrebakedSessionList:
+      description: List of pre-baked sessions.
+      properties:
+        sessions:
+          items:
+            $ref: '#/components/schemas/PrebakedSession'
+          title: Sessions
+          type: array
+      required:
+      - sessions
+      title: PrebakedSessionList
+      type: object
+    ProvisionResult:
+      description: Result of Supabase provisioning.
+      properties:
+        message:
+          title: Message
+          type: string
+        success:
+          title: Success
+          type: boolean
+        tables_created:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Tables Created
+      required:
+      - success
+      - message
+      title: ProvisionResult
+      type: object
+    RegionListResponse:
+      description: Response schema for listing regions.
+      properties:
+        regions:
+          items:
+            $ref: '#/components/schemas/RegionSummary'
+          title: Regions
+          type: array
+      required:
+      - regions
+      title: RegionListResponse
+      type: object
+    RegionSummary:
+      description: Summary of a region with field spec.
+      properties:
+        id:
+          format: uuid
+          title: Id
+          type: string
+        key:
+          title: Key
+          type: string
+        name:
+          title: Name
+          type: string
+      required:
+      - key
+      - name
+      - id
+      title: RegionSummary
+      type: object
+    ResetDataResponse:
+      description: Response for data reset operation.
+      properties:
+        deletedCounts:
+          $ref: '#/components/schemas/DeletedTableCounts'
+        message:
+          title: Message
+          type: string
+      required:
+      - deletedCounts
+      - message
+      title: ResetDataResponse
+      type: object
+    ResultResponse:
+      properties:
+        cropCoordinates:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          title: Cropcoordinates
+        cropId:
+          title: Cropid
+          type: integer
+        documentName:
+          default: ''
+          title: Documentname
+          type: string
+        entryCoordinates:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          title: Entrycoordinates
+        extractedText:
+          title: Extractedtext
+          type: string
+        ocrResultId:
+          title: Ocrresultid
+          type: integer
+        pageNumber:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pagenumber
+        predictions:
+          items:
+            $ref: '#/components/schemas/MatchPrediction'
+          title: Predictions
+          type: array
+        scanId:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scanid
+        thumbnailUrl:
+          title: Thumbnailurl
+          type: string
+      required:
+      - ocrResultId
+      - extractedText
+      - cropId
+      - thumbnailUrl
+      - predictions
+      title: ResultResponse
+      type: object
+    ResultsListResponse:
+      properties:
+        nextCursor:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Nextcursor
+        pageSize:
+          title: Pagesize
+          type: integer
+        results:
+          items:
+            $ref: '#/components/schemas/ResultResponse'
+          title: Results
+          type: array
+        total:
+          title: Total
+          type: integer
+      required:
+      - results
+      - total
+      - pageSize
+      title: ResultsListResponse
+      type: object
+    SessionListResponse:
+      description: Response schema for listing sessions.
+      properties:
+        sessions:
+          items:
+            $ref: '#/components/schemas/SessionResponse'
+          title: Sessions
+          type: array
+        total:
+          title: Total
+          type: integer
+      required:
+      - sessions
+      - total
+      title: SessionListResponse
+      type: object
+    SessionResponse:
+      description: Response schema for session.
+      properties:
+        campaignId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Campaignid
+        createdAt:
+          format: date-time
+          title: Createdat
+          type: string
+        id:
+          title: Id
+          type: integer
+        name:
+          title: Name
+          type: string
+        sessionType:
+          title: Sessiontype
+          type: string
+        snapshotData:
+          additionalProperties: true
+          title: Snapshotdata
+          type: object
+        updatedAt:
+          format: date-time
+          title: Updatedat
+          type: string
+      required:
+      - id
+      - name
+      - campaignId
+      - sessionType
+      - snapshotData
+      - createdAt
+      - updatedAt
+      title: SessionResponse
+      type: object
+    SettingsResponse:
+      description: Settings response.
+      properties:
+        features:
+          $ref: '#/components/schemas/FeatureFlagsResponse'
+        ocrModel:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ocrmodel
+        ocrProvider:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ocrprovider
+      required:
+      - ocrProvider
+      - ocrModel
+      - features
+      title: SettingsResponse
+      type: object
+    SetupStatusResponse:
+      description: Response schema for campaign setup status.
+      properties:
+        jobs:
+          $ref: '#/components/schemas/JobsStatus'
+        petitions:
+          $ref: '#/components/schemas/PetitionsStatus'
+        state:
+          title: State
+          type: string
+        voterList:
+          $ref: '#/components/schemas/VoterListStatus'
+      required:
+      - voterList
+      - petitions
+      - jobs
+      - state
+      title: SetupStatusResponse
+      type: object
+    SupabaseCredentials:
+      description: Supabase connection credentials.
+      properties:
+        db_password:
+          description: Database password
+          format: password
+          minLength: 1
+          title: Db Password
+          type: string
+          writeOnly: true
+        project_url:
+          description: Supabase project URL or custom domain
+          pattern: ^https://[a-z0-9][a-z0-9.-]+\.[a-z]{2,}
+          title: Project Url
+          type: string
+        service_key:
+          description: Service role key
+          format: password
+          minLength: 50
+          title: Service Key
+          type: string
+          writeOnly: true
+      required:
+      - project_url
+      - service_key
+      - db_password
+      title: SupabaseCredentials
+      type: object
+    UploadDetail:
+      description: Typed upload details for voter list status.
+      properties:
+        fileSize:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Filesize
+        id:
+          title: Id
+          type: string
+        originalFilename:
+          title: Originalfilename
+          type: string
+        rowCount:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rowcount
+        status:
+          title: Status
+          type: string
+        uploadedAt:
+          title: Uploadedat
+          type: string
+      required:
+      - id
+      - originalFilename
+      - fileSize
+      - rowCount
+      - uploadedAt
+      - status
+      title: UploadDetail
+      type: object
+    ValidationError:
+      properties:
+        ctx:
+          title: Context
+          type: object
+        input:
+          title: Input
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+    VoterListStatus:
+      description: Voter list status sub-object.
+      properties:
+        exists:
+          title: Exists
+          type: boolean
+        regionName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Regionname
+        rowCount:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rowcount
+        uploadedAt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Uploadedat
+      required:
+      - exists
+      - rowCount
+      - uploadedAt
+      - regionName
+      title: VoterListStatus
+      type: object
+    VoterListStatusResponse:
+      description: Response schema for voter list status.
+      properties:
+        exists:
+          title: Exists
+          type: boolean
+        upload:
+          anyOf:
+          - $ref: '#/components/schemas/UploadDetail'
+          - type: 'null'
+      required:
+      - exists
+      title: VoterListStatusResponse
+      type: object
+    VoterListUploadResponse:
+      description: Response schema for voter list upload.
+      properties:
+        filePath:
+          title: Filepath
+          type: string
+        importedCount:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Importedcount
+        message:
+          title: Message
+          type: string
+        rowCount:
+          title: Rowcount
+          type: integer
+      required:
+      - message
+      - filePath
+      - rowCount
+      title: VoterListUploadResponse
+      type: object
 info:
-  title: Votecatcher API
-  description: Petition signature verification API
-  version: 1.0.0
-  contact:
-    name: Votecatcher Team
-
-servers:
-  - url: http://localhost:8080/api
-    description: Local development server
-
-tags:
-  - name: campaigns
-    description: Campaign management
-  - name: upload
-    description: File upload operations
-  - name: jobs
-    description: Job orchestration and status
-  - name: results
-    description: Match results
-  - name: sessions
-    description: Session management
-
+  title: FastAPI
+  version: 0.1.0
+openapi: 3.1.0
 paths:
   /campaigns:
     get:
-      tags: [campaigns]
-      summary: List campaigns
-      operationId: listCampaigns
+      description: List all campaigns.
+      operationId: list_campaigns_campaigns_get
       parameters:
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 25
+      - in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          title: Offset
+          type: integer
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 100
+          title: Limit
+          type: integer
       responses:
-        "200":
-          description: List of campaigns
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CampaignList"
-        "500":
-          $ref: "#/components/responses/InternalError"
+                $ref: '#/components/schemas/CampaignListResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Campaigns
+      tags:
+      - campaigns
     post:
-      tags: [campaigns]
-      summary: Create campaign
-      operationId: createCampaign
+      description: Create a new campaign.
+      operationId: create_campaign_campaigns_post
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateCampaign"
+              $ref: '#/components/schemas/CreateCampaignRequest'
+        required: true
       responses:
-        "201":
-          description: Campaign created
+        '201':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Campaign"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
+                $ref: '#/components/schemas/CampaignResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create Campaign
+      tags:
+      - campaigns
   /campaigns/{campaign_id}:
-    get:
-      tags: [campaigns]
-      summary: Get campaign details
-      operationId: getCampaign
-      parameters:
-        - $ref: "#/components/parameters/CampaignId"
-      responses:
-        "200":
-          description: Campaign details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Campaign"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
     delete:
-      tags: [campaigns]
-      summary: Delete campaign
-      operationId: deleteCampaign
+      description: Delete a campaign.
+      operationId: delete_campaign_campaigns__campaign_id__delete
       parameters:
-        - $ref: "#/components/parameters/CampaignId"
+      - in: path
+        name: campaign_id
+        required: true
+        schema:
+          format: uuid
+          title: Campaign Id
+          type: string
       responses:
-        "204":
-          description: Campaign deleted
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /campaigns/{campaign_id}/metrics:
-    get:
-      tags: [campaigns]
-      summary: Get campaign metrics
-      operationId: getCampaignMetrics
-      parameters:
-        - $ref: "#/components/parameters/CampaignId"
-      responses:
-        "200":
-          description: Campaign metrics
+        '204':
+          description: Successful Response
+        '422':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CampaignMetrics"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /campaigns/{campaign_id}/scans:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Campaign
+      tags:
+      - campaigns
     get:
-      tags: [campaigns]
-      summary: List petition scans for campaign
-      operationId: listCampaignScans
+      description: Get campaign details.
+      operationId: get_campaign_campaigns__campaign_id__get
       parameters:
-        - $ref: "#/components/parameters/CampaignId"
+      - in: path
+        name: campaign_id
+        required: true
+        schema:
+          format: uuid
+          title: Campaign Id
+          type: string
       responses:
-        "200":
-          description: List of petition scans
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PetitionScanList"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /campaigns/{campaign_id}/results:
-    get:
-      tags: [results]
-      summary: Get campaign match results
-      operationId: getCampaignResults
-      parameters:
-        - $ref: "#/components/parameters/CampaignId"
-        - name: confidence
-          in: query
-          description: Filter by confidence level
-          schema:
-            type: string
-            enum: [HIGH, MEDIUM, LOW]
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: pageSize
-          in: query
-          schema:
-            type: integer
-            default: 50
-      responses:
-        "200":
-          description: Campaign match results
+                $ref: '#/components/schemas/CampaignResponse'
+          description: Successful Response
+        '422':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CampaignResultsList"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /campaigns/{campaign_id}/setup-status:
-    get:
-      tags: [campaigns]
-      summary: Get campaign setup status
-      operationId: getSetupStatus
-      parameters:
-        - $ref: "#/components/parameters/CampaignId"
-      responses:
-        "200":
-          description: Setup status
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SetupStatus"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Campaign
+      tags:
+      - campaigns
   /campaigns/{campaign_id}/jobs/{job_id}:
     get:
-      tags: [jobs]
-      summary: Get job status scoped to campaign
-      operationId: getCampaignJob
+      description: 'Get a job scoped to a campaign.
+
+
+        Returns 404 when the job does not exist or belongs to a different campaign.
+
+        Out-of-range or malformed job IDs are rejected with 422 before any database
+
+        access; the three 404 causes are deliberately indistinguishable.'
+      operationId: get_campaign_job_campaigns__campaign_id__jobs__job_id__get
       parameters:
-        - $ref: "#/components/parameters/CampaignId"
-        - $ref: "#/components/parameters/JobId"
-      responses:
-        "200":
-          description: Job details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Job"
-        "404":
-          description: >-
-            Not found. Unknown campaign, unknown job, and job not belonging to
-            the campaign are deliberately indistinguishable.
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "422":
-          description: >-
-            Request validation failed for path parameters, such as a non-UUID
-            campaign_id or an out-of-range job_id.
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /upload/voter-list:
-    post:
-      tags: [upload]
-      summary: Upload voter list CSV/Excel
-      operationId: uploadVoterList
-      requestBody:
+      - in: path
+        name: campaign_id
         required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required:
-                - file
-                - region_id
-              properties:
-                file:
-                  type: string
-                  format: binary
-                region_id:
-                  type: integer
-      responses:
-        "201":
-          description: Voter list uploaded
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/VoterListUpload"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /upload/petition:
-    post:
-      tags: [upload]
-      summary: Upload petition PDF
-      operationId: uploadPetition
-      requestBody:
+        schema:
+          format: uuid
+          title: Campaign Id
+          type: string
+      - in: path
+        name: job_id
         required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required:
-                - file
-                - campaign_id
-              properties:
-                file:
-                  type: string
-                  format: binary
-                campaign_id:
-                  type: string
-                  format: uuid
+        schema:
+          maximum: 2147483647
+          minimum: 1
+          title: Job Id
+          type: integer
       responses:
-        "201":
-          description: Petition uploaded
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PetitionUpload"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /jobs:
+                $ref: '#/components/schemas/JobResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Campaign Job
+      tags:
+      - campaigns
+  /campaigns/{campaign_id}/metrics:
     get:
-      tags: [jobs]
-      summary: List all jobs
-      operationId: listJobs
+      description: Get campaign metrics including signature counts and confidence
+        breakdown.
+      operationId: get_campaign_metrics_campaigns__campaign_id__metrics_get
+      parameters:
+      - in: path
+        name: campaign_id
+        required: true
+        schema:
+          format: uuid
+          title: Campaign Id
+          type: string
       responses:
-        "200":
-          description: List of jobs
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/JobList"
-        "500":
-          $ref: "#/components/responses/InternalError"
-    post:
-      tags: [jobs]
-      summary: Create matcher job
-      operationId: createJob
-      requestBody:
+                $ref: '#/components/schemas/CampaignMetricsResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Campaign Metrics
+      tags:
+      - campaigns
+  /campaigns/{campaign_id}/results:
+    get:
+      description: Get match results for all jobs in a campaign.
+      operationId: get_campaign_results_campaigns__campaign_id__results_get
+      parameters:
+      - in: path
+        name: campaign_id
         required: true
+        schema:
+          format: uuid
+          title: Campaign Id
+          type: string
+      - in: query
+        name: confidence
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ConfidenceLevel'
+          - type: 'null'
+          title: Confidence
+      - in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Cursor
+      - in: query
+        name: page_size
+        required: false
+        schema:
+          default: 50
+          title: Page Size
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignResultsListResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Campaign Results
+      tags:
+      - campaigns
+  /campaigns/{campaign_id}/scans:
+    get:
+      description: List all petition scans for a campaign.
+      operationId: list_campaign_scans_campaigns__campaign_id__scans_get
+      parameters:
+      - in: path
+        name: campaign_id
+        required: true
+        schema:
+          format: uuid
+          title: Campaign Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetitionScanListResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Campaign Scans
+      tags:
+      - campaigns
+  /campaigns/{campaign_id}/scans/{scan_id}:
+    delete:
+      description: Delete a petition scan.
+      operationId: delete_campaign_scan_campaigns__campaign_id__scans__scan_id__delete
+      parameters:
+      - in: path
+        name: campaign_id
+        required: true
+        schema:
+          format: uuid
+          title: Campaign Id
+          type: string
+      - in: path
+        name: scan_id
+        required: true
+        schema:
+          title: Scan Id
+          type: integer
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Campaign Scan
+      tags:
+      - campaigns
+  /campaigns/{campaign_id}/setup-status:
+    get:
+      description: Get campaign setup status for progress stepper.
+      operationId: get_setup_status_campaigns__campaign_id__setup_status_get
+      parameters:
+      - in: path
+        name: campaign_id
+        required: true
+        schema:
+          format: uuid
+          title: Campaign Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetupStatusResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Setup Status
+      tags:
+      - campaigns
+  /config/features:
+    get:
+      description: Get feature flags.
+      operationId: get_features_config_features_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlagsResponse'
+          description: Successful Response
+      summary: Get Features
+      tags:
+      - config
+  /config/reset-data:
+    post:
+      description: 'Reset all application data.
+
+
+        This endpoint deletes ALL data from the database including:
+
+        - All match results
+
+        - All OCR results
+
+        - All OCR jobs
+
+        - All matcher jobs
+
+        - All petition crops
+
+        - All petition scans
+
+        - All campaigns
+
+
+        This is a destructive operation and should only be enabled in
+
+        non-production environments.'
+      operationId: reset_all_data_config_reset_data_post
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetDataResponse'
+          description: Successful Response
+      summary: Reset All Data
+      tags:
+      - config
+  /config/settings:
+    get:
+      description: Get application settings.
+      operationId: get_settings_endpoint_config_settings_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettingsResponse'
+          description: Successful Response
+      summary: Get Settings Endpoint
+      tags:
+      - config
+  /crops/{crop_id}/image:
+    get:
+      operationId: get_crop_image_crops__crop_id__image_get
+      parameters:
+      - in: path
+        name: crop_id
+        required: true
+        schema:
+          title: Crop Id
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Crop Image
+      tags:
+      - crops
+  /database/status:
+    get:
+      operationId: get_database_status_database_status_get
+      parameters:
+      - in: header
+        name: x-api-key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseStatus'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Database Status
+      tags:
+      - database
+  /database/supabase:
+    delete:
+      operationId: disconnect_supabase_database_supabase_delete
+      parameters:
+      - in: header
+        name: x-api-key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: boolean
+                title: Response Disconnect Supabase Database Supabase Delete
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Disconnect Supabase
+      tags:
+      - database
+  /database/supabase/provision:
+    post:
+      operationId: provision_supabase_database_supabase_provision_post
+      parameters:
+      - in: header
+        name: x-api-key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateJob"
+              $ref: '#/components/schemas/SupabaseCredentials'
+        required: true
       responses:
-        "201":
-          description: Job created
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Job"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /jobs/{job_id}:
-    get:
-      tags: [jobs]
-      summary: Get job status
-      operationId: getJob
-      parameters:
-        - $ref: "#/components/parameters/JobId"
-      responses:
-        "200":
-          description: Job details
+                $ref: '#/components/schemas/ProvisionResult'
+          description: Successful Response
+        '422':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Job"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /jobs/{job_id}/start:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Provision Supabase
+      tags:
+      - database
+  /database/supabase/test:
     post:
-      tags: [jobs]
-      summary: Start job
-      operationId: startJob
+      operationId: test_supabase_connection_database_supabase_test_post
       parameters:
-        - $ref: "#/components/parameters/JobId"
+      - in: header
+        name: x-api-key
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupabaseCredentials'
+        required: true
       responses:
-        "200":
-          description: Job started
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Job"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /jobs/{job_id}/cancel:
+                $ref: '#/components/schemas/ConnectionTestResult'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Test Supabase Connection
+      tags:
+      - database
+  /demo/reset:
     post:
-      tags: [jobs]
-      summary: Cancel job
-      operationId: cancelJob
-      parameters:
-        - $ref: "#/components/parameters/JobId"
+      description: Reset all demo data to initial state.
+      operationId: reset_demo_data_demo_reset_post
       responses:
-        "200":
-          description: Job cancelled
+        '204':
+          description: Successful Response
+      summary: Reset Demo Data
+      tags:
+      - demo
+  /demo/sessions:
+    get:
+      description: List available pre-baked demo sessions.
+      operationId: list_prebaked_sessions_demo_sessions_get
+      responses:
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Job"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /jobs/{job_id}/status:
-    get:
-      tags: [jobs]
-      summary: SSE endpoint for job status updates
-      operationId: getJobStatusStream
+                $ref: '#/components/schemas/PrebakedSessionList'
+          description: Successful Response
+      summary: List Prebaked Sessions
+      tags:
+      - demo
+  /demo/sessions/{session_id}/load:
+    post:
+      description: Load a pre-baked demo session.
+      operationId: load_prebaked_session_demo_sessions__session_id__load_post
       parameters:
-        - $ref: "#/components/parameters/JobId"
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: string
       responses:
-        "200":
-          description: SSE stream
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Load Prebaked Session Demo Sessions  Session Id  Load
+                  Post
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Load Prebaked Session
+      tags:
+      - demo
+  /events/campaigns/{campaign_id}/stream:
+    get:
+      description: SSE stream for all events in a campaign.
+      operationId: campaign_event_stream_events_campaigns__campaign_id__stream_get
+      parameters:
+      - in: path
+        name: campaign_id
+        required: true
+        schema:
+          title: Campaign Id
+          type: string
+      responses:
+        '200':
           content:
             text/event-stream:
               schema:
                 type: string
-
-  /jobs/{job_id}/results:
-    get:
-      tags: [results]
-      summary: Get match results
-      operationId: getResults
-      parameters:
-        - $ref: "#/components/parameters/JobId"
-        - name: confidence
-          in: query
-          description: Filter by confidence level
-          schema:
-            type: string
-            enum: [HIGH, MEDIUM, LOW]
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: pageSize
-          in: query
-          schema:
-            type: integer
-            default: 50
-      responses:
-        "200":
-          description: Match results
+          description: SSE stream of campaign events
+        '422':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResultList"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /jobs/{job_id}/results/export:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Campaign Event Stream
+      tags:
+      - events
+  /events/jobs/{job_id}/stream:
     get:
-      tags: [results]
-      summary: Export results to CSV
-      operationId: exportResults
+      description: SSE stream for job status updates.
+      operationId: job_event_stream_events_jobs__job_id__stream_get
       parameters:
-        - $ref: "#/components/parameters/JobId"
-        - name: confidence
-          in: query
-          schema:
-            type: string
-            enum: [HIGH, MEDIUM, LOW]
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: string
       responses:
-        "200":
-          description: CSV file
+        '200':
           content:
-            text/csv:
+            text/event-stream:
               schema:
                 type: string
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /sessions:
-    get:
-      tags: [sessions]
-      summary: List sessions
-      operationId: listSessions
-      responses:
-        "200":
-          description: List of sessions
+          description: SSE stream of job status updates
+        '422':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SessionList"
-        "500":
-          $ref: "#/components/responses/InternalError"
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Job Event Stream
+      tags:
+      - events
+  /health:
+    get:
+      operationId: health_check_health_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Health Check
+      tags:
+      - health
+  /jobs:
+    get:
+      operationId: list_jobs_jobs_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobListResponse'
+          description: Successful Response
+      summary: List Jobs
+      tags:
+      - jobs
     post:
-      tags: [sessions]
-      summary: Save session
-      operationId: saveSession
+      description: Create a new matcher job.
+      operationId: create_job_jobs_post
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateSession"
+              $ref: '#/components/schemas/CreateJobRequest'
+        required: true
       responses:
-        "201":
-          description: Session saved
+        '201':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Session"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /sessions/{session_id}:
+                $ref: '#/components/schemas/JobResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create Job
+      tags:
+      - jobs
+  /jobs/{job_id}:
     get:
-      tags: [sessions]
-      summary: Get session detail
-      operationId: getSession
+      description: Get job status.
+      operationId: get_job_jobs__job_id__get
       parameters:
-        - $ref: "#/components/parameters/SessionId"
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: integer
       responses:
-        "200":
-          description: Session details
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Session"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-    delete:
-      tags: [sessions]
-      summary: Delete session
-      operationId: deleteSession
+                $ref: '#/components/schemas/JobResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Job
+      tags:
+      - jobs
+  /jobs/{job_id}/cancel:
+    post:
+      description: Cancel a running job.
+      operationId: cancel_job_jobs__job_id__cancel_post
       parameters:
-        - $ref: "#/components/parameters/SessionId"
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: integer
       responses:
-        "204":
-          description: Session deleted
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Cancel Job
+      tags:
+      - jobs
+  /jobs/{job_id}/results:
+    get:
+      operationId: get_results_jobs__job_id__results_get
+      parameters:
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: integer
+      - in: query
+        name: confidence
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ConfidenceLevel'
+          - type: 'null'
+          title: Confidence
+      - in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Cursor
+      - in: query
+        name: page_size
+        required: false
+        schema:
+          default: 50
+          title: Page Size
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultsListResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Results
+      tags:
+      - results
+  /jobs/{job_id}/results/export:
+    get:
+      operationId: export_results_csv_jobs__job_id__results_export_get
+      parameters:
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: integer
+      - in: query
+        name: confidence
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ConfidenceLevel'
+          - type: 'null'
+          title: Confidence
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Export Results Csv
+      tags:
+      - results
+  /jobs/{job_id}/retry:
+    post:
+      description: Retry a failed or stuck job.
+      operationId: retry_job_jobs__job_id__retry_post
+      parameters:
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Retry Job
+      tags:
+      - jobs
+  /jobs/{job_id}/start:
+    post:
+      description: Start a NOT_STARTED job.
+      operationId: start_job_jobs__job_id__start_post
+      parameters:
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Start Job
+      tags:
+      - jobs
+  /jobs/{job_id}/status:
+    get:
+      description: SSE endpoint for real-time job status updates.
+      operationId: get_job_status_stream_jobs__job_id__status_get
+      parameters:
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: integer
+      responses:
+        '200':
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Job Status Stream
+      tags:
+      - jobs
+  /regions:
+    get:
+      description: List available regions with loaded field specs.
+      operationId: list_regions_regions_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegionListResponse'
+          description: Successful Response
+      summary: List Regions
+      tags:
+      - regions
+  /regions/{region_id}/voter-list:
+    delete:
+      description: Delete all voters for a region and mark uploads as superseded.
+      operationId: delete_voter_list_regions__region_id__voter_list_delete
+      parameters:
+      - in: path
+        name: region_id
+        required: true
+        schema:
+          format: uuid
+          title: Region Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteVoterListResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Voter List
+      tags:
+      - regions
+    get:
+      description: Get the current voter list status for a region.
+      operationId: get_voter_list_status_regions__region_id__voter_list_get
+      parameters:
+      - in: path
+        name: region_id
+        required: true
+        schema:
+          format: uuid
+          title: Region Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoterListStatusResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Voter List Status
+      tags:
+      - regions
+  /scans/{scan_id}/pages/{page_number}/image:
+    get:
+      operationId: get_scan_page_image_scans__scan_id__pages__page_number__image_get
+      parameters:
+      - in: path
+        name: scan_id
+        required: true
+        schema:
+          title: Scan Id
+          type: integer
+      - in: path
+        name: page_number
+        required: true
+        schema:
+          title: Page Number
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Scan Page Image
+      tags:
+      - scans
+  /sessions:
+    get:
+      description: List all saved sessions.
+      operationId: list_sessions_sessions_get
+      parameters:
+      - in: query
+        name: session_type
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Type
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Sessions
+      tags:
+      - sessions
+    post:
+      description: Save current workspace state as a session.
+      operationId: create_session_sessions_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create Session
+      tags:
+      - sessions
+  /sessions/{session_id}:
+    delete:
+      description: Delete a session.
+      operationId: delete_session_sessions__session_id__delete
+      parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: integer
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Session
+      tags:
+      - sessions
+    get:
+      description: Load a saved session.
+      operationId: get_session_detail_sessions__session_id__get
+      parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Session Detail
+      tags:
+      - sessions
   /sessions/{session_id}/export:
     get:
-      tags: [sessions]
-      summary: Export session as ZIP
-      operationId: exportSession
+      description: Export session as ZIP file.
+      operationId: export_session_sessions__session_id__export_get
       parameters:
-        - $ref: "#/components/parameters/SessionId"
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: integer
       responses:
-        "200":
-          description: ZIP file
+        '200':
           content:
-            application/zip:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
               schema:
-                type: string
-                format: binary
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-components:
-  parameters:
-    CampaignId:
-      name: campaign_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-
-    JobId:
-      name: job_id
-      in: path
-      required: true
-      schema:
-        type: integer
-
-    SessionId:
-      name: session_id
-      in: path
-      required: true
-      schema:
-        type: integer
-
-  schemas:
-    Campaign:
-      type: object
-      required:
-        - id
-        - uniqueName
-        - title
-        - year
-      properties:
-        id:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Export Session
+      tags:
+      - sessions
+  /settings/providers:
+    get:
+      description: Get all provider configurations.
+      operationId: list_providers_settings_providers_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/LlmProviderConfigRead'
+                title: Response List Providers Settings Providers Get
+                type: array
+          description: Successful Response
+      summary: List Providers
+      tags:
+      - settings
+      - providers
+  /settings/providers/{provider}:
+    delete:
+      description: Delete provider configuration.
+      operationId: delete_provider_settings_providers__provider__delete
+      parameters:
+      - in: path
+        name: provider
+        required: true
+        schema:
+          title: Provider
           type: string
-          format: uuid
-        uniqueName:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Delete Provider Settings Providers  Provider  Delete
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Provider
+      tags:
+      - settings
+      - providers
+    post:
+      description: Save API key and model for a provider.
+      operationId: configure_provider_settings_providers__provider__post
+      parameters:
+      - in: path
+        name: provider
+        required: true
+        schema:
+          title: Provider
           type: string
-        title:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LlmProviderConfigCreate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmProviderConfigRead'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Configure Provider
+      tags:
+      - settings
+      - providers
+  /settings/providers/{provider}/test:
+    post:
+      description: Test provider API key by listing available models.
+      operationId: test_provider_settings_providers__provider__test_post
+      parameters:
+      - in: path
+        name: provider
+        required: true
+        schema:
+          title: Provider
           type: string
-        year:
-          type: string
-        region:
-          type: string
-          nullable: true
-        regionId:
-          type: string
-          format: uuid
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-          nullable: true
-        updatedAt:
-          type: string
-          format: date-time
-          nullable: true
-
-    CreateCampaign:
-      type: object
-      required:
-        - name
-        - year
-      properties:
-        name:
-          type: string
-          minLength: 1
-        year:
-          type: integer
-          minimum: 1900
-          maximum: 2100
-        region:
-          type: string
-          default: "DC"
-
-    CampaignList:
-      type: object
-      required:
-        - campaigns
-        - total
-      properties:
-        campaigns:
-          type: array
-          items:
-            $ref: "#/components/schemas/Campaign"
-        total:
-          type: integer
-
-    CampaignMetrics:
-      type: object
-      required:
-        - totalSignatures
-        - processed
-        - highConfidence
-      properties:
-        totalSignatures:
-          type: integer
-        processed:
-          type: integer
-        highConfidence:
-          type: integer
-        lastJob:
-          $ref: "#/components/schemas/LastJobInfo"
-          nullable: true
-
-    LastJobInfo:
-      type: object
-      properties:
-        jobId:
-          type: integer
-        status:
-          type: string
-        startedAt:
-          type: string
-          format: date-time
-          nullable: true
-        endedAt:
-          type: string
-          format: date-time
-          nullable: true
-
-    PetitionScan:
-      type: object
-      properties:
-        id:
-          type: integer
-        originalFilename:
-          type: string
-        pageCount:
-          type: integer
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-          nullable: true
-
-    PetitionScanList:
-      type: object
-      properties:
-        scans:
-          type: array
-          items:
-            $ref: "#/components/schemas/PetitionScan"
-        total:
-          type: integer
-
-    CampaignMatchPrediction:
-      type: object
-      required:
-        - rank
-        - voterName
-        - voterAddress
-        - similarityScore
-        - confidence
-      properties:
-        rank:
-          type: integer
-        voterName:
-          type: string
-        voterAddress:
-          type: string
-        similarityScore:
-          type: number
-          format: float
-        confidence:
-          type: string
-          enum: [HIGH, MEDIUM, LOW]
-
-    CampaignResult:
-      type: object
-      required:
-        - ocrResultId
-        - extractedName
-        - extractedAddress
-        - predictions
-      properties:
-        ocrResultId:
-          type: integer
-        extractedName:
-          type: string
-        extractedAddress:
-          type: string
-        cropId:
-          type: integer
-        jobId:
-          type: integer
-        predictions:
-          type: array
-          maxItems: 5
-          items:
-            $ref: "#/components/schemas/CampaignMatchPrediction"
-
-    CampaignResultsList:
-      type: object
-      required:
-        - results
-        - total
-        - page
-        - pageSize
-      properties:
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/CampaignResult"
-        total:
-          type: integer
-        page:
-          type: integer
-        pageSize:
-          type: integer
-
-    SetupStatus:
-      type: object
-      required:
-        - voterList
-        - petitions
-        - jobs
-        - state
-      properties:
-        voterList:
-          $ref: "#/components/schemas/VoterListStatus"
-        petitions:
-          $ref: "#/components/schemas/PetitionsStatus"
-        jobs:
-          $ref: "#/components/schemas/JobsStatus"
-        state:
-          type: string
-          enum: [empty, voter_only, petitions_only, ready_to_process, has_jobs]
-
-    VoterListStatus:
-      type: object
-      properties:
-        exists:
-          type: boolean
-        rowCount:
-          type: integer
-          nullable: true
-        uploadedAt:
-          type: string
-          nullable: true
-        regionName:
-          type: string
-          nullable: true
-
-    PetitionsStatus:
-      type: object
-      properties:
-        exists:
-          type: boolean
-        fileCount:
-          type: integer
-        signatureCount:
-          type: integer
-
-    JobsStatus:
-      type: object
-      properties:
-        total:
-          type: integer
-        active:
-          type: integer
-
-    Job:
-      type: object
-      required:
-        - jobId
-        - status
-        - campaignId
-      properties:
-        jobId:
-          type: integer
-        status:
-          type: string
-          enum:
-            - NOT_STARTED
-            - OCR_PENDING
-            - OCR_STARTED
-            - OCR_COMPLETED
-            - OCR_FAILED
-            - OCR_TIMEOUT
-            - MATCHING_PENDING
-            - MATCHING
-            - MATCHING_COMPLETED
-            - MATCHING_ERROR
-            - CANCELLED
-        campaignId:
-          type: string
-          format: uuid
-        campaignName:
-          type: string
-          nullable: true
-        providerName:
-          type: string
-          nullable: true
-        providerModel:
-          type: string
-          nullable: true
-        forceReprocess:
-          type: boolean
-        cachedOcrCount:
-          type: integer
-          nullable: true
-        newOcrCount:
-          type: integer
-          nullable: true
-        ocrDurationSeconds:
-          type: number
-          nullable: true
-        matchingDurationSeconds:
-          type: number
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-          nullable: true
-        updatedAt:
-          type: string
-          format: date-time
-          nullable: true
-        startedAt:
-          type: string
-          format: date-time
-          nullable: true
-        endedAt:
-          type: string
-          format: date-time
-          nullable: true
-        errorMessage:
-          type: string
-          nullable: true
-        isOrphaned:
-          type: boolean
-        progress:
-          type: number
-          nullable: true
-
-    CreateJob:
-      type: object
-      required:
-        - campaignId
-      properties:
-        campaignId:
-          type: string
-          format: uuid
-        scanIds:
-          type: array
-          items:
-            type: integer
-        providerName:
-          type: string
-          nullable: true
-        providerModel:
-          type: string
-          nullable: true
-        forceReprocess:
-          type: boolean
-          default: false
-
-    JobList:
-      type: object
-      required:
-        - jobs
-        - total
-      properties:
-        jobs:
-          type: array
-          items:
-            $ref: "#/components/schemas/Job"
-        total:
-          type: integer
-
-    MatchPrediction:
-      type: object
-      required:
-        - rank
-        - voterName
-        - voterAddress
-        - similarityScore
-        - confidence
-      properties:
-        rank:
-          type: integer
-        voterName:
-          type: string
-        voterAddress:
-          type: string
-        similarityScore:
-          type: number
-          format: float
-        confidence:
-          type: string
-          enum: [HIGH, MEDIUM, LOW]
-
-    Result:
-      type: object
-      required:
-        - ocrResultId
-        - extractedText
-        - cropId
-        - predictions
-      properties:
-        ocrResultId:
-          type: integer
-        extractedText:
-          type: string
-        cropId:
-          type: integer
-        predictions:
-          type: array
-          maxItems: 5
-          items:
-            $ref: "#/components/schemas/MatchPrediction"
-
-    ResultList:
-      type: object
-      required:
-        - results
-        - total
-        - page
-        - pageSize
-      properties:
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/Result"
-        total:
-          type: integer
-        page:
-          type: integer
-        pageSize:
-          type: integer
-
-    VoterListUpload:
-      type: object
-      properties:
-        message:
-          type: string
-        filePath:
-          type: string
-        rowCount:
-          type: integer
-        importedCount:
-          type: integer
-          nullable: true
-
-    PetitionUpload:
-      type: object
-      properties:
-        message:
-          type: string
-        scanId:
-          type: integer
-        cropCount:
-          type: integer
-
-    Session:
-      type: object
-      required:
-        - id
-        - name
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        campaignId:
-          type: string
-          nullable: true
-        sessionType:
-          type: string
-        snapshotData:
-          type: object
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    CreateSession:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          minLength: 1
-        campaignId:
-          type: string
-          nullable: true
-        snapshotData:
-          type: object
-        sessionType:
-          type: string
-          default: "REAL"
-
-    SessionList:
-      type: object
-      required:
-        - sessions
-        - total
-      properties:
-        sessions:
-          type: array
-          items:
-            $ref: "#/components/schemas/Session"
-        total:
-          type: integer
-
-    Error:
-      type: object
-      required:
-        - type
-        - title
-        - status
-        - detail
-      properties:
-        type:
-          type: string
-          format: uri
-        title:
-          type: string
-        status:
-          type: integer
-        detail:
-          type: string
-        instance:
-          type: string
-
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Error"
-
-    NotFound:
-      description: Resource not found
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Error"
-
-    InternalError:
-      description: Internal server error
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LlmProviderConfigCreate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmProviderTestResult'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Test Provider
+      tags:
+      - settings
+      - providers
+  /upload/petition:
+    post:
+      description: "Upload petition PDF with pre-cropping.\n\nArgs:\n        campaign_id:\
+        \ Campaign ID to associate with\n        file: Uploaded PDF file\n       \
+        \ region: Region for crop coordinates (default: DC)\n        session: Database\
+        \ session\n\nReturns:\n        Upload confirmation with scan ID and crop count\n\
+        \nRaises:\n        HTTPException: 400 if file validation fails\n        HTTPException:\
+        \ 404 if campaign not found"
+      operationId: upload_petition_upload_petition_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_petition_upload_petition_post'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetitionUploadResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Upload Petition
+      tags:
+      - upload
+  /upload/voter-list:
+    post:
+      description: "Upload and import voter list CSV file.\n\nArgs:\n        campaign_id:\
+        \ Campaign ID to get region from\n        file: Uploaded file (CSV)\n    \
+        \    session: Database session\n\nReturns:\n        Upload confirmation with\
+        \ file path and imported count\n\nRaises:\n        HTTPException: 400 if file\
+        \ validation fails\n        HTTPException: 404 if campaign/region not found"
+      operationId: upload_voter_list_upload_voter_list_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_voter_list_upload_voter_list_post'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoterListUploadResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Upload Voter List
+      tags:
+      - upload
