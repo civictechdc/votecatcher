@@ -7,6 +7,7 @@ on:
     branches: [main]
   schedule:
     - cron: '0 3 * * 1'
+  workflow_dispatch:
 
 jobs:
   prepare:
@@ -158,9 +159,18 @@ jobs:
         env:
           TEST_DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"  # pragma: allowlist secret
 
-      - name: Security scan (bandit + uv audit)
+      - name: Security scan (bandit)
         id: security-scan
-        run: cd backend && uv run bandit -r app/ && uv audit
+        run: cd backend && uv run bandit -r app/
+
+      # Advisory freshness (uv audit) is a hard gate on PRs only. On main it
+      # moves to the weekly dependency-advisory-triage job (ADR-0012): three
+      # same-day advisories on 2026-11-13 reddened main between PRs, so main
+      # pushes no longer gate on advisory database drift they cannot control.
+      - name: Dependency audit (uv audit)
+        id: dependency-audit
+        if: github.event_name == 'pull_request'
+        run: cd backend && uv audit
 
       - name: Security tests
         id: security-tests
@@ -214,7 +224,8 @@ jobs:
           if [[ "${{ steps.lint.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Lint (ruff)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Lint (ruff)"; fi
           if [[ "${{ steps.typecheck.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Typecheck (basedpyright)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Typecheck (basedpyright)"; fi
           if [[ "${{ steps.test.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Tests (pytest)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Tests (pytest)"; fi
-          if [[ "${{ steps.security-scan.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Security scan (bandit + uv audit)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Security scan (bandit + uv audit)"; fi
+          if [[ "${{ steps.security-scan.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Security scan (bandit)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Security scan (bandit)"; fi
+          if [[ "${{ steps.dependency-audit.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Dependency audit (uv audit)"; elif [[ "${{ steps.dependency-audit.outcome }}" == "skipped" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ➖ Dependency audit (uv audit) skipped (not reached, or PR-only gate per ADR-0012)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Dependency audit (uv audit)"; fi
           if [[ "${{ steps.security-tests.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Security tests"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Security tests"; fi
           if [[ "${{ steps.dead-code.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Dead code analysis (vulture)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Dead code analysis (vulture)"; fi
 
@@ -239,7 +250,12 @@ jobs:
           echo "- ✅ Lint (ruff)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Typecheck (basedpyright)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Tests (pytest)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- ✅ Security scan (bandit + uv audit)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Security scan (bandit)" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "- ✅ Dependency audit (uv audit)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- ⏭️ Dependency audit (uv audit) skipped — PR-only gate; scheduled triage job owns main (ADR-0012)" >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "- ✅ Security tests" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Dead code analysis (vulture)" >> "$GITHUB_STEP_SUMMARY"
 
@@ -289,8 +305,12 @@ jobs:
         id: test
         run: cd frontend && bun run prepare && bun run test:unit
 
+      # Advisory freshness (bun audit) is a hard gate on PRs only. On main it
+      # moves to the weekly dependency-advisory-triage job (ADR-0012) so a
+      # same-day advisory cannot redden main between PRs.
       - name: Security scan (bun audit)
         id: security-scan
+        if: github.event_name == 'pull_request'
         # Ignored advisories — no in-range fix; dev/build-time only except as noted below:
         #   GHSA-vfj7-8cjw-p6xm (braces HIGH): flag removed 2026-11-07 — advisory withdrawn
         #     upstream; bun audit no longer reports it. Re-add only if reporting resumes.
@@ -329,7 +349,7 @@ jobs:
           if [[ "${{ steps.typecheck.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Typecheck (svelte-check)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Typecheck (svelte-check)"; fi
           if [[ "${{ steps.build.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Build (vite)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Build (vite)"; fi
           if [[ "${{ steps.test.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Tests (vitest)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Tests (vitest)"; fi
-          if [[ "${{ steps.security-scan.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Security scan (bun audit)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Security scan (bun audit)"; fi
+          if [[ "${{ steps.security-scan.outcome }}" == "success" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ✅ Security scan (bun audit)"; elif [[ "${{ steps.security-scan.outcome }}" == "skipped" ]]; then PASSED_STEPS="$PASSED_STEPS\n- ➖ Security scan (bun audit) skipped (not reached, or PR-only gate per ADR-0012)"; else FAILED_STEPS="$FAILED_STEPS\n- ❌ Security scan (bun audit)"; fi
 
           FIRST_FAIL=$(echo -e "$FAILED_STEPS" | grep -m1 "❌" || true)
           echo "::error::Frontend quality gate failed:$FIRST_FAIL"
@@ -353,7 +373,11 @@ jobs:
           echo "- ✅ Typecheck (svelte-check)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Build (vite)" >> "$GITHUB_STEP_SUMMARY"
           echo "- ✅ Tests (vitest)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- ✅ Security scan (bun audit)" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "- ✅ Security scan (bun audit)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- ⏭️ Security scan (bun audit) skipped — PR-only gate; scheduled triage job owns main (ADR-0012)" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   frontend-fallow:
     needs: [prepare]
@@ -394,6 +418,233 @@ jobs:
             echo "::error::Fallow audit job failed before the audit could run — dependency install or infrastructure issue, not dead-code findings. Re-run the job and check the logs."
             echo "## ❌ Fallow Audit Failed Before Scanning" >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  dependency-advisory-triage:
+    # Advisory triage for main (ADR-0012). Hard uv/bun audit gates run on PRs
+    # only, so advisory-database drift cannot redden main between PRs. This
+    # job re-audits main after every merge (push), on the nominal weekly
+    # schedule, and on demand (workflow_dispatch), filing (or updating) a
+    # labeled issue for human triage. Advisory findings never fail the job —
+    # the audit steps exit 0 on findings and only the issue records them.
+    # Tooling failures (dependency install, audit crashes) fail the run by
+    # design so they stay visible.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    concurrency:
+      # GitHub retains only ONE pending run per concurrency group, so bursty
+      # merges can supersede (drop) an intermediate queued run's verdict.
+      # Execution is serialized and the newest state is always the one
+      # audited, but an intermediate queued verdict may never be produced.
+      group: dependency-advisory-triage
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Install dependencies
+        run: |
+          cd backend && uv sync --dev
+          cd "${GITHUB_WORKSPACE}" && cd frontend && bun install --frozen-lockfile
+
+      - name: Backend advisories (uv audit)
+        id: uv-audit
+        # Exit-code contract: 0 = clean, 1 = advisories found (the expected
+        # triage signal, exit 0 here — only the issue records it), anything
+        # else = tooling error, which fails this step on purpose (ADR-0012).
+        run: |
+          cd backend
+          set +e
+          uv audit > ../uv-audit.txt 2>&1
+          code=$?
+          set -e
+          cat ../uv-audit.txt
+          if [ "$code" -eq 0 ]; then
+            echo "status=clean" >> "$GITHUB_OUTPUT"
+          elif [ "$code" -eq 1 ]; then
+            echo "status=findings" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=error" >> "$GITHUB_OUTPUT"
+            echo "::error::uv audit failed with exit code ${code} — tooling error, not advisory findings"
+            {
+              echo "### ❌ uv audit tooling error"
+              echo ""
+              echo "Exit code ${code}. Fails the run by design (ADR-0012); no advisory issue is filed from a failed audit."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Frontend advisories (bun audit)
+        id: bun-audit
+        # Ignore list mirrors the PR gate in frontend-quality and
+        # `just security-scan-frontend` — keep all three in sync.
+        # Exit-code contract: bun exits 1 for BOTH advisories-found and
+        # registry/malformed-response errors, so exit 1 alone cannot classify
+        # the run (a registry error would file a bogus advisory issue). Worse,
+        # bun's `--json` mode does not apply `--ignore` — it lists every
+        # advisory, ignored or not. Classification is therefore corroborated:
+        # the text audit (which honors --ignore) is the gate; its exit 1 is
+        # findings only if the JSON report parses AND lists an advisory id
+        # outside the ignore list. Anything else on exit 1, or any other
+        # exit code, is a tooling error that fails the run (ADR-0012).
+        env:
+          IGNORES: "GHSA-gcqx-w48m-w2h4 GHSA-3g3m-2fjr-6pw4 GHSA-g3hv-75wg-m249 GHSA-h4fr-cmh5-qr62 GHSA-jfwm-3p3c-6hx5"
+        run: |
+          cd frontend
+          IGNORE_FLAGS=""
+          for id in $IGNORES; do IGNORE_FLAGS="$IGNORE_FLAGS --ignore $id"; done
+          set +e
+          # shellcheck disable=SC2086
+          bun audit $IGNORE_FLAGS > ../bun-audit.txt 2>&1
+          code=$?
+          if [ "$code" -eq 1 ]; then
+            # Corroboration pass (see exit-code contract above).
+            bun audit --json > ../bun-audit.json 2>/dev/null
+          fi
+          set -e
+          cat ../bun-audit.txt
+          status=error
+          if [ "$code" -eq 0 ]; then
+            status=clean
+          elif [ "$code" -eq 1 ]; then
+            # Corroborator: parse the JSON report, drop advisory ids on the
+            # ignore list (filter(Boolean) so a record without a usable url
+            # cannot inject an empty-string id), exit 0 only if a non-ignored
+            # id remains. Unparseable JSON (registry error) raises, exits
+            # nonzero -> tooling error.
+            if python3 -c 'import json,sys; ignored=set(sys.argv[1].split()); report=json.load(open("../bun-audit.json")); ids=set(filter(None,[str(a.get("url","")).rsplit("/",1)[-1] for v in report.values() for a in v])); sys.exit(0 if ids-ignored else 1)' "$IGNORES"; then
+              status=findings
+            fi
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" = "error" ]; then
+            echo "::error::bun audit failed (exit ${code}) — not confirmed as non-ignored advisory findings; treating as tooling error (ADR-0012)"
+            {
+              echo "### ❌ bun audit tooling error"
+              echo ""
+              echo "Exit code ${code}, unconfirmed as non-ignored advisory findings. Fails the run by design (ADR-0012); no advisory issue is filed from a failed audit."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: File or update advisory triage issue
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          UV_STATUS: ${{ steps.uv-audit.outputs.status }}
+          BUN_STATUS: ${{ steps.bun-audit.outputs.status }}
+        with:
+          script: |
+            const fs = require('fs');
+            // Audit output is third-party text (advisory metadata, package
+            // names): neutralize backtick runs so it cannot break out of the
+            // fenced block, and @ mentions so the bot issue cannot ping anyone.
+            const sanitize = (text) => text.replace(/`+/g, "'").replace(/@/g, "@\u200b");
+            const readAudit = (file) => {
+              try {
+                return sanitize(fs.readFileSync(file, 'utf8').trim());
+              } catch {
+                return '(no audit output captured)';
+              }
+            };
+            const uvOutput = readAudit('uv-audit.txt');
+            const bunOutput = readAudit('bun-audit.txt');
+            const uvStatus = process.env.UV_STATUS || 'error';
+            const bunStatus = process.env.BUN_STATUS || 'error';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const date = new Date().toISOString().split('T')[0];
+            const anyError = uvStatus === 'error' || bunStatus === 'error';
+            const allClean = uvStatus === 'clean' && bunStatus === 'clean';
+
+            await core.summary
+              .addHeading('Dependency advisory triage')
+              .addRaw(`uv audit: ${uvStatus} — bun audit: ${bunStatus}\n\n[View run](${runUrl})`)
+              .write();
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'dependency-advisories',
+              state: 'open',
+              per_page: 100
+            });
+
+            if (anyError) {
+              // Tooling errors keep the run red (the failed audit step already
+              // failed the job); no advisory issue is filed from a failed audit.
+              core.setFailed(`Audit tooling error (uv audit: ${uvStatus}, bun audit: ${bunStatus}) — see the failed steps in this run. Advisory findings are not triaged from a failed audit (ADR-0012).`);
+              return;
+            }
+
+            if (allClean) {
+              if (existing.data.length > 0) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existing.data[0].number,
+                  body: `Re-audit clean on ${date} (ignores unchanged).\n[View run](${runUrl})`
+                });
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existing.data[0].number,
+                  state: 'closed',
+                  state_reason: 'completed'
+                });
+                core.info('Advisories resolved — closed the open triage issue.');
+              } else {
+                core.info('No advisories found; nothing to file.');
+              }
+              return;
+            }
+
+            // GitHub comments cap at 65536 chars — keep each section well under.
+            const cap = (text) => text.length > 25000 ? `${text.slice(0, 25000)}\n…(truncated — see the full output in the run log)` : text;
+            const section = (name, status, text) => status === 'clean'
+              ? `### ${name}\n\nClean (no advisories reported).`
+              : `### ${name}\n\n\`\`\`\n${cap(text)}\n\`\`\``;
+            const body = [
+              `Dependency advisories found by the advisory triage audit on **${date}** (ADR-0012).`,
+              '',
+              'These are advisory findings for human triage — main stays green. Update the dependency, add a justified ignore, or accept the risk in this issue.',
+              '',
+              section('Backend (uv audit)', uvStatus, uvOutput),
+              '',
+              section('Frontend (bun audit)', bunStatus, bunOutput),
+              '',
+              `[View run](${runUrl})`
+            ].join('\n');
+
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: `Still flagged on ${date}:\n\n${body}`
+              });
+              core.info(`Updated existing triage issue #${existing.data[0].number}.`);
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Dependency advisories need triage (${date})`,
+                labels: ['dependency-advisories'],
+                body
+              });
+              core.info('Filed a new advisory triage issue.');
+            }
 
   openapi-freshness:
     # Regenerate the API contract and the generated TS client from app code and
@@ -455,13 +706,23 @@ jobs:
       - name: Verify Java runtime
         run: java --version
 
+      # scripts/verify-generator-jar.mjs caches the sha256-verified generator
+      # jar here; a cache hit makes codegen run on the pre-verified jar with no
+      # network fetch. Key includes the pinned sha256, so a re-pin busts it.
+      - name: Cache verified generator jar
+        uses: actions/cache@v4
+        with:
+          path: frontend/.generator-jar-cache
+          key: generator-jar-7.27.0-db9c4b73
+
       - name: Install dependencies
         run: cd frontend && bun install --frozen-lockfile
 
       # Config-driven invocation: frontend/openapitools.json pins the generator
       # version and declares input/output. (`-c` on the CLI means a generator
       # options file, not this wrapper config — flags must stay off.)
-      # generate:client = generator + @ts-nocheck stamp, identical to local
+      # generate:client = sha256-verified jar (verify-generator-jar.mjs passes
+      # it via --custom-generator) + @ts-nocheck stamp, identical to local
       # `just openapi-generate`, so CI regenerates byte-identical output.
       - name: Generate API client
         id: generate
