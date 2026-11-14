@@ -16,7 +16,7 @@ from app.services import providers as provider_service
 
 router = APIRouter(
     prefix="/settings/providers",
-    tags=["settings", "providers"],
+    tags=["providers"],
     dependencies=[Depends(verify_database_api_key)],
 )
 
