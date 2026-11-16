@@ -20,6 +20,7 @@ An ADR is a document that captures an important architectural decision along wit
 | 0009 | [Observability Signal Catalog](./0009-observability-signal-catalog.md) | Accepted | 2026-04-21 |
 | 0010 | [Adopt Architecture Fitness Tests](./0010-adopt-architecture-fitness-tests.md) | Accepted | 2026-07-21 |
 | 0011 | [Extract API Response Contracts](./0011-extract-api-response-contracts.md) | Accepted | 2026-07-22 |
+| 0012 | [PR-Only Advisory Gates with Scheduled Triage](./0012-pr-only-advisory-gates-with-scheduled-triage.md) | Accepted | 2026-11-13 |
 
 ## Creating a New ADR
 

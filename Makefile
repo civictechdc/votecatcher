@@ -51,8 +51,8 @@ lint:
 
 typecheck:
 	@echo "=== Typechecking all modified files ==="
-	cd backend && uv run basedpyright
-	cd frontend && bun run check
+	just typecheck-backend
+	just typecheck-frontend
 	@echo "=== Typechecking complete ==="
 
 clean:

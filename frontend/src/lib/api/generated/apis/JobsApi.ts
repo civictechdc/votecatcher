@@ -248,19 +248,24 @@ export class JobsApi extends runtime.BaseAPI {
      * SSE endpoint for real-time job status updates.
      * Get Job Status Stream
      */
-    async getJobStatusStreamJobsJobIdStatusGetRaw(requestParameters: GetJobStatusStreamJobsJobIdStatusGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async getJobStatusStreamJobsJobIdStatusGetRaw(requestParameters: GetJobStatusStreamJobsJobIdStatusGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
         const requestOptions = await this.getJobStatusStreamJobsJobIdStatusGetRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<string>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
     }
 
     /**
      * SSE endpoint for real-time job status updates.
      * Get Job Status Stream
      */
-    async getJobStatusStreamJobsJobIdStatusGet(requestParameters: GetJobStatusStreamJobsJobIdStatusGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.getJobStatusStreamJobsJobIdStatusGetRaw(requestParameters, initOverrides);
+    async getJobStatusStreamJobsJobIdStatusGet(requestParameters: GetJobStatusStreamJobsJobIdStatusGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+        const response = await this.getJobStatusStreamJobsJobIdStatusGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

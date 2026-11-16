@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* tslint:disable */
 /* eslint-disable */
 export * from './CampaignsApi';
@@ -14,5 +13,4 @@ export * from './RegionsApi';
 export * from './ResultsApi';
 export * from './ScansApi';
 export * from './SessionsApi';
-export * from './SettingsApi';
 export * from './UploadApi';

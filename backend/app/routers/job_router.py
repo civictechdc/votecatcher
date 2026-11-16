@@ -119,7 +119,16 @@ def retry_job(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
 
-@router.get("/{job_id}/status", response_class=StreamingResponse)
+@router.get(
+    "/{job_id}/status",
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "description": "SSE stream of job status updates",
+            "content": {"text/event-stream": {"schema": {"type": "string"}}},
+        }
+    },
+)
 async def get_job_status_stream(
     job_id: int,
     session: SessionDep,

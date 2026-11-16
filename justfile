@@ -69,11 +69,11 @@ lint:
     cd frontend && bun run fmt:check
     @echo "=== Linting complete ==="
 
-# Run type checkers (basedpyright, svelte-check) - validates all modified files
+# Run type checkers (baseline-aware basedpyright, svelte-check) - validates all modified files
 typecheck:
     @echo "=== Typechecking all modified files ==="
-    cd backend && uv run basedpyright
-    cd frontend && bun run check
+    just typecheck-backend
+    just typecheck-frontend
     @echo "=== Typechecking complete ==="
 
 # Clean build artifacts

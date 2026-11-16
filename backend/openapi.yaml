@@ -2101,7 +2101,11 @@ paths:
           type: integer
       responses:
         '200':
-          description: Successful Response
+          content:
+            text/event-stream:
+              schema:
+                type: string
+          description: SSE stream of job status updates
         '422':
           content:
             application/json:
@@ -2371,7 +2375,6 @@ paths:
           description: Validation Error
       summary: List Providers
       tags:
-      - settings
       - providers
   /settings/providers/{provider}:
     delete:
@@ -2409,7 +2412,6 @@ paths:
           description: Validation Error
       summary: Delete Provider
       tags:
-      - settings
       - providers
     post:
       description: Save API key and model for a provider.
@@ -2450,7 +2452,6 @@ paths:
           description: Validation Error
       summary: Configure Provider
       tags:
-      - settings
       - providers
   /settings/providers/{provider}/test:
     post:
@@ -2492,7 +2493,6 @@ paths:
           description: Validation Error
       summary: Test Provider
       tags:
-      - settings
       - providers
   /upload/petition:
     post:

@@ -17,8 +17,8 @@
 		"unused-dependencies": "warn"
 	},
 	"audit": {
-		"deadCodeBaseline": "fallow-baselines/dead-code@0709179.json",
-		"healthBaseline": "fallow-baselines/health@0709179.json",
-		"dupesBaseline": "fallow-baselines/dupes@0709179.json"
+		"deadCodeBaseline": "fallow-baselines/dead-code@6716980.json",
+		"healthBaseline": "fallow-baselines/health@6716980.json",
+		"dupesBaseline": "fallow-baselines/dupes@6716980.json"
 	}
 }

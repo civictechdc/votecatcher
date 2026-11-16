@@ -1,1 +1,11 @@
 *       @civictechdc/ballot-initiative @civictechdc/ballot-initiative-maintainers
+
+# Codegen config drives the generated TS client and pins the generator version;
+# changes require explicit maintainer review (jar integrity is verified against
+# scripts/verify-generator-jar.mjs, so a version bump is a deliberate act).
+/frontend/openapitools.json   @civictechdc/ballot-initiative @civictechdc/ballot-initiative-maintainers
+
+# The other half of the codegen trust root: the pinned version, checksums, and
+# download/verification logic for the generator jar live in this script, so it
+# needs the same review bar as the config it cross-checks.
+/frontend/scripts/verify-generator-jar.mjs   @civictechdc/ballot-initiative @civictechdc/ballot-initiative-maintainers
